@@ -112,12 +112,13 @@ export async function onRequestGet(context) {
       health.status = 'degraded';
     } else {
       // List objects in the aunclick folder to verify access
-      const listed = await env.R2.list({ prefix: 'aunclick/', limit: 5 });
+      const r2Prefix = env.R2_FOLDER || 'merida';
+      const listed = await env.R2.list({ prefix: r2Prefix + '/', limit: 5 });
       health.services.r2 = {
         status: 'ok',
         message: 'Almacenamiento R2 conectado',
         bucket: 'my-emdash-media',
-        prefix: 'aunclick/',
+        prefix: r2Prefix + '/',
         sample_objects: listed.objects.map(o => ({
           key: o.key,
           size: o.size,

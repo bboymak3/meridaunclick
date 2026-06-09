@@ -147,7 +147,8 @@ export async function onRequestPost(context) {
     // Generate unique key
     const timestamp = Date.now();
     const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const key = `aunclick/businesses/${businessId}/${timestamp}_${sanitizedName}`;
+    const r2Folder = env.R2_FOLDER || 'merida';
+    const key = `${r2Folder}/businesses/${businessId}/${timestamp}_${sanitizedName}`;
 
     // Upload to R2
     await env.R2.put(key, arrayBuffer, {
