@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Explorar negocioes en Mérida, Venezuela - Casas, apartamentos, terrenos y más.">
+    <meta name="description" content="Explorar negocios en Venezuela - Restaurantes, farmacias, tiendas, profesionales y más.">
     <title>Explorar Negocios - Mérida Un Click</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -15,7 +15,7 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-home"></i>
+                <i class="fas fa-store"></i>
                 <span>Mérida Un Click</span>
             </a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
@@ -23,7 +23,7 @@
             </button>
             <ul class="nav-menu" id="navMenu">
                 <li><a href="index.html" class="nav-link">Inicio</a></li>
-                <li><a href="search.html" class="nav-link active">Negocioes</a></li>
+                <li><a href="search.html" class="nav-link active">Negocios</a></li>
                 <li><a href="map.html" class="nav-link">Mapa</a></li>
                 <li><a href="new-business.html" class="nav-link">Registrar</a></li>
                 <li id="navLoginItem"><a href="login.html" class="nav-link nav-btn">Login</a></li>
@@ -46,54 +46,74 @@
             <section class="search-filters-bar" id="searchFiltersBar">
                 <div class="search-filters-row">
                     <div class="search-filter-field">
-                        <select id="sTipo" class="form-select">
-                            <option value="">Tipo</option>
-                            <option value="Casa">Casas</option>
-                            <option value="Apartamento">Apartamentos</option>
-                            <option value="Terreno">Profesionales</option>
-                            <option value="Local Comercial">Locales Comerciales</option>
-                            <option value="Oficina">Oficinas</option>
-                            <option value="Hotel">Hoteles</option>
-                            <option value="Finca">Fincas</option>
-                            <option value="Galpón">Galpones</option>
-                            <option value="Estacionamiento">Estacionamientos</option>
-                            <option value="Otro">Otros</option>
+                        <select id="sEstado" class="form-select">
+                            <option value="">Estado</option>
+                            <option value="Amazonas">Amazonas</option>
+                            <option value="Anzoátegui">Anzoátegui</option>
+                            <option value="Apure">Apure</option>
+                            <option value="Aragua">Aragua</option>
+                            <option value="Barinas">Barinas</option>
+                            <option value="Bolívar">Bolívar</option>
+                            <option value="Carabobo">Carabobo</option>
+                            <option value="Cojedes">Cojedes</option>
+                            <option value="Delta Amacuro">Delta Amacuro</option>
+                            <option value="Distrito Capital">Distrito Capital</option>
+                            <option value="Falcón">Falcón</option>
+                            <option value="Guárico">Guárico</option>
+                            <option value="Lara">Lara</option>
+                            <option value="Mérida">Mérida</option>
+                            <option value="Miranda">Miranda</option>
+                            <option value="Monagas">Monagas</option>
+                            <option value="Nueva Esparta">Nueva Esparta</option>
+                            <option value="Portuguesa">Portuguesa</option>
+                            <option value="Sucre">Sucre</option>
+                            <option value="Táchira">Táchira</option>
+                            <option value="Trujillo">Trujillo</option>
+                            <option value="Vargas">Vargas</option>
+                            <option value="Yaracuy">Yaracuy</option>
+                            <option value="Zulia">Zulia</option>
                         </select>
                     </div>
                     <div class="search-filter-field">
-                        <select id="sOperacion" class="form-select">
-                            <option value="">Operación</option>
-                            <option value="Venta">Venta</option>
-                            <option value="Alquiler">Alquiler</option>
+                        <select id="sCategoria" class="form-select">
+                            <option value="">Categoría</option>
+                            <option value="restaurantes">Restaurantes</option>
+                            <option value="farmacias">Farmacias</option>
+                            <option value="clinicas-hospitales">Clínicas y Hospitales</option>
+                            <option value="supermercados">Supermercados</option>
+                            <option value="ropas">Ropas</option>
+                            <option value="barberias">Barberías y Salones</option>
+                            <option value="auto-talleres">Auto Talleres</option>
+                            <option value="cafeterias">Cafeterías</option>
+                            <option value="bares-discotecas">Bares y Discotecas</option>
+                            <option value="ferreterias">Ferreterías</option>
+                            <option value="tecnologia">Tecnología</option>
+                            <option value="hoteles-posadas">Hoteles y Posadas</option>
+                            <option value="gimnasios">Gimnasios</option>
+                            <option value="dentistas">Dentistas</option>
+                            <option value="celulares">Celulares</option>
+                            <option value="mueblerias">Mueblerías</option>
+                            <option value="juridicos">Jurídicos</option>
+                            <option value="academias">Academias</option>
+                            <option value="veterinarias">Veterinarias</option>
+                            <option value="electricos">Eléctricos</option>
+                            <option value="perfumerias">Perfumerías</option>
+                            <option value="joyerias">Joyerías</option>
+                            <option value="zapaterias">Zapaterías</option>
+                            <option value="panaderias">Panaderías</option>
+                            <option value="heladerias">Heladerías</option>
+                            <option value="pizzerias">Pizzerías</option>
+                            <option value="bicicletas">Bicicletas</option>
+                            <option value="encomiendas">Encomiendas</option>
+                            <option value="lavanderias">Lavanderías</option>
+                            <option value="otro">Otro</option>
                         </select>
                     </div>
                     <div class="search-filter-field">
                         <input type="text" id="sCiudad" class="form-input" placeholder="Ciudad">
                     </div>
                     <div class="search-filter-field">
-                        <input type="number" id="sPrecioMin" class="form-input" placeholder="Precio Mín">
-                    </div>
-                    <div class="search-filter-field">
-                        <input type="number" id="sPrecioMax" class="form-input" placeholder="Precio Máx">
-                    </div>
-                    <div class="search-filter-field">
-                        <select id="sHabitaciones" class="form-select">
-                            <option value="">Habitaciones</option>
-                            <option value="1">1+</option>
-                            <option value="2">2+</option>
-                            <option value="3">3+</option>
-                            <option value="4">4+</option>
-                            <option value="5">5+</option>
-                        </select>
-                    </div>
-                    <div class="search-filter-field">
-                        <select id="sBanos" class="form-select">
-                            <option value="">Baños</option>
-                            <option value="1">1+</option>
-                            <option value="2">2+</option>
-                            <option value="3">3+</option>
-                            <option value="4">4+</option>
-                        </select>
+                        <input type="text" id="sQuery" class="form-input" placeholder="Buscar...">
                     </div>
                     <button class="btn btn-primary" id="searchBtn">
                         <i class="fas fa-search"></i>
@@ -106,18 +126,19 @@
                 <div class="search-filters-extended hidden" id="extendedFilters">
                     <div class="search-filters-row">
                         <div class="search-filter-field">
-                            <select id="sMoneda" class="form-select">
-                                <option value="">Moneda</option>
-                                <option value="USD">USD ($)</option>
-                                <option value="EUR">EUR (&euro;)</option>
-                                <option value="Bs">Bs</option>
+                            <select id="sTipoNegocio" class="form-select">
+                                <option value="">Tipo de Negocio</option>
+                                <option value="negocio">Negocio</option>
+                                <option value="profesional">Profesional</option>
+                                <option value="servicio">Servicio</option>
+                                <option value="restaurante">Restaurante</option>
+                                <option value="tienda">Tienda</option>
+                                <option value="otro">Otro</option>
                             </select>
                         </div>
                         <div class="search-filter-field">
                             <select id="sOrdenar" class="form-select">
                                 <option value="relevancia">Relevancia</option>
-                                <option value="precio_asc">Precio: menor a mayor</option>
-                                <option value="precio_desc">Precio: mayor a menor</option>
                                 <option value="reciente">Más reciente</option>
                                 <option value="visto">Más visto</option>
                             </select>
@@ -142,8 +163,6 @@
                         <label for="sSort">Ordenar:</label>
                         <select id="sSort" class="form-select-sm">
                             <option value="relevancia">Relevancia</option>
-                            <option value="precio_asc">Precio menor-mayor</option>
-                            <option value="precio_desc">Precio mayor-menor</option>
                             <option value="reciente">Más reciente</option>
                             <option value="visto">Más visto</option>
                         </select>
@@ -169,16 +188,16 @@
                     <!-- Loading -->
                     <div class="loading-spinner" id="searchLoading">
                         <i class="fas fa-spinner fa-spin fa-2x"></i>
-                        <p>Explorando negocioes...</p>
+                        <p>Explorando negocios...</p>
                     </div>
 
                     <!-- No Results -->
                     <div class="no-results hidden" id="noResults">
                         <i class="fas fa-search fa-3x"></i>
-                        <h2>No se encontraron negocioes</h2>
+                        <h2>No se encontraron negocios</h2>
                         <p>No hay resultados para tu búsqueda. Intenta con otros filtros o términos.</p>
                         <div class="no-results-actions">
-                            <a href="search.html" class="btn btn-primary">Ver todas los negocios</a>
+                            <a href="search.html" class="btn btn-primary">Ver todos los negocios</a>
                             <a href="index.html" class="btn btn-secondary">Volver al inicio</a>
                         </div>
                     </div>

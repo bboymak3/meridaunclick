@@ -8,15 +8,15 @@
     'use strict';
 
     // ─── Configuration ──────────────────────────────────────────
-    const BARINAS_CENTER = [8.6233, -70.2288];
-    const DEFAULT_ZOOM = 12;
+    const VENEZUELA_CENTER = [8.6233, -66.5897];
+    const DEFAULT_ZOOM = 6;
 
     // ─── State ──────────────────────────────────────────────────
     let map = null;
     let markers = [];
     let markerLayer = null;
     let isMapView = false;
-    let allProperties = [];
+    let allBusinesses = [];
     let activeCardId = null;
     let miniMapInitialized = false;
 
@@ -30,9 +30,7 @@
 
     // Filter elements
     const mapTipo = document.getElementById('mapTipo');
-    const mapOperacion = document.getElementById('mapOperacion');
-    const mapPrecioMin = document.getElementById('mapPrecioMin');
-    const mapPrecioMax = document.getElementById('mapPrecioMax');
+    const mapEstado = document.getElementById('mapEstado');
     const mapCiudad = document.getElementById('mapCiudad');
     const mapSearchBtn = document.getElementById('mapSearchBtn');
     const mapResetBtn = document.getElementById('mapResetBtn');
@@ -62,11 +60,11 @@
 
         try {
             map = L.map('map', {
-                center: BARINAS_CENTER,
+                center: VENEZUELA_CENTER,
                 zoom: DEFAULT_ZOOM,
-                zoomControl: false,     // Removed default zoom — using custom controls
+                zoomControl: false,
                 scrollWheelZoom: true,
-                tap: true,           // Enable tap events for mobile
+                tap: true,
                 closePopupOnClick: true,
             });
 
@@ -122,7 +120,7 @@
             markerLayer = L.layerGroup().addTo(map);
 
             // Load businesses
-            loadMapProperties();
+            loadMapBusinesses();
 
             // Fix rendering
             setTimeout(function () { map.invalidateSize(); }, 300);
@@ -133,39 +131,23 @@
     }
 
     // ─── Safe helpers (fallback if app.js functions not loaded) ──
-    function safeFormatPrice(price, currency) {
-        try {
-            if (typeof formatPrice === 'function') return formatPrice(price, currency);
-        } catch (e) { /* ignore */ }
-        var symbols = { 'USD': '$', 'EUR': '€', 'Bs': 'Bs' };
-        var s = symbols[currency] || '$';
-        return price != null ? s + Number(price).toLocaleString() : 'Precio no disponible';
-    }
-
-    function safeFormatShortPrice(price, currency) {
-        try {
-            if (typeof formatShortPrice === 'function') return formatShortPrice(price, currency);
-        } catch (e) { /* ignore */ }
-        if (!price || isNaN(price)) return '';
-        var symbols = { 'USD': '$', 'EUR': '€', 'Bs': 'Bs' };
-        var s = symbols[currency] || '$';
-        if (price >= 1000000) return s + (price / 1000000).toFixed(1) + 'M';
-        if (price >= 1000) return s + (price / 1000).toFixed(0) + 'K';
-        return s + price;
-    }
-
     function safeGetTypeLabel(type) {
         try {
             if (typeof getBusinessTypeLabel === 'function') return getBusinessTypeLabel(type);
         } catch (e) { /* ignore */ }
-        return type || 'Propiedad';
+        return type || 'Negocio';
     }
 
-    function safeGetOpLabel(op) {
-        try {
-            if (typeof getOperationTypeLabel === 'function') return getOperationTypeLabel(op);
-        } catch (e) { /* ignore */ }
-        return op || 'Operación';
+    function safeGetTypeIcon(type) {
+        var icons = {
+            'negocio': '🏪',
+            'profesional': '💼',
+            'servicio': '🔔',
+            'restaurante': '🍽️',
+            'tienda': '🛍️',
+            'otro': '📌',
+        };
+        return icons[type?.toLowerCase()] || '📌';
     }
 
     // ─── Create Marker ──────────────────────────────────────────
@@ -180,19 +162,17 @@
                 coverImage = business.images[0].url;
             }
 
-            var priceStr = safeFormatPrice(business.price, business.currency);
             var typeLabel = safeGetTypeLabel(business.business_type);
-            var opLabel = safeGetOpLabel(business.business_type);
             var title = business.title || 'Sin título';
 
-            // Color by operation type
+            // Color by business type
             var iconColor = getMarkerColor(business.business_type);
 
-            // Custom pin icon with price
+            // Custom pin icon with emoji
             var icon = L.divIcon({
                 className: 'custom-map-marker',
                 html: '<div class="marker-pin" style="background-color: ' + iconColor + ';">'
-                    + '<span class="marker-price">' + safeFormatShortPrice(business.price, business.currency) + '</span>'
+                    + '<span class="marker-price">' + safeGetTypeIcon(business.business_type) + '</span>'
                     + '</div>'
                     + '<div class="marker-shadow"></div>',
                 iconSize: [40, 52],
@@ -202,33 +182,28 @@
 
             var marker = L.marker([business.lat, business.lng], { icon: icon });
 
-            // Build popup content — always a valid string
+            // Build popup content
             var imgTag = coverImage
                 ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display=\'none\'"></div>'
                 : '';
 
-            var details = '';
-            if (business.bedrooms) details += '<span class="map-popup-detail"><i class="fas fa-bed"></i> ' + business.bedrooms + '</span>';
-            if (business.bathrooms) details += '<span class="map-popup-detail"><i class="fas fa-bath"></i> ' + business.bathrooms + '</span>';
-            if (business.area) details += '<span class="map-popup-detail"><i class="fas fa-ruler-combined"></i> ' + business.area + (business.area_unit || 'm²') + '</span>';
+            var address = business.city ? (business.state ? business.city + ', ' + business.state : business.city) : '';
 
             var popupHTML = '<div class="map-popup">'
                 + imgTag
                 + '<div class="map-popup-content">'
                 + '<h4 class="map-popup-title">' + title + '</h4>'
-                + '<div class="map-popup-price">' + priceStr + '</div>'
                 + '<div class="map-popup-badges">'
                 + '<span class="map-popup-badge">' + typeLabel + '</span>'
-                + '<span class="map-popup-badge">' + opLabel + '</span>'
                 + '</div>'
-                + details
+                + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
                 + '<a href="business.html?id=' + business.id + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
                 + '</div>'
                 + '</div>';
 
             // Safety check: popupHTML must be a non-empty string
             if (typeof popupHTML !== 'string' || popupHTML.length === 0) {
-                popupHTML = '<div class="map-popup"><div class="map-popup-content"><h4>' + title + '</h4><p>Propiedad</p></div></div>';
+                popupHTML = '<div class="map-popup"><div class="map-popup-content"><h4>' + title + '</h4><p>Negocio</p></div></div>';
             }
 
             // Bind popup to marker
@@ -253,21 +228,24 @@
         }
     }
 
-    function getMarkerColor(operationType) {
+    function getMarkerColor(businessType) {
         var colors = {
-            'venta': '#1a73e8',
-            'alquiler': '#28a745',
-            'venta_alquiler': '#ff6b35',
+            'negocio': '#1a73e8',
+            'profesional': '#28a745',
+            'servicio': '#ff6b35',
+            'restaurante': '#e74c3c',
+            'tienda': '#9c27b0',
+            'otro': '#607d8b',
         };
         try {
-            return (operationType && colors[operationType.toLowerCase()]) || '#1a73e8';
+            return (businessType && colors[businessType.toLowerCase()]) || '#1a73e8';
         } catch (e) {
             return '#1a73e8';
         }
     }
 
-    // ─── Load Map Properties ────────────────────────────────────
-    function loadMapProperties() {
+    // ─── Load Map Businesses ───────────────────────────────────
+    function loadMapBusinesses() {
         if (!isMapView) return;
 
         if (mapLoading) mapLoading.style.display = '';
@@ -276,13 +254,11 @@
         var endpoint = '/businesses?status=approved&limit=100';
 
         if (filters.business_type) endpoint += '&business_type=' + encodeURIComponent(filters.business_type);
-        if (filters.business_type) endpoint += '&business_type=' + encodeURIComponent(filters.business_type);
-        if (filters.min_price) endpoint += '&min_price=' + filters.min_price;
-        if (filters.max_price) endpoint += '&max_price=' + filters.max_price;
+        if (filters.state) endpoint += '&state=' + encodeURIComponent(filters.state);
         if (filters.city) endpoint += '&city=' + encodeURIComponent(filters.city);
 
         api.get(endpoint).then(function (data) {
-            allProperties = data.businesses || [];
+            allBusinesses = data.businesses || [];
 
             // Clear markers
             if (markerLayer) markerLayer.clearLayers();
@@ -290,13 +266,13 @@
 
             // Update count
             if (mapResultCount) {
-                mapResultCount.textContent = allProperties.length + ' propiedades encontradas';
+                mapResultCount.textContent = allBusinesses.length + ' negocios encontrados';
             }
 
             // Add markers
-            var validProps = allProperties.filter(function (p) { return p.lat && p.lng; });
+            var validItems = allBusinesses.filter(function (p) { return p.lat && p.lng; });
 
-            validProps.forEach(function (business) {
+            validItems.forEach(function (business) {
                 var marker = createMarker(business);
                 if (marker) {
                     markers.push({ marker: marker, business: business });
@@ -305,16 +281,16 @@
             });
 
             // Fit map to show all markers
-            if (validProps.length > 0) {
+            if (validItems.length > 0) {
                 fitAllMarkers();
             }
 
             // Render sidebar list
-            renderBusinessList(allProperties);
+            renderBusinessList(allBusinesses);
 
         }).catch(function (error) {
             console.error('Error loading map businesses:', error);
-            showToast('Error al cargar propiedades en el mapa', 'error');
+            showToast('Error al cargar negocios en el mapa', 'error');
         }).finally(function () {
             if (mapLoading) mapLoading.style.display = 'none';
         });
@@ -348,15 +324,15 @@
     // ─── Map Filters ────────────────────────────────────────────
     function setupMapFilters() {
         if (mapSearchBtn) {
-            mapSearchBtn.addEventListener('click', function () { loadMapProperties(); });
+            mapSearchBtn.addEventListener('click', function () { loadMapBusinesses(); });
         }
         if (mapResetBtn) {
             mapResetBtn.addEventListener('click', resetFilters);
         }
-        [mapCiudad, mapPrecioMin, mapPrecioMax].forEach(function (input) {
+        [mapCiudad, mapEstado].forEach(function (input) {
             if (input) {
                 input.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') loadMapProperties();
+                    if (e.key === 'Enter') loadMapBusinesses();
                 });
             }
         });
@@ -365,20 +341,16 @@
     function getFilterValues() {
         return {
             business_type: mapTipo ? mapTipo.value : '',
-            business_type: mapOperacion ? mapOperacion.value : '',
-            min_price: mapPrecioMin ? mapPrecioMin.value : '',
-            max_price: mapPrecioMax ? mapPrecioMax.value : '',
+            state: mapEstado ? mapEstado.value : '',
             city: mapCiudad ? (mapCiudad.value || '').trim() : '',
         };
     }
 
     function resetFilters() {
         if (mapTipo) mapTipo.value = '';
-        if (mapOperacion) mapOperacion.value = '';
-        if (mapPrecioMin) mapPrecioMin.value = '';
-        if (mapPrecioMax) mapPrecioMax.value = '';
+        if (mapEstado) mapEstado.value = '';
         if (mapCiudad) mapCiudad.value = '';
-        loadMapProperties();
+        loadMapBusinesses();
     }
 
     // ─── Render Sidebar Business List ───────────────────────────
@@ -386,26 +358,22 @@
         if (!mapBusinessList) return;
 
         if (businesses.length === 0) {
-            mapBusinessList.innerHTML = '<div class="map-no-results"><i class="fas fa-search"></i><p>No se encontraron propiedades.</p></div>';
+            mapBusinessList.innerHTML = '<div class="map-no-results"><i class="fas fa-search"></i><p>No se encontraron negocios.</p></div>';
             return;
         }
 
         mapBusinessList.innerHTML = businesses.map(function (p) {
             var coverImage = p.cover_image || (p.images && p.images[0] && p.images[0].url) || '';
-            var priceStr = safeFormatPrice(p.price, p.currency);
             var typeLabel = safeGetTypeLabel(p.business_type);
-            var opLabel = safeGetOpLabel(p.business_type);
-            var address = p.city ? (p.address ? p.address + ', ' + p.city : p.city) : '--';
+            var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
 
             return '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p.lat || '') + '" data-lng="' + (p.lng || '') + '">'
-                + '<img src="' + coverImage + '" alt="' + (p.title || 'Propiedad') + '" onerror="this.style.display=\'none\'">'
+                + '<img src="' + coverImage + '" alt="' + (p.title || 'Negocio') + '" onerror="this.style.display=\'none\'">'
                 + '<div class="card-info">'
-                + '<div class="card-price">' + priceStr + '</div>'
                 + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin título') + '</div>'
                 + '<div class="card-location">' + address + '</div>'
                 + '<div class="card-badges">'
                 + '<span class="card-badge badge-type">' + typeLabel + '</span>'
-                + '<span class="card-badge badge-operation">' + opLabel + '</span>'
                 + '</div>'
                 + '</div>'
                 + '</div>';
@@ -440,7 +408,7 @@
             });
         }
 
-        // Open popup on marker (use marker.openPopup, NOT map.openPopup(marker))
+        // Open popup on marker
         var found = markers.find(function (m) { return m.business.id === businessId; });
         if (found && found.marker) {
             found.marker.openPopup();
@@ -502,7 +470,7 @@
 
         try {
             window._miniMap = L.map('searchMiniMap', {
-                center: BARINAS_CENTER,
+                center: VENEZUELA_CENTER,
                 zoom: DEFAULT_ZOOM,
                 zoomControl: false,
                 scrollWheelZoom: true,
@@ -516,7 +484,7 @@
             L.control.zoom({ position: 'bottomright' }).addTo(window._miniMap);
 
             window._miniMarkerLayer = L.layerGroup().addTo(window._miniMap);
-            loadMiniMapProperties();
+            loadMiniMapBusinesses();
 
             setTimeout(function () { window._miniMap.invalidateSize(); }, 300);
         } catch (error) {
@@ -524,31 +492,29 @@
         }
     }
 
-    function loadMiniMapProperties() {
+    function loadMiniMapBusinesses() {
         if (!window._miniMap || !window._miniMarkerLayer) return;
 
         var params = getSearchParams();
         var endpoint = '/businesses?status=approved&limit=50';
-        if (params.business_type) endpoint += '&business_type=' + encodeURIComponent(params.business_type);
-        if (params.business_type) endpoint += '&business_type=' + encodeURIComponent(params.business_type);
+        if (params.estado) endpoint += '&state=' + encodeURIComponent(params.estado);
+        if (params.categoria) endpoint += '&categoria=' + encodeURIComponent(params.categoria);
         if (params.city) endpoint += '&city=' + encodeURIComponent(params.city);
-        if (params.min_price) endpoint += '&min_price=' + params.min_price;
-        if (params.max_price) endpoint += '&max_price=' + params.max_price;
-        if (params.bedrooms) endpoint += '&bedrooms=' + params.bedrooms;
-        if (params.bathrooms) endpoint += '&bathrooms=' + params.bathrooms;
+        if (params.business_type) endpoint += '&business_type=' + encodeURIComponent(params.business_type);
+        if (params.search) endpoint += '&search=' + encodeURIComponent(params.search);
 
         api.get(endpoint).then(function (data) {
             var businesses = data.businesses || [];
             window._miniMarkerLayer.clearLayers();
-            var validProps = businesses.filter(function (p) { return p.lat && p.lng; });
+            var validItems = businesses.filter(function (p) { return p.lat && p.lng; });
 
-            validProps.forEach(function (business) {
+            validItems.forEach(function (business) {
                 var marker = createMarker(business);
                 if (marker) window._miniMarkerLayer.addLayer(marker);
             });
 
-            if (validProps.length > 0) {
-                var bounds = L.latLngBounds(validProps.map(function (p) { return [p.lat, p.lng]; }));
+            if (validItems.length > 0) {
+                var bounds = L.latLngBounds(validItems.map(function (p) { return [p.lat, p.lng]; }));
                 window._miniMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
             }
         }).catch(function (error) {
@@ -560,8 +526,8 @@
     window.casasMap = {
         flyToBusiness: flyToBusiness,
         fitAllMarkers: fitAllMarkers,
-        filterProperties: loadMapProperties,
-        loadMapProperties: loadMapProperties,
+        filterBusinesses: loadMapBusinesses,
+        loadMapBusinesses: loadMapBusinesses,
         invalidateSize: function () {
             if (map) map.invalidateSize();
             if (window._miniMap) window._miniMap.invalidateSize();

@@ -57,11 +57,13 @@ export async function onRequestGet(context) {
     const businessType = params.get('business_type');
     const categorySlug = params.get('categoria');
     const city = params.get('city');
+    const state = params.get('state');
     const status = params.get('status') || 'approved';
     const page = parseInt(params.get('page')) || 1;
     const limit = parseInt(params.get('limit')) || 12;
     const offset = (page - 1) * limit;
     const search = params.get('search');
+    const sort = params.get('sort') || 'newest';
     const userId = params.get('user_id');
     const featured = params.get('featured');
 
@@ -81,8 +83,18 @@ export async function onRequestGet(context) {
       bindings.push(businessType);
     }
     if (categorySlug) {
-      conditions.push('p.category_id = (SELECT id FROM categories WHERE slug = ?)');
-      bindings.push(categorySlug);
+      // Support both slug and numeric id
+      if (!isNaN(categorySlug)) {
+        conditions.push('p.category_id = ?');
+        bindings.push(parseInt(categorySlug));
+      } else {
+        conditions.push('p.category_id = (SELECT id FROM categories WHERE slug = ?)');
+        bindings.push(categorySlug);
+      }
+    }
+    if (state) {
+      conditions.push('p.state = ?');
+      bindings.push(state);
     }
     if (city) {
       conditions.push('p.city LIKE ?');
@@ -98,6 +110,14 @@ export async function onRequestGet(context) {
 
     const whereClause = conditions.join(' AND ');
 
+    // Sort options
+    let orderBy = 'p.created_at DESC';
+    if (sort === 'views_desc') orderBy = 'p.views DESC';
+    else if (sort === 'price_asc') orderBy = 'p.price ASC';
+    else if (sort === 'price_desc') orderBy = 'p.price DESC';
+    else if (sort === 'oldest') orderBy = 'p.created_at ASC';
+    else orderBy = 'p.created_at DESC';
+
     // Count total matching businesses
     const countQuery = `SELECT COUNT(*) as total FROM businesses p WHERE ${whereClause}`;
     const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();
@@ -107,6 +127,8 @@ export async function onRequestGet(context) {
     const query = `
       SELECT 
         p.*,
+        c.name as category_name,
+        c.slug as category_slug,
         u.name as owner_name,
         u.phone as owner_phone,
         u.whatsapp as owner_whatsapp,
@@ -114,9 +136,10 @@ export async function onRequestGet(context) {
         (SELECT url FROM images WHERE business_id = p.id AND is_cover = 1 LIMIT 1) as cover_image,
         (SELECT COUNT(*) FROM images WHERE business_id = p.id) as image_count
       FROM businesses p
+      LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN users u ON p.user_id = u.id
       WHERE ${whereClause}
-      ORDER BY p.created_at DESC
+      ORDER BY ${orderBy}
       LIMIT ? OFFSET ?
     `;
 

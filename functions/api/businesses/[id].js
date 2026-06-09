@@ -52,14 +52,16 @@ export async function onRequestGet(context) {
     const { id } = params;
 
     const business = await env.DB.prepare(`
-      SELECT p.*, u.name as owner_name, u.phone as owner_phone, u.whatsapp as owner_whatsapp, u.email as owner_email, u.avatar as owner_avatar, u.bio as owner_bio
+      SELECT p.*, u.name as owner_name, u.phone as owner_phone, u.whatsapp as owner_whatsapp, u.email as owner_email, u.avatar as owner_avatar, u.bio as owner_bio,
+        c.name as category_name, c.slug as category_slug
       FROM businesses p
       LEFT JOIN users u ON p.user_id = u.id
+      LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.id = ?
     `).bind(id).first();
 
     if (!business) {
-      return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), {
+      return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -105,7 +107,7 @@ export async function onRequestPut(context) {
     // Check business exists
     const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(id).first();
     if (!business) {
-      return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), {
+      return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -113,7 +115,7 @@ export async function onRequestPut(context) {
 
     // Check authorization: owner or admin
     if (user.role !== 'admin' && user.id !== business.user_id) {
-      return new Response(JSON.stringify({ error: 'No tienes permiso para editar esta propiedad' }), {
+      return new Response(JSON.stringify({ error: 'No tienes permiso para editar este negocio' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -121,14 +123,14 @@ export async function onRequestPut(context) {
 
     const body = await request.json();
 
-    // Build dynamic UPDATE query
+    // Build dynamic UPDATE query — only business-relevant fields
     const allowedFields = [
-      'title', 'description', 'business_type', 'business_type', 'price',
-      'currency', 'address', 'city', 'state', 'country', 'lat', 'lng',
-      'bedrooms', 'bathrooms', 'parking_spaces', 'area', 'area_unit',
-      'year_built', 'floors', 'has_pool', 'has_garden', 'has_ac',
-      'has_kitchen', 'has_furniture', 'has_security', 'has_elevator',
-      'featured',
+      'title', 'description', 'category_id', 'business_type',
+      'address', 'city', 'state', 'country', 'lat', 'lng',
+      'phone', 'whatsapp', 'website', 'instagram', 'facebook',
+      'email_contact', 'schedule',
+      'has_parking', 'has_wifi', 'has_card', 'has_delivery', 'has_outdoor',
+      'featured', 'status',
     ];
 
     const setClauses = [];
@@ -160,7 +162,7 @@ export async function onRequestPut(context) {
       `UPDATE businesses SET ${setClauses.join(', ')} WHERE id = ?`
     ).bind(...bindings).run();
 
-    return new Response(JSON.stringify({ message: 'Propiedad actualizada exitosamente' }), {
+    return new Response(JSON.stringify({ message: 'Negocio actualizado exitosamente' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -188,14 +190,14 @@ export async function onRequestDelete(context) {
 
     const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(id).first();
     if (!business) {
-      return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), {
+      return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (user.role !== 'admin' && user.id !== business.user_id) {
-      return new Response(JSON.stringify({ error: 'No tienes permiso para eliminar esta propiedad' }), {
+      return new Response(JSON.stringify({ error: 'No tienes permiso para eliminar este negocio' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -219,7 +221,6 @@ export async function onRequestDelete(context) {
     }
 
     // Delete related records that lack ON DELETE CASCADE
-    // (contacts, favorites, conversations reference businesses without cascade)
     try { await env.DB.prepare('DELETE FROM contacts WHERE business_id = ?').bind(id).run(); } catch (e) {}
     try { await env.DB.prepare('DELETE FROM favorites WHERE business_id = ?').bind(id).run(); } catch (e) {}
     try { await env.DB.prepare('DELETE FROM conversations WHERE business_id = ?').bind(id).run(); } catch (e) {}
@@ -227,7 +228,7 @@ export async function onRequestDelete(context) {
     // Now safe to delete business (images cascade automatically due to FK)
     await env.DB.prepare('DELETE FROM businesses WHERE id = ?').bind(id).run();
 
-    return new Response(JSON.stringify({ message: 'Propiedad eliminada exitosamente' }), {
+    return new Response(JSON.stringify({ message: 'Negocio eliminado exitosamente' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

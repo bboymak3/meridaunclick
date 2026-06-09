@@ -7,7 +7,7 @@
     'use strict';
 
     // ─── Configuration ──────────────────────────────────────────
-    const BARINAS_DEFAULT = { lat: 8.6233, lng: -70.2288 };
+    const VENEZUELA_CENTER = { lat: 8.6233, lng: -66.5897 };
     const MAX_PHOTOS = 10;
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
@@ -32,18 +32,18 @@
     let locationMap = null;
     let locationMarker = null;
     let geocoder = null;
-    let selectedLat = BARINAS_DEFAULT.lat;
-    let selectedLng = BARINAS_DEFAULT.lng;
+    let selectedLat = VENEZUELA_CENTER.lat;
+    let selectedLng = VENEZUELA_CENTER.lng;
 
     function initLocationPicker() {
         const mapEl = document.getElementById('locationMap');
         if (!mapEl || typeof L === 'undefined') return;
 
         try {
-            // Initialize map centered on Mérida
+            // Initialize map centered on Venezuela
             locationMap = L.map('locationMap', {
                 center: [selectedLat, selectedLng],
-                zoom: 13,
+                zoom: 6,
                 zoomControl: true,
                 scrollWheelZoom: true,
             });
@@ -161,8 +161,8 @@
 
                 // Update city if empty
                 const cityInput = document.getElementById('propCiudad');
-                if (cityInput && !cityInput.value.trim() && results[0].businesses) {
-                    const city = results[0].businesses.city || results[0].businesses.town || '';
+                if (cityInput && !cityInput.value.trim() && results[0].properties) {
+                    const city = results[0].properties.city || results[0].properties.town || '';
                     if (city) cityInput.value = city;
                 }
             } else {
@@ -252,27 +252,6 @@
         });
     }
 
-    // ─── Currency Radio Buttons ─────────────────────────────────
-    function setupCurrencySelector() {
-        const radios = document.querySelectorAll('input[name="moneda"]');
-        const priceSymbol = document.getElementById('priceSymbol');
-
-        const symbols = { 'USD': '$', 'EUR': '€', 'Bs': 'Bs' };
-
-        radios.forEach(radio => {
-            radio.addEventListener('change', () => {
-                if (priceSymbol) {
-                    priceSymbol.textContent = symbols[radio.value] || '$';
-                }
-            });
-        });
-    }
-
-    function getSelectedCurrency() {
-        const checked = document.querySelector('input[name="moneda"]:checked');
-        return checked ? checked.value : 'USD';
-    }
-
     // ─── Initialization ─────────────────────────────────────────
     function initForm() {
         // Check authentication
@@ -291,7 +270,6 @@
         setupFormSubmit();
         setupCharCounters();
         setupStepProgress();
-        setupCurrencySelector();
 
         // Initialize location picker map
         initLocationPicker();
@@ -303,7 +281,7 @@
             const business = await api.get(`/businesses/${businessId}`);
 
             if (formTitle) {
-                formTitle.textContent = 'Editar Propiedad';
+                formTitle.textContent = 'Editar Negocio';
             }
             if (submitBtnText) {
                 submitBtnText.textContent = 'Guardar Cambios';
@@ -311,7 +289,7 @@
 
             updateFormFromBusiness(business);
         } catch (error) {
-            showToast('Error al cargar la propiedad para editar', 'error');
+            showToast('Error al cargar el negocio para editar', 'error');
             console.error('Error loading business:', error);
         }
     }
@@ -327,15 +305,15 @@
 
         setValue('propTitle', business.title);
         setValue('propDescription', business.description);
-        setValue('propPrecio', business.price);
-        // Currency - now uses radio buttons
-        const currencyRadio = document.querySelector(`input[name="moneda"][value="${business.currency || 'USD'}"]`);
-        if (currencyRadio) currencyRadio.checked = true;
-        const priceSymbol = document.getElementById('priceSymbol');
-        if (priceSymbol) {
-            const symbols = { 'USD': '$', 'EUR': '€', 'Bs': 'Bs' };
-            priceSymbol.textContent = symbols[business.currency || 'USD'] || '$';
-        }
+        setValue('propCategoria', business.category_id);
+        setValue('propTipoNegocio', business.business_type);
+        setValue('propPhone', business.phone);
+        setValue('propWhatsapp', business.whatsapp);
+        setValue('propEmail', business.email_contact);
+        setValue('propWebsite', business.website);
+        setValue('propInstagram', business.instagram);
+        setValue('propFacebook', business.facebook);
+        setValue('propSchedule', business.schedule);
         setValue('propDireccion', business.address);
         setValue('propCiudad', business.city);
         setValue('propEstado', business.state);
@@ -350,52 +328,14 @@
             locationMap.flyTo([selectedLat, selectedLng], 15, { duration: 0.5 });
             updateCoordinateFields();
         }
-        setValue('propHabitaciones', business.bedrooms);
-        setValue('propBanos', business.bathrooms);
-        setValue('propEstacionamientos', business.parking_spaces);
-        setValue('propPisos', business.floors);
-        setValue('propArea', business.area);
-        setValue('propAreaUnidad', business.area_unit);
-        setValue('propAno', business.year_built);
 
-        // Business type - capitalize for display in select
-        const propTipo = document.getElementById('propTipo');
-        if (propTipo && business.business_type) {
-            const typeMap = {
-                'casa': 'Casa',
-                'apartamento': 'Apartamento',
-                'terreno': 'Terreno',
-                'local_comercial': 'Local Comercial',
-                'oficina': 'Oficina',
-                'hotel': 'Hotel',
-                'finca': 'Finca',
-                'galpon': 'Galpón',
-                'estacionamiento': 'Estacionamiento',
-                'otro': 'Otro',
-            };
-            propTipo.value = typeMap[business.business_type.toLowerCase()] || business.business_type;
-        }
-
-        // Operation type
-        const propOperacion = document.getElementById('propOperacion');
-        if (propOperacion && business.business_type) {
-            const opMap = {
-                'venta': 'Venta',
-                'alquiler': 'Alquiler',
-                'venta_alquiler': 'Venta y Alquiler',
-            };
-            propOperacion.value = opMap[business.business_type.toLowerCase()] || business.business_type;
-        }
-
-        // Features checkboxes
+        // Business features checkboxes
         const featuresMap = {
-            'has_pool': 'Piscina',
-            'has_garden': 'Jardín',
-            'has_ac': 'Aire Acondicionado',
-            'has_kitchen': 'Cocina',
-            'has_furniture': 'Amueblado',
-            'has_security': 'Seguridad',
-            'has_elevator': 'Ascensor',
+            'has_parking': 'Estacionamiento',
+            'has_wifi': 'Wi-Fi',
+            'has_card': 'Tarjeta',
+            'has_delivery': 'Delivery',
+            'has_outdoor': 'Terraza',
         };
         for (const [field, label] of Object.entries(featuresMap)) {
             if (business[field]) {
@@ -664,22 +604,20 @@
 
         const title = getValue('propTitle');
         const description = getValue('propDescription');
-        const tipo = getValue('propTipo');
-        const operacion = getValue('propOperacion');
-        const precio = getValueNum('propPrecio');
-        const moneda = getSelectedCurrency();
+        const categoria = getValue('propCategoria');
+        const tipoNegocio = getValue('propTipoNegocio');
+        const phone = getValue('propPhone');
+        const whatsapp = getValue('propWhatsapp');
+        const emailContact = getValue('propEmail');
+        const website = getValue('propWebsite');
+        const instagram = getValue('propInstagram');
+        const facebook = getValue('propFacebook');
+        const schedule = getValue('propSchedule');
         const direccion = getValue('propDireccion');
         const ciudad = getValue('propCiudad');
         const estado = getValue('propEstado');
         let lat = getValueNum('propLat');
         let lng = getValueNum('propLng');
-        const habitaciones = getValueNum('propHabitaciones');
-        const banos = getValueNum('propBanos');
-        const estacionamientos = getValueNum('propEstacionamientos');
-        const pisos = getValueNum('propPisos');
-        const area = getValueNum('propArea');
-        const areaUnidad = getValue('propAreaUnidad');
-        const ano = getValueNum('propAno');
 
         // ── Validation ──
         let hasError = false;
@@ -697,33 +635,13 @@
             hasError = true;
         }
 
-        if (!tipo) {
-            showFormError('propTipo', 'Selecciona un tipo de propiedad');
-            hasError = true;
-        }
-
-        if (!operacion) {
-            showFormError('propOperacion', 'Selecciona un tipo de operación');
-            hasError = true;
-        }
-
-        if (!precio || precio <= 0) {
-            showFormError('propPrecio', 'Ingresa un precio válido');
+        if (!categoria) {
+            showFormError('propCategoria', 'Selecciona una categoría');
             hasError = true;
         }
 
         if (!direccion) {
             showFormError('propDireccion', 'La dirección es requerida');
-            hasError = true;
-        }
-
-        if (!ciudad) {
-            showFormError('propCiudad', 'La ciudad es requerida');
-            hasError = true;
-        }
-
-        if (!area || area <= 0) {
-            showFormError('propArea', 'El área es requerida');
             hasError = true;
         }
 
@@ -737,70 +655,42 @@
             return;
         }
 
-        // Default coordinates to Mérida if not provided
+        // Default coordinates to Venezuela center if not provided
         if (isNaN(lat) || isNaN(lng)) {
-            lat = BARINAS_DEFAULT.lat;
-            lng = BARINAS_DEFAULT.lng;
+            lat = VENEZUELA_CENTER.lat;
+            lng = VENEZUELA_CENTER.lng;
         }
 
-        // Map form values to API field names
-        const tipoMap = {
-            'Casa': 'casa',
-            'Apartamento': 'apartamento',
-            'Terreno': 'terreno',
-            'Local Comercial': 'local_comercial',
-            'Oficina': 'oficina',
-            'Hotel': 'hotel',
-            'Finca': 'finca',
-            'Galpón': 'Galpón',
-            'Estacionamiento': 'estacionamiento',
-            'Otro': 'otro',
-        };
-
-        const operacionMap = {
-            'Venta': 'venta',
-            'Alquiler': 'alquiler',
-            'Venta y Alquiler': 'venta_alquiler',
-        };
-
-        // Gather features
-        const features = {};
-        const featureMap = {
-            'Piscina': 'has_pool',
-            'Jardín': 'has_garden',
-            'Aire Acondicionado': 'has_ac',
-            'Cocina': 'has_kitchen',
-            'Amueblado': 'has_furniture',
-            'Seguridad': 'has_security',
-            'Ascensor': 'has_elevator',
-        };
-
-        const checkedFeatures = businessForm.querySelectorAll('input[name="caracteristicas"]:checked');
-        checkedFeatures.forEach(cb => {
-            const apiField = featureMap[cb.value];
-            if (apiField) features[apiField] = true;
-        });
+        // Gather features from checkboxes
+        const has_parking = businessForm.querySelector('input[name="caracteristicas"][value="Estacionamiento"]')?.checked ? 1 : 0;
+        const has_wifi = businessForm.querySelector('input[name="caracteristicas"][value="Wi-Fi"]')?.checked ? 1 : 0;
+        const has_card = businessForm.querySelector('input[name="caracteristicas"][value="Tarjeta"]')?.checked ? 1 : 0;
+        const has_delivery = businessForm.querySelector('input[name="caracteristicas"][value="Delivery"]')?.checked ? 1 : 0;
+        const has_outdoor = businessForm.querySelector('input[name="caracteristicas"][value="Terraza"]')?.checked ? 1 : 0;
 
         const businessData = {
             title,
             description,
-            business_type: tipoMap[tipo] || tipo.toLowerCase(),
-            business_type: operacionMap[operacion] || operacion.toLowerCase(),
-            price: precio,
-            currency: moneda || 'USD',
+            category_id: parseInt(categoria) || null,
+            business_type: tipoNegocio?.toLowerCase() || 'negocio',
             address: direccion,
             city: ciudad,
             state: estado || 'Mérida',
+            country: 'Venezuela',
             lat,
             lng,
-            bedrooms: habitaciones || null,
-            bathrooms: banos || null,
-            parking_spaces: estacionamientos || null,
-            area,
-            area_unit: areaUnidad || 'm2',
-            year_built: ano || null,
-            floors: pisos || null,
-            ...features,
+            phone,
+            whatsapp,
+            website,
+            instagram,
+            facebook,
+            email_contact: emailContact,
+            schedule,
+            has_parking,
+            has_wifi,
+            has_card,
+            has_delivery,
+            has_outdoor,
         };
 
         // Submit
@@ -867,9 +757,9 @@
 
             // Show success with appropriate message
             if (editingBusinessId) {
-                showToast('Propiedad actualizada exitosamente', 'success');
+                showToast('Negocio actualizado exitosamente', 'success');
             } else {
-                showToast('Propiedad publicada exitosamente. Pendiente de aprobación.', 'success');
+                showToast('Negocio registrado exitosamente. Pendiente de aprobación.', 'success');
             }
 
             // Show R2 warning if needed
@@ -889,12 +779,12 @@
             }, 1500);
 
         } catch (error) {
-            showToast(error.message || 'Error al guardar la propiedad', 'error');
+            showToast(error.message || 'Error al guardar el negocio', 'error');
         } finally {
             isSubmitting = false;
             if (submitBtn) {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> <span id="submitBtnText">${editingBusinessId ? 'Guardar Cambios' : 'Publicar Propiedad'}</span>`;
+                submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> <span id="submitBtnText">${editingBusinessId ? 'Guardar Cambios' : 'Publicar Negocio'}</span>`;
             }
         }
     }

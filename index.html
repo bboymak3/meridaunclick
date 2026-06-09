@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Mérida Un Click - El portal comercial líder en Mérida, Venezuela. Encuentra casas, apartamentos, terrenos y más.">
-    <meta name="keywords" content="inmobiliaria, Mérida, casas, apartamentos, terrenos, venta, alquiler, Venezuela">
-    <title>Mérida Un Click - Negocioes en Mérida, Venezuela</title>
+    <meta name="description" content="Mérida Un Click - El directorio de negocios y comercios más completo de Venezuela. Encuentra restaurantes, farmacias, tiendas, profesionales y más en todo el país.">
+    <meta name="keywords" content="directorio de negocios, Venezuela, comercios, restaurantes, farmacias, tiendas, profesionales, servicios, Mérida, registro gratis">
+    <title>Mérida Un Click - Directorio de Negocios en Venezuela</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-home"></i>
+                <i class="fas fa-store"></i>
                 <span>Mérida Un Click</span>
             </a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
@@ -24,7 +24,7 @@
             </button>
             <ul class="nav-menu" id="navMenu">
                 <li><a href="index.html" class="nav-link active">Inicio</a></li>
-                <li><a href="search.html" class="nav-link">Negocioes</a></li>
+                <li><a href="search.html" class="nav-link">Negocios</a></li>
                 <li><a href="map.html" class="nav-link">Mapa</a></li>
                 <li><a href="new-business.html" class="nav-link">Registrar</a></li>
                 <li id="navLoginItem"><a href="login.html" class="nav-link nav-btn">Login</a></li>
@@ -46,10 +46,10 @@
         <div class="idx-hero-particles"></div>
         <div class="idx-hero-content">
             <div class="idx-hero-badge">
-                <i class="fas fa-star"></i> El directorio comercial #1 de Mérida
+                <i class="fas fa-star"></i> El directorio comercial #1 de Venezuela
             </div>
-            <h1 class="idx-hero-title">Encuentra los mejores <span class="idx-hero-highlight">negocios y comercios</span> en Mérida</h1>
-            <p class="idx-hero-subtitle">Negocios, profesionales, servicios y más. Registra tu comercio gratis y conecta con clientes en Mérida.</p>
+            <h1 class="idx-hero-title">Encuentra los mejores <span class="idx-hero-highlight">negocios y comercios</span> en Venezuela</h1>
+            <p class="idx-hero-subtitle">Negocios, profesionales, servicios y más. Registra tu comercio gratis y conecta con clientes en todo el país.</p>
 
             <!-- Mobile: Search Trigger Button -->
             <button class="idx-mobile-search-trigger" id="mobileSearchTrigger">
@@ -68,89 +68,100 @@
                 </div>
                 <div class="idx-search-row">
                     <div class="idx-search-field">
-                        <label><i class="fas fa-home"></i> Tipo</label>
+                        <label><i class="fas fa-map"></i> Estado</label>
                         <div class="idx-select-wrap">
-                            <select id="searchTipo" name="tipo">
-                                <option value="">Todas</option>
-                                <option value="Casa">Casas</option>
-                                <option value="Apartamento">Apartamentos</option>
-                                <option value="Terreno">Profesionales</option>
-                                <option value="Local Comercial">Locales Comerciales</option>
-                                <option value="Oficina">Oficinas</option>
-                                <option value="Hotel">Hoteles</option>
-                                <option value="Finca">Fincas</option>
-                                <option value="Galpón">Galpones</option>
-                                <option value="Estacionamiento">Estacionamientos</option>
-                                <option value="Otro">Otros</option>
+                            <select id="searchEstado" name="estado">
+                                <option value="">Todo el país</option>
+                                <option value="Amazonas">Amazonas</option>
+                                <option value="Anzoátegui">Anzoátegui</option>
+                                <option value="Apure">Apure</option>
+                                <option value="Aragua">Aragua</option>
+                                <option value="Barinas">Barinas</option>
+                                <option value="Bolívar">Bolívar</option>
+                                <option value="Carabobo">Carabobo</option>
+                                <option value="Cojedes">Cojedes</option>
+                                <option value="Delta Amacuro">Delta Amacuro</option>
+                                <option value="Distrito Capital">Distrito Capital</option>
+                                <option value="Falcón">Falcón</option>
+                                <option value="Guárico">Guárico</option>
+                                <option value="Lara">Lara</option>
+                                <option value="Mérida">Mérida</option>
+                                <option value="Miranda">Miranda</option>
+                                <option value="Monagas">Monagas</option>
+                                <option value="Nueva Esparta">Nueva Esparta</option>
+                                <option value="Portuguesa">Portuguesa</option>
+                                <option value="Sucre">Sucre</option>
+                                <option value="Táchira">Táchira</option>
+                                <option value="Trujillo">Trujillo</option>
+                                <option value="Vargas">Vargas</option>
+                                <option value="Yaracuy">Yaracuy</option>
+                                <option value="Zulia">Zulia</option>
                             </select>
                             <i class="fas fa-chevron-down idx-select-arrow"></i>
                         </div>
                     </div>
                     <div class="idx-search-field">
-                        <label><i class="fas fa-exchange-alt"></i> Operación</label>
+                        <label><i class="fas fa-th-large"></i> Categoría</label>
                         <div class="idx-select-wrap">
-                            <select id="searchOperacion" name="operacion">
-                                <option value="">Ambos</option>
-                                <option value="Venta">Venta</option>
-                                <option value="Alquiler">Alquiler</option>
+                            <select id="searchCategoria" name="categoria">
+                                <option value="">Todas</option>
+                                <option value="restaurantes">Restaurantes</option>
+                                <option value="farmacias">Farmacias</option>
+                                <option value="clinicas-hospitales">Clínicas y Hospitales</option>
+                                <option value="supermercados">Supermercados</option>
+                                <option value="ropas">Ropas</option>
+                                <option value="barberias">Barberías y Salones</option>
+                                <option value="auto-talleres">Auto Talleres</option>
+                                <option value="cafeterias">Cafeterías</option>
+                                <option value="bares-discotecas">Bares y Discotecas</option>
+                                <option value="ferreterias">Ferreterías</option>
+                                <option value="tecnologia">Tecnología</option>
+                                <option value="hoteles-posadas">Hoteles y Posadas</option>
+                                <option value="gimnasios">Gimnasios</option>
+                                <option value="dentistas">Dentistas</option>
+                                <option value="celulares">Celulares</option>
+                                <option value="mueblerias">Mueblerías</option>
+                                <option value="juridicos">Jurídicos</option>
+                                <option value="academias">Academias</option>
+                                <option value="veterinarias">Veterinarias</option>
+                                <option value="electricos">Eléctricos</option>
+                                <option value="perfumerias">Perfumerías</option>
+                                <option value="joyerias">Joyerías</option>
+                                <option value="zapaterias">Zapaterías</option>
+                                <option value="panaderias">Panaderías</option>
+                                <option value="heladerias">Heladerías</option>
+                                <option value="pizzerias">Pizzerías</option>
+                                <option value="bicicletas">Bicicletas</option>
+                                <option value="encomiendas">Encomiendas</option>
+                                <option value="lavanderias">Lavanderías</option>
+                                <option value="otro">Otro</option>
                             </select>
                             <i class="fas fa-chevron-down idx-select-arrow"></i>
                         </div>
                     </div>
                     <div class="idx-search-field">
                         <label><i class="fas fa-map-marker-alt"></i> Ciudad</label>
-                        <input type="text" id="searchCiudad" name="ciudad" placeholder="Mérida">
+                        <input type="text" id="searchCiudad" name="ciudad" placeholder="Ej: Mérida">
                     </div>
                 </div>
                 <div class="idx-search-row idx-search-row-2">
-                    <div class="idx-search-field">
-                        <label><i class="fas fa-dollar-sign"></i> Precio Mín</label>
-                        <input type="number" id="searchPrecioMin" name="precio_min" placeholder="0" min="0">
-                    </div>
-                    <div class="idx-search-field">
-                        <label><i class="fas fa-dollar-sign"></i> Precio Máx</label>
-                        <input type="number" id="searchPrecioMax" name="precio_max" placeholder="Sin límite" min="0">
-                    </div>
-                    <div class="idx-search-field">
-                        <label><i class="fas fa-bed"></i> Habitaciones</label>
-                        <div class="idx-select-wrap">
-                            <select id="searchHabitaciones" name="habitaciones">
-                                <option value="">Cualquiera</option>
-                                <option value="1">1+</option>
-                                <option value="2">2+</option>
-                                <option value="3">3+</option>
-                                <option value="4">4+</option>
-                                <option value="5">5+</option>
-                            </select>
-                            <i class="fas fa-chevron-down idx-select-arrow"></i>
-                        </div>
-                    </div>
-                    <div class="idx-search-field">
-                        <label><i class="fas fa-bath"></i> Baños</label>
-                        <div class="idx-select-wrap">
-                            <select id="searchBanos" name="banos">
-                                <option value="">Cualquiera</option>
-                                <option value="1">1+</option>
-                                <option value="2">2+</option>
-                                <option value="3">3+</option>
-                                <option value="4">4+</option>
-                            </select>
-                            <i class="fas fa-chevron-down idx-select-arrow"></i>
-                        </div>
+                    <div class="idx-search-field idx-search-field-full">
+                        <label><i class="fas fa-search"></i> Buscar</label>
+                        <input type="text" id="searchQuery" name="q" placeholder="Nombre o describe el negocio...">
                     </div>
                     <button type="submit" class="idx-search-btn">
-                        <i class="fas fa-search"></i> Explorar
+                        <i class="fas fa-search"></i> Buscar
                     </button>
                 </div>
                 <!-- Quick Links inside form (visible in mobile modal) -->
                 <div class="idx-quick-links idx-quick-links-modal">
-                    <a href="search.html?tipo=Casa&operacion=Venta" class="idx-quick-link">
+                    <a href="search.html?sort=popular" class="idx-quick-link">
                         <i class="fas fa-fire"></i> Negocios Populares
                     </a>
-                    <a href="search.html?tipo=Apartamento&operacion=Alquiler" class="idx-quick-link">
-                        <i class="fas fa-key"></i> Negocios Destacados
+                    <a href="search.html?sort=reciente" class="idx-quick-link">
+                        <i class="fas fa-clock"></i> Últimos Registrados
                     </a>
-                    <a href="search.html?tipo=Terreno" class="idx-quick-link">
+                    <a href="search.html?tipo_negocio=profesional" class="idx-quick-link">
                         <i class="fas fa-mountain-sun"></i> Profesionales
                     </a>
                     <a href="new-business.html" class="idx-quick-link idx-quick-link-publish">
@@ -161,13 +172,13 @@
 
             <!-- Quick Links (desktop only) -->
             <div class="idx-quick-links">
-                <a href="search.html?tipo=Casa&operacion=Venta" class="idx-quick-link">
+                <a href="search.html?sort=popular" class="idx-quick-link">
                     <i class="fas fa-fire"></i> Negocios Populares
                 </a>
-                <a href="search.html?tipo=Apartamento&operacion=Alquiler" class="idx-quick-link">
-                    <i class="fas fa-key"></i> Negocios Destacados
+                <a href="search.html?sort=reciente" class="idx-quick-link">
+                    <i class="fas fa-clock"></i> Últimos Registrados
                 </a>
-                <a href="search.html?tipo=Terreno" class="idx-quick-link">
+                <a href="search.html?tipo_negocio=profesional" class="idx-quick-link">
                     <i class="fas fa-mountain-sun"></i> Profesionales
                 </a>
                 <a href="new-business.html" class="idx-quick-link idx-quick-link-publish">
@@ -190,7 +201,7 @@
                     </div>
                     <div>
                         <h2 class="idx-section-title">Negocios Destacados</h2>
-                        <p class="idx-section-subtitle">Las mejores oportunidades inmobiliarias en Mérida</p>
+                        <p class="idx-section-subtitle">Las mejores oportunidades comerciales en Venezuela</p>
                     </div>
                 </div>
                 <a href="search.html" class="idx-section-link">
@@ -200,11 +211,11 @@
             <div class="business-grid" id="featuredGrid">
                 <div class="loading-spinner" id="featuredLoading">
                     <i class="fas fa-spinner fa-spin"></i>
-                    <p>Cargando negocioes...</p>
+                    <p>Cargando negocios...</p>
                 </div>
             </div>
             <div class="text-center" id="featuredEmpty" style="display:none;">
-                <p class="text-muted">No hay negocioes destacadas en este momento.</p>
+                <p class="text-muted">No hay negocios destacados en este momento.</p>
             </div>
         </div>
     </section>
@@ -371,7 +382,7 @@
                     </div>
                     <div>
                         <h2 class="idx-section-title">Mapa de Negocios</h2>
-                        <p class="idx-section-subtitle">Explora los negocios disponibles en Mérida visualmente</p>
+                        <p class="idx-section-subtitle">Explora los negocios disponibles en Venezuela visualmente</p>
                     </div>
                 </div>
                 <a href="map.html" class="idx-section-link">
@@ -417,7 +428,7 @@
                         </div>
                     </div>
                     <h3>Registra</h3>
-                    <p>Regístrate y publica tu negocio con fotos, detalles y precio de forma completamente gratuita.</p>
+                    <p>Regístrate y publica tu negocio con fotos, detalles y contacto de forma completamente gratuita.</p>
                 </div>
                 <div class="idx-step-card">
                     <div class="idx-step-connector"></div>
@@ -428,7 +439,7 @@
                         </div>
                     </div>
                     <h3>Explora</h3>
-                    <p>Explora negocioes usando filtros avanzados, mapa interactivo y búsqueda por zona.</p>
+                    <p>Explora negocios usando filtros avanzados, mapa interactivo y búsqueda por zona.</p>
                 </div>
                 <div class="idx-step-card">
                     <div class="idx-step-number">03</div>
@@ -451,10 +462,10 @@
             <div class="idx-stats-grid">
                 <div class="idx-stat-card">
                     <div class="idx-stat-icon-wrap">
-                        <i class="fas fa-home"></i>
+                        <i class="fas fa-store"></i>
                     </div>
                     <div class="idx-stat-number" id="statProperties">0</div>
-                    <div class="idx-stat-label">Negocioes Registradas</div>
+                    <div class="idx-stat-label">Negocios Registrados</div>
                 </div>
                 <div class="idx-stat-card">
                     <div class="idx-stat-icon-wrap" style="background: rgba(40, 167, 69, 0.15);">
@@ -467,8 +478,8 @@
                     <div class="idx-stat-icon-wrap" style="background: rgba(255, 107, 53, 0.15);">
                         <i class="fas fa-map-marker-alt"></i>
                     </div>
-                    <div class="idx-stat-number">Mérida</div>
-                    <div class="idx-stat-label">Venezuela</div>
+                    <div class="idx-stat-number">24</div>
+                    <div class="idx-stat-label">Estados</div>
                 </div>
                 <div class="idx-stat-card">
                     <div class="idx-stat-icon-wrap" style="background: rgba(111, 66, 193, 0.15);">
@@ -487,8 +498,8 @@
             <div class="idx-cta-card">
                 <div class="idx-cta-glow"></div>
                 <div class="idx-cta-content">
-                    <h2>¿Tienes una negocio que vender o alquilar?</h2>
-                    <p>Registra tu negocio gratis en Mérida Un Click y llega a miles de personas buscando su próximo hogar.</p>
+                    <h2>¿Tienes un negocio o comercio?</h2>
+                    <p>Registra tu negocio gratis en Mérida Un Click y llega a miles de personas en Venezuela.</p>
                     <a href="new-business.html" class="idx-cta-btn">
                         <i class="fas fa-plus-circle"></i> Registrar Negocio Gratis
                     </a>
@@ -503,10 +514,10 @@
             <div class="footer-grid">
                 <div class="footer-col">
                     <a href="index.html" class="footer-logo">
-                        <i class="fas fa-home"></i>
+                        <i class="fas fa-store"></i>
                         <span>Mérida Un Click</span>
                     </a>
-                    <p>El portal comercial más completo de Mérida, Venezuela. Conectamos negocios con clientes.</p>
+                    <p>El directorio de negocios más completo de Venezuela. Conectamos comercios con clientes en todo el país.</p>
                     <div class="footer-social">
                         <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
                         <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
@@ -518,7 +529,7 @@
                     <h4>Navegación</h4>
                     <ul>
                         <li><a href="index.html">Inicio</a></li>
-                        <li><a href="search.html">Negocioes</a></li>
+                        <li><a href="search.html">Negocios</a></li>
                         <li><a href="map.html">Mapa</a></li>
                         <li><a href="new-business.html">Registrar Negocio</a></li>
                     </ul>
@@ -526,17 +537,18 @@
                 <div class="footer-col">
                     <h4>Categorías</h4>
                     <ul>
-                        <li><a href="search.html?tipo=Casa">Casas</a></li>
-                        <li><a href="search.html?tipo=Apartamento">Apartamentos</a></li>
-                        <li><a href="search.html?tipo=Terreno">Profesionales</a></li>
-                        <li><a href="search.html?tipo=Local+Comercial">Locales Comerciales</a></li>
-                        <li><a href="search.html?tipo=Finca">Fincas</a></li>
+                        <li><a href="search.html?categoria=restaurantes">Restaurantes</a></li>
+                        <li><a href="search.html?categoria=farmacias">Farmacias</a></li>
+                        <li><a href="search.html?categoria=supermercados">Supermercados</a></li>
+                        <li><a href="search.html?categoria=barberias">Barberías</a></li>
+                        <li><a href="search.html?categoria=tecnologia">Tecnología</a></li>
+                        <li><a href="search.html?categoria=hoteles-posadas">Hoteles y Posadas</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">
                     <h4>Contacto</h4>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> info@casasbarinas.com</li>
+                        <li><i class="fas fa-envelope"></i> info@meridaunclick.com</li>
                         <li><i class="fas fa-phone"></i> +58 274-000-0000</li>
                         <li><i class="fas fa-map-marker-alt"></i> Mérida, Venezuela</li>
                     </ul>

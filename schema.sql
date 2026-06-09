@@ -106,10 +106,45 @@ CREATE INDEX IF NOT EXISTS idx_businesses_status ON businesses(status);
 CREATE INDEX IF NOT EXISTS idx_businesses_city ON businesses(city);
 CREATE INDEX IF NOT EXISTS idx_businesses_user ON businesses(user_id);
 CREATE INDEX IF NOT EXISTS idx_businesses_latlng ON businesses(lat, lng);
+CREATE INDEX IF NOT EXISTS idx_businesses_state ON businesses(state);
 CREATE INDEX IF NOT EXISTS idx_images_business ON images(business_id);
 CREATE INDEX IF NOT EXISTS idx_contacts_business ON contacts(business_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
+
+-- Tabla de estados de Venezuela
+CREATE TABLE IF NOT EXISTS states (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  slug TEXT NOT NULL UNIQUE,
+  is_active INTEGER DEFAULT 1
+);
+
+INSERT OR IGNORE INTO states (name, slug) VALUES
+('Amazonas', 'amazonas'),
+('Anzoátegui', 'anzoategui'),
+('Apure', 'apure'),
+('Aragua', 'aragua'),
+('Barinas', 'barinas'),
+('Bolívar', 'bolivar'),
+('Carabobo', 'carabobo'),
+('Cojedes', 'cojedes'),
+('Delta Amacuro', 'delta-amacuro'),
+('Distrito Capital', 'distrito-capital'),
+('Falcón', 'falcon'),
+('Guárico', 'guarico'),
+('Lara', 'lara'),
+('Mérida', 'merida'),
+('Miranda', 'miranda'),
+('Monagas', 'monagas'),
+('Nueva Esparta', 'nueva-esparta'),
+('Portuguesa', 'portuguesa'),
+('Sucre', 'sucre'),
+('Táchira', 'tachira'),
+('Trujillo', 'trujillo'),
+('Vargas', 'vargas'),
+('Yaracuy', 'yaracuy'),
+('Zulia', 'zulia');
 
 INSERT OR IGNORE INTO users (name, email, phone, password_hash, role) VALUES
 ('Administrador', 'admin@meridaunclick.com', '+58-274-000-0000', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'admin');

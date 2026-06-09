@@ -6,7 +6,7 @@
 (function () {
     'use strict';
 
-    var BARINAS_CENTER = [8.6233, -70.2288];
+    var VENEZUELA_CENTER = [8.6233, -66.5897];
     var map = null;
     var markerLayer = null;
 
@@ -16,8 +16,8 @@
 
         try {
             map = L.map('homeMap', {
-                center: BARINAS_CENTER,
-                zoom: 12,
+                center: VENEZUELA_CENTER,
+                zoom: 6,
                 zoomControl: false,
                 scrollWheelZoom: false,
                 dragging: true,
@@ -36,7 +36,7 @@
             markerLayer = L.layerGroup().addTo(map);
 
             // Load businesses
-            loadProperties();
+            loadBusinesses();
 
             // Fix size after render
             setTimeout(function () { map.invalidateSize(); }, 300);
@@ -45,20 +45,26 @@
         }
     }
 
-    function createMarkerIcon(price, operationType) {
+    function createMarkerIcon(businessType) {
         var colors = {
-            'venta': '#1a73e8',
-            'alquiler': '#28a745',
-            'venta_alquiler': '#ff6b35',
+            'negocio': '#1a73e8',
+            'profesional': '#28a745',
+            'servicio': '#ff6b35',
+            'restaurante': '#e74c3c',
+            'tienda': '#9c27b0',
+            'otro': '#607d8b',
         };
-        var color = (operationType && colors[operationType.toLowerCase()]) || '#1a73e8';
+        var color = (businessType && colors[businessType.toLowerCase()]) || '#1a73e8';
 
-        var label = '';
-        if (price != null && !isNaN(price)) {
-            if (price >= 1000000) label = '$' + (price / 1000000).toFixed(1) + 'M';
-            else if (price >= 1000) label = '$' + (price / 1000).toFixed(0) + 'K';
-            else label = '$' + price;
-        }
+        var icons = {
+            'negocio': '🏪',
+            'profesional': '💼',
+            'servicio': '🔔',
+            'restaurante': '🍽️',
+            'tienda': '🛍️',
+            'otro': '📌',
+        };
+        var label = icons[businessType?.toLowerCase()] || '📌';
 
         return L.divIcon({
             className: 'custom-map-marker',
@@ -72,32 +78,37 @@
         });
     }
 
-    function loadProperties() {
+    function loadBusinesses() {
         if (!map || !markerLayer) return;
 
         fetch('/api/businesses?status=approved&limit=100')
             .then(function (r) { return r.json(); })
             .then(function (data) {
                 var businesses = data.businesses || [];
-                var validProps = businesses.filter(function (p) { return p.lat && p.lng; });
+                var validItems = businesses.filter(function (p) { return p.lat && p.lng; });
 
                 markerLayer.clearLayers();
 
-                validProps.forEach(function (p) {
-                    var icon = createMarkerIcon(p.price, p.business_type);
+                validItems.forEach(function (p) {
+                    var icon = createMarkerIcon(p.business_type);
                     var coverImage = p.cover_image || (p.images && p.images[0] && p.images[0].url) || '';
                     var title = p.title || 'Sin titulo';
-                    var priceStr = p.price != null ? '$' + Number(p.price).toLocaleString() : 'Precio no disponible';
+                    var typeLabel = p.business_type || 'Negocio';
 
                     var imgTag = coverImage
                         ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display=\'none\'"></div>'
                         : '';
 
+                    var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '';
+
                     var popupHTML = '<div class="map-popup">'
                         + imgTag
                         + '<div class="map-popup-content">'
                         + '<h4 class="map-popup-title">' + title + '</h4>'
-                        + '<div class="map-popup-price">' + priceStr + '</div>'
+                        + '<div class="map-popup-badges">'
+                        + '<span class="map-popup-badge">' + typeLabel + '</span>'
+                        + '</div>'
+                        + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
                         + '<a href="business.html?id=' + p.id + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
                         + '</div>'
                         + '</div>';
@@ -113,14 +124,14 @@
                 });
 
                 // Fit bounds to show all markers
-                if (validProps.length > 0) {
-                    var bounds = L.latLngBounds(validProps.map(function (p) { return [p.lat, p.lng]; }));
+                if (validItems.length > 0) {
+                    var bounds = L.latLngBounds(validItems.map(function (p) { return [p.lat, p.lng]; }));
                     map.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
                 }
 
                 // Hide overlay if businesses exist
                 var overlay = document.getElementById('homeMapOverlay');
-                if (overlay && validProps.length > 0) {
+                if (overlay && validItems.length > 0) {
                     overlay.style.display = 'none';
                 }
             })

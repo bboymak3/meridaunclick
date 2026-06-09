@@ -14,7 +14,7 @@
     <nav class="navbar navbar-admin" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-home"></i>
+                <i class="fas fa-store"></i>
                 <span>Mérida Un Click</span>
                 <span class="admin-badge">Admin</span>
             </a>
@@ -23,7 +23,7 @@
             </button>
             <ul class="nav-menu" id="navMenu">
                 <li><a href="index.html" class="nav-link"><i class="fas fa-globe"></i> Ver Sitio</a></li>
-                <li><a href="search.html" class="nav-link"><i class="fas fa-building"></i> Negocioes</a></li>
+                <li><a href="search.html" class="nav-link"><i class="fas fa-building"></i> Negocios</a></li>
                 <li id="navUserItem" class="nav-user">
                     <a href="dashboard.html" class="nav-link" id="navUserName">
                         <i class="fas fa-user-shield"></i> Administrador
@@ -52,7 +52,7 @@
                     </a>
                     <a href="#" class="admin-nav-link" data-tab="businesses">
                         <i class="fas fa-building"></i>
-                        <span>Negocioes</span>
+                        <span>Negocios</span>
                         <span class="badge" id="adminPendingBadge">0</span>
                     </a>
                     <a href="#" class="admin-nav-link" data-tab="users">
@@ -96,7 +96,7 @@
                             </div>
                             <div class="admin-stat-info">
                                 <div class="admin-stat-number" id="adminTotalProps">0</div>
-                                <div class="admin-stat-label">Total Negocioes</div>
+                                <div class="admin-stat-label">Total Negocios</div>
                             </div>
                         </div>
                         <div class="admin-stat-card">
@@ -142,10 +142,10 @@
                         </div>
                     </div>
 
-                    <!-- Recent Properties -->
+                    <!-- Recent Businesses -->
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-building"></i> Últimas Negocioes</h3>
+                            <h3><i class="fas fa-building"></i> Últimos Negocios</h3>
                             <a href="#" class="admin-link" data-tab="businesses">Ver todas</a>
                         </div>
                         <div class="admin-card-body">
@@ -154,7 +154,7 @@
                                     <thead>
                                         <tr>
                                             <th>Negocio</th>
-                                            <th>Tipo</th>
+                                            <th>Categoría</th>
                                             <th>Usuario</th>
                                             <th>Estado</th>
                                             <th>Fecha</th>
@@ -163,7 +163,7 @@
                                     <tbody id="adminRecentProps">
                                         <tr class="empty-row">
                                             <td colspan="5">
-                                                <div class="empty-state-sm"><p>No hay negocioes.</p></div>
+                                                <div class="empty-state-sm"><p>No hay negocios.</p></div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -207,28 +207,48 @@
                 <div class="admin-tab hidden" id="tabProperties">
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-building"></i> Gestión de Negocioes</h3>
+                            <h3><i class="fas fa-building"></i> Gestión de Negocios</h3>
                             <div class="admin-card-actions">
                                 <select id="adminPropStatusFilter" class="form-select-sm">
                                     <option value="">Todos los estados</option>
-                                    <option value="publicada">Registradas</option>
+                                    <option value="publicada">Registrados</option>
                                     <option value="pendiente">Pendientes</option>
-                                    <option value="rechazada">Rechazadas</option>
+                                    <option value="rechazada">Rechazados</option>
                                 </select>
                                 <select id="adminPropTypeFilter" class="form-select-sm">
-                                    <option value="">Todos los tipos</option>
-                                    <option value="Casa">Casas</option>
-                                    <option value="Apartamento">Apartamentos</option>
-                                    <option value="Terreno">Profesionales</option>
-                                    <option value="Local Comercial">Locales Comerciales</option>
-                                    <option value="Oficina">Oficinas</option>
-                                    <option value="Hotel">Hoteles</option>
-                                    <option value="Finca">Fincas</option>
-                                    <option value="Galpón">Galpones</option>
-                                    <option value="Estacionamiento">Estacionamientos</option>
-                                    <option value="Otro">Otros</option>
+                                    <option value="">Todas las categorías</option>
+                                    <option value="restaurantes">Restaurantes</option>
+                                    <option value="farmacias">Farmacias</option>
+                                    <option value="clinicas-hospitales">Clínicas y Hospitales</option>
+                                    <option value="supermercados">Supermercados</option>
+                                    <option value="ropas">Ropas</option>
+                                    <option value="barberias">Barberías y Salones</option>
+                                    <option value="auto-talleres">Auto Talleres</option>
+                                    <option value="cafeterias">Cafeterías</option>
+                                    <option value="bares-discotecas">Bares y Discotecas</option>
+                                    <option value="ferreterias">Ferreterías</option>
+                                    <option value="tecnologia">Tecnología</option>
+                                    <option value="hoteles-posadas">Hoteles y Posadas</option>
+                                    <option value="gimnasios">Gimnasios</option>
+                                    <option value="dentistas">Dentistas</option>
+                                    <option value="celulares">Celulares</option>
+                                    <option value="mueblerias">Mueblerías</option>
+                                    <option value="juridicos">Jurídicos</option>
+                                    <option value="academias">Academias</option>
+                                    <option value="veterinarias">Veterinarias</option>
+                                    <option value="electricos">Eléctricos</option>
+                                    <option value="perfumerias">Perfumerías</option>
+                                    <option value="joyerias">Joyerías</option>
+                                    <option value="zapaterias">Zapaterías</option>
+                                    <option value="panaderias">Panaderías</option>
+                                    <option value="heladerias">Heladerías</option>
+                                    <option value="pizzerias">Pizzerías</option>
+                                    <option value="bicicletas">Bicicletas</option>
+                                    <option value="encomiendas">Encomiendas</option>
+                                    <option value="lavanderias">Lavanderías</option>
+                                    <option value="otro">Otro</option>
                                 </select>
-                                <input type="text" id="adminPropSearch" class="form-input-sm" placeholder="Explorar...">
+                                <input type="text" id="adminPropSearch" class="form-input-sm" placeholder="Buscar...">
                             </div>
                         </div>
                         <div class="admin-card-body">
@@ -239,19 +259,18 @@
                                             <th>ID</th>
                                             <th>Imagen</th>
                                             <th>Título</th>
-                                            <th>Tipo</th>
-                                            <th>Operación</th>
-                                            <th>Precio</th>
-                                            <th>Usuario</th>
+                                            <th>Categoría</th>
                                             <th>Estado</th>
+                                            <th>Usuario</th>
+                                            <th>Estatus</th>
                                             <th>Destacada</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
                                     <tbody id="adminPropsTableBody">
                                         <tr class="empty-row">
-                                            <td colspan="10">
-                                                <div class="empty-state-sm"><p>Cargando negocioes...</p></div>
+                                            <td colspan="9">
+                                                <div class="empty-state-sm"><p>Cargando negocios...</p></div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -273,7 +292,7 @@
                                     <option value="user">Usuarios</option>
                                     <option value="admin">Administradores</option>
                                 </select>
-                                <input type="text" id="adminUserSearch" class="form-input-sm" placeholder="Explorar usuario...">
+                                <input type="text" id="adminUserSearch" class="form-input-sm" placeholder="Buscar usuario...">
                             </div>
                         </div>
                         <div class="admin-card-body">
@@ -287,7 +306,7 @@
                                             <th>Teléfono</th>
                                             <th>Rol</th>
                                             <th>Estado</th>
-                                            <th>Negocioes</th>
+                                            <th>Negocios</th>
                                             <th>Fecha Registro</th>
                                             <th>Acciones</th>
                                         </tr>
@@ -314,39 +333,39 @@
                             <h3><i class="fab fa-facebook"></i> Importar desde Página de Facebook</h3>
                         </div>
                         <div class="admin-card-body">
-                            <p style="margin-bottom:16px;color:#666;">Conecta tu página de Facebook para importar automáticamente los negocios que publiques all&iacute;. Los posts con fotos se convertir&aacute;n en negocioes en tu web.</p>
+                            <p style="margin-bottom:16px;color:#666;">Conecta tu página de Facebook para importar automáticamente los negocios que publiques allí. Los posts con fotos se convertirán en negocios en tu web.</p>
 
                             <div class="form-group">
                                 <label for="fbPageId"><i class="fab fa-facebook"></i> Page ID de Facebook</label>
                                 <input type="text" id="fbPageId" class="form-input" placeholder="Ej: 123456789012345">
-                                <small class="form-hint">El ID num&eacute;rico de tu p&aacute;gina. Lo encuentras en facebook.com/ TU-PAGINA &rarr; Informaci&oacute;n &rarr; ID de la p&aacute;gina.</small>
+                                <small class="form-hint">El ID numérico de tu página. Lo encuentras en facebook.com/ TU-PÁGINA → Información → ID de la página.</small>
                             </div>
 
                             <div class="form-group">
                                 <label for="fbAccessToken"><i class="fas fa-key"></i> Page Access Token</label>
                                 <input type="password" id="fbAccessToken" class="form-input" placeholder="EAAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
-                                <small class="form-hint">Token de acceso a la p&aacute;gina de Facebook. Se obtiene en developers.facebook.com.</small>
+                                <small class="form-hint">Token de acceso a la página de Facebook. Se obtiene en developers.facebook.com.</small>
                             </div>
 
                             <div class="form-row" style="margin-bottom:16px;">
                                 <div class="form-group">
                                     <label for="fbCity"><i class="fas fa-map-marker-alt"></i> Ciudad por defecto</label>
-                                    <input type="text" id="fbCity" class="form-input" value="Mérida">
+                                    <input type="text" id="fbCity" class="form-input" placeholder="Ej: Mérida">
                                 </div>
                                 <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px;">
                                     <label class="feature-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
                                         <input type="checkbox" id="fbAutoApprove" checked>
-                                        <span>Aprobar negocioes importadas autom&aacute;ticamente</span>
+                                        <span>Aprobar negocios importados automáticamente</span>
                                     </label>
                                 </div>
                             </div>
 
                             <div style="display:flex;gap:12px;flex-wrap:wrap;">
                                 <button class="btn btn-primary" id="fbSaveConfig">
-                                    <i class="fas fa-save"></i> Guardar Configuraci&oacute;n
+                                    <i class="fas fa-save"></i> Guardar Configuración
                                 </button>
                                 <button class="btn btn-secondary" id="fbTestConnection">
-                                    <i class="fas fa-plug"></i> Probar Conexi&oacute;n
+                                    <i class="fas fa-plug"></i> Probar Conexión
                                 </button>
                             </div>
                             <div id="fbConfigStatus" style="margin-top:12px;"></div>
@@ -356,10 +375,10 @@
                     <!-- Manual Import Card -->
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-download"></i> Importaci&oacute;n Manual</h3>
+                            <h3><i class="fas fa-download"></i> Importación Manual</h3>
                         </div>
                         <div class="admin-card-body">
-                            <p style="margin-bottom:16px;color:#666;">Importa los &uacute;ltimos 25 posts de tu p&aacute;gina. Los posts que ya fueron importados se omitir&aacute;n autom&aacute;ticamente.</p>
+                            <p style="margin-bottom:16px;color:#666;">Importa los últimos 25 posts de tu página. Los posts que ya fueron importados se omitirán automáticamente.</p>
                             <button class="btn btn-primary btn-lg" id="fbImportNow">
                                 <i class="fab fa-facebook"></i> Importar Posts Ahora
                             </button>
@@ -507,7 +526,7 @@
                                     <i class="fab fa-whatsapp" style="color:#25d366"></i>
                                     <input type="tel" id="editUserWhatsApp" name="whatsapp" class="form-control" placeholder="+58 414 0000000">
                                 </div>
-                                <small class="form-hint">Número que verán los compradores al contactar por WhatsApp</small>
+                                <small class="form-hint">Número que verán los clientes al contactar por WhatsApp</small>
                             </div>
                         </div>
                     </div>
@@ -569,7 +588,7 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label for="rejectReason">Motivo del rechazo</label>
-                    <textarea id="rejectReason" name="reason" rows="4" placeholder="Explique por qué este negocio es rechazada..." required></textarea>
+                    <textarea id="rejectReason" name="reason" rows="4" placeholder="Explique por qué este negocio es rechazado..." required></textarea>
                 </div>
             </div>
             <div class="modal-footer">
