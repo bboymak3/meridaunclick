@@ -138,7 +138,7 @@
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, settings: tabSettings };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -146,7 +146,7 @@
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', settings: 'Configuración' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -175,6 +175,9 @@
             case 'jobs':
                 jobsPage = 1;
                 loadJobs();
+                break;
+            case 'settings':
+                loadSettings();
                 break;
         }
 
@@ -878,6 +881,10 @@
             adminDeleteModal.querySelector('.modal-overlay')?.addEventListener('click', closeDeleteModal);
         }
 
+        // Settings save button
+        const adminSaveSettingsBtn = document.getElementById('adminSaveSettingsBtn');
+        if (adminSaveSettingsBtn) adminSaveSettingsBtn.addEventListener('click', saveSettings);
+
         // Reject modal
         if (adminRejectConfirm) adminRejectConfirm.addEventListener('click', confirmReject);
         if (adminRejectCancel) adminRejectCancel.addEventListener('click', closeRejectModal);
@@ -1321,6 +1328,48 @@
             }
         } catch (err) {
             showToast(err.message || 'Error', 'error');
+        }
+    }
+
+    // ─── Settings Functions ───────────────────────────────────
+    async function loadSettings() {
+        try {
+            const data = await api.get('/settings');
+            const settings = data.settings || data;
+
+            // Populate toggle checkboxes
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.dataset.key;
+                const value = settings[key];
+                if (el.type === 'checkbox') {
+                    el.checked = value === '1' || value === 'true';
+                } else {
+                    el.value = value || '';
+                }
+            });
+        } catch (error) {
+            console.error('Error loading settings:', error);
+            showToast('Error al cargar configuración', 'error');
+        }
+    }
+
+    async function saveSettings() {
+        try {
+            const updates = {};
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.dataset.key;
+                if (el.type === 'checkbox') {
+                    updates[key] = el.checked ? '1' : '0';
+                } else {
+                    updates[key] = el.value;
+                }
+            });
+
+            await api.put('/settings', updates);
+            showToast('Configuración guardada exitosamente', 'success');
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            showToast('Error al guardar configuración: ' + error.message, 'error');
         }
     }
 

@@ -72,6 +72,10 @@
                         <i class="fab fa-facebook"></i>
                         <span>Facebook Import</span>
                     </a>
+                    <a href="#" class="admin-nav-link" data-tab="settings">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Configuración</span>
+                    </a>
                 </nav>
             </aside>
 
@@ -480,6 +484,53 @@
                                 </table>
                             </div>
                             <div class="admin-pagination" id="adminJobsPagination"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== SETTINGS TAB ==================== -->
+                <div class="admin-tab hidden" id="tabSettings">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-sliders-h"></i> Configuración del Sitio</h3>
+                            <div class="admin-card-actions">
+                                <button class="btn btn-primary btn-sm" id="adminSaveSettingsBtn">
+                                    <i class="fas fa-save"></i> Guardar Cambios
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="settings-section">
+                                <h4 class="settings-section-title"><i class="fas fa-robot" style="color:#1a73e8;"></i> Chatbot IA</h4>
+                                <div class="settings-toggle-row">
+                                    <label class="settings-label">Habilitar Chatbot IA</label>
+                                    <label class="settings-switch"><input type="checkbox" id="setting_ai_chatbot_enabled" data-key="ai_chatbot_enabled"><span class="settings-switch-slider"></span></label>
+                                </div>
+                                <div class="form-group" style="margin-top:8px;">
+                                    <label for="setting_ai_chatbot_welcome">Mensaje de bienvenida</label>
+                                    <textarea id="setting_ai_chatbot_welcome" data-key="ai_chatbot_welcome" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+                            <hr style="margin:20px 0; border-color:var(--color-border-light);">
+                            <div class="settings-section">
+                                <h4 class="settings-section-title"><i class="fas fa-puzzle-piece" style="color:#28a745;"></i> Funcionalidades</h4>
+                                <div class="settings-toggle-row"><label class="settings-label">Reseñas y Calificaciones</label><label class="settings-switch"><input type="checkbox" id="setting_reviews_enabled" data-key="reviews_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label">Cupones y Ofertas</label><label class="settings-switch"><input type="checkbox" id="setting_coupons_enabled" data-key="coupons_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label">Eventos y Actividades</label><label class="settings-switch"><input type="checkbox" id="setting_events_enabled" data-key="events_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label">Reservas y Citas</label><label class="settings-switch"><input type="checkbox" id="setting_bookings_enabled" data-key="bookings_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label">Marketplace</label><label class="settings-switch"><input type="checkbox" id="setting_marketplace_enabled" data-key="marketplace_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label">Programa de Puntos</label><label class="settings-switch"><input type="checkbox" id="setting_points_enabled" data-key="points_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label">Servicios de Emergencia</label><label class="settings-switch"><input type="checkbox" id="setting_emergency_enabled" data-key="emergency_enabled"><span class="settings-switch-slider"></span></label></div>
+                            </div>
+                            <hr style="margin:20px 0; border-color:var(--color-border-light);">
+                            <div class="settings-section">
+                                <h4 class="settings-section-title"><i class="fas fa-star" style="color:#ffc107;"></i> Configuración de Puntos</h4>
+                                <div class="form-row">
+                                    <div class="form-group"><label for="setting_points_per_visit">Puntos por visita</label><input type="number" id="setting_points_per_visit" data-key="points_per_visit" class="form-control" min="0" max="100"></div>
+                                    <div class="form-group"><label for="setting_points_per_review">Puntos por reseña</label><input type="number" id="setting_points_per_review" data-key="points_per_review" class="form-control" min="0" max="100"></div>
+                                    <div class="form-group"><label for="setting_points_per_booking">Puntos por reserva</label><input type="number" id="setting_points_per_booking" data-key="points_per_booking" class="form-control" min="0" max="100"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
