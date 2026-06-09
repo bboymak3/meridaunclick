@@ -778,7 +778,6 @@
                         Más <i class="fas fa-chevron-down"></i>
                     </button>
                     <ul class="nav-dropdown-menu">
-                        <li><a href="cupones.html" class="nav-link"><i class="fas fa-ticket-alt"></i> Cupones</a></li>
                         <li><a href="eventos.html" class="nav-link"><i class="fas fa-calendar-alt"></i> Eventos</a></li>
                         <li><a href="reservas.html" class="nav-link"><i class="fas fa-calendar-check"></i> Reservas</a></li>
                         <li><a href="marketplace.html" class="nav-link"><i class="fas fa-shopping-bag"></i> Marketplace</a></li>
@@ -798,9 +797,6 @@
                 <li class="nav-mobile-cta">
                     <a href="marketplace.html" class="nav-mobile-cta-marketplace">
                         <i class="fas fa-shopping-bag"></i> Marketplace
-                    </a>
-                    <a href="cupones.html" class="nav-mobile-cta-cupon">
-                        <i class="fas fa-ticket-alt"></i> Cupones y Ofertas
                     </a>
                 </li>
             </ul>
@@ -868,9 +864,9 @@
                 </div>
                 <!-- CTA Button -->
                 <div style="margin-top:20px;">
-                    <a href="dashboard.html" class="mp-search-btn" style="background:linear-gradient(135deg,#065f46,#059669);padding:14px 36px;font-size:1rem;">
-                        <i class="fas fa-plus-circle"></i> Publicar Producto
-                    </a>
+                    <button class="mp-search-btn" id="mpPublishBtn" style="background:linear-gradient(135deg,#065f46,#059669);padding:14px 36px;font-size:1rem;cursor:pointer;border:none;font-family:inherit;">
+                        <i class="fas fa-plus-circle"></i> Publicar Nuevo Producto
+                    </button>
                 </div>
             </div>
         </div>
@@ -911,7 +907,7 @@
                 <p>Aún no se han publicado productos en el marketplace. ¡Vuelve pronto o publica el tuyo!</p>
                 <div class="mp-empty-actions">
                     <a href="index.html" class="btn-outline"><i class="fas fa-home"></i> Volver al inicio</a>
-                    <a href="dashboard.html" class="btn-primary"><i class="fas fa-plus"></i> Publicar producto</a>
+                    <button class="btn-primary" style="border:none;cursor:pointer;font-family:inherit;" onclick="document.getElementById('mpPublishBtn').click()"><i class="fas fa-plus"></i> Publicar producto</button>
                 </div>
             </div>
 
@@ -939,6 +935,127 @@
             <p>&copy; 2025 <a href="index.html">Un Click</a>. Todos los derechos reservados.</p>
         </div>
     </footer>
+
+    <!-- Product Publish Modal -->
+    <div class="modal hidden" id="mpProductModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-plus-circle" style="color:#059669;"></i> Publicar Nuevo Producto</h3>
+                <button class="modal-close" id="mpModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="mpProductForm" class="profile-form">
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-tag"></i> <span>Información del Producto</span></div>
+                        <div class="profile-input-group">
+                            <label for="mpProdName">Nombre del producto *</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-box"></i>
+                            <input type="text" id="mpProdName" name="name" required placeholder="Ej: iPhone 14 Pro">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label for="mpProdPrice">Precio ($)</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-dollar-sign"></i>
+                                <input type="number" id="mpProdPrice" name="price" required min="0" step="0.01" placeholder="0.00">
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label for="mpProdCategory">Categoría</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-tag"></i>
+                                <select id="mpProdCategory" name="category">
+                                    <option value="general">General</option>
+                                    <option value="vehiculos">Vehículos</option>
+                                    <option value="inmuebles">Inmuebles</option>
+                                    <option value="electronica">Electrónica</option>
+                                    <option value="servicios">Servicios</option>
+                                    <option value="ropa">Ropa</option>
+                                    <option value="hogar">Hogar</option>
+                                </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-camera"></i> <span>Imagen del Producto</span></div>
+                        <div class="profile-input-group">
+                            <div class="profile-input-wrapper"><i class="fas fa-link"></i>
+                            <input type="url" id="mpProdImage" name="image" placeholder="O pega una URL de imagen aquí">
+                            </div>
+                            <small class="profile-input-hint">O sube una imagen desde tu dispositivo</small>
+                        </div>
+                        <div class="prod-upload-area" id="mpUploadArea">
+                            <div class="prod-upload-btns">
+                                <label class="btn btn-primary btn-sm prod-upload-label" for="mpImageFile">
+                                    <i class="fas fa-camera"></i> Tomar Foto / Galería
+                                </label>
+                                <input type="file" id="mpImageFile" name="image_file" accept="image/*" capture="environment" style="display:none;">
+                                <label class="btn btn-secondary btn-sm prod-upload-label" for="mpAttachFile">
+                                    <i class="fas fa-paperclip"></i> Adjuntar Archivo
+                                </label>
+                                <input type="file" id="mpAttachFile" name="attach_file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none;">
+                            </div>
+                            <div class="prod-upload-preview" id="mpUploadPreview"></div>
+                            <div class="prod-upload-progress hidden" id="mpUploadProgress">
+                                <i class="fas fa-spinner fa-spin"></i> Subiendo imagen...
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-align-left"></i> <span>Descripción</span></div>
+                        <div class="profile-textarea-wrapper">
+                            <textarea id="mpProdDescription" name="description" rows="3" placeholder="Describe tu producto..." maxlength="500"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="mpModalCancel">Cancelar</button>
+                <button class="btn btn-primary" id="mpModalSave" style="background:linear-gradient(135deg,#059669,#10b981);"><i class="fas fa-save"></i> Publicar Producto</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .modal { position:fixed; inset:0; z-index:10000; display:flex; align-items:center; justify-content:center; }
+        .modal.hidden { display:none; }
+        .modal-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.5); }
+        .modal-content { position:relative; background:#fff; border-radius:16px; width:95%; max-height:90vh; overflow-y:auto; box-shadow:0 25px 50px rgba(0,0,0,0.25); }
+        .modal-header { display:flex; align-items:center; justify-content:space-between; padding:20px 24px; border-bottom:1px solid #e5e7eb; }
+        .modal-header h3 { margin:0; font-size:1.15rem; font-weight:700; color:#1f2937; }
+        .modal-close { background:none; border:none; font-size:1.5rem; color:#9ca3af; cursor:pointer; padding:4px 8px; }
+        .modal-body { padding:24px; }
+        .modal-footer { display:flex; justify-content:flex-end; gap:10px; padding:16px 24px; border-top:1px solid #e5e7eb; background:#f9fafb; border-radius:0 0 16px 16px; }
+        .profile-form { display:flex; flex-direction:column; gap:16px; }
+        .profile-form-section { display:flex; flex-direction:column; gap:10px; }
+        .profile-form-section-title { display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.88rem; color:#374151; text-transform:uppercase; letter-spacing:0.3px; }
+        .profile-form-section-title i { color:#059669; font-size:0.8rem; }
+        .profile-input-group { display:flex; flex-direction:column; gap:4px; }
+        .profile-input-group label { font-size:0.82rem; font-weight:500; color:#4b5563; }
+        .profile-input-wrapper { display:flex; align-items:center; gap:10px; border:1.5px solid #d1d5db; border-radius:10px; padding:0 14px; transition:all 0.2s; }
+        .profile-input-wrapper:focus-within { border-color:#059669; box-shadow:0 0 0 3px rgba(5,150,105,0.1); }
+        .profile-input-wrapper i { color:#9ca3af; font-size:0.85rem; width:18px; text-align:center; flex-shrink:0; }
+        .profile-input-wrapper input, .profile-input-wrapper select { flex:1; border:none; outline:none; padding:12px 0; font-size:0.9rem; font-family:inherit; color:#1f2937; background:transparent; }
+        .profile-textarea-wrapper { position:relative; }
+        .profile-textarea-wrapper textarea { width:100%; border:1.5px solid #d1d5db; border-radius:10px; padding:12px 14px; font-size:0.9rem; font-family:inherit; resize:vertical; outline:none; transition:all 0.2s; }
+        .profile-textarea-wrapper textarea:focus { border-color:#059669; box-shadow:0 0 0 3px rgba(5,150,105,0.1); }
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        @media(max-width:480px){ .form-row{grid-template-columns:1fr;} }
+        .profile-input-hint { font-size:0.75rem; color:#9ca3af; margin-top:2px; }
+        .prod-upload-area { margin-top:12px; padding:16px; border:2px dashed #d1d5db; border-radius:12px; background:#f9fafb; text-align:center; }
+        .prod-upload-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; }
+        .prod-upload-label { cursor:pointer; display:inline-flex; align-items:center; gap:6px; margin:0; }
+        .prod-upload-preview { display:flex; flex-direction:column; align-items:center; gap:8px; }
+        .prod-upload-preview img { max-width:100%; max-height:200px; border-radius:8px; object-fit:cover; border:1px solid #e5e7eb; }
+        .prod-upload-preview .prod-upload-filename { font-size:0.8rem; color:#6b7280; display:flex; align-items:center; gap:5px; }
+        .prod-upload-progress { color:#059669; font-size:0.85rem; padding:8px; }
+        .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 20px; border:none; border-radius:8px; font-size:0.88rem; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; text-decoration:none; }
+        .btn-primary { background:linear-gradient(135deg,#1a73e8,#4a90e8); color:#fff; }
+        .btn-primary:hover { opacity:0.9; transform:translateY(-1px); }
+        .btn-secondary { background:#f1f5f9; color:#475569; border:1.5px solid #e2e8f0; }
+        .hidden { display:none !important; }
+    </style>
 
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
@@ -1238,6 +1355,152 @@
             // ─── Init ─────────────────────────────────────────
             fetchProducts(1);
         })();
+    </script>
+
+    <script>
+    (function() {
+        'use strict';
+        
+        const publishBtn = document.getElementById('mpPublishBtn');
+        const modal = document.getElementById('mpProductModal');
+        const closeBtn = document.getElementById('mpModalClose');
+        const cancelBtn = document.getElementById('mpModalCancel');
+        const saveBtn = document.getElementById('mpModalSave');
+        const overlay = modal ? modal.querySelector('.modal-overlay') : null;
+        const form = document.getElementById('mpProductForm');
+        const imageFileInput = document.getElementById('mpImageFile');
+        const attachFileInput = document.getElementById('mpAttachFile');
+        const uploadPreview = document.getElementById('mpUploadPreview');
+        const uploadProgress = document.getElementById('mpUploadProgress');
+        const prodImageInput = document.getElementById('mpProdImage');
+        let uploadedImageUrl = '';
+        
+        function openModal() {
+            if (modal) modal.classList.remove('hidden');
+        }
+        
+        function closeModal() {
+            if (modal) modal.classList.add('hidden');
+            if (form) form.reset();
+            uploadedImageUrl = '';
+            if (uploadPreview) uploadPreview.innerHTML = '';
+        }
+        
+        if (publishBtn) publishBtn.addEventListener('click', openModal);
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (overlay) overlay.addEventListener('click', closeModal);
+        
+        // Image upload
+        function handleImageUpload(file) {
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showToast('Solo se permiten im\u00e1genes', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (uploadPreview) {
+                    uploadPreview.innerHTML = '<img src="' + e.target.result + '" alt="Preview"><div class="prod-upload-filename"><i class="fas fa-check-circle" style="color:#059669;"></i> ' + file.name + '</div>';
+                }
+            };
+            reader.readAsDataURL(file);
+            
+            if (uploadProgress) uploadProgress.classList.remove('hidden');
+            
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('product_type', 'marketplace');
+            
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+            fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: fd,
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (uploadProgress) uploadProgress.classList.add('hidden');
+                if (data.url) {
+                    uploadedImageUrl = data.url;
+                    if (prodImageInput) prodImageInput.value = data.url;
+                    showToast('Imagen subida correctamente', 'success');
+                } else {
+                    showToast(data.error || 'Error al subir', 'error');
+                }
+            })
+            .catch(function() {
+                if (uploadProgress) uploadProgress.classList.add('hidden');
+                showToast('Error de conexi\u00f3n', 'error');
+            });
+        }
+        
+        if (imageFileInput) imageFileInput.addEventListener('change', function(e) { handleImageUpload(e.target.files[0]); });
+        if (attachFileInput) attachFileInput.addEventListener('change', function(e) { handleImageUpload(e.target.files[0]); });
+        
+        // Save product
+        if (saveBtn) saveBtn.addEventListener('click', function() {
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+            
+            const fd = new FormData(form);
+            const body = {
+                name: fd.get('name'),
+                price: parseFloat(fd.get('price')) || 0,
+                category: fd.get('category') || 'general',
+                image: uploadedImageUrl || fd.get('image') || '',
+                description: fd.get('description') || '',
+            };
+            
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando...';
+            
+            fetch('/api/marketplace', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token,
+                },
+                body: JSON.stringify(body),
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Publicar Producto';
+                if (data.product_id) {
+                    showToast('Producto publicado exitosamente', 'success');
+                    closeModal();
+                    // Reload page to show new product
+                    setTimeout(function() { location.reload(); }, 1000);
+                } else {
+                    showToast(data.error || 'Error al publicar', 'error');
+                }
+            })
+            .catch(function(err) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Publicar Producto';
+                showToast('Error de conexi\u00f3n', 'error');
+            });
+        });
+        
+        // Toast helper
+        function showToast(msg, type) {
+            var container = document.getElementById('toastContainer');
+            if (!container) return;
+            var toast = document.createElement('div');
+            toast.style.cssText = 'padding:12px 20px;border-radius:10px;color:#fff;font-size:0.88rem;margin-bottom:8px;animation:fadeIn 0.3s;';
+            toast.style.background = type === 'error' ? '#ef4444' : type === 'success' ? '#059669' : '#3b82f6';
+            toast.textContent = msg;
+            container.appendChild(toast);
+            setTimeout(function() { toast.remove(); }, 3000);
+        }
+        
+        // Expose showToast globally for modal
+        window.showToast = showToast;
+    })();
     </script>
 </body>
 </html>

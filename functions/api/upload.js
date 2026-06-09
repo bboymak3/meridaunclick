@@ -84,6 +84,7 @@ export async function onRequestPost(context) {
     const formData = await request.formData();
     const file = formData.get('file');
     const businessId = formData.get('business_id');
+    const productType = formData.get('product_type'); // 'marketplace' or 'business'
 
     if (!file) {
       return new Response(JSON.stringify({ error: 'No se proporcionó ningún archivo' }), {
@@ -92,8 +93,8 @@ export async function onRequestPost(context) {
       });
     }
 
-    if (!businessId) {
-      return new Response(JSON.stringify({ error: 'business_id es requerido' }), {
+    if (!businessId && productType !== 'marketplace') {
+      return new Response(JSON.stringify({ error: 'business_id es requerido o product_type debe ser marketplace' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -125,20 +126,24 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Verify business exists and user owns it (or is admin)
-    const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(businessId).first();
-    if (!business) {
-      return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
-        status: 404,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // Verify business exists and user owns it (or is admin) — or allow marketplace uploads
+    if (productType === 'marketplace') {
+      // Marketplace uploads - any authenticated user can upload
+    } else {
+      const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(businessId).first();
+      if (!business) {
+        return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
 
-    if (user.role !== 'admin' && user.id !== business.user_id) {
-      return new Response(JSON.stringify({ error: 'No tienes permiso para subir imágenes a este negocio' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      if (user.role !== 'admin' && user.id !== business.user_id) {
+        return new Response(JSON.stringify({ error: 'No tienes permiso para subir imágenes a este negocio' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     // Read file content
@@ -148,7 +153,12 @@ export async function onRequestPost(context) {
     const timestamp = Date.now();
     const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
     const r2Folder = env.R2_FOLDER || 'merida';
-    const key = `${r2Folder}/businesses/${businessId}/${timestamp}_${sanitizedName}`;
+    let key;
+    if (productType === 'marketplace') {
+      key = `${r2Folder}/marketplace/${user.id}/${timestamp}_${sanitizedName}`;
+    } else {
+      key = `${r2Folder}/businesses/${businessId}/${timestamp}_${sanitizedName}`;
+    }
 
     // Upload to R2
     await env.R2.put(key, arrayBuffer, {

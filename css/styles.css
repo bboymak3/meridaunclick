@@ -3419,6 +3419,94 @@ select.form-select {
     flex-wrap: wrap;
 }
 
+.dashboard-header-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+    .dashboard-header-actions .btn {
+        flex: 1;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+/* ─── Product Upload Area ──────────────────────────────── */
+.prod-upload-area {
+    margin-top: 12px;
+    padding: 16px;
+    border: 2px dashed #d1d5db;
+    border-radius: 12px;
+    background: #f9fafb;
+    text-align: center;
+}
+
+.prod-upload-btns {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.prod-upload-label {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.prod-upload-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.prod-upload-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 1px solid #e5e7eb;
+}
+
+.prod-upload-preview .prod-upload-filename {
+    font-size: 0.8rem;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.prod-upload-preview .prod-upload-remove {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.prod-upload-progress {
+    color: #059669;
+    font-size: 0.85rem;
+    padding: 8px;
+}
+
 .sidebar-toggle {
     display: none;
     width: 40px;

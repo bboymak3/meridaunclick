@@ -105,9 +105,8 @@
         // Setup delete modal
         setupDeleteModal();
 
-        // Setup product & coupon modals
+        // Setup product modal
         setupProductModal();
-        setupCouponModal();
 
         // Setup profile form
         setupProfileForm();
@@ -171,7 +170,6 @@
             messages: 'Mensajes',
             favorites: 'Favoritos',
             products: 'Mis Productos',
-            coupons: 'Mis Cupones',
             profile: 'Mi Perfil',
             admin: 'Panel de Administracion',
         };
@@ -193,9 +191,6 @@
                 break;
             case 'products':
                 loadMyProducts();
-                break;
-            case 'coupons':
-                loadMyCoupons();
                 break;
             case 'admin':
                 loadAdminData();
@@ -685,11 +680,87 @@
                 showToast('Producto publicado exitosamente', 'success');
                 modal.classList.add('hidden');
                 form.reset();
+                uploadedImageUrl = '';
+                if (uploadPreview) uploadPreview.innerHTML = '';
                 loadMyProducts();
             } catch (error) {
                 showToast(error.message || 'Error al publicar producto', 'error');
             }
         });
+
+        // ─── Image Upload Handler ─────────────────────────
+        const imageFileInput = document.getElementById('prodImageFile');
+        const attachFileInput = document.getElementById('prodAttachFile');
+        const uploadPreview = document.getElementById('prodUploadPreview');
+        const uploadProgress = document.getElementById('prodUploadProgress');
+        const prodImageInput = document.getElementById('prodImage');
+        let uploadedImageUrl = '';
+
+        function handleImageUpload(file) {
+            if (!file) return;
+            
+            // Validate it's an image
+            if (!file.type.startsWith('image/')) {
+                showToast('Solo se permiten imágenes', 'error');
+                return;
+            }
+            
+            // Show preview immediately
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                if (uploadPreview) {
+                    uploadPreview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview">
+                        <div class="prod-upload-filename">
+                            <i class="fas fa-check-circle" style="color:#059669;"></i> ${file.name}
+                            <button class="prod-upload-remove" type="button" onclick="this.closest('.prod-upload-preview').innerHTML='';uploadedImageUrl='';document.getElementById('prodImage').value='';">&times;</button>
+                        </div>`;
+                }
+            };
+            reader.readAsDataURL(file);
+            
+            // Upload to server
+            if (uploadProgress) uploadProgress.classList.remove('hidden');
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('product_type', 'marketplace');
+            
+            const token = getToken();
+            
+            fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: formData,
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (uploadProgress) uploadProgress.classList.add('hidden');
+                if (data.url) {
+                    uploadedImageUrl = data.url;
+                    if (prodImageInput) prodImageInput.value = data.url;
+                    showToast('Imagen subida correctamente', 'success');
+                } else {
+                    showToast(data.error || 'Error al subir imagen', 'error');
+                }
+            })
+            .catch(err => {
+                if (uploadProgress) uploadProgress.classList.add('hidden');
+                showToast('Error de conexión al subir imagen', 'error');
+            });
+        }
+        
+        if (imageFileInput) {
+            imageFileInput.addEventListener('change', (e) => {
+                handleImageUpload(e.target.files[0]);
+            });
+        }
+        
+        if (attachFileInput) {
+            attachFileInput.addEventListener('change', (e) => {
+                handleImageUpload(e.target.files[0]);
+            });
+        }
     }
 
     // Wire up header button
@@ -702,128 +773,16 @@
 
     if (btnNewProduct) btnNewProduct.addEventListener('click', window.openProductModal);
 
+    // Wire up header button
+    const headerBtnNewProduct = document.getElementById('headerBtnNewProduct');
+    if (headerBtnNewProduct) headerBtnNewProduct.addEventListener('click', window.openProductModal);
+
     window.deleteProduct = async function (id) {
         if (!confirm('¿Eliminar este producto?')) return;
         try {
             await api.delete(`/marketplace/${id}`);
             showToast('Producto eliminado', 'success');
             loadMyProducts();
-        } catch (error) {
-            showToast(error.message || 'Error al eliminar', 'error');
-        }
-    };
-
-    // ─── My Coupons ────────────────────────────────────────────
-    async function loadMyCoupons() {
-        const tbody = document.getElementById('myCouponsBody');
-        if (!tbody) return;
-
-        try {
-            const data = await api.get('/coupons?limit=100');
-            const coupons = data.coupons || [];
-
-            if (coupons.length === 0) {
-                tbody.innerHTML = `
-                    <tr class="empty-row"><td colspan="6">
-                        <div class="empty-state">
-                            <i class="fas fa-ticket-alt"></i>
-                            <p>No tienes cupones creados.</p>
-                            <button class="btn btn-primary btn-sm" onclick="openCouponModal()"><i class="fas fa-plus"></i> Crear Cupón</button>
-                        </div>
-                    </td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = coupons.map(c => {
-                const expired = c.end_date && new Date(c.end_date) < new Date();
-                return `
-                <tr>
-                    <td><div class="dash-prop-name"><span>${c.title || 'Sin título'}</span></div></td>
-                    <td>${c.business_name || '—'}</td>
-                    <td>${c.discount_type === 'percentage' ? c.discount + '%' : c.discount_type === 'fixed' ? '$' + c.discount : 'Envío gratis'}</td>
-                    <td>${c.end_date ? formatDate(c.end_date) : 'Sin vencimiento'}</td>
-                    <td>${expired ? '<span class="badge badge-danger">Expirado</span>' : '<span class="badge badge-success">Activo</span>'}</td>
-                    <td class="dash-actions">
-                        <button class="btn-icon btn-icon-danger" onclick="deleteCoupon(${c.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>`;
-            }).join('');
-        } catch (error) {
-            console.error('Error loading coupons:', error);
-        }
-    }
-
-    function setupCouponModal() {
-        const modal = document.getElementById('couponModal');
-        if (!modal) return;
-
-        const close = document.getElementById('couponModalClose');
-        const cancel = document.getElementById('couponModalCancel');
-        const save = document.getElementById('couponModalSave');
-        const overlay = modal.querySelector('.modal-overlay');
-        const form = document.getElementById('couponForm');
-
-        if (close) close.addEventListener('click', () => modal.classList.add('hidden'));
-        if (cancel) cancel.addEventListener('click', () => modal.classList.add('hidden'));
-        if (overlay) overlay.addEventListener('click', () => modal.classList.add('hidden'));
-
-        if (save) save.addEventListener('click', async () => {
-            if (!form.checkValidity()) { form.reportValidity(); return; }
-            try {
-                const fd = new FormData(form);
-                const body = {
-                    title: fd.get('title'),
-                    business_id: parseInt(fd.get('business_id')),
-                    discount_type: fd.get('discount_type') || 'percentage',
-                    discount: fd.get('discount'),
-                    code: fd.get('code') || '',
-                    start_date: fd.get('start_date') || '',
-                    end_date: fd.get('end_date') || '',
-                    description: fd.get('description') || '',
-                    terms: fd.get('terms') || '',
-                };
-                await api.post('/coupons', body);
-                showToast('Cupón creado exitosamente', 'success');
-                modal.classList.add('hidden');
-                form.reset();
-                loadMyCoupons();
-            } catch (error) {
-                showToast(error.message || 'Error al crear cupón', 'error');
-            }
-        });
-    }
-
-    // Wire up header button
-    const btnNewCoupon = document.getElementById('btnNewCoupon');
-
-    window.openCouponModal = async function () {
-        const modal = document.getElementById('couponModal');
-        const bizSelect = document.getElementById('coupBusiness');
-        
-        // Load user's businesses
-        if (bizSelect && currentUser) {
-            try {
-                const data = await api.get(`/businesses?user_id=${currentUser.id}&status=approved&limit=100`);
-                const businesses = data.businesses || [];
-                bizSelect.innerHTML = businesses.length > 0
-                    ? businesses.map(b => `<option value="${b.id}">${b.title}</option>`).join('')
-                    : '<option value="">No tienes negocios registrados</option>';
-            } catch (e) {
-                bizSelect.innerHTML = '<option value="">Error al cargar</option>';
-            }
-        }
-        
-        if (modal) modal.classList.remove('hidden');
-    };
-
-    if (btnNewCoupon) btnNewCoupon.addEventListener('click', window.openCouponModal);
-
-    window.deleteCoupon = async function (id) {
-        if (!confirm('¿Eliminar este cupón?')) return;
-        try {
-            await api.delete(`/coupons/${id}`);
-            showToast('Cupón eliminado', 'success');
-            loadMyCoupons();
         } catch (error) {
             showToast(error.message || 'Error al eliminar', 'error');
         }

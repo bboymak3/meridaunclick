@@ -185,9 +185,9 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Default category to 'adhesivos' if not provided
-    const category = body.category || 'adhesivos';
-    const validCategories = ['adhesivos', 'camisetas', 'tazas', 'poster', 'sticker', 'accesorios', 'digitales', 'otros'];
+    // Default category to 'general' if not provided
+    const category = body.category || 'general';
+    const validCategories = ['general', 'vehiculos', 'inmuebles', 'electronica', 'servicios', 'ropa', 'hogar'];
     if (!validCategories.includes(category)) {
       return new Response(JSON.stringify({ error: 'Categoría inválida', validCategories }), {
         status: 400,
@@ -196,15 +196,16 @@ export async function onRequestPost(context) {
     }
 
     const result = await env.DB.prepare(`
-      INSERT INTO products (name, price, category, image, description, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO products (name, price, category, image, description, sort_order, user_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `).bind(
       body.name.trim(),
       parseInt(body.price),
       category,
       body.image || '',
       body.description || '',
-      body.sort_order !== undefined ? parseInt(body.sort_order) : 0
+      body.sort_order !== undefined ? parseInt(body.sort_order) : 0,
+      user.id
     ).run();
 
     const productId = result.meta.last_row_id;
