@@ -671,7 +671,7 @@
         const businessData = {
             title,
             description,
-            category_id: parseInt(categoria) || null,
+            category_id: categoria || null,
             business_type: tipoNegocio?.toLowerCase() || 'negocio',
             address: direccion,
             city: ciudad,

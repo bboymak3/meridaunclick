@@ -207,49 +207,51 @@ export async function onRequestPost(context) {
 
     const body = await request.json();
 
-    // Required fields
+    // Required fields - title is mandatory, category and business_type have defaults
     const { title, category_id, business_type } = body;
-    if (!title || !category_id || !business_type) {
-      return new Response(JSON.stringify({ error: 'Título, categoría y tipo de negocio son requeridos', received: { title: !!title, category_id: !!category_id, business_type: !!business_type } }), {
+    if (!title || !title.trim()) {
+      return new Response(JSON.stringify({ error: 'El título es requerido' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Default business_type to 'negocio' if not provided
+    const finalBusinessType = business_type || 'negocio';
     const validBusinessTypes = ['negocio', 'profesional', 'servicio', 'restaurante', 'tienda', 'otro'];
-    if (!validBusinessTypes.includes(business_type)) {
-      return new Response(JSON.stringify({ error: 'Tipo de negocio inválido', validTypes: validBusinessTypes, received: business_type }), {
+    if (!validBusinessTypes.includes(finalBusinessType)) {
+      return new Response(JSON.stringify({ error: 'Tipo de negocio inválido', validTypes: validBusinessTypes, received: finalBusinessType }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // Default category to 'variedades' if not provided
+    const catInput = category_id || 'variedades';
 
     // Resolve category_id: accept numeric ID or slug string
-    let resolvedCategoryId = category_id;
-    if (isNaN(parseInt(category_id))) {
+    let resolvedCategoryId = catInput;
+    if (isNaN(parseInt(catInput))) {
       // It's a slug - look up the numeric ID
-      const catRow = await env.DB.prepare('SELECT id FROM categories WHERE slug = ?').bind(category_id).first();
-      if (!catRow) {
-        // Category not in DB - try to create it with a default entry
+      const catRow = await env.DB.prepare('SELECT id FROM categories WHERE slug = ?').bind(catInput).first();
+      if (catRow) {
+        resolvedCategoryId = catRow.id;
+      } else {
+        // Category not in DB - try to create it
         try {
-          const slugName = category_id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-          const iconGuess = 'fas fa-store';
+          const slugName = catInput.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
           const insertResult = await env.DB.prepare(
             'INSERT INTO categories (name, slug, icon, color, sort_order) VALUES (?, ?, ?, ?, 99)'
-          ).bind(slugName, category_id, iconGuess, '#607d8b').run();
+          ).bind(slugName, catInput, 'fas fa-store', '#607d8b').run();
           resolvedCategoryId = insertResult.meta.last_row_id;
         } catch (insertErr) {
-          // If still can't insert, reject
-          return new Response(JSON.stringify({ error: 'Categoría no encontrada: ' + category_id, hint: 'Usa un ID numérico o un slug válido' }), {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
+          // If still can't insert, default to first category
+          const fallback = await env.DB.prepare('SELECT id FROM categories ORDER BY sort_order LIMIT 1').first();
+          resolvedCategoryId = fallback ? fallback.id : 1;
         }
-      } else {
-        resolvedCategoryId = catRow.id;
       }
     } else {
-      resolvedCategoryId = parseInt(category_id);
+      resolvedCategoryId = parseInt(catInput);
     }
 
     // Generate slug from title
@@ -273,7 +275,7 @@ export async function onRequestPost(context) {
       slug,
       body.description || null,
       resolvedCategoryId,
-      business_type,
+      finalBusinessType,
       body.address || null,
       body.city || 'Mérida',
       body.state || 'Mérida',
