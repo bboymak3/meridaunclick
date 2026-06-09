@@ -13,3 +13,4 @@ bucket_name = "my-emdash-media"
 
 [vars]
 R2_FOLDER = "aunclick"
+JWT_SECRET = "aunclick_jwt_secret_2024_secure"
