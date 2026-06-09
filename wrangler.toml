@@ -1,5 +1,6 @@
 name = "meridaunclick"
 compatibility_date = "2024-01-01"
+pages_build_output_dir = "."
 
 [[d1_databases]]
 binding = "DB"
@@ -11,5 +12,4 @@ binding = "R2"
 bucket_name = "my-emdash-media"
 
 [vars]
-JWT_SECRET = "meridaunclick_secure_jwt_2024_production"
 R2_FOLDER = "merida"
