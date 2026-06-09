@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Panel de usuario de Mérida Un Click - Gestiona tus negocioes y mensajes.">
+    <title>Mi Panel - Mérida Un Click</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <i class="fas fa-home"></i>
+                <span>Mérida Un Click</span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Inicio</a></li>
+                <li><a href="search.html" class="nav-link">Negocioes</a></li>
+                <li><a href="map.html" class="nav-link">Mapa</a></li>
+                <li><a href="new-business.html" class="nav-link">Registrar</a></li>
+                <li id="navLoginItem"><a href="login.html" class="nav-link nav-btn">Login</a></li>
+                <li id="navUserItem" class="nav-user">
+                    <a href="dashboard.html" class="nav-link active" id="navUserName">
+                        <i class="fas fa-user-circle"></i> Mi Cuenta
+                    </a>
+                    <button class="nav-link btn-logout" id="navLogout">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Dashboard -->
+    <main class="dashboard">
+        <div class="container dashboard-container">
+            <!-- Sidebar -->
+            <aside class="dashboard-sidebar" id="dashboardSidebar">
+                <div class="sidebar-user">
+                    <div class="user-avatar" id="userAvatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="user-info">
+                        <h3 id="dashUserName">Usuario</h3>
+                        <p id="dashUserEmail">usuario@email.com</p>
+                    </div>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" class="sidebar-link active" data-section="overview">
+                        <i class="fas fa-th-large"></i> Resumen
+                    </a>
+                    <a href="#" class="sidebar-link" data-section="businesses">
+                        <i class="fas fa-building"></i> Mis Negocios
+                    </a>
+                    <a href="#" class="sidebar-link" data-section="messages">
+                        <i class="fas fa-envelope"></i> Mensajes
+                        <span class="badge" id="msgBadge">0</span>
+                    </a>
+                    <a href="#" class="sidebar-link" data-section="favorites">
+                        <i class="fas fa-heart"></i> Favoritos
+                    </a>
+                    <a href="#" class="sidebar-link" data-section="profile">
+                        <i class="fas fa-user-edit"></i> Mi Perfil
+                    </a>
+                    <!-- Admin link added dynamically in dashboard.js if user is admin -->
+                </nav>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="dashboard-main">
+                <!-- Header -->
+                <div class="dashboard-header">
+                    <button class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 class="dashboard-title" id="sectionTitle">Resumen</h1>
+                    <a href="new-business.html" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Negocio
+                    </a>
+                </div>
+
+                <!-- Overview Section -->
+                <section class="dashboard-section" id="sectionOverview">
+                    <!-- Stats Cards -->
+                    <div class="dash-stats-grid">
+                        <div class="dash-stat-card">
+                            <div class="dash-stat-icon stat-icon-blue">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="dash-stat-info">
+                                <div class="dash-stat-number" id="dashTotalProps">0</div>
+                                <div class="dash-stat-label">Total Negocioes</div>
+                            </div>
+                        </div>
+                        <div class="dash-stat-card">
+                            <div class="dash-stat-icon stat-icon-green">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="dash-stat-info">
+                                <div class="dash-stat-number" id="dashPublishedProps">0</div>
+                                <div class="dash-stat-label">Registradas</div>
+                            </div>
+                        </div>
+                        <div class="dash-stat-card">
+                            <div class="dash-stat-icon stat-icon-orange">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="dash-stat-info">
+                                <div class="dash-stat-number" id="dashPendingProps">0</div>
+                                <div class="dash-stat-label">Pendientes</div>
+                            </div>
+                        </div>
+                        <div class="dash-stat-card">
+                            <div class="dash-stat-icon stat-icon-purple">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="dash-stat-info">
+                                <div class="dash-stat-number" id="dashTotalViews">0</div>
+                                <div class="dash-stat-label">Vistas Totales</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Properties -->
+                    <div class="dash-card">
+                        <div class="dash-card-header">
+                            <h3>Negocioes Recientes</h3>
+                            <a href="#" class="dash-link" data-section="businesses">Ver todas</a>
+                        </div>
+                        <div class="dash-table-responsive">
+                            <table class="dash-table" id="recentPropsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Negocio</th>
+                                        <th>Tipo</th>
+                                        <th>Precio</th>
+                                        <th>Estado</th>
+                                        <th>Vistas</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentPropsBody">
+                                    <tr class="empty-row">
+                                        <td colspan="6">
+                                            <div class="empty-state">
+                                                <i class="fas fa-inbox"></i>
+                                                <p>No tienes negocioes aún.</p>
+                                                <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Properties Section -->
+                <section class="dashboard-section hidden" id="sectionProperties">
+                    <div class="dash-card">
+                        <div class="dash-card-header">
+                            <h3>Mis Negocios</h3>
+                            <a href="new-business.html" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Nueva
+                            </a>
+                        </div>
+                        <div class="dash-filters">
+                            <select id="dashPropFilter" class="form-select">
+                                <option value="">Todas</option>
+                                <option value="publicada">Registradas</option>
+                                <option value="pendiente">Pendientes</option>
+                                <option value="rechazada">Rechazadas</option>
+                            </select>
+                        </div>
+                        <div class="dash-table-responsive">
+                            <table class="dash-table" id="allPropsTable">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>Título</th>
+                                        <th>Tipo</th>
+                                        <th>Operación</th>
+                                        <th>Precio</th>
+                                        <th>Estado</th>
+                                        <th>Vistas</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allPropsBody">
+                                    <tr class="empty-row">
+                                        <td colspan="8">
+                                            <div class="empty-state">
+                                                <i class="fas fa-inbox"></i>
+                                                <p>No tienes negocioes.</p>
+                                                <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Messages Section -->
+                <section class="dashboard-section hidden" id="sectionMessages">
+                    <div class="dash-card">
+                        <div class="dash-card-header">
+                            <h3>Mensajes Recibidos</h3>
+                        </div>
+                        <div class="messages-list" id="messagesList">
+                            <div class="empty-state">
+                                <i class="fas fa-envelope-open"></i>
+                                <p>No tienes mensajes nuevos.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Favorites Section -->
+                <section class="dashboard-section hidden" id="sectionFavorites">
+                    <div class="dash-card">
+                        <div class="dash-card-header">
+                            <h3>Mis Favoritos</h3>
+                        </div>
+                        <div class="business-grid" id="favoritesGrid">
+                            <div class="empty-state">
+                                <i class="fas fa-heart"></i>
+                                <p>No tienes negocioes favoritas.</p>
+                                <a href="search.html" class="btn btn-primary btn-sm">Explorar Negocioes</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Admin Section (only visible for admin users) -->
+                <section class="dashboard-section hidden" id="sectionAdmin">
+                    <div class="dash-card">
+                        <div class="dash-card-header">
+                            <h3><i class="fas fa-shield-alt"></i> Panel de Administracion</h3>
+                        </div>
+
+                        <!-- Admin Tabs -->
+                        <div class="admin-tabs">
+                            <button class="admin-tab active" id="adminTabPending">
+                                <i class="fas fa-clock"></i> Pendientes <span class="badge badge-warning" id="adminPendingBadgeTop">0</span>
+                            </button>
+                            <button class="admin-tab" id="adminTabAll">
+                                <i class="fas fa-list"></i> Negocioes
+                            </button>
+                            <button class="admin-tab" id="adminTabUsers">
+                                <i class="fas fa-users-cog"></i> Usuarios
+                            </button>
+                        </div>
+
+                        <!-- Pending Properties Panel -->
+                        <div id="adminPanelPending">
+                            <div class="dash-info-banner">
+                                <i class="fas fa-info-circle"></i>
+                                <p>Las negocioes nuevas aparecen aqui con estado <strong>Pendiente</strong>. Debes aprobarlas para que sean visibles publicamente en la plataforma.</p>
+                            </div>
+                            <div class="dash-table-responsive">
+                                <table class="dash-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Negocio</th>
+                                            <th>Tipo</th>
+                                            <th>Precio</th>
+                                            <th>Ubicacion</th>
+                                            <th>Fecha</th>
+                                            <th>Propietario</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminPendingBody">
+                                        <tr class="empty-row">
+                                            <td colspan="7">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-spinner fa-spin"></i>
+                                                    <p>Cargando negocioes pendientes...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- All Properties Panel -->
+                        <div id="adminPanelAll" class="hidden">
+                            <div class="dash-table-responsive">
+                                <table class="dash-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Negocio</th>
+                                            <th>Tipo</th>
+                                            <th>Operacion</th>
+                                            <th>Precio</th>
+                                            <th>Estado</th>
+                                            <th>Propietario</th>
+                                            <th>Fecha</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminAllPropsBody">
+                                        <tr class="empty-row">
+                                            <td colspan="8">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-spinner fa-spin"></i>
+                                                    <p>Cargando...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Users Panel -->
+                        <div id="adminPanelUsers" class="hidden">
+                            <div class="admin-users-header">
+                                <div class="admin-users-stats" id="adminUsersStats">
+                                    <div class="admin-stat-chip admin-stat-chip-blue">
+                                        <i class="fas fa-users"></i> <span id="statTotalUsers">0</span> Usuarios
+                                    </div>
+                                    <div class="admin-stat-chip admin-stat-chip-red">
+                                        <i class="fas fa-shield-alt"></i> <span id="statAdminUsers">0</span> Admins
+                                    </div>
+                                    <div class="admin-stat-chip admin-stat-chip-green">
+                                        <i class="fas fa-user"></i> <span id="statNormalUsers">0</span> Normales
+                                    </div>
+                                </div>
+                                <div class="admin-users-search">
+                                    <div class="admin-search-wrapper">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" id="adminUsersSearchInput" placeholder="Explorar por nombre o email...">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dash-table-responsive">
+                                <table class="dash-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Usuario</th>
+                                            <th>Email</th>
+                                            <th>Teléfono</th>
+                                            <th>Rol</th>
+                                            <th>Negocioes</th>
+                                            <th>Registro</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminUsersBody">
+                                        <tr class="empty-row">
+                                            <td colspan="7">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-spinner fa-spin"></i>
+                                                    <p>Cargando usuarios...</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Profile Section -->
+                <section class="dashboard-section hidden" id="sectionProfile">
+                    <!-- Profile Header Card -->
+                    <div class="profile-header-card">
+                        <div class="profile-cover"></div>
+                        <div class="profile-header-body">
+                            <div class="profile-avatar-large" id="profileAvatarLarge">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="profile-header-info">
+                                <h2 id="profileDisplayName">Usuario</h2>
+                                <span class="profile-role-badge" id="profileRoleBadge">Usuario</span>
+                                <p class="profile-email-display" id="profileDisplayEmail">usuario@email.com</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Form Card -->
+                    <div class="profile-form-card">
+                        <div class="profile-form-card-header">
+                            <div class="profile-section-icon">
+                                <i class="fas fa-user-edit"></i>
+                            </div>
+                            <div>
+                                <h3>Información Personal</h3>
+                                <p>Actualiza tus datos y se reflejarán en todas tus publicaciones</p>
+                            </div>
+                        </div>
+
+                        <form class="profile-form" id="profileForm">
+                            <!-- Contact Info Section -->
+                            <div class="profile-form-section">
+                                <div class="profile-form-section-title">
+                                    <i class="fas fa-id-card"></i>
+                                    <span>Datos Básicos</span>
+                                </div>
+                                <div class="form-row">
+                                    <div class="profile-input-group">
+                                        <label for="profileName">Nombre Completo</label>
+                                        <div class="profile-input-wrapper">
+                                            <i class="fas fa-user"></i>
+                                            <input type="text" id="profileName" name="name" required placeholder="Ej: Juan Pérez">
+                                        </div>
+                                    </div>
+                                    <div class="profile-input-group">
+                                        <label for="profileEmail">Correo Electrónico</label>
+                                        <div class="profile-input-wrapper">
+                                            <i class="fas fa-envelope"></i>
+                                            <input type="email" id="profileEmail" name="email" required placeholder="correo@ejemplo.com">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Phone Section -->
+                            <div class="profile-form-section">
+                                <div class="profile-form-section-title">
+                                    <i class="fas fa-phone-alt"></i>
+                                    <span>Teléfonos de Contacto</span>
+                                </div>
+                                <div class="form-row">
+                                    <div class="profile-input-group">
+                                        <label for="profilePhone">Teléfono Principal</label>
+                                        <div class="profile-input-wrapper">
+                                            <i class="fas fa-phone"></i>
+                                            <input type="tel" id="profilePhone" name="phone" placeholder="+58 414 0000000">
+                                        </div>
+                                    </div>
+                                    <div class="profile-input-group">
+                                        <label for="profileWhatsApp">
+                                            <i class="fab fa-whatsapp" style="color:#25d366"></i> WhatsApp
+                                        </label>
+                                        <div class="profile-input-wrapper">
+                                            <i class="fab fa-whatsapp" style="color:#25d366"></i>
+                                            <input type="tel" id="profileWhatsApp" name="whatsapp" placeholder="+58 414 0000000">
+                                        </div>
+                                        <small class="profile-input-hint">Los compradores podrán contactarte directamente por WhatsApp desde tus negocioes</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Bio Section -->
+                            <div class="profile-form-section">
+                                <div class="profile-form-section-title">
+                                    <i class="fas fa-align-left"></i>
+                                    <span>Sobre Mí</span>
+                                </div>
+                                <div class="profile-input-group">
+                                    <label for="profileBio">Biografía / Descripción</label>
+                                    <div class="profile-textarea-wrapper">
+                                        <textarea id="profileBio" name="bio" rows="4" placeholder="Cuéntanos sobre ti, tu experiencia en bienes raíces, las zonas donde trabajas..." maxlength="500"></textarea>
+                                        <span class="profile-char-count" id="bioCharCount">0/500</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sync Info Banner -->
+                            <div class="profile-sync-banner">
+                                <div class="profile-sync-icon">
+                                    <i class="fas fa-sync-alt"></i>
+                                </div>
+                                <div class="profile-sync-text">
+                                    <strong>Sincronización automática</strong>
+                                    <p>Al guardar, tu información se actualizará en todas tus negocioes publicadas. Los compradores verán tu teléfono y WhatsApp actualizados al contactarte.</p>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="profile-form-actions">
+                                <button type="submit" class="btn btn-primary profile-save-btn" id="profileSaveBtn">
+                                    <i class="fas fa-check-circle"></i> Guardar Cambios
+                                </button>
+                                <button type="button" class="btn btn-secondary profile-cancel-btn" id="profileCancelBtn">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal hidden" id="deleteModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-exclamation-triangle text-danger"></i> Confirmar Eliminación</h3>
+                <button class="modal-close" id="deleteModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas eliminar este negocio? Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="deleteModalCancel">Cancelar</button>
+                <button class="btn btn-danger" id="deleteModalConfirm">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/chat.js"></script>
+</body>
+</html>

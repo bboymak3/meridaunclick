@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mérida Un Click - El portal comercial líder en Mérida, Venezuela. Encuentra casas, apartamentos, terrenos y más.">
+    <meta name="keywords" content="inmobiliaria, Mérida, casas, apartamentos, terrenos, venta, alquiler, Venezuela">
+    <title>Mérida Un Click - Negocioes en Mérida, Venezuela</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <i class="fas fa-home"></i>
+                <span>Mérida Un Click</span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link active">Inicio</a></li>
+                <li><a href="search.html" class="nav-link">Negocioes</a></li>
+                <li><a href="map.html" class="nav-link">Mapa</a></li>
+                <li><a href="new-business.html" class="nav-link">Registrar</a></li>
+                <li id="navLoginItem"><a href="login.html" class="nav-link nav-btn">Login</a></li>
+                <li id="navUserItem" class="nav-user hidden">
+                    <a href="dashboard.html" class="nav-link" id="navUserName">
+                        <i class="fas fa-user-circle"></i> Mi Cuenta
+                    </a>
+                    <button class="nav-link btn-logout" id="navLogout">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ===== 1. HERO SECTION ===== -->
+    <section class="idx-hero">
+        <div class="idx-hero-bg"></div>
+        <div class="idx-hero-particles"></div>
+        <div class="idx-hero-content">
+            <div class="idx-hero-badge">
+                <i class="fas fa-star"></i> El directorio comercial #1 de Mérida
+            </div>
+            <h1 class="idx-hero-title">Encuentra los mejores <span class="idx-hero-highlight">negocios y comercios</span> en Mérida</h1>
+            <p class="idx-hero-subtitle">Negocios, profesionales, servicios y más. Registra tu comercio gratis y conecta con clientes en Mérida.</p>
+
+            <!-- Mobile: Search Trigger Button -->
+            <button class="idx-mobile-search-trigger" id="mobileSearchTrigger">
+                <i class="fas fa-search"></i>
+                <span>Explorar Negocios</span>
+                <i class="fas fa-chevron-down idx-mobile-search-arrow"></i>
+            </button>
+
+            <!-- Search Bar (desktop inline, mobile inside modal) -->
+            <form class="idx-search-bar" id="heroSearchForm" action="search.html" method="GET">
+                <div class="idx-search-modal-header" id="searchModalHeader">
+                    <h3><i class="fas fa-search"></i> Explorar Negocios</h3>
+                    <button type="button" class="idx-search-modal-close" id="searchModalClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="idx-search-row">
+                    <div class="idx-search-field">
+                        <label><i class="fas fa-home"></i> Tipo</label>
+                        <div class="idx-select-wrap">
+                            <select id="searchTipo" name="tipo">
+                                <option value="">Todas</option>
+                                <option value="Casa">Casas</option>
+                                <option value="Apartamento">Apartamentos</option>
+                                <option value="Terreno">Profesionales</option>
+                                <option value="Local Comercial">Locales Comerciales</option>
+                                <option value="Oficina">Oficinas</option>
+                                <option value="Hotel">Hoteles</option>
+                                <option value="Finca">Fincas</option>
+                                <option value="Galpón">Galpones</option>
+                                <option value="Estacionamiento">Estacionamientos</option>
+                                <option value="Otro">Otros</option>
+                            </select>
+                            <i class="fas fa-chevron-down idx-select-arrow"></i>
+                        </div>
+                    </div>
+                    <div class="idx-search-field">
+                        <label><i class="fas fa-exchange-alt"></i> Operación</label>
+                        <div class="idx-select-wrap">
+                            <select id="searchOperacion" name="operacion">
+                                <option value="">Ambos</option>
+                                <option value="Venta">Venta</option>
+                                <option value="Alquiler">Alquiler</option>
+                            </select>
+                            <i class="fas fa-chevron-down idx-select-arrow"></i>
+                        </div>
+                    </div>
+                    <div class="idx-search-field">
+                        <label><i class="fas fa-map-marker-alt"></i> Ciudad</label>
+                        <input type="text" id="searchCiudad" name="ciudad" placeholder="Mérida">
+                    </div>
+                </div>
+                <div class="idx-search-row idx-search-row-2">
+                    <div class="idx-search-field">
+                        <label><i class="fas fa-dollar-sign"></i> Precio Mín</label>
+                        <input type="number" id="searchPrecioMin" name="precio_min" placeholder="0" min="0">
+                    </div>
+                    <div class="idx-search-field">
+                        <label><i class="fas fa-dollar-sign"></i> Precio Máx</label>
+                        <input type="number" id="searchPrecioMax" name="precio_max" placeholder="Sin límite" min="0">
+                    </div>
+                    <div class="idx-search-field">
+                        <label><i class="fas fa-bed"></i> Habitaciones</label>
+                        <div class="idx-select-wrap">
+                            <select id="searchHabitaciones" name="habitaciones">
+                                <option value="">Cualquiera</option>
+                                <option value="1">1+</option>
+                                <option value="2">2+</option>
+                                <option value="3">3+</option>
+                                <option value="4">4+</option>
+                                <option value="5">5+</option>
+                            </select>
+                            <i class="fas fa-chevron-down idx-select-arrow"></i>
+                        </div>
+                    </div>
+                    <div class="idx-search-field">
+                        <label><i class="fas fa-bath"></i> Baños</label>
+                        <div class="idx-select-wrap">
+                            <select id="searchBanos" name="banos">
+                                <option value="">Cualquiera</option>
+                                <option value="1">1+</option>
+                                <option value="2">2+</option>
+                                <option value="3">3+</option>
+                                <option value="4">4+</option>
+                            </select>
+                            <i class="fas fa-chevron-down idx-select-arrow"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="idx-search-btn">
+                        <i class="fas fa-search"></i> Explorar
+                    </button>
+                </div>
+                <!-- Quick Links inside form (visible in mobile modal) -->
+                <div class="idx-quick-links idx-quick-links-modal">
+                    <a href="search.html?tipo=Casa&operacion=Venta" class="idx-quick-link">
+                        <i class="fas fa-fire"></i> Negocios Populares
+                    </a>
+                    <a href="search.html?tipo=Apartamento&operacion=Alquiler" class="idx-quick-link">
+                        <i class="fas fa-key"></i> Negocios Destacados
+                    </a>
+                    <a href="search.html?tipo=Terreno" class="idx-quick-link">
+                        <i class="fas fa-mountain-sun"></i> Profesionales
+                    </a>
+                    <a href="new-business.html" class="idx-quick-link idx-quick-link-publish">
+                        <i class="fas fa-plus-circle"></i> Registrar Gratis
+                    </a>
+                </div>
+            </form>
+
+            <!-- Quick Links (desktop only) -->
+            <div class="idx-quick-links">
+                <a href="search.html?tipo=Casa&operacion=Venta" class="idx-quick-link">
+                    <i class="fas fa-fire"></i> Negocios Populares
+                </a>
+                <a href="search.html?tipo=Apartamento&operacion=Alquiler" class="idx-quick-link">
+                    <i class="fas fa-key"></i> Negocios Destacados
+                </a>
+                <a href="search.html?tipo=Terreno" class="idx-quick-link">
+                    <i class="fas fa-mountain-sun"></i> Profesionales
+                </a>
+                <a href="new-business.html" class="idx-quick-link idx-quick-link-publish">
+                    <i class="fas fa-plus-circle"></i> Registrar Gratis
+                </a>
+            </div>
+
+            <!-- Mobile Search Modal Backdrop -->
+            <div class="idx-mobile-search-backdrop" id="mobileSearchBackdrop"></div>
+        </div>
+    </section>
+
+    <!-- ===== 2. FEATURED PROPERTIES ===== -->
+    <section class="idx-section" id="featuredSection">
+        <div class="container">
+            <div class="idx-section-header">
+                <div class="idx-section-header-left">
+                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #1a73e8, #4a90e8);">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div>
+                        <h2 class="idx-section-title">Negocios Destacados</h2>
+                        <p class="idx-section-subtitle">Las mejores oportunidades inmobiliarias en Mérida</p>
+                    </div>
+                </div>
+                <a href="search.html" class="idx-section-link">
+                    Ver todas <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="business-grid" id="featuredGrid">
+                <div class="loading-spinner" id="featuredLoading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Cargando negocioes...</p>
+                </div>
+            </div>
+            <div class="text-center" id="featuredEmpty" style="display:none;">
+                <p class="text-muted">No hay negocioes destacadas en este momento.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 3. EXPLORE BY TYPE ===== -->
+    <section class="idx-section idx-section-alt">
+        <div class="container">
+            <div class="idx-section-header">
+                <div class="idx-section-header-left">
+                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #6f42c1, #8b5cf6);">
+                        <i class="fas fa-th-large"></i>
+                    </div>
+                    <div>
+                        <h2 class="idx-section-title">Explora por Categoría</h2>
+                        <p class="idx-section-subtitle">Encuentra exactamente lo que buscas</p>
+                    </div>
+                </div>
+            </div>
+            <div class="idx-types-grid">
+                <a href="search.html?categoria=restaurantes" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fef2f2, #fecaca); color: #e74c3c;">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <h3>Restaurantes</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=farmacias" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #e74c3c;">
+                        <i class="fas fa-pills"></i>
+                    </div>
+                    <h3>Farmacias</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=clinicas-hospitales" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fef2f2, #fecaca); color: #c0392b;">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                    <h3>Clínicas</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=supermercados" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #2ecc71;">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>Supermercados</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=barberias" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f1f5f9, #cbd5e1); color: #607d8b;">
+                        <i class="fas fa-cut"></i>
+                    </div>
+                    <h3>Barberías</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=auto-talleres" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fff7ed, #fed7aa); color: #ff9800;">
+                        <i class="fas fa-wrench"></i>
+                    </div>
+                    <h3>Auto Talleres</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=ropas" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #e91e63;">
+                        <i class="fas fa-tshirt"></i>
+                    </div>
+                    <h3>Ropas</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=ferreterias" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #ff9800;">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3>Ferreterías</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=cafeterias" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #795548;">
+                        <i class="fas fa-coffee"></i>
+                    </div>
+                    <h3>Cafeterías</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=tecnologia" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0f9ff, #bae6fd); color: #2196f3;">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <h3>Tecnología</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=hoteles-posadas" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fef9c3, #fde68a); color: #e91e63;">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <h3>Hoteles</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=gimnasios" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #2980b9;">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                    <h3>Gimnasios</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=celulares" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #00bcd4;">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h3>Celulares</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=artesanias" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fff7ed, #fed7aa); color: #ff9800;">
+                        <i class="fas fa-palette"></i>
+                    </div>
+                    <h3>Artesanías</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=academias" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #3f51b5;">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h3>Academias</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=dentistas" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fef2f2, #fecaca); color: #1abc9c;">
+                        <i class="fas fa-tooth"></i>
+                    </div>
+                    <h3>Dentistas</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=electricos" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f1f5f9, #cbd5e1); color: #ffeb3b;">
+                        <i class="fas fa-bolt"></i>
+                    </div>
+                    <h3>Eléctricos</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=bares-discotecas" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #8e44ad;">
+                        <i class="fas fa-cocktail"></i>
+                    </div>
+                    <h3>Bares</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a href="search.html?categoria=all" class="idx-type-card">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0f9ff, #bae6fd); color: #0284c7;">
+                        <i class="fas fa-th-large"></i>
+                    </div>
+                    <h3>Ver Todas</h3>
+                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 4. MAP SECTION ===== -->
+    <section class="idx-section" id="homeMapSection">
+        <div class="container">
+            <div class="idx-section-header">
+                <div class="idx-section-header-left">
+                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8c5a);">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <div>
+                        <h2 class="idx-section-title">Mapa de Negocios</h2>
+                        <p class="idx-section-subtitle">Explora los negocios disponibles en Mérida visualmente</p>
+                    </div>
+                </div>
+                <a href="map.html" class="idx-section-link">
+                    <i class="fas fa-expand"></i> Ver Mapa Completo
+                </a>
+            </div>
+            <div class="idx-map-wrapper">
+                <div id="homeMap" class="home-map"></div>
+                <div class="idx-map-overlay" id="homeMapOverlay">
+                    <div class="idx-map-overlay-content">
+                        <div class="idx-map-overlay-icon">
+                            <i class="fas fa-map-marked-alt"></i>
+                        </div>
+                        <p>Mapa interactivo con todas los negocios</p>
+                        <a href="map.html" class="idx-map-btn">
+                            <i class="fas fa-expand"></i> Abrir Mapa Completo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 5. HOW IT WORKS ===== -->
+    <section class="idx-section idx-section-alt">
+        <div class="container">
+            <div class="idx-section-header idx-section-header-center">
+                <div class="idx-section-icon" style="background: linear-gradient(135deg, #28a745, #5cb85c);">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div>
+                    <h2 class="idx-section-title">¿Cómo funciona?</h2>
+                    <p class="idx-section-subtitle">Encuentra o publica tu negocio en 3 sencillos pasos</p>
+                </div>
+            </div>
+            <div class="idx-steps-grid">
+                <div class="idx-step-card">
+                    <div class="idx-step-connector"></div>
+                    <div class="idx-step-number">01</div>
+                    <div class="idx-step-icon-wrap">
+                        <div class="idx-step-icon" style="background: linear-gradient(135deg, #1a73e8, #4a90e8);">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                    </div>
+                    <h3>Registra</h3>
+                    <p>Regístrate y publica tu negocio con fotos, detalles y precio de forma completamente gratuita.</p>
+                </div>
+                <div class="idx-step-card">
+                    <div class="idx-step-connector"></div>
+                    <div class="idx-step-number">02</div>
+                    <div class="idx-step-icon-wrap">
+                        <div class="idx-step-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8c5a);">
+                            <i class="fas fa-search-location"></i>
+                        </div>
+                    </div>
+                    <h3>Explora</h3>
+                    <p>Explora negocioes usando filtros avanzados, mapa interactivo y búsqueda por zona.</p>
+                </div>
+                <div class="idx-step-card">
+                    <div class="idx-step-number">03</div>
+                    <div class="idx-step-icon-wrap">
+                        <div class="idx-step-icon" style="background: linear-gradient(135deg, #28a745, #5cb85c);">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                    </div>
+                    <h3>Contacta</h3>
+                    <p>Comunícate directamente con el dueño del negocio sin intermediarios.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 6. STATS SECTION ===== -->
+    <section class="idx-stats-section">
+        <div class="idx-stats-bg"></div>
+        <div class="container">
+            <div class="idx-stats-grid">
+                <div class="idx-stat-card">
+                    <div class="idx-stat-icon-wrap">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <div class="idx-stat-number" id="statProperties">0</div>
+                    <div class="idx-stat-label">Negocioes Registradas</div>
+                </div>
+                <div class="idx-stat-card">
+                    <div class="idx-stat-icon-wrap" style="background: rgba(40, 167, 69, 0.15);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="idx-stat-number" id="statUsers">0</div>
+                    <div class="idx-stat-label">Usuarios Activos</div>
+                </div>
+                <div class="idx-stat-card">
+                    <div class="idx-stat-icon-wrap" style="background: rgba(255, 107, 53, 0.15);">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="idx-stat-number">Mérida</div>
+                    <div class="idx-stat-label">Venezuela</div>
+                </div>
+                <div class="idx-stat-card">
+                    <div class="idx-stat-icon-wrap" style="background: rgba(111, 66, 193, 0.15);">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="idx-stat-number">100%</div>
+                    <div class="idx-stat-label">Gratuito</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 7. CTA SECTION ===== -->
+    <section class="idx-cta-section">
+        <div class="container">
+            <div class="idx-cta-card">
+                <div class="idx-cta-glow"></div>
+                <div class="idx-cta-content">
+                    <h2>¿Tienes una negocio que vender o alquilar?</h2>
+                    <p>Registra tu negocio gratis en Mérida Un Click y llega a miles de personas buscando su próximo hogar.</p>
+                    <a href="new-business.html" class="idx-cta-btn">
+                        <i class="fas fa-plus-circle"></i> Registrar Negocio Gratis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-col">
+                    <a href="index.html" class="footer-logo">
+                        <i class="fas fa-home"></i>
+                        <span>Mérida Un Click</span>
+                    </a>
+                    <p>El portal comercial más completo de Mérida, Venezuela. Conectamos negocios con clientes.</p>
+                    <div class="footer-social">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+                <div class="footer-col">
+                    <h4>Navegación</h4>
+                    <ul>
+                        <li><a href="index.html">Inicio</a></li>
+                        <li><a href="search.html">Negocioes</a></li>
+                        <li><a href="map.html">Mapa</a></li>
+                        <li><a href="new-business.html">Registrar Negocio</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Categorías</h4>
+                    <ul>
+                        <li><a href="search.html?tipo=Casa">Casas</a></li>
+                        <li><a href="search.html?tipo=Apartamento">Apartamentos</a></li>
+                        <li><a href="search.html?tipo=Terreno">Profesionales</a></li>
+                        <li><a href="search.html?tipo=Local+Comercial">Locales Comerciales</a></li>
+                        <li><a href="search.html?tipo=Finca">Fincas</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Contacto</h4>
+                    <ul>
+                        <li><i class="fas fa-envelope"></i> info@casasbarinas.com</li>
+                        <li><i class="fas fa-phone"></i> +58 274-000-0000</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Mérida, Venezuela</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Mérida Un Click. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="js/app.js"></script>
+    <script src="js/home-map.js"></script>
+    <script src="js/chat.js"></script>
+</body>
+</html>

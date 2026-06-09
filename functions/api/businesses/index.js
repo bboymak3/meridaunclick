@@ -1,0 +1,261 @@
+// functions/api/businesses/index.js
+// GET: List businesses (with filters)
+// POST: Create business (requires auth)
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+};
+
+export async function onRequestOptions() {
+  return new Response(null, { headers: corsHeaders });
+}
+
+function base64urlDecode(str) {
+  let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = base64.length % 4;
+  if (pad) {
+    base64 += '='.repeat(4 - pad);
+  }
+  return JSON.parse(atob(base64));
+}
+
+async function verifyJWT(token, secret) {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [headerB64, payloadB64, signatureB64] = parts;
+  const data = `${headerB64}.${payloadB64}`;
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  let sigBase64 = signatureB64.replace(/-/g, '+').replace(/_/g, '/');
+  const sigPad = sigBase64.length % 4;
+  if (sigPad) sigBase64 += '='.repeat(4 - sigPad);
+  const sigBytes = Uint8Array.from(atob(sigBase64), (c) => c.charCodeAt(0));
+  const isValid = await crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(data));
+  if (!isValid) return null;
+  const payload = base64urlDecode(payloadB64);
+  if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) return null;
+  return payload;
+}
+
+// ─── GET: List businesses ───────────────────────────────────────
+export async function onRequestGet(context) {
+  try {
+    const { request, env } = context;
+
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: 'Base de datos no disponible. Verifica el binding D1 en Cloudflare Pages.', debug: 'DB binding missing' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const url = new URL(request.url);
+    const params = url.searchParams;
+
+    const businessType = params.get('business_type');
+    const categorySlug = params.get('categoria');
+    const city = params.get('city');
+    const status = params.get('status') || 'approved';
+    const page = parseInt(params.get('page')) || 1;
+    const limit = parseInt(params.get('limit')) || 12;
+    const offset = (page - 1) * limit;
+    const search = params.get('search');
+    const userId = params.get('user_id');
+    const featured = params.get('featured');
+
+    const conditions = [];
+    const bindings = [];
+
+    conditions.push('p.status = ?');
+    bindings.push(status);
+
+    if (userId) {
+      conditions.push('p.user_id = ?');
+      bindings.push(parseInt(userId));
+    }
+
+    if (businessType) {
+      conditions.push('p.business_type = ?');
+      bindings.push(businessType);
+    }
+    if (categorySlug) {
+      conditions.push('p.category_id = (SELECT id FROM categories WHERE slug = ?)');
+      bindings.push(categorySlug);
+    }
+    if (city) {
+      conditions.push('p.city LIKE ?');
+      bindings.push(`%${city}%`);
+    }
+    if (featured === '1') {
+      conditions.push('p.featured = 1');
+    }
+    if (search) {
+      conditions.push('(p.title LIKE ? OR p.description LIKE ? OR p.address LIKE ?)');
+      bindings.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    const whereClause = conditions.join(' AND ');
+
+    // Count total matching businesses
+    const countQuery = `SELECT COUNT(*) as total FROM businesses p WHERE ${whereClause}`;
+    const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();
+    const total = countResult.total;
+
+    // Fetch businesses with cover image and owner info
+    const query = `
+      SELECT 
+        p.*,
+        u.name as owner_name,
+        u.phone as owner_phone,
+        u.whatsapp as owner_whatsapp,
+        u.avatar as owner_avatar,
+        (SELECT url FROM images WHERE business_id = p.id AND is_cover = 1 LIMIT 1) as cover_image,
+        (SELECT COUNT(*) FROM images WHERE business_id = p.id) as image_count
+      FROM businesses p
+      LEFT JOIN users u ON p.user_id = u.id
+      WHERE ${whereClause}
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+
+    const businesses = await env.DB.prepare(query).bind(...bindings, limit, offset).all();
+
+    return new Response(JSON.stringify({
+      businesses: businesses.results,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Businesses GET error:', error);
+    let errorMsg = 'Error interno del servidor';
+    if (error.message && error.message.includes('no such table')) {
+      errorMsg = 'Error: La tabla de businesses no existe. Ejecuta el schema.sql en tu D1.';
+    } else if (error.message) {
+      errorMsg = `Error: ${error.message}`;
+    }
+    return new Response(JSON.stringify({ error: errorMsg, debug: error.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
+
+// ─── POST: Create business ──────────────────────────────────────
+export async function onRequestPost(context) {
+  try {
+    const { request, env } = context;
+
+    // Check D1 binding
+    if (!env.DB) {
+      return new Response(JSON.stringify({ error: 'Base de datos no disponible. Verifica el binding D1 en Cloudflare Pages.', debug: 'DB binding missing' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const jwtSecret = env.JWT_SECRET || 'meridaunclick_default_secret_2024';
+
+    // Auth required
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Token de autorización requerido' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const token = authHeader.substring(7);
+    const payload = await verifyJWT(token, jwtSecret);
+    if (!payload) {
+      return new Response(JSON.stringify({ error: 'Token inválido o expirado' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const body = await request.json();
+
+    // Required fields
+    const { title, category_id, business_type } = body;
+    if (!title || !category_id || !business_type) {
+      return new Response(JSON.stringify({ error: 'Título, categoría y tipo de negocio son requeridos' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const validBusinessTypes = ['negocio', 'profesional', 'servicio', 'restaurante', 'tienda', 'otro'];
+    if (!validBusinessTypes.includes(business_type)) {
+      return new Response(JSON.stringify({ error: 'Tipo de negocio inválido' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const result = await env.DB.prepare(`
+      INSERT INTO businesses (
+        user_id, title, description, category_id, business_type,
+        address, city, state, country, lat, lng,
+        phone, whatsapp, website, instagram, facebook, email_contact, schedule,
+        has_parking, has_wifi, has_card, has_delivery, has_outdoor,
+        status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      payload.id,
+      title,
+      body.description || null,
+      parseInt(category_id),
+      business_type,
+      body.address || null,
+      body.city || 'Mérida',
+      body.state || 'Mérida',
+      body.country || 'Venezuela',
+      body.lat || null,
+      body.lng || null,
+      body.phone || null,
+      body.whatsapp || null,
+      body.website || null,
+      body.instagram || null,
+      body.facebook || null,
+      body.email_contact || null,
+      body.schedule || null,
+      body.has_parking ? 1 : 0,
+      body.has_wifi ? 1 : 0,
+      body.has_card ? 1 : 0,
+      body.has_delivery ? 1 : 0,
+      body.has_outdoor ? 1 : 0,
+      'pending'
+    ).run();
+
+    const businessId = result.meta.last_row_id;
+
+    return new Response(JSON.stringify({
+      message: 'Negocio registrado exitosamente. Está pendiente de aprobación.',
+      business_id: businessId,
+    }), {
+      status: 201,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Businesses POST error:', error);
+    let errorMsg = 'Error interno del servidor';
+    if (error.message && error.message.includes('no such table')) {
+      errorMsg = 'Error: La tabla de businesses no existe. Ejecuta el schema.sql en tu D1.';
+    } else if (error.message) {
+      errorMsg = `Error: ${error.message}`;
+    }
+    return new Response(JSON.stringify({ error: errorMsg, debug: error.message, stack: error.stack }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+}
