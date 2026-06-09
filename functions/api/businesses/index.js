@@ -210,7 +210,7 @@ export async function onRequestPost(context) {
     // Required fields
     const { title, category_id, business_type } = body;
     if (!title || !category_id || !business_type) {
-      return new Response(JSON.stringify({ error: 'Título, categoría y tipo de negocio son requeridos' }), {
+      return new Response(JSON.stringify({ error: 'Título, categoría y tipo de negocio son requeridos', received: { title: !!title, category_id: !!category_id, business_type: !!business_type } }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -218,25 +218,61 @@ export async function onRequestPost(context) {
 
     const validBusinessTypes = ['negocio', 'profesional', 'servicio', 'restaurante', 'tienda', 'otro'];
     if (!validBusinessTypes.includes(business_type)) {
-      return new Response(JSON.stringify({ error: 'Tipo de negocio inválido' }), {
+      return new Response(JSON.stringify({ error: 'Tipo de negocio inválido', validTypes: validBusinessTypes, received: business_type }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // Resolve category_id: accept numeric ID or slug string
+    let resolvedCategoryId = category_id;
+    if (isNaN(parseInt(category_id))) {
+      // It's a slug - look up the numeric ID
+      const catRow = await env.DB.prepare('SELECT id FROM categories WHERE slug = ?').bind(category_id).first();
+      if (!catRow) {
+        // Category not in DB - try to create it with a default entry
+        try {
+          const slugName = category_id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          const iconGuess = 'fas fa-store';
+          const insertResult = await env.DB.prepare(
+            'INSERT INTO categories (name, slug, icon, color, sort_order) VALUES (?, ?, ?, ?, 99)'
+          ).bind(slugName, category_id, iconGuess, '#607d8b').run();
+          resolvedCategoryId = insertResult.meta.last_row_id;
+        } catch (insertErr) {
+          // If still can't insert, reject
+          return new Response(JSON.stringify({ error: 'Categoría no encontrada: ' + category_id, hint: 'Usa un ID numérico o un slug válido' }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      } else {
+        resolvedCategoryId = catRow.id;
+      }
+    } else {
+      resolvedCategoryId = parseInt(category_id);
+    }
+
+    // Generate slug from title
+    const slug = title.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 120);
+
     const result = await env.DB.prepare(`
       INSERT INTO businesses (
-        user_id, title, description, category_id, business_type,
+        user_id, title, slug, description, category_id, business_type,
         address, city, state, country, lat, lng,
         phone, whatsapp, website, instagram, facebook, email_contact, schedule,
         has_parking, has_wifi, has_card, has_delivery, has_outdoor,
         status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       payload.id,
       title,
+      slug,
       body.description || null,
-      parseInt(category_id),
+      resolvedCategoryId,
       business_type,
       body.address || null,
       body.city || 'Mérida',
