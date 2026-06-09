@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unclick-v2';
+const CACHE_NAME = 'unclick-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -51,16 +51,10 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API calls: network first
+  // API calls: network only, no caching (POST/PUT/DELETE not supported by Cache API)
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request))
+      fetch(request).catch(() => caches.match(request))
     );
     return;
   }
