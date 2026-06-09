@@ -15,6 +15,7 @@
     let propsPage = 1;
     let usersPage = 1;
     let msgsPage = 1;
+    let jobsPage = 1;
     const PAGE_LIMIT = 15;
 
     // ─── DOM Elements ───────────────────────────────────────────
@@ -29,6 +30,7 @@
     const tabUsers = document.getElementById('tabUsers');
     const tabMessages = document.getElementById('tabMessages');
     const tabFacebook = document.getElementById('tabFacebook');
+    const tabJobs = document.getElementById('tabJobs');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -97,6 +99,8 @@
         setupModals();
         setupFilterListeners();
         setupFacebookListeners();
+        setupJobListeners();
+        loadBusinessesForJobSelect();
 
         // Load initial data
         await loadDashboardStats();
@@ -134,7 +138,7 @@
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -142,7 +146,7 @@
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Propiedades', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -167,6 +171,10 @@
             case 'facebook':
                 loadFacebookConfig();
                 loadFacebookHistory();
+                break;
+            case 'jobs':
+                jobsPage = 1;
+                loadJobs();
                 break;
         }
 
@@ -1153,6 +1161,9 @@
         toggleUserStatus,
         deleteUser,
         viewMessage,
+        approveJob,
+        rejectJob,
+        deleteJob,
     };
 
     // ─── Facebook Event Listeners (set up in init) ─────────────
@@ -1164,6 +1175,153 @@
         if (fbSaveConfigBtn) fbSaveConfigBtn.addEventListener('click', saveFacebookConfig);
         if (fbTestConnectionBtn) fbTestConnectionBtn.addEventListener('click', testFacebookConnection);
         if (fbImportNowBtn) fbImportNowBtn.addEventListener('click', importFromFacebook);
+    }
+
+    // ─── JOBS MANAGEMENT ──────────────────────────────────────
+    async function loadJobs() {
+        try {
+            const params = new URLSearchParams({ page: jobsPage, limit: PAGE_LIMIT });
+            const data = await api.get(`/jobs?${params}`);
+            const tbody = document.getElementById('adminJobsTableBody');
+            if (!tbody) return;
+
+            if (!data.jobs || data.jobs.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="7"><div class="empty-state-sm"><p>No hay ofertas de empleo.</p></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.jobs.map(j => `
+                <tr>
+                    <td>${j.id}</td>
+                    <td><strong>${escHtml(j.title)}</strong></td>
+                    <td>${escHtml(j.company_name)}</td>
+                    <td>${j.state || '-'} / ${j.city || '-'}</td>
+                    <td><span class="badge badge-${j.status === 'approved' ? 'success' : j.status === 'rejected' ? 'danger' : 'warning'}">${j.job_type || '-'}</span></td>
+                    <td><span class="badge badge-${j.status === 'approved' ? 'success' : j.status === 'rejected' ? 'danger' : 'warning'}">${j.status}</span></td>
+                    <td>
+                        ${j.status === 'pending' ? `<button class="btn btn-sm btn-success" onclick="admin.approveJob(${j.id})"><i class="fas fa-check"></i></button>` : ''}
+                        ${j.status !== 'rejected' ? `<button class="btn btn-sm btn-danger" onclick="admin.rejectJob(${j.id})"><i class="fas fa-ban"></i></button>` : ''}
+                        <button class="btn btn-sm btn-secondary" onclick="admin.deleteJob(${j.id})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            console.error('Error loading jobs:', err);
+        }
+    }
+
+    async function loadBusinessesForJobSelect() {
+        const select = document.getElementById('jobCompany');
+        if (!select) return;
+        try {
+            const data = await api.get('/businesses?status=approved&limit=200');
+            if (data.businesses) {
+                data.businesses.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.title;
+                    opt.textContent = `${b.title} (${b.state || '-'})`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (err) {
+            console.error('Error loading businesses for job select:', err);
+        }
+    }
+
+    function setupJobListeners() {
+        const createBtn = document.getElementById('adminCreateJobBtn');
+        const modal = document.getElementById('adminJobModal');
+        const closeBtn = document.getElementById('adminJobModalClose');
+        const cancelBtn = document.getElementById('adminJobCancel');
+        const submitBtn = document.getElementById('adminJobSubmit');
+
+        if (createBtn) createBtn.addEventListener('click', () => { if (modal) modal.classList.remove('hidden'); });
+        if (closeBtn) closeBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); });
+        if (cancelBtn) cancelBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); });
+        if (modal) modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+
+        if (submitBtn) submitBtn.addEventListener('click', submitJob);
+    }
+
+    async function submitJob() {
+        const company = document.getElementById('jobCompany')?.value;
+        const title = document.getElementById('jobTitle')?.value?.trim();
+        const job_type = document.getElementById('jobType')?.value;
+        const salary = document.getElementById('jobSalary')?.value?.trim();
+        const state = document.getElementById('jobState')?.value?.trim();
+        const city = document.getElementById('jobCity')?.value?.trim();
+        const description = document.getElementById('jobDescription')?.value?.trim();
+        const requirements = document.getElementById('jobRequirements')?.value?.trim();
+        const benefits = document.getElementById('jobBenefits')?.value?.trim();
+        const contactEmail = document.getElementById('jobContactEmail')?.value?.trim();
+        const contactPhone = document.getElementById('jobContactPhone')?.value?.trim();
+
+        if (!company || !title) {
+            showToast('Empresa y título son requeridos', 'error');
+            return;
+        }
+
+        try {
+            await api.post('/jobs', {
+                company_name: company,
+                title,
+                job_type: job_type || 'tiempo_completo',
+                salary: salary || null,
+                state: state || null,
+                city: city || null,
+                description: description || null,
+                requirements: requirements || null,
+                benefits: benefits || null,
+                contact_email: contactEmail || null,
+                contact_phone: contactPhone || null,
+            });
+            showToast('Oferta de empleo publicada', 'success');
+            document.getElementById('adminJobModal')?.classList.add('hidden');
+            loadJobs();
+        } catch (err) {
+            showToast(err.message || 'Error al publicar empleo', 'error');
+        }
+    }
+
+    function approveJob(id) {
+        executeD1Action(`UPDATE job_listings SET status='approved' WHERE id=${id}`, 'Oferta aprobada', loadJobs);
+    }
+
+    function rejectJob(id) {
+        executeD1Action(`UPDATE job_listings SET status='rejected' WHERE id=${id}`, 'Oferta rechazada', loadJobs);
+    }
+
+    function deleteJob(id) {
+        if (confirm('¿Eliminar esta oferta de empleo?')) {
+            executeD1Action(`DELETE FROM job_listings WHERE id=${id}`, 'Oferta eliminada', loadJobs);
+        }
+    }
+
+    function escHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    async function executeD1Action(sql, successMsg, callback) {
+        try {
+            // Use the jobs API with direct approach - we need a direct DB endpoint
+            // For now use the businesses approve pattern
+            const token = localStorage.getItem(TOKEN_KEY);
+            // Call a generic admin action via PATCH to jobs
+            const resp = await fetch(`/api/jobs/${sql.split(' ')[2].split('=')[0]}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ action: sql.includes('DELETE') ? 'delete' : sql.includes('approved') ? 'approve' : 'reject' })
+            });
+            if (resp.ok) {
+                showToast(successMsg, 'success');
+                if (callback) callback();
+            } else {
+                showToast('Error en la acción', 'error');
+            }
+        } catch (err) {
+            showToast(err.message || 'Error', 'error');
+        }
     }
 
     // ─── Initialize on DOM Ready ────────────────────────────────

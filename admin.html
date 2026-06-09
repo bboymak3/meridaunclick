@@ -63,6 +63,11 @@
                         <span>Mensajes</span>
                         <span class="badge" id="adminMsgBadge">0</span>
                     </a>
+                    <a href="#" class="admin-nav-link" data-tab="jobs">
+                        <i class="fas fa-briefcase"></i>
+                        <span>Empleo</span>
+                        <span class="badge" id="adminJobsBadge">0</span>
+                    </a>
                     <a href="#" class="admin-nav-link" data-tab="facebook">
                         <i class="fab fa-facebook"></i>
                         <span>Facebook Import</span>
@@ -439,6 +444,45 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ==================== JOBS TAB ==================== -->
+                <div class="admin-tab hidden" id="tabJobs">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-briefcase"></i> Ofertas de Empleo</h3>
+                            <div class="admin-card-actions">
+                                <button class="btn btn-primary btn-sm" id="adminCreateJobBtn">
+                                    <i class="fas fa-plus"></i> Publicar Empleo
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="admin-table-responsive">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Título</th>
+                                            <th>Empresa</th>
+                                            <th>Estado</th>
+                                            <th>Tipo</th>
+                                            <th>Estatus</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminJobsTableBody">
+                                        <tr class="empty-row">
+                                            <td colspan="7">
+                                                <div class="empty-state-sm"><p>Cargando empleos...</p></div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="admin-pagination" id="adminJobsPagination"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -631,6 +675,84 @@
                 <button class="btn btn-secondary" id="adminDeleteCancel">Cancelar</button>
                 <button class="btn btn-danger" id="adminDeleteConfirm">
                     <i class="fas fa-trash"></i> Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Job Modal -->
+    <div class="modal hidden" id="adminJobModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3><i class="fas fa-briefcase" style="color:#6366f1"></i> Publicar Oferta de Empleo</h3>
+                <button class="modal-close" id="adminJobModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="jobCompany">Empresa <span style="color:#e74c3c">*</span></label>
+                    <select id="jobCompany" name="company" required>
+                        <option value="">Selecciona una empresa registrada...</option>
+                    </select>
+                    <small style="color:#888;">La empresa debe estar registrada como negocio en el directorio</small>
+                </div>
+                <div class="form-group">
+                    <label for="jobTitle">Título del Puesto <span style="color:#e74c3c">*</span></label>
+                    <input type="text" id="jobTitle" name="title" placeholder="Ej: Desarrollador Frontend" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="jobType">Tipo de Empleo <span style="color:#e74c3c">*</span></label>
+                        <select id="jobType" name="job_type" required>
+                            <option value="tiempo_completo">Tiempo Completo</option>
+                            <option value="medio_tiempo">Medio Tiempo</option>
+                            <option value="contrato">Contrato</option>
+                            <option value="remoto">Remoto</option>
+                            <option value="freelance">Freelance</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="jobSalary">Salario</label>
+                        <input type="text" id="jobSalary" name="salary" placeholder="Ej: $500 - $800 mensual">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="jobState">Estado</label>
+                        <input type="text" id="jobState" name="state" placeholder="Ej: Mérida">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobCity">Ciudad</label>
+                        <input type="text" id="jobCity" name="city" placeholder="Ej: Mérida">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="jobDescription">Descripción <span style="color:#e74c3c">*</span></label>
+                    <textarea id="jobDescription" name="description" rows="5" placeholder="Describe el puesto, responsabilidades, requisitos..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="jobRequirements">Requisitos</label>
+                    <textarea id="jobRequirements" name="requirements" rows="3" placeholder="Ej: Experiencia mínima 2 años, conocimiento en..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="jobBenefits">Beneficios</label>
+                    <textarea id="jobBenefits" name="benefits" rows="2" placeholder="Ej: Seguro médico, días libres, bono de productividad"></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="jobContactEmail">Email de Contacto</label>
+                        <input type="email" id="jobContactEmail" name="contact_email" placeholder="rrhh@empresa.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="jobContactPhone">Teléfono de Contacto</label>
+                        <input type="tel" id="jobContactPhone" name="contact_phone" placeholder="+58 414 000-0000">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="adminJobCancel">Cancelar</button>
+                <button class="btn btn-primary" id="adminJobSubmit">
+                    <i class="fas fa-paper-plane"></i> Publicar Oferta
                 </button>
             </div>
         </div>
