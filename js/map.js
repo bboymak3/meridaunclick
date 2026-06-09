@@ -1,5 +1,5 @@
 /**
- * Mérida Un Click - Map Module
+ * Un Click - Map Module
  * Clean restructure: Uses Leaflet native popups (works on desktop & mobile)
  * No custom modal overlays — just native Leaflet popups that work everywhere
  */

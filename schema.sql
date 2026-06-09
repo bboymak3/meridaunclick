@@ -1,7 +1,8 @@
 -- ============================================================
--- Esquema D1 para Mérida Un Click
+-- Esquema D1 para Un Click - Directorio Nacional de Venezuela
 -- Base de datos: generico_db
 -- ID: 38dd85ba-03dc-4937-af19-4d1c41a18f27
+-- Dominio: aunclick.pages.dev
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS users (
@@ -147,7 +148,7 @@ INSERT OR IGNORE INTO states (name, slug) VALUES
 ('Zulia', 'zulia');
 
 INSERT OR IGNORE INTO users (name, email, phone, password_hash, role) VALUES
-('Administrador', 'admin@meridaunclick.com', '+58-274-000-0000', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'admin');
+('Administrador', 'admin@aunclick.pages.dev', '+58-414-000-0000', '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9', 'admin');
 
 INSERT OR IGNORE INTO categories (name, slug, icon, color, description, sort_order) VALUES
 ('Farmacias', 'farmacias', 'fas fa-pills', '#e74c3c', 'Farmacias y droguerías', 1),

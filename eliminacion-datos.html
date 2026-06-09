@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Eliminacion de Datos - Mérida Un Click. Instrucciones para solicitar la eliminacion de su cuenta y datos personales.">
-    <title>Eliminacion de Datos - Mérida Un Click</title>
+    <meta name="description" content="Eliminacion de Datos - Un Click. Instrucciones para solicitar la eliminacion de su cuenta y datos personales.">
+    <title>Eliminacion de Datos - Un Click</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -91,8 +91,28 @@
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
                 <i class="fas fa-store"></i>
-                <span>Mérida Un Click</span>
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> Un Click</span>
             </a>
+            <div class="location-selector" id="locationSelector">
+                <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span class="location-label" id="locationLabel">Todo Venezuela</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="location-dropdown hidden" id="locationDropdown">
+                    <div class="location-search">
+                        <input type="text" id="locationSearchInput" placeholder="Buscar estado..." autocomplete="off">
+                    </div>
+                    <div class="location-option" data-state="" data-city="">
+                        <i class="fas fa-globe-americas"></i>
+                        <span>Todo Venezuela</span>
+                    </div>
+                    <div class="location-divider"></div>
+                    <div class="location-list" id="locationList">
+                        <!-- States loaded dynamically -->
+                    </div>
+                </div>
+            </div>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menu">
                 <i class="fas fa-bars"></i>
             </button>
@@ -125,7 +145,7 @@
             <div class="legal-content">
 
                 <p>
-                    En Mérida Un Click respetamos su privacidad y su derecho a controlar sus datos personales.
+                    En Un Click respetamos su privacidad y su derecho a controlar sus datos personales.
                     A continuacion se explican los pasos para solicitar la eliminacion de su cuenta y la
                     informacion que almacenamos sobre usted.
                 </p>
@@ -142,7 +162,7 @@
                 </div>
                 <p>
                     <strong>Importante:</strong> La solicitud debe ser enviada desde el correo electronico registrado
-                    en su cuenta de Mérida Un Click. Esto es necesario para verificar su identidad y proteger sus datos.
+                    en su cuenta de Un Click. Esto es necesario para verificar su identidad y proteger sus datos.
                 </p>
 
                 <h2>2. Que se Elimina</h2>
@@ -218,7 +238,7 @@
                 <div class="footer-col">
                     <a href="index.html" class="footer-logo">
                         <i class="fas fa-store"></i>
-                        <span>Mérida Un Click</span>
+                        <span>Un Click</span>
                     </a>
                     <p>El portal comercial mas completo de Barinas, Venezuela. Conectamos negocios con clientes.</p>
                     <div class="footer-social">
@@ -257,7 +277,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Mérida Un Click. Todos los derechos reservados.</p>
+                <p>&copy; 2025 Un Click. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>

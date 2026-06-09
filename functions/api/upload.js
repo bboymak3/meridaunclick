@@ -60,7 +60,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    const jwtSecret = env.JWT_SECRET || 'meridaunclick_default_secret_2024';
+    const jwtSecret = env.JWT_SECRET || 'aunclick_default_secret_2024';
 
     // Auth required
     const authHeader = request.headers.get('Authorization');
@@ -128,14 +128,14 @@ export async function onRequestPost(context) {
     // Verify business exists and user owns it (or is admin)
     const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(businessId).first();
     if (!business) {
-      return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), {
+      return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (user.role !== 'admin' && user.id !== business.user_id) {
-      return new Response(JSON.stringify({ error: 'No tienes permiso para subir imágenes a esta propiedad' }), {
+      return new Response(JSON.stringify({ error: 'No tienes permiso para subir imágenes a este negocio' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -147,7 +147,7 @@ export async function onRequestPost(context) {
     // Generate unique key
     const timestamp = Date.now();
     const sanitizedName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const key = `merida/businesses/${businessId}/${timestamp}_${sanitizedName}`;
+    const key = `aunclick/businesses/${businessId}/${timestamp}_${sanitizedName}`;
 
     // Upload to R2
     await env.R2.put(key, arrayBuffer, {

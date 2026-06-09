@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Mérida Un Click - El directorio de negocios y comercios más completo de Venezuela. Encuentra restaurantes, farmacias, tiendas, profesionales y más en todo el país.">
+    <meta name="description" content="Un Click - El directorio de negocios y comercios más completo de Venezuela. Encuentra restaurantes, farmacias, tiendas, profesionales y más en todo el país.">
     <meta name="keywords" content="directorio de negocios, Venezuela, comercios, restaurantes, farmacias, tiendas, profesionales, servicios, Mérida, registro gratis">
-    <title>Mérida Un Click - Directorio de Negocios en Venezuela</title>
+    <title>Un Click - Directorio de Negocios en Venezuela</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,8 +17,28 @@
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
                 <i class="fas fa-store"></i>
-                <span>Mérida Un Click</span>
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> Un Click</span>
             </a>
+            <div class="location-selector" id="locationSelector">
+                <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span class="location-label" id="locationLabel">Todo Venezuela</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="location-dropdown hidden" id="locationDropdown">
+                    <div class="location-search">
+                        <input type="text" id="locationSearchInput" placeholder="Buscar estado..." autocomplete="off">
+                    </div>
+                    <div class="location-option" data-state="" data-city="">
+                        <i class="fas fa-globe-americas"></i>
+                        <span>Todo Venezuela</span>
+                    </div>
+                    <div class="location-divider"></div>
+                    <div class="location-list" id="locationList">
+                        <!-- States loaded dynamically -->
+                    </div>
+                </div>
+            </div>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
             </button>
@@ -499,7 +519,7 @@
                 <div class="idx-cta-glow"></div>
                 <div class="idx-cta-content">
                     <h2>¿Tienes un negocio o comercio?</h2>
-                    <p>Registra tu negocio gratis en Mérida Un Click y llega a miles de personas en Venezuela.</p>
+                    <p>Registra tu negocio gratis en Un Click y llega a miles de personas en toda Venezuela.</p>
                     <a href="new-business.html" class="idx-cta-btn">
                         <i class="fas fa-plus-circle"></i> Registrar Negocio Gratis
                     </a>
@@ -515,7 +535,7 @@
                 <div class="footer-col">
                     <a href="index.html" class="footer-logo">
                         <i class="fas fa-store"></i>
-                        <span>Mérida Un Click</span>
+                        <span>Un Click</span>
                     </a>
                     <p>El directorio de negocios más completo de Venezuela. Conectamos comercios con clientes en todo el país.</p>
                     <div class="footer-social">
@@ -548,14 +568,14 @@
                 <div class="footer-col">
                     <h4>Contacto</h4>
                     <ul>
-                        <li><i class="fas fa-envelope"></i> info@meridaunclick.com</li>
-                        <li><i class="fas fa-phone"></i> +58 274-000-0000</li>
-                        <li><i class="fas fa-map-marker-alt"></i> Mérida, Venezuela</li>
+                        <li><i class="fas fa-envelope"></i> info@aunclick.pages.dev</li>
+                        <li><i class="fas fa-phone"></i> +58 414-000-0000</li>
+                        <li><i class="fas fa-map-marker-alt"></i> Venezuela</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Mérida Un Click. Todos los derechos reservados.</p>
+                <p>&copy; 2025 Un Click. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>

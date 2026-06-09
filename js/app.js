@@ -1,6 +1,7 @@
 /**
- * Mérida Un Click - Core Application Module
+ * Un Click - Core Application Module
  * Common module loaded on ALL pages
+ * Directorio Nacional de Negocios de Venezuela
  */
 
 // ─── API Configuration ──────────────────────────────────────────
@@ -10,6 +11,168 @@ const API_BASE = '';
 // ─── Token Management ──────────────────────────────────────────
 const TOKEN_KEY = 'meridaunclick_token';
 const USER_KEY = 'meridaunclick_user';
+
+// ─── Venezuela States ────────────────────────────────────────────
+const VENEZUELA_STATES = [
+  { name: 'Amazonas', slug: 'amazonas' },
+  { name: 'Anzoátegui', slug: 'anzoategui' },
+  { name: 'Apure', slug: 'apure' },
+  { name: 'Aragua', slug: 'aragua' },
+  { name: 'Barinas', slug: 'barinas' },
+  { name: 'Bolívar', slug: 'bolivar' },
+  { name: 'Carabobo', slug: 'carabobo' },
+  { name: 'Cojedes', slug: 'cojedes' },
+  { name: 'Delta Amacuro', slug: 'delta-amacuro' },
+  { name: 'Distrito Capital', slug: 'distrito-capital' },
+  { name: 'Falcón', slug: 'falcon' },
+  { name: 'Guárico', slug: 'guarico' },
+  { name: 'Lara', slug: 'lara' },
+  { name: 'Mérida', slug: 'merida' },
+  { name: 'Miranda', slug: 'miranda' },
+  { name: 'Monagas', slug: 'monagas' },
+  { name: 'Nueva Esparta', slug: 'nueva-esparta' },
+  { name: 'Portuguesa', slug: 'portuguesa' },
+  { name: 'Sucre', slug: 'sucre' },
+  { name: 'Táchira', slug: 'tachira' },
+  { name: 'Trujillo', slug: 'trujillo' },
+  { name: 'Vargas', slug: 'vargas' },
+  { name: 'Yaracuy', slug: 'yaracuy' },
+  { name: 'Zulia', slug: 'zulia' },
+];
+
+const LOCATION_KEY = 'aunclick_selected_state';
+
+// ─── Location Selector System ───────────────────────────────────
+function getSelectedState() {
+  return localStorage.getItem(LOCATION_KEY) || '';
+}
+
+function setSelectedState(stateName) {
+  if (stateName) {
+    localStorage.setItem(LOCATION_KEY, stateName);
+  } else {
+    localStorage.removeItem(LOCATION_KEY);
+  }
+  updateBrandDisplay(stateName);
+  updateLocationLabel(stateName);
+  // Reload businesses if on index or search page
+  const featuredGrid = document.getElementById('featuredGrid');
+  if (featuredGrid) {
+    loadFeaturedProperties();
+  }
+  const searchGrid = document.getElementById('searchResultsGrid');
+  if (searchGrid) {
+    executeSearch(1);
+  }
+}
+
+function updateBrandDisplay(stateName) {
+  // Update all #brandCity elements
+  document.querySelectorAll('#brandCity').forEach(el => {
+    el.textContent = stateName ? stateName + ' ' : '';
+  });
+  // Update page title dynamically
+  if (stateName) {
+    document.title = stateName + ' Un Click - Directorio de Negocios en Venezuela';
+  } else {
+    document.title = 'Un Click - Directorio de Negocios en Venezuela';
+  }
+}
+
+function updateLocationLabel(stateName) {
+  const label = document.getElementById('locationLabel');
+  if (label) {
+    label.textContent = stateName || 'Todo Venezuela';
+  }
+}
+
+function initLocationSelector() {
+  const locationBtn = document.getElementById('locationBtn');
+  const locationDropdown = document.getElementById('locationDropdown');
+  const locationList = document.getElementById('locationList');
+  const locationSearchInput = document.getElementById('locationSearchInput');
+  const locationSelector = document.getElementById('locationSelector');
+
+  if (!locationBtn || !locationDropdown || !locationList) return;
+
+  // Populate states list
+  locationList.innerHTML = VENEZUELA_STATES.map(state => `
+    <div class="location-option" data-state="${state.name}">
+      <i class="fas fa-map-marker-alt"></i>
+      <span>${state.name}</span>
+    </div>
+  `).join('');
+
+  // Toggle dropdown
+  locationBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    locationDropdown.classList.toggle('hidden');
+    locationBtn.classList.toggle('active');
+    if (!locationDropdown.classList.contains('hidden') && locationSearchInput) {
+      locationSearchInput.value = '';
+      filterLocations('');
+      locationSearchInput.focus();
+    }
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!locationSelector.contains(e.target)) {
+      locationDropdown.classList.add('hidden');
+      locationBtn.classList.remove('active');
+    }
+  });
+
+  // State option click
+  locationList.addEventListener('click', (e) => {
+    const option = e.target.closest('.location-option');
+    if (option) {
+      const stateName = option.dataset.state || '';
+      setSelectedState(stateName);
+      locationDropdown.classList.add('hidden');
+      locationBtn.classList.remove('active');
+    }
+  });
+
+  // "Todo Venezuela" option click
+  const allVzlaOption = locationDropdown.querySelector('.location-option[data-state=""]');
+  if (allVzlaOption) {
+    allVzlaOption.addEventListener('click', () => {
+      setSelectedState('');
+      locationDropdown.classList.add('hidden');
+      locationBtn.classList.remove('active');
+    });
+  }
+
+  // Search/filter states
+  if (locationSearchInput) {
+    locationSearchInput.addEventListener('input', (e) => {
+      filterLocations(e.target.value.toLowerCase());
+    });
+    // Prevent form submission
+    locationSearchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') e.preventDefault();
+    });
+  }
+
+  // Restore saved state
+  const savedState = getSelectedState();
+  if (savedState) {
+    updateBrandDisplay(savedState);
+    updateLocationLabel(savedState);
+  }
+}
+
+function filterLocations(query) {
+  const locationList = document.getElementById('locationList');
+  if (!locationList) return;
+
+  const options = locationList.querySelectorAll('.location-option');
+  options.forEach(option => {
+    const stateName = (option.dataset.state || '').toLowerCase();
+    option.style.display = (!query || stateName.includes(query)) ? '' : 'none';
+  });
+}
 
 function getToken() {
     return localStorage.getItem(TOKEN_KEY);
@@ -421,7 +584,7 @@ function shareBusinessWhatsApp(business) {
     msg += `📌 ${type}\n`;
     if (business.city) msg += `📍 ${business.city}${business.state ? ', ' + business.state : ''}\n`;
     msg += `\n🔗 ${url}`;
-    msg += `\n\n📌 Publicado en Mérida Un Click`;
+    msg += `\n\n📌 Publicado en Un Click`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -503,7 +666,7 @@ document.addEventListener('click', (e) => {
         shareBusinessWhatsApp(business);
     }).catch(() => {
         // Minimal share with just the link
-        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en Mérida Un Click:\nhttps://aunclick.pages.dev/business.html?id=' + businessId)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en Un Click:\nhttps://aunclick.pages.dev/business.html?id=' + businessId)}`, '_blank');
     });
 });
 
@@ -615,6 +778,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update navigation bar
     updateNav();
 
+    // Initialize location selector (loads saved state, updates brand)
+    initLocationSelector();
+
     // Initialize mobile search modal
     initMobileSearchModal();
 
@@ -682,12 +848,19 @@ async function loadFeaturedProperties() {
     if (!grid) return;
 
     try {
-        const data = await api.get('/businesses?status=approved&limit=8&featured=1');
+        // Respect selected state
+        const selectedState = getSelectedState();
+        let endpoint = '/businesses?status=approved&limit=8&featured=1';
+        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+
+        const data = await api.get(endpoint);
         let businesses = data.businesses || [];
 
         // If no featured businesses, get latest approved
         if (businesses.length === 0) {
-            const allData = await api.get('/businesses?status=approved&limit=8');
+            let fallbackEndpoint = '/businesses?status=approved&limit=8';
+            if (selectedState) fallbackEndpoint += `&state=${encodeURIComponent(selectedState)}`;
+            const allData = await api.get(fallbackEndpoint);
             businesses = allData.businesses || [];
         }
 

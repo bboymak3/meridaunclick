@@ -12,4 +12,4 @@ binding = "R2"
 bucket_name = "my-emdash-media"
 
 [vars]
-R2_FOLDER = "merida"
+R2_FOLDER = "aunclick"

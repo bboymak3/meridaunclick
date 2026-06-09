@@ -1,5 +1,5 @@
 /**
- * Mérida Un Click - Authentication Module
+ * Un Click - Authentication Module
  * Loaded on login.html
  */
 

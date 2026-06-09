@@ -1,5 +1,5 @@
 /**
- * Mérida Un Click - Admin Panel Module
+ * Un Click - Admin Panel Module
  * Loaded on admin.html
  */
 

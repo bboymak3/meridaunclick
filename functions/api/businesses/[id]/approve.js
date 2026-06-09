@@ -61,7 +61,7 @@ export async function onRequestPost(context) {
 
     // Admin only
     if (user.role !== 'admin') {
-      return new Response(JSON.stringify({ error: 'Acceso denegado. Solo administradores pueden aprobar propiedades.' }), {
+      return new Response(JSON.stringify({ error: 'Acceso denegado. Solo administradores pueden aprobar negocios.' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -70,14 +70,14 @@ export async function onRequestPost(context) {
     // Check business exists
     const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(id).first();
     if (!business) {
-      return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), {
+      return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (business.status === 'approved') {
-      return new Response(JSON.stringify({ error: 'La propiedad ya está aprobada' }), {
+      return new Response(JSON.stringify({ error: 'El negocio ya está aprobado' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -88,7 +88,7 @@ export async function onRequestPost(context) {
       "UPDATE businesses SET status = 'approved', updated_at = datetime('now') WHERE id = ?"
     ).bind(id).run();
 
-    return new Response(JSON.stringify({ message: 'Propiedad aprobada exitosamente' }), {
+    return new Response(JSON.stringify({ message: 'Negocio aprobado exitosamente' }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

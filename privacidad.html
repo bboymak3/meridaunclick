@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Politica de Privacidad de Mérida Un Click - Informacion sobre como recopilamos, usamos y protegemos tus datos personales.">
-    <title>Politica de Privacidad - Mérida Un Click</title>
+    <meta name="description" content="Politica de Privacidad de Un Click - Informacion sobre como recopilamos, usamos y protegemos tus datos personales.">
+    <title>Politica de Privacidad - Un Click</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -68,8 +68,28 @@
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
                 <i class="fas fa-store"></i>
-                <span>Mérida Un Click</span>
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> Un Click</span>
             </a>
+            <div class="location-selector" id="locationSelector">
+                <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span class="location-label" id="locationLabel">Todo Venezuela</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="location-dropdown hidden" id="locationDropdown">
+                    <div class="location-search">
+                        <input type="text" id="locationSearchInput" placeholder="Buscar estado..." autocomplete="off">
+                    </div>
+                    <div class="location-option" data-state="" data-city="">
+                        <i class="fas fa-globe-americas"></i>
+                        <span>Todo Venezuela</span>
+                    </div>
+                    <div class="location-divider"></div>
+                    <div class="location-list" id="locationList">
+                        <!-- States loaded dynamically -->
+                    </div>
+                </div>
+            </div>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menu">
                 <i class="fas fa-bars"></i>
             </button>
@@ -104,8 +124,8 @@
                 <h2>1. Responsable del Tratamiento</h2>
                 <p>
                     El responsable del tratamiento de los datos personales recogidos en esta plataforma es
-                    <strong>Mérida Un Click</strong>, con domicilio en Barinas, Estado Barinas, Venezuela.
-                    Mérida Un Click es un portal comercial dedicado a facilitar la busqueda, publicacion y
+                    <strong>Un Click</strong>, con domicilio en Barinas, Estado Barinas, Venezuela.
+                    Un Click es un portal comercial dedicado a facilitar la busqueda, publicacion y
                     gestion de negocios inmobiliarias en la region de Barinas.
                 </p>
                 <p>
@@ -136,7 +156,7 @@
 
                 <h2>4. Integracion con Facebook</h2>
                 <p>
-                    Mérida Un Click ofrece una integracion opcional con Facebook que permite a los administradores
+                    Un Click ofrece una integracion opcional con Facebook que permite a los administradores
                     del sitio importar publicaciones de una Pagina de Facebook y convertirlas automaticamente
                     en anuncios de negocios en nuestra plataforma.
                 </p>
@@ -171,7 +191,7 @@
 
                 <h2>6. Derechos del Usuario</h2>
                 <p>
-                    Como usuario de Mérida Un Click, usted tiene los siguientes derechos respecto a sus datos personales:
+                    Como usuario de Un Click, usted tiene los siguientes derechos respecto a sus datos personales:
                 </p>
                 <ul>
                     <li><strong>Derecho de acceso:</strong> puede solicitar informacion sobre los datos personales que tenemos almacenados sobre usted.</li>
@@ -200,7 +220,7 @@
 
                 <p style="margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #ddd; color: var(--text-muted, #888); font-size: 0.9rem;">
                     Esta Politica de Privacidad fue actualizada por ultima vez en <strong>Mayo 2025</strong>.
-                    Mérida Un Click se reserva el derecho de modificar esta politica en cualquier momento. Cualquier
+                    Un Click se reserva el derecho de modificar esta politica en cualquier momento. Cualquier
                     cambio sera publicado en esta pagina con la fecha de actualizacion correspondiente.
                 </p>
 
@@ -215,7 +235,7 @@
                 <div class="footer-col">
                     <a href="index.html" class="footer-logo">
                         <i class="fas fa-store"></i>
-                        <span>Mérida Un Click</span>
+                        <span>Un Click</span>
                     </a>
                     <p>El portal comercial mas completo de Barinas, Venezuela. Conectamos negocios con clientes.</p>
                     <div class="footer-social">
@@ -254,7 +274,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Mérida Un Click. Todos los derechos reservados.</p>
+                <p>&copy; 2025 Un Click. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>

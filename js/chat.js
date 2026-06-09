@@ -1,5 +1,5 @@
 /**
- * Mérida Un Click - Chat Widget Module
+ * Un Click - Chat Widget Module
  * Floating chat widget for buyer-seller communication
  */
 
@@ -392,7 +392,7 @@
 
   // ─── Public API ────────────────────────────────────────────
   // Open chat directly to a specific business's conversation
-  window.Mérida Un ClickChat = {
+  window.UnClickChat = {
     async openChatWith(businessId, message) {
       if (!isAuthenticated()) {
         const redirect = encodeURIComponent(window.location.pathname + window.location.search);
@@ -490,6 +490,6 @@
     const path = window.location.pathname;
     if (path.includes('login') || path.includes('admin')) return;
 
-    window.Mérida Un ClickChat.init();
+    window.UnClickChat.init();
   }
 })();

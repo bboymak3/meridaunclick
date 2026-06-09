@@ -1,5 +1,5 @@
 /**
- * Mérida Un Click - Home Page Mini Map
+ * Un Click - Home Page Mini Map
  * Shows a compact map with business markers on the homepage
  */
 

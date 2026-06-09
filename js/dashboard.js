@@ -1,5 +1,5 @@
 /**
- * Mérida Un Click - Dashboard Module
+ * Un Click - Dashboard Module
  * Handles user dashboard and admin panel functionality
  */
 

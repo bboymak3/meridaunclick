@@ -1,5 +1,5 @@
 /**
- * Mérida Un Click - Business Form Module
+ * Un Click - Business Form Module
  * Loaded on new-business.html
  */
 

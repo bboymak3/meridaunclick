@@ -64,14 +64,14 @@ export async function onRequestPost(context) {
     // Check business exists and user owns it
     const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(businessId).first();
     if (!business) {
-      return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), {
+      return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
         status: 404,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
     if (user.role !== 'admin' && user.id !== business.user_id) {
-      return new Response(JSON.stringify({ error: 'No tienes permiso para agregar imágenes a esta propiedad' }), {
+      return new Response(JSON.stringify({ error: 'No tienes permiso para agregar imágenes a este negocio' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -175,7 +175,7 @@ export async function onRequestDelete(context) {
     // Check business ownership
     const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(businessId).first();
     if (user.role !== 'admin' && user.id !== business.user_id) {
-      return new Response(JSON.stringify({ error: 'No tienes permiso para eliminar imágenes de esta propiedad' }), {
+      return new Response(JSON.stringify({ error: 'No tienes permiso para eliminar imágenes de este negocio' }), {
         status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
