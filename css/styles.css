@@ -10952,6 +10952,59 @@ select.form-select {
     }
 }
 
+/* ─── Mobile Nav CTA Buttons ──────────────────────────── */
+.nav-mobile-cta {
+    display: none;
+}
+
+@media (max-width: 1024px) {
+    .nav-mobile-cta {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px var(--space-md);
+        width: 100%;
+    }
+
+    .nav-mobile-cta a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 14px 20px;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.25s;
+        text-align: center;
+    }
+
+    .nav-mobile-cta-marketplace {
+        background: linear-gradient(135deg, #059669, #10b981);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(5, 150, 105, 0.4);
+    }
+
+    .nav-mobile-cta-marketplace:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 24px rgba(5, 150, 105, 0.55);
+        color: #fff;
+    }
+
+    .nav-mobile-cta-cupon {
+        background: linear-gradient(135deg, #ea580c, #f97316);
+        color: #fff;
+        box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35);
+    }
+
+    .nav-mobile-cta-cupon:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 24px rgba(234, 88, 12, 0.5);
+        color: #fff;
+    }
+}
+
 /* ─── Settings Toggle Switches ─────────────────────────────── */
 .settings-section {
     margin-bottom: 8px;

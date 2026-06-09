@@ -105,6 +105,10 @@
         // Setup delete modal
         setupDeleteModal();
 
+        // Setup product & coupon modals
+        setupProductModal();
+        setupCouponModal();
+
         // Setup profile form
         setupProfileForm();
 
@@ -166,6 +170,8 @@
             businesses: 'Mis Propiedades',
             messages: 'Mensajes',
             favorites: 'Favoritos',
+            products: 'Mis Productos',
+            coupons: 'Mis Cupones',
             profile: 'Mi Perfil',
             admin: 'Panel de Administracion',
         };
@@ -184,6 +190,12 @@
                 break;
             case 'favorites':
                 loadFavorites();
+                break;
+            case 'products':
+                loadMyProducts();
+                break;
+            case 'coupons':
+                loadMyCoupons();
                 break;
             case 'admin':
                 loadAdminData();
@@ -606,6 +618,216 @@
             showToast(error.message || 'Error al eliminar la propiedad', 'error');
         }
     }
+
+    // ─── My Products (Marketplace) ──────────────────────────────
+    async function loadMyProducts() {
+        const tbody = document.getElementById('myProductsBody');
+        if (!tbody) return;
+
+        try {
+            const data = await api.get('/marketplace?limit=100');
+            const products = data.products || [];
+
+            if (products.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="empty-row"><td colspan="5">
+                        <div class="empty-state">
+                            <i class="fas fa-box-open"></i>
+                            <p>No tienes productos publicados.</p>
+                            <button class="btn btn-primary btn-sm" onclick="openProductModal()"><i class="fas fa-plus"></i> Publicar Producto</button>
+                        </div>
+                    </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td><div class="dash-prop-name">${p.image ? `<img src="${p.image}" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}<span>${p.name || 'Sin nombre'}</span></div></td>
+                    <td>${p.category || 'General'}</td>
+                    <td class="dash-price">$${Number(p.price || 0).toLocaleString('es-VE')}</td>
+                    <td>${formatDate(p.created_at)}</td>
+                    <td class="dash-actions">
+                        <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`).join('');
+        } catch (error) {
+            console.error('Error loading products:', error);
+        }
+    }
+
+    // Product Modal
+    function setupProductModal() {
+        const modal = document.getElementById('productModal');
+        if (!modal) return;
+
+        const close = document.getElementById('productModalClose');
+        const cancel = document.getElementById('productModalCancel');
+        const save = document.getElementById('productModalSave');
+        const overlay = modal.querySelector('.modal-overlay');
+        const form = document.getElementById('productForm');
+
+        if (close) close.addEventListener('click', () => modal.classList.add('hidden'));
+        if (cancel) cancel.addEventListener('click', () => modal.classList.add('hidden'));
+        if (overlay) overlay.addEventListener('click', () => modal.classList.add('hidden'));
+
+        if (save) save.addEventListener('click', async () => {
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+            try {
+                const fd = new FormData(form);
+                const body = {
+                    name: fd.get('name'),
+                    price: parseFloat(fd.get('price')) || 0,
+                    category: fd.get('category') || 'general',
+                    image: fd.get('image') || '',
+                    description: fd.get('description') || '',
+                };
+                await api.post('/marketplace', body);
+                showToast('Producto publicado exitosamente', 'success');
+                modal.classList.add('hidden');
+                form.reset();
+                loadMyProducts();
+            } catch (error) {
+                showToast(error.message || 'Error al publicar producto', 'error');
+            }
+        });
+    }
+
+    // Wire up header button
+    const btnNewProduct = document.getElementById('btnNewProduct');
+
+    window.openProductModal = function () {
+        const modal = document.getElementById('productModal');
+        if (modal) modal.classList.remove('hidden');
+    };
+
+    if (btnNewProduct) btnNewProduct.addEventListener('click', window.openProductModal);
+
+    window.deleteProduct = async function (id) {
+        if (!confirm('¿Eliminar este producto?')) return;
+        try {
+            await api.delete(`/marketplace/${id}`);
+            showToast('Producto eliminado', 'success');
+            loadMyProducts();
+        } catch (error) {
+            showToast(error.message || 'Error al eliminar', 'error');
+        }
+    };
+
+    // ─── My Coupons ────────────────────────────────────────────
+    async function loadMyCoupons() {
+        const tbody = document.getElementById('myCouponsBody');
+        if (!tbody) return;
+
+        try {
+            const data = await api.get('/coupons?limit=100');
+            const coupons = data.coupons || [];
+
+            if (coupons.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="empty-row"><td colspan="6">
+                        <div class="empty-state">
+                            <i class="fas fa-ticket-alt"></i>
+                            <p>No tienes cupones creados.</p>
+                            <button class="btn btn-primary btn-sm" onclick="openCouponModal()"><i class="fas fa-plus"></i> Crear Cupón</button>
+                        </div>
+                    </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = coupons.map(c => {
+                const expired = c.end_date && new Date(c.end_date) < new Date();
+                return `
+                <tr>
+                    <td><div class="dash-prop-name"><span>${c.title || 'Sin título'}</span></div></td>
+                    <td>${c.business_name || '—'}</td>
+                    <td>${c.discount_type === 'percentage' ? c.discount + '%' : c.discount_type === 'fixed' ? '$' + c.discount : 'Envío gratis'}</td>
+                    <td>${c.end_date ? formatDate(c.end_date) : 'Sin vencimiento'}</td>
+                    <td>${expired ? '<span class="badge badge-danger">Expirado</span>' : '<span class="badge badge-success">Activo</span>'}</td>
+                    <td class="dash-actions">
+                        <button class="btn-icon btn-icon-danger" onclick="deleteCoupon(${c.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+            }).join('');
+        } catch (error) {
+            console.error('Error loading coupons:', error);
+        }
+    }
+
+    function setupCouponModal() {
+        const modal = document.getElementById('couponModal');
+        if (!modal) return;
+
+        const close = document.getElementById('couponModalClose');
+        const cancel = document.getElementById('couponModalCancel');
+        const save = document.getElementById('couponModalSave');
+        const overlay = modal.querySelector('.modal-overlay');
+        const form = document.getElementById('couponForm');
+
+        if (close) close.addEventListener('click', () => modal.classList.add('hidden'));
+        if (cancel) cancel.addEventListener('click', () => modal.classList.add('hidden'));
+        if (overlay) overlay.addEventListener('click', () => modal.classList.add('hidden'));
+
+        if (save) save.addEventListener('click', async () => {
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+            try {
+                const fd = new FormData(form);
+                const body = {
+                    title: fd.get('title'),
+                    business_id: parseInt(fd.get('business_id')),
+                    discount_type: fd.get('discount_type') || 'percentage',
+                    discount: fd.get('discount'),
+                    code: fd.get('code') || '',
+                    start_date: fd.get('start_date') || '',
+                    end_date: fd.get('end_date') || '',
+                    description: fd.get('description') || '',
+                    terms: fd.get('terms') || '',
+                };
+                await api.post('/coupons', body);
+                showToast('Cupón creado exitosamente', 'success');
+                modal.classList.add('hidden');
+                form.reset();
+                loadMyCoupons();
+            } catch (error) {
+                showToast(error.message || 'Error al crear cupón', 'error');
+            }
+        });
+    }
+
+    // Wire up header button
+    const btnNewCoupon = document.getElementById('btnNewCoupon');
+
+    window.openCouponModal = async function () {
+        const modal = document.getElementById('couponModal');
+        const bizSelect = document.getElementById('coupBusiness');
+        
+        // Load user's businesses
+        if (bizSelect && currentUser) {
+            try {
+                const data = await api.get(`/businesses?user_id=${currentUser.id}&status=approved&limit=100`);
+                const businesses = data.businesses || [];
+                bizSelect.innerHTML = businesses.length > 0
+                    ? businesses.map(b => `<option value="${b.id}">${b.title}</option>`).join('')
+                    : '<option value="">No tienes negocios registrados</option>';
+            } catch (e) {
+                bizSelect.innerHTML = '<option value="">Error al cargar</option>';
+            }
+        }
+        
+        if (modal) modal.classList.remove('hidden');
+    };
+
+    if (btnNewCoupon) btnNewCoupon.addEventListener('click', window.openCouponModal);
+
+    window.deleteCoupon = async function (id) {
+        if (!confirm('¿Eliminar este cupón?')) return;
+        try {
+            await api.delete(`/coupons/${id}`);
+            showToast('Cupón eliminado', 'success');
+            loadMyCoupons();
+        } catch (error) {
+            showToast(error.message || 'Error al eliminar', 'error');
+        }
+    };
 
     // ═══════════════════════════════════════════════════════════════
     // ADMIN SECTION - Approve/Reject Properties
