@@ -811,6 +811,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Navbar dropdown toggle ("Más")
+    document.querySelectorAll('.nav-dropdown-toggle').forEach(toggleBtn => {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const menu = toggleBtn.nextElementSibling;
+            if (menu) {
+                // Close other dropdowns
+                document.querySelectorAll('.nav-dropdown-menu.active').forEach(m => {
+                    if (m !== menu) m.classList.remove('active');
+                });
+                document.querySelectorAll('.nav-dropdown-toggle.active').forEach(b => {
+                    if (b !== toggleBtn) b.classList.remove('active');
+                });
+                menu.classList.toggle('active');
+                toggleBtn.classList.toggle('active');
+            }
+        });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.nav-dropdown')) {
+            document.querySelectorAll('.nav-dropdown-menu.active').forEach(m => m.classList.remove('active'));
+            document.querySelectorAll('.nav-dropdown-toggle.active').forEach(b => b.classList.remove('active'));
+        }
+    });
+
     // Logout button handler
     const logoutBtn = document.getElementById('navLogout');
     if (logoutBtn) {

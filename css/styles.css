@@ -10832,6 +10832,126 @@ select.form-select {
     }
 }
 
+/* ─── Navbar Dropdown ("Más") ─────────────────────────────── */
+.nav-dropdown {
+    position: relative;
+}
+
+.nav-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text);
+    border-radius: var(--radius);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+}
+
+.nav-dropdown-toggle:hover,
+.nav-dropdown-toggle.active {
+    color: var(--color-primary);
+    background-color: var(--color-primary-bg);
+}
+
+.nav-dropdown-toggle i.fa-chevron-down {
+    font-size: 0.6rem;
+    transition: transform 0.25s ease;
+}
+
+.nav-dropdown-toggle.active i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 210px;
+    background: var(--color-white);
+    border: 1.5px solid var(--color-border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all 0.25s ease;
+    z-index: 100;
+    padding: 6px;
+    list-style: none;
+}
+
+.nav-dropdown-menu.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.nav-dropdown-menu li {
+    display: flex;
+    align-items: center;
+}
+
+.nav-dropdown-menu .nav-link {
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    width: 100%;
+    font-size: 0.88rem;
+}
+
+.nav-dropdown-menu .nav-link i {
+    width: 20px;
+    text-align: center;
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+.nav-dropdown-menu .nav-link:hover {
+    background: var(--color-primary-bg);
+}
+
+.nav-dropdown-divider {
+    height: 1px;
+    background: var(--color-border-light);
+    margin: 4px 8px;
+}
+
+/* Mobile: dropdown becomes flat items */
+@media (max-width: 1024px) {
+    .nav-dropdown-menu {
+        position: static;
+        box-shadow: none;
+        border: none;
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        min-width: 100%;
+        padding: 0;
+        border-radius: 0;
+        display: none;
+    }
+
+    .nav-dropdown-menu.active {
+        display: block;
+    }
+
+    .nav-dropdown-toggle {
+        justify-content: flex-start;
+        padding: 12px var(--space-md);
+        width: 100%;
+    }
+
+    .nav-dropdown-menu .nav-link {
+        padding: 10px var(--space-md) 10px calc(var(--space-md) + 16px);
+    }
+}
+
 /* ─── Settings Toggle Switches ─────────────────────────────── */
 .settings-section {
     margin-bottom: 8px;
