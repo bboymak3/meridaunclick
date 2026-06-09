@@ -61,7 +61,6 @@ export async function onRequestGet(context) {
         c.*,
         b.title as business_name,
         b.slug as business_slug,
-        b.logo as business_logo,
         b.phone as business_phone,
         b.website as business_website,
         b.instagram as business_instagram,
