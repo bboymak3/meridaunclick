@@ -329,11 +329,14 @@
       // the chatbot setting would be exposed via a different mechanism
 
       // Try fetching settings (may fail for non-admin users)
-      const data = await api.get('/settings').catch(() => null);
+      // Use fetch directly to avoid triggering apiCall's 401 handler which clears tokens
+      const data = await fetch('/api/settings', {
+        headers: { 'Content-Type': 'application/json' }
+      }).then(r => r.ok ? r.json() : null).catch(() => null);
 
       const settings = data?.settings || {};
       const result = {
-        enabled: settings.ai_chatbot_enabled === '1' || settings.ai_chatbot_enabled === undefined,
+        enabled: settings.ai_chatbot_enabled === '1',
         welcome: settings.ai_chatbot_welcome || '',
         timestamp: Date.now()
       };
@@ -347,9 +350,9 @@
 
       return result;
     } catch {
-      // Default: enabled with no custom welcome
+      // Default: disabled (admin must explicitly enable)
       return {
-        enabled: true,
+        enabled: false,
         welcome: '',
         timestamp: Date.now()
       };

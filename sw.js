@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unclick-v1';
+const CACHE_NAME = 'unclick-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -15,12 +15,19 @@ const STATIC_ASSETS = [
   '/reservas.html',
   '/marketplace.html',
   '/emergencia.html',
+  '/admin.html',
   '/css/styles.css',
   '/js/app.js',
   '/js/business-detail.js',
   '/js/chat.js',
   '/js/review-widget.js',
   '/js/ai-chatbot.js',
+  '/js/home-map.js',
+  '/js/map.js',
+  '/js/dashboard.js',
+  '/js/admin.js',
+  '/js/auth.js',
+  '/js/business-form.js',
   '/manifest.json'
 ];
 
@@ -58,17 +65,37 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Static assets: cache first
+  // HTML pages: network first (always serve fresh pages)
+  if (request.headers.get('accept')?.includes('text/html') ||
+      url.pathname.endsWith('.html') ||
+      url.pathname === '/' ||
+      url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Static assets (CSS, JS, images): stale-while-revalidate
   event.respondWith(
     caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
+      const fetchPromise = fetch(request).then(response => {
         if (response.ok) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
         }
         return response;
-      });
+      }).catch(() => cached);
+
+      return cached || fetchPromise;
     })
   );
 });
