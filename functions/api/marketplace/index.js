@@ -104,7 +104,7 @@ export async function onRequestGet(context) {
       bindings.push(`%${search}%`, `%${search}%`);
     }
 
-    const whereClause = `WHERE ${conditions.join(' AND ')}`;
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Sort options
     let orderBy = 'sort_order ASC, created_at DESC';
@@ -120,7 +120,18 @@ export async function onRequestGet(context) {
     const total = countResult.total;
 
     // Fetch products
-    const query = `SELECT * FROM products ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
+    let query;
+    if (allProducts) {
+      // Admin mode: include user info
+      query = `
+        SELECT p.*, u.name as owner_name, u.email as owner_email, b.title as business_name
+        FROM products p
+        LEFT JOIN users u ON p.user_id = u.id
+        LEFT JOIN businesses b ON p.business_id = b.id
+        ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
+    } else {
+      query = `SELECT * FROM products ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
+    }
     const products = await env.DB.prepare(query).bind(...bindings, limit, offset).all();
 
     return new Response(JSON.stringify({

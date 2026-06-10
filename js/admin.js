@@ -1421,16 +1421,20 @@
                     <td>${p.id}</td>
                     <td>
                         <div style="display:flex;align-items:center;gap:10px;">
-                            ${p.image ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">` : ''}
+                            ${p.image ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">` : '<div style="width:40px;height:40px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"><i class="fas fa-box" style="color:#94a3b8;font-size:0.8rem;"></i></div>'}
                             <div>
                                 <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.name)}</div>
+                                ${p.business_name ? `<div style="font-size:0.72rem;color:#6366f1;"><i class="fas fa-store" style="font-size:0.65rem;"></i> ${escapeHtml(p.business_name)}</div>` : ''}
                                 ${p.description ? `<div style="font-size:0.75rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.description)}</div>` : ''}
                             </div>
                         </div>
                     </td>
                     <td><span style="font-size:0.8rem;">${escapeHtml(p.category || 'general')}</span></td>
                     <td style="font-weight:600;color:#059669;">${price}</td>
-                    <td style="font-size:0.8rem;">${p.user_id || '-'}</td>
+                    <td style="font-size:0.8rem;">
+                        <div>${escapeHtml(p.owner_name || 'Usuario')}</div>
+                        ${p.owner_email ? `<div style="font-size:0.7rem;color:#94a3b8;">${escapeHtml(p.owner_email)}</div>` : ''}
+                    </td>
                     <td><span class="admin-status-badge ${statusClass}">${statusLabel}</span></td>
                     <td style="font-size:0.78rem;color:#94a3b8;">${date}</td>
                     <td><div style="display:flex;gap:6px;">${actions}</div></td>

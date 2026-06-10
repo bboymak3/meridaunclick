@@ -666,6 +666,15 @@
 
         if (save) save.addEventListener('click', async () => {
             if (!form.checkValidity()) { form.reportValidity(); return; }
+
+            // Validate business selection
+            const businessSelect = document.getElementById('prodBusiness');
+            const businessId = businessSelect ? businessSelect.value : '';
+            if (!businessId) {
+                showToast('Debes seleccionar un negocio. Si no tienes uno, regístralo primero desde "Nuevo Negocio".', 'error');
+                return;
+            }
+
             try {
                 const fd = new FormData(form);
                 const body = {
@@ -674,9 +683,8 @@
                     category: fd.get('category') || 'general',
                     image: fd.get('image') || '',
                     description: fd.get('description') || '',
+                    business_id: parseInt(businessId),
                 };
-                const businessId = fd.get('business_id');
-                if (businessId) body.business_id = parseInt(businessId);
                 await api.post('/marketplace', body);
                 showToast('Producto enviado para aprobación. Será visible una vez aprobado por un administrador.', 'success');
                 modal.classList.add('hidden');
@@ -774,17 +782,23 @@
         // Load user's businesses into selector
         try {
             const user = getCachedUser();
-            const businessesData = await api.get(`/api/businesses?user_id=${user.id}&limit=50`);
+            const businessesData = await api.get(`/businesses?user_id=${user.id}&limit=50`);
             const businesses = businessesData.businesses || businessesData.results || businessesData || [];
             const select = document.getElementById('prodBusiness');
             if (select) {
-                select.innerHTML = '<option value="">Publicar como usuario independiente</option>';
-                businesses.forEach(b => {
-                    const opt = document.createElement('option');
-                    opt.value = b.id;
-                    opt.textContent = b.title || b.name || `Negocio #${b.id}`;
-                    select.appendChild(opt);
-                });
+                if (businesses.length === 0) {
+                    select.innerHTML = '<option value="">-- Debe registrar un negocio primero --</option>';
+                    select.disabled = true;
+                } else {
+                    select.innerHTML = '<option value="" disabled selected>Selecciona un negocio para publicar</option>';
+                    businesses.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.title || b.name || `Negocio #${b.id}`;
+                        select.appendChild(opt);
+                    });
+                    select.disabled = false;
+                }
             }
         } catch (e) {
             console.log('Could not load businesses for selector:', e);
