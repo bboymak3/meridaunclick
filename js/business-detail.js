@@ -13,9 +13,12 @@
         // Must have the loading/content/error elements
         if (!loadingEl || !contentEl) return;
 
-        // Get business ID from URL
+        // Get business ID from injected variable or URL param
+        let businessId = window.__BUSINESS_ID || null;
         const urlParams = new URLSearchParams(window.location.search);
-        const businessId = urlParams.get('id');
+        if (!businessId) {
+            businessId = urlParams.get('id');
+        }
 
         if (!businessId) {
             showError();
@@ -25,6 +28,11 @@
         try {
             // Fetch business data
             const business = await api.get(`/businesses/${businessId}`);
+
+            // If accessed via ?id= param, update URL to slug format
+            if (business.slug && window.location.pathname === '/business.html' && !window.__BUSINESS_SLUG) {
+                history.replaceState(null, '', '/negocio/' + business.slug);
+            }
 
             // Populate page
             populateBusinessDetail(business);

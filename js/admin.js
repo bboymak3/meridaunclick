@@ -324,7 +324,7 @@
                     <tr data-business-id="${p.id}">
                         <td>${p.id}</td>
                         <td>${coverImg ? `<img src="${coverImg}" alt="" class="admin-thumb" onerror="this.style.display='none'">` : '<div class="admin-thumb-placeholder"><i class="fas fa-image"></i></div>'}</td>
-                        <td><a href="business.html?id=${p.id}" target="_blank" title="${p.title}">${truncateText(p.title, 35)}</a></td>
+                        <td><a href="/negocio/${ + inner + }" target="_blank" title="${p.title}">${truncateText(p.title, 35)}</a></td>
                         <td>${getBusinessTypeLabel(p.business_type)}</td>
                         <td>${p.city || '--'}, ${p.state || '--'}</td>
                         <td>${p.owner_name || '--'}</td>
@@ -1374,7 +1374,7 @@
                     html += '<div style="margin-top:12px;">';
                     html += '<table class="admin-table" style="font-size:13px;"><thead><tr><th>Propiedad</th><th>Imagenes</th></tr></thead><tbody>';
                     data.results.forEach(r => {
-                        html += '<tr><td><a href="business.html?id=' + r.business_id + '" target="_blank">' + (r.title || 'Sin titulo') + '</a></td><td>' + r.images + '</td></tr>';
+                        html += '<tr><td><a href='/negocio/' + (r.business_slug || r.business_id + '" target="_blank">' + (r.title || 'Sin titulo') + '</a></td><td>' + r.images + '</td></tr>';
                     });
                     html += '</tbody></table></div>';
                 }
@@ -1417,7 +1417,7 @@
 
             data.history.forEach(h => {
                 const statusHTML = h.business_id
-                    ? '<a href="business.html?id=' + h.business_id + '" target="_blank" class="badge badge-success">Ver Propiedad</a>'
+                    ? '<a href='/negocio/' + (h.business_slug || h.business_id + '" target="_blank" class="badge badge-success">Ver Propiedad</a>'
                     : '<span class="badge badge-warning">Omitido</span>';
                 const title = h.business_title || (h.post_message ? truncateText(h.post_message, 40) : 'Post sin texto');
                 html += '<tr>';

@@ -261,8 +261,8 @@
                             <td>${getStatusBadge(p.status)}</td>
                             <td>${p.views || 0}</td>
                             <td class="dash-actions">
-                                <a href="business.html?id=${p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
-                                <a href="new-business.html?id=${p.id}" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
+                                <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
+                                <a href="new-/negocio/${p.slug || p.id}" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
                                 <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
@@ -329,8 +329,8 @@
                             <td>${p.views || 0}</td>
                             <td class="dash-actions">
                                 <button class="btn-icon" onclick="openServicesManager(${p.id}, '${escapeAttr(p.title)}')" title="Servicios"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i></button>
-                                <a href="business.html?id=${p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
-                                <a href="new-business.html?id=${p.id}" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
+                                <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
+                                <a href="new-/negocio/${p.slug || p.id}" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
                                 <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
@@ -1289,7 +1289,7 @@
                             <button class="btn btn-sm btn-danger" onclick="adminRejectBusiness(${p.id})" title="Rechazar">
                                 <i class="fas fa-times"></i> Rechazar
                             </button>
-                            <a href="business.html?id=${p.id}" class="btn-icon" title="Ver detalle"><i class="fas fa-eye"></i></a>
+                            <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver detalle"><i class="fas fa-eye"></i></a>
                         </td>
                     </tr>
                 `).join('');
@@ -1351,7 +1351,7 @@
                                 <button class="btn btn-sm btn-success" onclick="adminApproveBusiness(${p.id})"><i class="fas fa-check"></i></button>
                                 <button class="btn btn-sm btn-danger" onclick="adminRejectBusiness(${p.id})"><i class="fas fa-times"></i></button>
                             ` : ''}
-                            <a href="business.html?id=${p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
+                            <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
                             <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                         </td>
                     </tr>

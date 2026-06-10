@@ -577,11 +577,18 @@ function getBusinessTypeIcon(type) {
     return icons[type?.toLowerCase()] || 'fa-store';
 }
 
+// ─── Business URL Helper ─────────────────────────────────────
+function getBusinessUrl(business) {
+    if (!business) return '#';
+    if (business.slug) return '/negocio/' + business.slug;
+    return '/business.html?id=' + business.id;
+}
+
 // ─── WhatsApp Share ────────────────────────────────────────────
 function shareBusinessWhatsApp(business) {
     if (!business) return;
     const type = getBusinessTypeLabel(business.business_type);
-    const url = `https://aunclick.pages.dev/business.html?id=${business.id}`;
+    const url = 'https://aunclick.pages.dev' + getBusinessUrl(business);
     const title = business.title || 'Negocio';
 
     let msg = `🏪 *${title}*\n`;
@@ -632,9 +639,10 @@ function createBusinessCard(business) {
     const featuredBadge = business.featured ? '<span class="card-badge badge-featured"><i class="fas fa-star"></i> Destacada</span>' : '';
     const statusBadge = business.status && business.status !== 'approved' ? `<span class="card-badge badge-${business.status}">${getStatusLabel(business.status)}</span>` : '';
 
+    const bizUrl = getBusinessUrl(business);
     return `
         <article class="business-card" data-business-id="${business.id}">
-            <a href="business.html?id=${business.id}" class="business-card-link">
+            <a href="${bizUrl}" class="business-card-link">
                 <div class="business-card-image">
                     <img src="${imgSrc}" alt="${business.title || 'Sin título'}" loading="lazy" onerror="this.src='${placeholderImg}'">
                     <div class="business-card-badges">
@@ -670,7 +678,7 @@ document.addEventListener('click', (e) => {
         shareBusinessWhatsApp(business);
     }).catch(() => {
         // Minimal share with just the link
-        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en Un Click:\nhttps://aunclick.pages.dev/business.html?id=' + businessId)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en Un Click:\nhttps://aunclick.pages.dev/negocio/' + businessId)}`, '_blank');
     });
 });
 

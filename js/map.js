@@ -197,7 +197,7 @@
                 + '<span class="map-popup-badge">' + typeLabel + '</span>'
                 + '</div>'
                 + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
-                + '<a href="business.html?id=' + business.id + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
+                + '<a href="/negocio/' + (business.slug || business.id) + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
                 + '</div>'
                 + '</div>';
 
@@ -391,7 +391,7 @@
                 if (!isNaN(lat) && !isNaN(lng) && map) {
                     flyToBusiness(id);
                 } else {
-                    window.location.href = 'business.html?id=' + id;
+                    window.location.href = '/negocio/' + (data.slug || id);
                 }
             });
         });

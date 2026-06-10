@@ -109,7 +109,7 @@
                         + '<span class="map-popup-badge">' + typeLabel + '</span>'
                         + '</div>'
                         + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
-                        + '<a href="business.html?id=' + p.id + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
+                        + '<a href="/negocio/' + p.slug + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
                         + '</div>'
                         + '</div>';
 

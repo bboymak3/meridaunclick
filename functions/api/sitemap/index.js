@@ -42,15 +42,15 @@ export async function onRequestGet(context) {
   </url>\n`;
       }
 
-      // Also add legacy URLs (business.html?id=X) with low priority for backward compat
+      // Also add legacy redirect URLs for businesses without slug
       const businessesLegacy = await env.DB.prepare(
-        "SELECT id, updated_at FROM businesses WHERE status = 'approved' AND (slug IS NULL OR slug = '') ORDER BY updated_at DESC"
+        "SELECT id, slug, updated_at FROM businesses WHERE status = 'approved' AND (slug IS NULL OR slug = '') ORDER BY updated_at DESC"
       ).all();
 
       for (const biz of businessesLegacy.results) {
         const lastmod = biz.updated_at ? biz.updated_at.substring(0, 10) : '';
         dynamicUrls += `  <url>
-    <loc>${baseUrl}/business.html?id=${biz.id}</loc>
+    <loc>${baseUrl}/negocio/${biz.id}</loc>
     <lastmod>${lastmod}</lastmod>
     <priority>0.5</priority>
     <changefreq>monthly</changefreq>

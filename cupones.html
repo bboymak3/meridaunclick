@@ -1103,7 +1103,7 @@
                 const code = coupon.code || '—';
                 const businessId = coupon.business_id || '';
                 const businessSlug = coupon.business_slug || '';
-                const businessLink = businessId ? `business.html?id=${businessId}` : '#';
+                const businessLink = businessId ? `/negocio/${businessSlug || businessId}` : '#';
 
                 const expiryInfo = getTimeUntilExpiry(coupon.end_date);
                 let countdownHtml = '';

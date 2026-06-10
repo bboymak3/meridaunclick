@@ -255,7 +255,7 @@
         propBar.innerHTML = `
           <i class="fas fa-user"></i>
           <span>Chat con <strong>${name}</strong></span>
-          <a href="business.html?id=${conv.business.id}" target="_blank" class="cb-prop-link">
+          <a href="/negocio/${conv.business.slug || conv.business.id}" target="_blank" class="cb-prop-link">
             ${conv.business.title} ${conv.business.price ? '- ' + formatPrice(conv.business.price, conv.business.currency) : ''}
           </a>
         `;
