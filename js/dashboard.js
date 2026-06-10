@@ -620,43 +620,109 @@
 
     // ─── My Products (Marketplace) ──────────────────────────────
     async function loadMyProducts() {
-        const tbody = document.getElementById('myProductsBody');
-        if (!tbody) return;
+        const container = document.getElementById('myProductsByStore');
+        if (!container) return;
 
         try {
-            // Fetch ALL user's products (all statuses) using all=true and user_id filter
-            const userId = currentUser?.id;
-            const data = await api.get(`/marketplace?limit=100&all=true&user_id=${userId}`);
-            const products = data.products || [];
+            // 1. Get user's businesses
+            const myBiz = await api.get('/user/my-businesses');
+            const businesses = myBiz.data || [];
 
-            if (products.length === 0) {
-                tbody.innerHTML = `
-                    <tr class="empty-row"><td colspan="5">
-                        <div class="empty-state">
-                            <i class="fas fa-box-open"></i>
-                            <p>No tienes productos publicados.</p>
-                            <button class="btn btn-primary btn-sm" onclick="openProductModal()"><i class="fas fa-plus"></i> Publicar Producto</button>
+            if (businesses.length === 0) {
+                container.innerHTML = `
+                    <div class="dash-card">
+                        <div style="text-align:center;padding:32px 0;color:#94a3b8;">
+                            <i class="fas fa-store" style="font-size:2.5rem;color:#cbd5e1;"></i>
+                            <p style="margin-top:12px;">Necesitas tener al menos un negocio registrado para ver productos.</p>
+                            <a href="new-business.html" class="btn btn-primary btn-sm" style="display:inline-block;margin-top:12px;"><i class="fas fa-plus"></i> Registrar Negocio</a>
                         </div>
-                    </td></tr>`;
+                    </div>`;
                 return;
             }
 
-            tbody.innerHTML = products.map(p => {
-                const statusLabel = p.status === 'approved' ? '<span class="status-badge status-approved">Activo</span>' : p.status === 'pending' ? '<span class="status-badge status-pending">Pendiente</span>' : p.status === 'rejected' ? '<span class="status-badge status-rejected">Rechazado</span>' : '<span class="status-badge">' + (p.status || '-') + '</span>';
-                return `
-                <tr>
-                    <td><div class="dash-prop-name">${p.image ? `<img src="${p.image}" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}<span>${p.name || 'Sin nombre'}</span></div></td>
-                    <td>${p.category || 'General'}</td>
-                    <td class="dash-price">$${Number(p.price || 0).toLocaleString('es-VE')}</td>
-                    <td>${statusLabel}</td>
-                    <td>${formatDate(p.created_at)}</td>
-                    <td class="dash-actions">
-                        <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>`;
-            }).join('');
+            // 2. Fetch products for each business
+            let totalProducts = 0;
+            let html = '';
+
+            for (const biz of businesses) {
+                try {
+                    const data = await api.get(`/marketplace?limit=100&all=true&business_id=${biz.id}`);
+                    const products = data.products || [];
+
+                    if (products.length === 0) continue;
+                    totalProducts += products.length;
+
+                    html += `
+                        <div class="dash-card" style="margin-bottom:16px;">
+                            <div class="dash-card-header">
+                                <h3 style="display:flex;align-items:center;gap:8px;">
+                                    <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;">
+                                        <i class="fas fa-store" style="color:#fff;font-size:0.8rem;"></i>
+                                    </div>
+                                    <a href="/negocio/${biz.slug || biz.id}" style="color:#059669;text-decoration:none;font-weight:700;">${biz.title || 'Sin nombre'}</a>
+                                </h3>
+                                <span style="font-size:0.75rem;color:#94a3b8;background:#f1f5f9;padding:4px 10px;border-radius:12px;">${products.length} producto${products.length > 1 ? 's' : ''}</span>
+                            </div>
+                            <div class="dash-table-responsive">
+                                <table class="dash-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Categoría</th>
+                                            <th>Precio</th>
+                                            <th>Estatus</th>
+                                            <th>Fecha</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+
+                    products.forEach(p => {
+                        const statusLabel = p.status === 'approved' ? '<span class="status-badge status-approved">Activo</span>' : p.status === 'pending' ? '<span class="status-badge status-pending">Pendiente</span>' : p.status === 'rejected' ? '<span class="status-badge status-rejected">Rechazado</span>' : '<span class="status-badge">' + (p.status || '-') + '</span>';
+                        html += `
+                                        <tr>
+                                            <td><div class="dash-prop-name">${p.image ? `<img src="${p.image}" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}<span>${p.name || 'Sin nombre'}</span></div></td>
+                                            <td>${p.category || 'General'}</td>
+                                            <td class="dash-price">$${Number(p.price || 0).toLocaleString('es-VE')}</td>
+                                            <td>${statusLabel}</td>
+                                            <td>${formatDate(p.created_at)}</td>
+                                            <td class="dash-actions">
+                                                <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                            </td>
+                                        </tr>`;
+                    });
+
+                    html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>`;
+                } catch(e) {
+                    console.error('Error loading products for business', biz.id, e);
+                }
+            }
+
+            if (totalProducts === 0) {
+                container.innerHTML = `
+                    <div class="dash-card">
+                        <div style="text-align:center;padding:32px 0;color:#94a3b8;">
+                            <i class="fas fa-box-open" style="font-size:2.5rem;color:#cbd5e1;"></i>
+                            <p style="margin-top:12px;">No tienes productos publicados en tus negocios.</p>
+                            <button class="btn btn-primary btn-sm" onclick="openProductModal()" style="display:inline-block;margin-top:12px;"><i class="fas fa-plus"></i> Publicar Producto</button>
+                        </div>
+                    </div>`;
+            } else {
+                container.innerHTML = html;
+            }
         } catch (error) {
             console.error('Error loading products:', error);
+            container.innerHTML = `
+                <div class="dash-card">
+                    <div style="text-align:center;padding:32px 0;color:#ef4444;">
+                        <i class="fas fa-exclamation-circle" style="font-size:2.5rem;"></i>
+                        <p style="margin-top:12px;">Error al cargar productos.</p>
+                    </div>
+                </div>`;
         }
     }
 

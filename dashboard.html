@@ -333,7 +333,7 @@
 
                 <!-- My Products Section -->
                 <section class="dashboard-section hidden" id="sectionProducts">
-                    <div class="dash-card">
+                    <div class="dash-card" style="margin-bottom:20px;">
                         <div class="dash-card-header">
                             <h3><i class="fas fa-shopping-bag"></i> Mis Productos (Marketplace)</h3>
                             <button class="btn btn-primary btn-sm" id="btnNewProduct">
@@ -344,30 +344,11 @@
                             <i class="fas fa-info-circle"></i>
                             <p>Publica productos en el marketplace para que los compradores te contacten por WhatsApp.</p>
                         </div>
-                        <div class="dash-table-responsive">
-                            <table class="dash-table">
-                                <thead>
-                                    <tr>
-                                        <th>Producto</th>
-                                        <th>Categoría</th>
-                                        <th>Precio</th>
-                                        <th>Estatus</th>
-                                        <th>Fecha</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="myProductsBody">
-                                    <tr class="empty-row">
-                                        <td colspan="6">
-                                            <div class="empty-state">
-                                                <i class="fas fa-box-open"></i>
-                                                <p>No tienes productos publicados.</p>
-                                                <button class="btn btn-primary btn-sm" onclick="openProductModal()"><i class="fas fa-plus"></i> Publicar Producto</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    </div>
+                    <div id="myProductsByStore">
+                        <div style="text-align:center;color:#94a3b8;padding:24px;">
+                            <i class="fas fa-spinner fa-spin" style="font-size:24px;color:#f59e0b;"></i>
+                            <p style="margin-top:8px;">Cargando productos...</p>
                         </div>
                     </div>
                 </section>
