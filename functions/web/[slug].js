@@ -40,7 +40,7 @@ export async function onRequestGet(context) {
 
     // Images gallery
     const images = await env.DB.prepare(
-      `SELECT url, is_cover FROM images WHERE business_id = b.id ORDER BY is_cover DESC, id ASC LIMIT 10`
+      `SELECT url, is_cover FROM images WHERE business_id = ? ORDER BY is_cover DESC, id ASC LIMIT 10`
     ).bind(business.id).all();
 
     const baseUrl = 'https://aunclick.pages.dev';
