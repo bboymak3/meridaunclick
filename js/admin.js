@@ -32,7 +32,6 @@
     const tabMessages = document.getElementById('tabMessages');
     const tabFacebook = document.getElementById('tabFacebook');
     const tabJobs = document.getElementById('tabJobs');
-    const tabProducts = document.getElementById('tabProducts');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -102,6 +101,7 @@
         setupFilterListeners();
         setupFacebookListeners();
         setupJobListeners();
+        setupB2Modal();
         loadBusinessesForJobSelect();
 
         // Load initial data
@@ -140,7 +140,7 @@
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, products: tabProducts, facebook: tabFacebook, jobs: tabJobs, settings: tabSettings };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, settings: tabSettings };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -148,7 +148,7 @@
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', products: 'Productos', facebook: 'Facebook Import', jobs: 'Empleo', settings: 'Configuración' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', settings: 'Configuración' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }

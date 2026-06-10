@@ -11,8 +11,6 @@ const STATIC_ASSETS = [
   '/empleo.html',
   '/entretenimiento.html',
   '/cupones.html',
-  '/eventos.html',
-  '/reservas.html',
   '/marketplace.html',
   '/emergencia.html',
   '/admin.html',

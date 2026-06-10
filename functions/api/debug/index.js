@@ -1,5 +1,5 @@
 // functions/api/debug/index.js
-// GET: Diagnóstico completo del sistema (solo admin)
+// GET /api/debug - Comprehensive system diagnostic endpoint
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,7 +24,13 @@ async function verifyJWT(token, secret) {
   const [headerB64, payloadB64, signatureB64] = parts;
   const data = `${headerB64}.${payloadB64}`;
   const encoder = new TextEncoder();
-  const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['verify']
+  );
   let sigBase64 = signatureB64.replace(/-/g, '+').replace(/_/g, '/');
   const sigPad = sigBase64.length % 4;
   if (sigPad) sigBase64 += '='.repeat(4 - sigPad);
@@ -36,90 +42,308 @@ async function verifyJWT(token, secret) {
   return payload;
 }
 
+async function safeQuery(db, sql, label) {
+  try {
+    const result = await db.prepare(sql).all();
+    return { status: 'OK', data: result.results };
+  } catch (e) {
+    return { status: 'ERROR', error: e.message };
+  }
+}
+
+async function safeFirst(db, sql, label) {
+  try {
+    const result = await db.prepare(sql).first();
+    return { status: 'OK', data: result };
+  } catch (e) {
+    return { status: 'ERROR', error: e.message };
+  }
+}
+
 export async function onRequestGet(context) {
   const { env, request } = context;
+  const startTime = Date.now();
+
   const results = {
     timestamp: new Date().toISOString(),
+    environment: {
+      platform: 'Cloudflare Pages Functions',
+      region: request.cf?.region || 'unknown',
+    },
     checks: {},
-    errors: [],
     tables: {},
-    api_endpoints: {},
+    status_breakdown: {},
+    api_endpoints: [],
+    auth: {},
+    settings: {},
+    recent_products: [],
+    schema_issues: [],
+    performance_ms: 0,
   };
 
-  // Check DB binding
+  // ─── 1. Database Connection Check ────────────────────────────
   if (!env.DB) {
-    results.checks.database = 'ERROR: DB binding not found';
-    results.errors.push('No hay binding de D1. Verifica wrangler.toml o configuracion de Pages.');
+    results.checks.database = { status: 'CRITICAL', message: 'DB binding not found. Check wrangler.toml or Cloudflare Pages settings.' };
+    results.schema_issues.push('No D1 database binding available');
     return new Response(JSON.stringify(results, null, 2), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
-  results.checks.database = 'OK - DB binding found';
 
-  // Check JWT_SECRET
-  results.checks.jwt_secret = env.JWT_SECRET ? 'OK' : 'WARNING: JWT_SECRET not set';
+  const dbTest = await safeFirst(env.DB, 'SELECT 1 as test', 'DB connection');
+  if (dbTest.status === 'OK') {
+    results.checks.database = { status: 'OK', message: 'Database connection successful' };
+  } else {
+    results.checks.database = { status: 'ERROR', message: dbTest.error };
+    results.schema_issues.push(`Database error: ${dbTest.error}`);
+  }
 
-  // Test tables
-  const tableNames = ['users', 'businesses', 'products', 'categories', 'images', 'contacts', 'favorites', 'states', 'reviews', 'coupons', 'events', 'bookings', 'notifications', 'settings', 'admin_settings'];
+  // ─── JWT Secret Check ────────────────────────────────────────
+  results.checks.jwt_secret = env.JWT_SECRET
+    ? { status: 'OK', message: 'JWT_SECRET is configured' }
+    : { status: 'WARNING', message: 'JWT_SECRET not set - auth will not work' };
+
+  // ─── 2. Table Counts ─────────────────────────────────────────
+  const tableNames = [
+    'users', 'businesses', 'products', 'categories', 'images',
+    'contacts', 'favorites', 'states', 'reviews', 'coupons',
+    'events', 'bookings', 'notifications', 'settings', 'admin_settings',
+    'jobs', 'job_applications',
+  ];
 
   for (const table of tableNames) {
-    try {
-      const count = await env.DB.prepare(`SELECT COUNT(*) as c FROM ${table}`).first();
-      results.tables[table] = { status: 'OK', count: count.c };
-    } catch (e) {
-      results.tables[table] = { status: 'NOT FOUND', error: e.message };
+    const result = await safeFirst(env.DB, `SELECT COUNT(*) as count FROM ${table}`, table);
+    if (result.status === 'OK') {
+      results.tables[table] = { status: 'OK', count: result.data.count };
+    } else {
+      results.tables[table] = { status: 'NOT FOUND', error: result.error };
+      if (result.error && !result.error.includes('no such table')) {
+        results.schema_issues.push(`Table "${table}": ${result.error}`);
+      }
     }
   }
 
-  // Test product statuses
-  try {
-    const byStatus = await env.DB.prepare(`
-      SELECT status, COUNT(*) as c FROM products GROUP BY status
-    `).all();
-    results.tables.products_by_status = byStatus.results.map(r => ({ status: r.status, count: r.c }));
-  } catch (e) {
-    results.tables.products_by_status = { error: e.message };
+  // ─── 3. Products Breakdown by Status ─────────────────────────
+  const productsByStatus = await safeQuery(env.DB,
+    `SELECT COALESCE(status, 'NULL') as status, COUNT(*) as count FROM products GROUP BY status`,
+    'products_by_status'
+  );
+  if (productsByStatus.status === 'OK') {
+    results.status_breakdown.products = productsByStatus.data.map(r => ({
+      status: r.status,
+      count: r.count,
+    }));
+  } else {
+    results.status_breakdown.products = { error: productsByStatus.error };
   }
 
-  // Test business statuses
-  try {
-    const byStatus = await env.DB.prepare(`
-      SELECT status, COUNT(*) as c FROM businesses GROUP BY status
-    `).all();
-    results.tables.businesses_by_status = byStatus.results.map(r => ({ status: r.status, count: r.c }));
-  } catch (e) {
-    results.tables.businesses_by_status = { error: e.message };
+  // ─── 4. Businesses Breakdown by Status ───────────────────────
+  const businessesByStatus = await safeQuery(env.DB,
+    `SELECT COALESCE(status, 'NULL') as status, COUNT(*) as count FROM businesses GROUP BY status`,
+    'businesses_by_status'
+  );
+  if (businessesByStatus.status === 'OK') {
+    results.status_breakdown.businesses = businessesByStatus.data.map(r => ({
+      status: r.status,
+      count: r.count,
+    }));
+  } else {
+    results.status_breakdown.businesses = { error: businessesByStatus.error };
   }
 
-  // Test admin_settings
-  try {
-    const settings = await env.DB.prepare(`SELECT key, value FROM admin_settings`).all();
-    results.tables.admin_settings_values = settings.results;
-  } catch (e) {
-    results.tables.admin_settings_values = { error: e.message };
+  // ─── 5. Jobs Breakdown by Status ─────────────────────────────
+  const jobsByStatus = await safeQuery(env.DB,
+    `SELECT COALESCE(status, 'NULL') as status, COUNT(*) as count FROM jobs GROUP BY status`,
+    'jobs_by_status'
+  );
+  if (jobsByStatus.status === 'OK') {
+    results.status_breakdown.jobs = jobsByStatus.data.map(r => ({
+      status: r.status,
+      count: r.count,
+    }));
+  } else {
+    results.status_breakdown.jobs = { error: jobsByStatus.error };
   }
 
-  // Test products schema
-  try {
-    const schema = await env.DB.prepare(`PRAGMA table_info(products)`).all();
-    results.tables.products_schema = schema.results.map(c => c.name);
-  } catch (e) {
-    results.tables.products_schema = { error: e.message };
-  }
+  // ─── 6. API Endpoint Availability ────────────────────────────
+  // List all known endpoints based on the functions directory structure
+  const knownEndpoints = [
+    { path: '/api/businesses', methods: ['GET', 'POST', 'PUT', 'DELETE'] },
+    { path: '/api/users', methods: ['GET', 'POST', 'PUT', 'DELETE'] },
+    { path: '/api/products', methods: ['GET', 'POST', 'PUT', 'DELETE'] },
+    { path: '/api/categories', methods: ['GET'] },
+    { path: '/api/reviews', methods: ['GET', 'POST'] },
+    { path: '/api/contacts', methods: ['GET', 'POST'] },
+    { path: '/api/favorites', methods: ['GET', 'POST', 'DELETE'] },
+    { path: '/api/events', methods: ['GET', 'POST', 'PUT', 'DELETE'] },
+    { path: '/api/bookings', methods: ['GET', 'POST', 'PUT', 'DELETE'] },
+    { path: '/api/jobs', methods: ['GET', 'POST', 'PUT', 'DELETE'] },
+    { path: '/api/coupons', methods: ['GET', 'POST', 'PUT', 'DELETE'] },
+    { path: '/api/marketplace', methods: ['GET', 'POST', 'PUT', 'DELETE'] },
+    { path: '/api/settings', methods: ['GET', 'PUT'] },
+    { path: '/api/points', methods: ['GET', 'POST'] },
+    { path: '/api/notifications', methods: ['GET', 'POST', 'PUT'] },
+    { path: '/api/emergency', methods: ['GET', 'POST'] },
+    { path: '/api/ai-chat', methods: ['POST'] },
+    { path: '/api/serve', methods: ['GET'] },
+    { path: '/api/debug', methods: ['GET'] },
+  ];
+  results.api_endpoints = knownEndpoints;
 
-  // Test auth (optional)
+  // ─── 7. Auth System Check ────────────────────────────────────
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
-    try {
-      const user = await verifyJWT(authHeader.substring(7), env.JWT_SECRET);
-      results.auth = user ? { status: 'OK', user_id: user.id, email: user.email, role: user.role } : { status: 'INVALID TOKEN' };
-    } catch (e) {
-      results.auth = { status: 'ERROR', error: e.message };
+    if (!env.JWT_SECRET) {
+      results.auth = { status: 'ERROR', message: 'Cannot verify token - JWT_SECRET not configured' };
+    } else {
+      try {
+        const user = await verifyJWT(authHeader.substring(7), env.JWT_SECRET);
+        if (user) {
+          results.auth = {
+            status: 'OK',
+            message: 'Token valid',
+            user_id: user.id,
+            email: user.email,
+            role: user.role,
+            exp: new Date(user.exp * 1000).toISOString(),
+          };
+        } else {
+          results.auth = { status: 'INVALID', message: 'Token is invalid or expired' };
+        }
+      } catch (e) {
+        results.auth = { status: 'ERROR', message: e.message };
+      }
     }
   } else {
-    results.auth = { status: 'NO TOKEN PROVIDED (debug endpoint works without auth)' };
+    results.auth = { status: 'NO_TOKEN', message: 'No Bearer token provided. Debug endpoint works without auth.' };
   }
+
+  // Check admin user count
+  const adminCount = await safeFirst(env.DB,
+    `SELECT COUNT(*) as count FROM users WHERE role = 'admin'`,
+    'admin_count'
+  );
+  if (adminCount.status === 'OK') {
+    results.auth.admin_users = adminCount.data.count;
+    if (adminCount.data.count === 0) {
+      results.schema_issues.push('CRITICAL: No admin users found in database');
+    }
+  }
+
+  // ─── 8. Settings Values ──────────────────────────────────────
+  const settingsResult = await safeQuery(env.DB,
+    `SELECT key, value FROM admin_settings ORDER BY key`,
+    'settings'
+  );
+  if (settingsResult.status === 'OK') {
+    // Parse known boolean/numeric settings
+    results.settings = {};
+    for (const row of settingsResult.data) {
+      try {
+        results.settings[row.key] = JSON.parse(row.value);
+      } catch {
+        results.settings[row.key] = row.value;
+      }
+    }
+  } else {
+    results.settings = { error: settingsResult.error };
+  }
+
+  // Also check legacy settings table
+  const legacySettings = await safeQuery(env.DB,
+    `SELECT key, value FROM settings ORDER BY key`,
+    'legacy_settings'
+  );
+  if (legacySettings.status === 'OK' && legacySettings.data.length > 0) {
+    results.legacy_settings = {};
+    for (const row of legacySettings.data) {
+      try {
+        results.legacy_settings[row.key] = JSON.parse(row.value);
+      } catch {
+        results.legacy_settings[row.key] = row.value;
+      }
+    }
+  }
+
+  // ─── 9. Recent Products (last 10) ────────────────────────────
+  const recentProducts = await safeQuery(env.DB,
+    `SELECT id, name, price, status, business_id, business_name, category, created_at
+     FROM products
+     ORDER BY created_at DESC
+     LIMIT 10`,
+    'recent_products'
+  );
+  if (recentProducts.status === 'OK') {
+    results.recent_products = recentProducts.data;
+  } else {
+    results.recent_products = { error: recentProducts.error };
+  }
+
+  // ─── 10. Schema Checks ───────────────────────────────────────
+  // Check products table schema for expected columns
+  const productsSchema = await safeQuery(env.DB, `PRAGMA table_info(products)`, 'products_schema');
+  if (productsSchema.status === 'OK') {
+    const columns = productsSchema.data.map(c => c.name);
+    const expectedColumns = ['id', 'name', 'description', 'price', 'status', 'business_id', 'business_name', 'category', 'image_url', 'created_at'];
+    const missing = expectedColumns.filter(c => !columns.includes(c));
+    if (missing.length > 0) {
+      results.schema_issues.push(`Products table missing columns: ${missing.join(', ')}`);
+    }
+    results.tables.products_columns = columns;
+  }
+
+  // Check businesses table schema
+  const businessesSchema = await safeQuery(env.DB, `PRAGMA table_info(businesses)`, 'businesses_schema');
+  if (businessesSchema.status === 'OK') {
+    const columns = businessesSchema.data.map(c => c.name);
+    const expectedColumns = ['id', 'name', 'category', 'address', 'city', 'state', 'phone', 'email', 'status', 'owner_id', 'created_at'];
+    const missing = expectedColumns.filter(c => !columns.includes(c));
+    if (missing.length > 0) {
+      results.schema_issues.push(`Businesses table missing columns: ${missing.join(', ')}`);
+    }
+    results.tables.businesses_columns = columns;
+  }
+
+  // Check users table schema
+  const usersSchema = await safeQuery(env.DB, `PRAGMA table_info(users)`, 'users_schema');
+  if (usersSchema.status === 'OK') {
+    const columns = usersSchema.data.map(c => c.name);
+    const expectedColumns = ['id', 'name', 'email', 'password', 'role', 'created_at'];
+    const missing = expectedColumns.filter(c => !columns.includes(c));
+    if (missing.length > 0) {
+      results.schema_issues.push(`Users table missing columns: ${missing.join(', ')}`);
+    }
+    results.tables.users_columns = columns;
+  }
+
+  // Check jobs table schema
+  const jobsSchema = await safeQuery(env.DB, `PRAGMA table_info(jobs)`, 'jobs_schema');
+  if (jobsSchema.status === 'OK') {
+    const columns = jobsSchema.data.map(c => c.name);
+    results.tables.jobs_columns = columns;
+  }
+
+  // Check for orphaned records (products with missing business)
+  const orphanedProducts = await safeFirst(env.DB,
+    `SELECT COUNT(*) as count FROM products WHERE business_id IS NOT NULL AND business_id NOT IN (SELECT id FROM businesses)`,
+    'orphaned_products'
+  );
+  if (orphanedProducts.status === 'OK' && orphanedProducts.data.count > 0) {
+    results.schema_issues.push(`${orphanedProducts.data.count} products reference non-existent businesses (orphaned)`);
+  }
+
+  // Check for users without proper roles
+  const invalidRoles = await safeFirst(env.DB,
+    `SELECT COUNT(*) as count FROM users WHERE role NOT IN ('user', 'admin', 'business_owner')`,
+    'invalid_roles'
+  );
+  if (invalidRoles.status === 'OK' && invalidRoles.data.count > 0) {
+    results.schema_issues.push(`${invalidRoles.data.count} users have invalid roles`);
+  }
+
+  // ─── Performance ─────────────────────────────────────────────
+  results.performance_ms = Date.now() - startTime;
 
   return new Response(JSON.stringify(results, null, 2), {
     status: 200,
