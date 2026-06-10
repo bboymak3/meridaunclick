@@ -353,10 +353,10 @@ function showWebPageSelector() {
     }
 
     // Fetch businesses
-    const api = getApi();
     api.get('/user/my-businesses').then(res => {
         const body = document.getElementById('webPageSelectorBody');
-        if (!res.data || res.data.length === 0) {
+        const businesses = res.data || [];
+        if (businesses.length === 0) {
             body.innerHTML = `
                 <div style="text-align:center;padding:20px 0;color:#64748b;">
                     <i class="fas fa-store" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
@@ -368,7 +368,7 @@ function showWebPageSelector() {
         }
 
         let html = '<p style="font-size:0.82rem;color:#94a3b8;margin-bottom:14px;">Selecciona a que negocio le quieres generar la pagina web:</p>';
-        res.data.forEach(b => {
+        businesses.forEach(b => {
             const coverImg = b.cover_image || '';
             html += `
                 <a href="/web/${b.slug}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px;border:1px solid #e5e7eb;border-radius:12px;margin-bottom:10px;text-decoration:none;color:inherit;transition:all 0.2s;background:#fff;" onmouseover="this.style.borderColor='#0ea5e9';this.style.boxShadow='0 4px 12px rgba(14,165,233,0.1)';" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none';">
