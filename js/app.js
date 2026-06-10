@@ -6,7 +6,6 @@
 
 // ─── API Configuration ──────────────────────────────────────────
 const API = '/api';
-const API_BASE = '';
 
 // ─── Token Management ──────────────────────────────────────────
 const TOKEN_KEY = 'meridaunclick_token';
@@ -405,21 +404,7 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-function showLoading(element) {
-    if (!element) return;
-    element.innerHTML = `
-        <div class="loading-spinner">
-            <i class="fas fa-spinner fa-spin"></i>
-            <p>Cargando...</p>
-        </div>
-    `;
-}
 
-function hideLoading(element) {
-    if (!element) return;
-    const spinner = element.querySelector('.loading-spinner');
-    if (spinner) spinner.remove();
-}
 
 function formatPrice(price, currency = 'USD') {
     if (price == null || isNaN(price)) return '--';
@@ -475,15 +460,6 @@ function truncateText(text, maxLen = 100) {
     return text.substring(0, maxLen).trim() + '...';
 }
 
-function slugify(text) {
-    if (!text) return '';
-    return text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-}
 
 function debounce(fn, delay = 300) {
     let timer;
@@ -565,17 +541,6 @@ function getBusinessTypeLabel(type) {
     return BUSINESS_TYPE_LABELS[type?.toLowerCase()] || type;
 }
 
-function getBusinessTypeIcon(type) {
-    const icons = {
-        'negocio': 'fa-store',
-        'profesional': 'fa-briefcase',
-        'servicio': 'fa-concierge-bell',
-        'restaurante': 'fa-utensils',
-        'tienda': 'fa-shopping-bag',
-        'otro': 'fa-ellipsis',
-    };
-    return icons[type?.toLowerCase()] || 'fa-store';
-}
 
 // ─── Business URL Helper ─────────────────────────────────────
 function getBusinessUrl(business) {
@@ -696,25 +661,7 @@ function getSearchParams() {
     };
 }
 
-function buildSearchURL(params) {
-    const url = new URL('search.html', window.location.origin);
-    const mapping = {
-        estado: 'estado',
-        categoria: 'categoria',
-        city: 'ciudad',
-        search: 'q',
-        business_type: 'tipo_negocio',
-    };
 
-    for (const [key, value] of Object.entries(params)) {
-        if (value && value !== '' && value !== 0) {
-            const paramName = mapping[key] || key;
-            url.searchParams.set(paramName, value);
-        }
-    }
-
-    return url.toString();
-}
 
 // ─── Auth Redirect Helper ──────────────────────────────────────
 function requireAuth() {

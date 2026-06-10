@@ -113,7 +113,6 @@
         loadBusinessesForJobSelect();
 
         // Load initial data
-        await loadDashboardStats();
         loadDashboardTab();
     }
 
@@ -800,17 +799,6 @@
                 saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
             }
         }
-    }
-
-    function toggleUserStatus(userId, active) {
-        // Direct API call instead of opening modal
-        api.put(`/users/${userId}`, { is_active: !!active })
-            .then(() => {
-                showToast(active ? 'Usuario activado' : 'Usuario desactivado', 'success');
-                loadUsers();
-                loadDashboardStats();
-            })
-            .catch(error => showToast(error.message, 'error'));
     }
 
     function deleteUser(id) {
@@ -1737,7 +1725,6 @@
         toggleFeatured,
         deleteBusiness,
         editUser,
-        toggleUserStatus,
         deleteUser,
         viewMessage,
         approveJob,

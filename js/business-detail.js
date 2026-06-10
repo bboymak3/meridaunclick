@@ -290,8 +290,8 @@ function populateBusinessDetail(b) {
             }).addTo(map);
 
             const marker = L.marker([b.lat, b.lng]).addTo(map);
-            if (b.title) marker.bindPopup(`<strong>${escapeHtml(b.title)}</strong>`);
-            if (b.address) marker.bindPopup(`<strong>${escapeHtml(b.title || 'Negocio')}</strong><br>${escapeHtml(b.address)}`);
+            const popupContent = `<strong>${escapeHtml(b.title || 'Negocio')}</strong>${b.address ? '<br>' + escapeHtml(b.address) : ''}`;
+            marker.bindPopup(popupContent);
 
             // Full-screen map modal
             if (openMapModalBtn) {
