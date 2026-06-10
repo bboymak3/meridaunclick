@@ -338,6 +338,20 @@ function showWebPageSelector() {
     document.getElementById('webPageSelectorClose').addEventListener('click', () => modal.remove());
     modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
 
+    // Check if user is logged in
+    const token = localStorage.getItem('meridaunclick_token');
+    if (!token) {
+        const body = document.getElementById('webPageSelectorBody');
+        body.innerHTML = `
+            <div style="text-align:center;padding:20px 0;color:#64748b;">
+                <i class="fas fa-user-lock" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
+                <p style="font-size:0.95rem;font-weight:600;">Inicia sesion para ver tus paginas web</p>
+                <p style="font-size:0.85rem;margin-top:4px;">Necesitas tener una cuenta y al menos un negocio registrado.</p>
+                <a href="/login.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#059669;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Iniciar Sesion</a>
+            </div>`;
+        return;
+    }
+
     // Fetch businesses
     const api = getApi();
     api.get('/user/my-businesses').then(res => {
@@ -378,6 +392,30 @@ function showWebPageSelector() {
     });
 }
 
+// ─── Add Web Page Menu Item ────────────────────────────────────
+function addWebPageMenuItem() {
+    const existing = document.getElementById('navWebPageItem');
+    if (existing) return;
+    const dropdownMenu = document.querySelector('.nav-dropdown-menu');
+    if (!dropdownMenu) return;
+    const divider = dropdownMenu.querySelector('.nav-dropdown-divider');
+    const webLi = document.createElement('li');
+    webLi.id = 'navWebPageItem';
+    webLi.innerHTML = `<a href="#" class="nav-link" id="navWebPageBtn" style="color:#0ea5e9;"><i class="fas fa-globe"></i> Pagina Web</a>`;
+    if (divider) {
+        dropdownMenu.insertBefore(webLi, divider);
+    } else {
+        dropdownMenu.appendChild(webLi);
+    }
+    const webBtn = document.getElementById('navWebPageBtn');
+    if (webBtn) {
+        webBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showWebPageSelector();
+        });
+    }
+}
+
 // ─── Navigation ────────────────────────────────────────────────
 function updateNav() {
     const navLoginItem = document.getElementById('navLoginItem');
@@ -416,28 +454,8 @@ function updateNav() {
         }
 
         // Add "Crear Pagina Web" in "Más" dropdown for logged-in users
-        const existingWebLink = document.getElementById('navWebPageItem');
-        if (!existingWebLink) {
-            const dropdownMenu = document.querySelector('.nav-dropdown-menu');
-            if (dropdownMenu) {
-                const divider = dropdownMenu.querySelector('.nav-dropdown-divider');
-                const webLi = document.createElement('li');
-                webLi.id = 'navWebPageItem';
-                webLi.innerHTML = `<a href="#" class="nav-link" id="navWebPageBtn" style="color:#0ea5e9;"><i class="fas fa-globe"></i> Pagina Web</a>`;
-                if (divider) {
-                    dropdownMenu.insertBefore(webLi, divider);
-                } else {
-                    dropdownMenu.appendChild(webLi);
-                }
-                const webBtn = document.getElementById('navWebPageBtn');
-                if (webBtn) {
-                    webBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        showWebPageSelector();
-                    });
-                }
-            }
-        }
+        addWebPageMenuItem();
+
     } else {
         navLoginItem.classList.remove('hidden');
         navUserItem.classList.add('hidden');
@@ -446,9 +464,8 @@ function updateNav() {
         const adminLinkItem = document.getElementById('navAdminItem');
         if (adminLinkItem) adminLinkItem.remove();
 
-        // Remove "Crear Pagina Web" if not logged in
-        const webLinkItem = document.getElementById('navWebPageItem');
-        if (webLinkItem) webLinkItem.remove();
+        // Also show web page link for non-logged users
+        addWebPageMenuItem();
 
         // Make "Publicar" link require login
         const publishLinks = document.querySelectorAll('a[href="new-business.html"]');

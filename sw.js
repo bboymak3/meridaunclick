@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unclick-v21';
+const CACHE_NAME = 'unclick-v22';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
