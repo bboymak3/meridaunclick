@@ -10888,8 +10888,24 @@ select.form-select {
 
 /* Responsive: location selector on mobile */
 @media (max-width: 768px) {
+    .nav-container {
+        flex-wrap: wrap;
+    }
+
     .location-selector {
         margin-left: 6px;
+        order: 10; /* Push to end */
+        width: calc(100% - 16px);
+        padding: 6px 0;
+        display: flex;
+        justify-content: center;
+    }
+
+    .location-dropdown {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%);
+        min-width: 280px;
     }
 
     .location-btn {
@@ -11080,16 +11096,23 @@ select.form-select {
         color: #fff;
     }
 
-    .nav-mobile-cta-cupon {
-        background: linear-gradient(135deg, #ea580c, #f97316);
+    .nav-mobile-cta-product {
+        background: linear-gradient(135deg, #d97706, #f59e0b);
         color: #fff;
-        box-shadow: 0 4px 16px rgba(234, 88, 12, 0.35);
+        box-shadow: 0 4px 16px rgba(217, 119, 6, 0.45);
+        font-weight: 700;
+        animation: goldenPulse 2s ease-in-out infinite;
     }
 
-    .nav-mobile-cta-cupon:hover {
+    .nav-mobile-cta-product:hover {
         transform: translateY(-1px);
-        box-shadow: 0 6px 24px rgba(234, 88, 12, 0.5);
+        box-shadow: 0 6px 24px rgba(217, 119, 6, 0.6);
         color: #fff;
+    }
+
+    @keyframes goldenPulse {
+        0%, 100% { box-shadow: 0 4px 16px rgba(217, 119, 6, 0.45); }
+        50% { box-shadow: 0 4px 24px rgba(245, 158, 11, 0.65); }
     }
 }
 

@@ -16,6 +16,7 @@
     let usersPage = 1;
     let msgsPage = 1;
     let jobsPage = 1;
+    let productsPage = 1;
     const PAGE_LIMIT = 15;
 
     // ─── DOM Elements ───────────────────────────────────────────
@@ -31,6 +32,7 @@
     const tabMessages = document.getElementById('tabMessages');
     const tabFacebook = document.getElementById('tabFacebook');
     const tabJobs = document.getElementById('tabJobs');
+    const tabProducts = document.getElementById('tabProducts');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -138,7 +140,7 @@
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, settings: tabSettings };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, products: tabProducts, facebook: tabFacebook, jobs: tabJobs, settings: tabSettings };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -146,7 +148,7 @@
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', settings: 'Configuración' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', products: 'Productos', facebook: 'Facebook Import', jobs: 'Empleo', settings: 'Configuración' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -171,6 +173,10 @@
             case 'facebook':
                 loadFacebookConfig();
                 loadFacebookHistory();
+                break;
+            case 'products':
+                productsPage = 1;
+                loadProducts();
                 break;
             case 'jobs':
                 jobsPage = 1;
@@ -936,6 +942,10 @@
         // Message filter
         const msgFilter = document.getElementById('adminMsgFilter');
         if (msgFilter) msgFilter.addEventListener('change', () => { msgsPage = 1; loadMessages(); });
+
+        // Products filter
+        const productStatusFilter = document.getElementById('adminProductStatusFilter');
+        if (productStatusFilter) productStatusFilter.addEventListener('change', () => { productsPage = 1; loadProducts(); });
     }
 
     // ─── Pagination Helper ──────────────────────────────────────
@@ -1372,6 +1382,139 @@
             showToast('Error al guardar configuración: ' + error.message, 'error');
         }
     }
+
+    // ─── Products Management ────────────────────────────────────
+    async function loadProducts() {
+        try {
+            const filter = document.getElementById('adminProductStatusFilter');
+            const statusFilter = filter ? filter.value : '';
+            
+            let url = `/api/marketplace?page=${productsPage}&limit=${PAGE_LIMIT}&all=true`;
+            if (statusFilter) url += `&status=${statusFilter}`;
+            
+            const data = await api.get(url);
+            const products = data.products || [];
+            
+            // Update badge
+            const pendingCount = await api.get('/api/marketplace?status=pending&all=true&limit=1');
+            const badge = document.getElementById('adminProductsBadge');
+            if (badge) badge.textContent = pendingCount.pagination?.total || 0;
+            
+            const tbody = document.getElementById('adminProductsTableBody');
+            if (!tbody) return;
+            
+            if (products.length === 0) {
+                tbody.innerHTML = `<tr class="empty-row"><td colspan="8"><div class="empty-state-sm"><p>No hay productos.</p></div></td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = products.map(p => {
+                const statusClass = p.status === 'approved' ? 'admin-badge-green' : p.status === 'rejected' ? 'admin-badge-red' : 'admin-badge-yellow';
+                const statusLabel = p.status === 'approved' ? 'Aprobado' : p.status === 'rejected' ? 'Rechazado' : 'Pendiente';
+                const price = p.price ? `$${parseFloat(p.price).toFixed(2)}` : '$0.00';
+                const date = p.created_at ? new Date(p.created_at).toLocaleDateString('es-VE') : '-';
+                
+                let actions = '';
+                if (p.status === 'pending') {
+                    actions = `
+                        <button class="admin-action-btn admin-action-approve" onclick="window._adminApproveProduct(${p.id})" title="Aprobar">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button class="admin-action-btn admin-action-reject" onclick="window._adminRejectProduct(${p.id})" title="Rechazar">
+                            <i class="fas fa-times"></i>
+                        </button>`;
+                } else if (p.status === 'rejected') {
+                    actions = `
+                        <button class="admin-action-btn admin-action-approve" onclick="window._adminApproveProduct(${p.id})" title="Aprobar">
+                            <i class="fas fa-check"></i>
+                        </button>`;
+                }
+                
+                return `<tr>
+                    <td>${p.id}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            ${p.image ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">` : ''}
+                            <div>
+                                <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.name)}</div>
+                                ${p.description ? `<div style="font-size:0.75rem;color:#94a3b8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.description)}</div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td><span style="font-size:0.8rem;">${escapeHtml(p.category || 'general')}</span></td>
+                    <td style="font-weight:600;color:#059669;">${price}</td>
+                    <td style="font-size:0.8rem;">${p.user_id || '-'}</td>
+                    <td><span class="admin-status-badge ${statusClass}">${statusLabel}</span></td>
+                    <td style="font-size:0.78rem;color:#94a3b8;">${date}</td>
+                    <td><div style="display:flex;gap:6px;">${actions}</div></td>
+                </tr>`;
+            }).join('');
+            
+            // Pagination
+            renderProductsPagination(data.pagination);
+        } catch (error) {
+            console.error('Error loading products:', error);
+            showToast('Error al cargar productos', 'error');
+        }
+    }
+    
+    function renderProductsPagination(pagination) {
+        const container = document.getElementById('adminProductsPagination');
+        if (!container || !pagination) return;
+        
+        const { page, totalPages } = pagination;
+        let html = '';
+        
+        if (page > 1) {
+            html += `<button class="admin-page-btn" onclick="window._adminProductsPage(${page - 1})"><i class="fas fa-chevron-left"></i></button>`;
+        }
+        
+        for (let i = 1; i <= totalPages; i++) {
+            if (totalPages > 7 && Math.abs(i - page) > 2 && i !== 1 && i !== totalPages) {
+                if (i === page - 3 || i === page + 3) html += '<span style="padding:0 4px;">...</span>';
+                continue;
+            }
+            html += `<button class="admin-page-btn ${i === page ? 'active' : ''}" onclick="window._adminProductsPage(${i})">${i}</button>`;
+        }
+        
+        if (page < totalPages) {
+            html += `<button class="admin-page-btn" onclick="window._adminProductsPage(${page + 1})"><i class="fas fa-chevron-right"></i></button>`;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    async function approveProduct(id) {
+        try {
+            await api.post(`/marketplace/${id}/approve`);
+            showToast('Producto aprobado exitosamente', 'success');
+            loadProducts();
+            loadDashboardStats();
+        } catch (error) {
+            console.error('Error approving product:', error);
+            showToast('Error al aprobar producto: ' + error.message, 'error');
+        }
+    }
+    
+    async function rejectProduct(id) {
+        try {
+            await api.post(`/marketplace/${id}/reject`);
+            showToast('Producto rechazado', 'success');
+            loadProducts();
+            loadDashboardStats();
+        } catch (error) {
+            console.error('Error rejecting product:', error);
+            showToast('Error al rechazar producto: ' + error.message, 'error');
+        }
+    }
+    
+    // Expose for inline onclick
+    window._adminApproveProduct = approveProduct;
+    window._adminRejectProduct = rejectProduct;
+    window._adminProductsPage = function(page) {
+        productsPage = page;
+        loadProducts();
+    };
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {

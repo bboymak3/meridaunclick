@@ -676,8 +676,10 @@
                     image: fd.get('image') || '',
                     description: fd.get('description') || '',
                 };
+                const businessId = fd.get('business_id');
+                if (businessId) body.business_id = parseInt(businessId);
                 await api.post('/marketplace', body);
-                showToast('Producto publicado exitosamente', 'success');
+                showToast('Producto enviado para aprobación. Será visible una vez aprobado por un administrador.', 'success');
                 modal.classList.add('hidden');
                 form.reset();
                 uploadedImageUrl = '';
@@ -766,9 +768,28 @@
     // Wire up header button
     const btnNewProduct = document.getElementById('btnNewProduct');
 
-    window.openProductModal = function () {
+    window.openProductModal = async function () {
         const modal = document.getElementById('productModal');
         if (modal) modal.classList.remove('hidden');
+        
+        // Load user's businesses into selector
+        try {
+            const user = getCachedUser();
+            const businessesData = await api.get(`/api/businesses?user_id=${user.id}&limit=50`);
+            const businesses = businessesData.businesses || businessesData.results || businessesData || [];
+            const select = document.getElementById('prodBusiness');
+            if (select) {
+                select.innerHTML = '<option value="">Publicar como usuario independiente</option>';
+                businesses.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.id;
+                    opt.textContent = b.title || b.name || `Negocio #${b.id}`;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.log('Could not load businesses for selector:', e);
+        }
     };
 
     if (btnNewProduct) btnNewProduct.addEventListener('click', window.openProductModal);

@@ -122,7 +122,7 @@
                     </button>
                     <h1 class="dashboard-title" id="sectionTitle">Resumen</h1>
                     <div class="dashboard-header-actions">
-                        <button class="btn btn-primary" id="headerBtnNewProduct" style="background:linear-gradient(135deg,#059669,#10b981);">
+                        <button class="btn btn-primary" id="headerBtnNewProduct" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.2);box-shadow:0 4px 14px rgba(217,119,6,0.35);">
                             <i class="fas fa-shopping-bag"></i> Publicar Producto
                         </button>
                         <a href="new-business.html" class="btn btn-primary">
@@ -588,6 +588,18 @@
             </div>
             <div class="modal-body">
                 <form id="productForm" class="profile-form">
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-store"></i> <span>Publicar desde tu Negocio</span></div>
+                        <div class="profile-input-group">
+                            <label for="prodBusiness">Negocio / Comercio (opcional)</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-store"></i>
+                            <select id="prodBusiness" name="business_id">
+                                <option value="">Publicar como usuario independiente</option>
+                            </select>
+                            </div>
+                            <small class="profile-input-hint">Selecciona desde cuál negocio quieres publicar este producto. Si no tienes negocios registrados, puedes crear uno desde <a href="new-business.html" style="color:#059669;">aquí</a>.</small>
+                        </div>
+                    </div>
                     <div class="profile-form-section">
                         <div class="profile-form-section-title"><i class="fas fa-tag"></i> <span>Información del Producto</span></div>
                         <div class="profile-input-group">

@@ -80,9 +80,19 @@ export async function onRequestGet(context) {
     const offset = (page - 1) * limit;
     const search = params.get('search');
     const sort = params.get('sort') || 'newest';
+    const allProducts = params.get('all') === 'true'; // Admin mode: show all statuses
+    const statusFilter = params.get('status');
 
     const conditions = [];
     const bindings = [];
+
+    // Only show approved products to public (unless admin mode)
+    if (!allProducts) {
+      conditions.push("(status = 'approved' OR status IS NULL)");
+    } else if (statusFilter) {
+      conditions.push('status = ?');
+      bindings.push(statusFilter);
+    }
 
     if (category) {
       conditions.push('category = ?');
@@ -94,7 +104,7 @@ export async function onRequestGet(context) {
       bindings.push(`%${search}%`, `%${search}%`);
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
     // Sort options
     let orderBy = 'sort_order ASC, created_at DESC';
@@ -195,9 +205,11 @@ export async function onRequestPost(context) {
       });
     }
 
+    const businessId = body.business_id ? parseInt(body.business_id) : null;
+
     const result = await env.DB.prepare(`
-      INSERT INTO products (name, price, category, image, description, sort_order, user_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO products (name, price, category, image, description, sort_order, user_id, business_id, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `).bind(
       body.name.trim(),
       parseInt(body.price),
@@ -205,7 +217,8 @@ export async function onRequestPost(context) {
       body.image || '',
       body.description || '',
       body.sort_order !== undefined ? parseInt(body.sort_order) : 0,
-      user.id
+      user.id,
+      businessId
     ).run();
 
     const productId = result.meta.last_row_id;

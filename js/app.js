@@ -326,6 +326,10 @@ function updateNav() {
             navUserName.innerHTML = `<i class="fas fa-user-circle"></i> ${user.name || 'Mi Cuenta'}`;
         }
 
+        // Show golden "Publicar Producto" CTA for logged-in users
+        const mobileCtaProduct = document.getElementById('mobileCtaProduct');
+        if (mobileCtaProduct) mobileCtaProduct.style.display = '';
+
         // Show admin link for admin users
         let adminLinkItem = document.getElementById('navAdminItem');
         if (user && user.role === 'admin') {

@@ -864,7 +864,7 @@
                 </div>
                 <!-- CTA Button -->
                 <div style="margin-top:20px;">
-                    <button class="mp-search-btn" id="mpPublishBtn" style="background:linear-gradient(135deg,#065f46,#059669);padding:14px 36px;font-size:1rem;cursor:pointer;border:none;font-family:inherit;">
+                    <button class="mp-search-btn" id="mpPublishBtn" style="background:linear-gradient(135deg,#d97706,#f59e0b);padding:14px 36px;font-size:1rem;cursor:pointer;border:none;font-family:inherit;color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.2);box-shadow:0 4px 16px rgba(217,119,6,0.4);">
                         <i class="fas fa-plus-circle"></i> Publicar Nuevo Producto
                     </button>
                 </div>
@@ -946,6 +946,18 @@
             </div>
             <div class="modal-body">
                 <form id="mpProductForm" class="profile-form">
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-store"></i> <span>Publicar desde tu Negocio</span></div>
+                        <div class="profile-input-group">
+                            <label for="mpProdBusiness">Negocio / Comercio (opcional)</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-store"></i>
+                            <select id="mpProdBusiness" name="business_id">
+                                <option value="">Publicar como usuario independiente</option>
+                            </select>
+                            </div>
+                            <small class="profile-input-hint">Selecciona desde cuál negocio quieres publicar este producto.</small>
+                        </div>
+                    </div>
                     <div class="profile-form-section">
                         <div class="profile-form-section-title"><i class="fas fa-tag"></i> <span>Información del Producto</span></div>
                         <div class="profile-input-group">
@@ -1377,6 +1389,28 @@
         
         function openModal() {
             if (modal) modal.classList.remove('hidden');
+            
+            // Load user's businesses into selector
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (token) {
+                fetch('/api/businesses?limit=50', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    const businesses = data.businesses || data.results || data || [];
+                    const select = document.getElementById('mpProdBusiness');
+                    if (select) {
+                        select.innerHTML = '<option value="">Publicar como usuario independiente</option>';
+                        businesses.forEach(function(b) {
+                            var opt = document.createElement('option');
+                            opt.value = b.id;
+                            opt.textContent = b.title || b.name || 'Negocio #' + b.id;
+                            select.appendChild(opt);
+                        });
+                    }
+                }).catch(function() {});
+            }
         }
         
         function closeModal() {
@@ -1387,6 +1421,11 @@
         }
         
         if (publishBtn) publishBtn.addEventListener('click', openModal);
+        
+        // Auto-open modal if #publicar hash
+        if (window.location.hash === '#publicar' && localStorage.getItem('meridaunclick_token')) {
+            setTimeout(openModal, 500);
+        }
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
         if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
         if (overlay) overlay.addEventListener('click', closeModal);
@@ -1452,6 +1491,8 @@
                 image: uploadedImageUrl || fd.get('image') || '',
                 description: fd.get('description') || '',
             };
+            const businessId = fd.get('business_id');
+            if (businessId) body.business_id = parseInt(businessId);
             
             const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             
@@ -1471,7 +1512,7 @@
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="fas fa-save"></i> Publicar Producto';
                 if (data.product_id) {
-                    showToast('Producto publicado exitosamente', 'success');
+                    showToast('Producto enviado para aprobación. Será visible una vez aprobado por un administrador.', 'success');
                     closeModal();
                     // Reload page to show new product
                     setTimeout(function() { location.reload(); }, 1000);
