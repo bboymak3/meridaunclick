@@ -276,10 +276,11 @@ export async function onRequestPost(context) {
       INSERT INTO businesses (
         user_id, title, slug, description, category_id, business_type,
         address, city, state, country, lat, lng,
-        phone, whatsapp, website, instagram, facebook, email_contact, schedule,
+        phone, whatsapp, website, instagram, facebook, twitter, tiktok, youtube, email_contact, schedule,
         has_parking, has_wifi, has_card, has_delivery, has_outdoor,
+        video_url,
         status
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
       payload.id,
       title,
@@ -298,6 +299,9 @@ export async function onRequestPost(context) {
       body.website || null,
       body.instagram || null,
       body.facebook || null,
+      body.twitter || null,
+      body.tiktok || null,
+      body.youtube || null,
       body.email_contact || null,
       body.schedule || null,
       body.has_parking ? 1 : 0,
@@ -305,6 +309,7 @@ export async function onRequestPost(context) {
       body.has_card ? 1 : 0,
       body.has_delivery ? 1 : 0,
       body.has_outdoor ? 1 : 0,
+      body.video_url || null,
       'pending'
     ).run();
 

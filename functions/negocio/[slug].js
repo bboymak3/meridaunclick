@@ -536,6 +536,30 @@ export async function onRequestGet(context) {
                     </div>
                 </div>
 
+                ${(() => { const instagram = business.instagram; const facebook = business.facebook; const twitter = business.twitter; const tiktok = business.tiktok; const youtube = business.youtube; if (!instagram && !facebook && !twitter && !tiktok && !youtube) return ''; return `
+                <div class="pd-social-section" style="padding:16px 20px;">
+                  <div style="font-size:0.85rem;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                    <i class="fas fa-share-nodes" style="color:#059669;"></i> Redes Sociales
+                  </div>
+                  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    ${instagram ? `<a href="${escapeHtml(instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
+                    ${facebook ? `<a href="${escapeHtml(facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:#1877f2;color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-facebook-f"></i> Facebook</a>` : ''}
+                    ${twitter ? `<a href="${escapeHtml(twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:#000;color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-x-twitter"></i> X (Twitter)</a>` : ''}
+                    ${tiktok ? `<a href="${escapeHtml(tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:#010101;color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-tiktok"></i> TikTok</a>` : ''}
+                    ${youtube ? `<a href="${escapeHtml(youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:#ff0000;color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-youtube"></i> YouTube</a>` : ''}
+                  </div>
+                </div>`; })()}
+
+                ${(() => { const video_url = business.video_url; if (!video_url) return ''; return `
+                <div style="padding:16px 20px;">
+                  <div style="font-size:0.85rem;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                    <i class="fas fa-play-circle" style="color:#059669;"></i> Video
+                  </div>
+                  <div style="max-width:320px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+                    ${getVideoEmbed(video_url)}
+                  </div>
+                </div>`; })()}
+
                 <section class="business-section" id="productsSection" style="display:none;">
                     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                         <h2 class="business-section-title"><i class="fas fa-boxes-stacked" style="color:#059669;"></i> Productos</h2>
@@ -629,4 +653,16 @@ function escapeHtml(str) {
 function escapeJs(str) {
   if (!str) return '';
   return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '');
+}
+
+function getVideoEmbed(url) {
+  if (!url) return '';
+  // YouTube: youtube.com/watch?v=XXX or youtu.be/XXX
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) return `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  // TikTok: tiktok.com/@user/video/XXX
+  const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (ttMatch) return `<iframe src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  // Other URLs: use as-is
+  return `<iframe src="${escapeHtml(url)}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
 }

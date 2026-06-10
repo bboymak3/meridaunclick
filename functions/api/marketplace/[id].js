@@ -101,7 +101,7 @@ export async function onRequestPut(context) {
 
     // Allowed fields for update
     const allowedFields = [
-      'name', 'price', 'category', 'image', 'description', 'sort_order',
+      'name', 'price', 'category', 'image', 'description', 'video_url', 'sort_order',
     ];
 
     const setClauses = [];

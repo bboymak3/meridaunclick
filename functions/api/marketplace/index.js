@@ -266,8 +266,8 @@ export async function onRequestPost(context) {
       .substring(0, 120);
 
     const result = await env.DB.prepare(`
-      INSERT INTO products (name, slug, price, category, image, description, sort_order, user_id, business_id, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+      INSERT INTO products (name, slug, price, category, image, description, video_url, sort_order, user_id, business_id, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
     `).bind(
       body.name.trim(),
       slug,
@@ -275,6 +275,7 @@ export async function onRequestPost(context) {
       category,
       body.image || '',
       body.description || '',
+      body.video_url || null,
       body.sort_order !== undefined ? parseInt(body.sort_order) : 0,
       user.id,
       businessId

@@ -753,18 +753,34 @@ ${images.results.length > 1 ? `
 </section>
 
 <!-- SOCIAL -->
-${(business.instagram || business.facebook || business.website) ? `
+${(business.instagram || business.facebook || business.twitter || business.tiktok || business.youtube) ? `
 <section class="lp-section lp-section-grey">
     <div class="lp-container">
         <div class="lp-section-header">
-            <div class="lp-section-label">Sigenos</div>
+            <div class="lp-section-label">Siguenos</div>
             <h2 class="lp-section-title">Nuestras Redes Sociales</h2>
         </div>
         <div class="lp-social-grid">
-            ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener" class="lp-social-card ig"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
-            ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener" class="lp-social-card fb"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
-            ${whatsappNumber ? `<a href="${whatsappLink}" target="_blank" rel="noopener" class="lp-social-card wa"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
-            ${business.website ? `<a href="${escapeHtml(business.website)}" target="_blank" rel="noopener" class="lp-social-card web"><i class="fas fa-globe"></i> Sitio Web</a>` : ''}
+            ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:14px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-weight:600;font-size:0.95rem;"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
+            ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:14px;background:#1877f2;color:#fff;text-decoration:none;font-weight:600;font-size:0.95rem;"><i class="fab fa-facebook-f"></i> Facebook</a>` : ''}
+            ${business.twitter ? `<a href="${escapeHtml(business.twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:14px;background:#000;color:#fff;text-decoration:none;font-weight:600;font-size:0.95rem;"><i class="fab fa-x-twitter"></i> X (Twitter)</a>` : ''}
+            ${business.tiktok ? `<a href="${escapeHtml(business.tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:14px;background:#010101;color:#fff;text-decoration:none;font-weight:600;font-size:0.95rem;"><i class="fab fa-tiktok"></i> TikTok</a>` : ''}
+            ${business.youtube ? `<a href="${escapeHtml(business.youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:12px 22px;border-radius:14px;background:#ff0000;color:#fff;text-decoration:none;font-weight:600;font-size:0.95rem;"><i class="fab fa-youtube"></i> YouTube</a>` : ''}
+        </div>
+    </div>
+</section>
+` : ''}
+
+<!-- VIDEO -->
+${business.video_url ? `
+<section class="lp-section">
+    <div class="lp-container" style="text-align:center;">
+        <div class="lp-section-header">
+            <div class="lp-section-label">Video</div>
+            <h2 class="lp-section-title">Conoce Nuestro Trabajo</h2>
+        </div>
+        <div style="max-width:320px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
+            ${getVideoEmbed(business.video_url)}
         </div>
     </div>
 </section>
@@ -909,4 +925,13 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function getVideoEmbed(url) {
+  if (!url) return '';
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) return `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (ttMatch) return `<iframe src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  return `<iframe src="${escapeHtml(url)}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
 }

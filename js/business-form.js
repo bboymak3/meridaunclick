@@ -313,6 +313,10 @@
         setValue('propWebsite', business.website);
         setValue('propInstagram', business.instagram);
         setValue('propFacebook', business.facebook);
+        setValue('propTwitter', business.twitter);
+        setValue('propTiktok', business.tiktok);
+        setValue('propYoutube', business.youtube);
+        setValue('propVideo', business.video_url);
         setValue('propSchedule', business.schedule);
         setValue('propDireccion', business.address);
         setValue('propCiudad', business.city);
@@ -612,6 +616,10 @@
         const website = getValue('propWebsite');
         const instagram = getValue('propInstagram');
         const facebook = getValue('propFacebook');
+        const twitter = getValue('propTwitter');
+        const tiktok = getValue('propTiktok');
+        const youtube = getValue('propYoutube');
+        const videoUrl = getValue('propVideo');
         const schedule = getValue('propSchedule');
         const direccion = getValue('propDireccion');
         const ciudad = getValue('propCiudad');
@@ -684,6 +692,10 @@
             website,
             instagram,
             facebook,
+            twitter,
+            tiktok,
+            youtube,
+            video_url: videoUrl,
             email_contact: emailContact,
             schedule,
             has_parking,

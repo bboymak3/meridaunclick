@@ -269,6 +269,9 @@ export async function onRequestGet(context) {
         .rp-card-name { font-size:1rem; font-weight:600; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
         .rp-card-price { font-size:1.1rem; font-weight:700; color:#059669; }
 
+        .pd-video { max-width:320px; margin:0 auto; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
+        .pd-video iframe { width:100%; aspect-ratio:9/16; display:block; }
+
         @media (max-width:640px) {
             .pd-wrap { padding:15px 12px 54px; }
             .pd-body { padding:18px 18px 21px; }
@@ -350,6 +353,11 @@ export async function onRequestGet(context) {
                     : `<div class="pd-img-ph"><i class="fas fa-image"></i></div>`}
                 <span class="pd-cat-badge ${catBadge}"><i class="fas ${catIcon}"></i> ${catLabel}</span>
             </div>
+
+            ${product.video_url ? `
+            <div class="pd-video">
+              ${getVideoEmbed(product.video_url)}
+            </div>` : ''}
 
             <div class="pd-body">
                 ${bizLink ? `<a href="${bizLink}" class="pd-biz-name"><i class="fas fa-store"></i> ${esc(product.business_name || 'Negocio')}${product.city ? ' · ' + esc(product.city) : ''}</a>` : (product.business_name ? `<div class="pd-biz-name"><i class="fas fa-store"></i> ${esc(product.business_name)}</div>` : '')}
@@ -449,4 +457,13 @@ function getCatIcon(c) {
 function fmtDate(d) {
   if(!d) return '';
   try { const dt=new Date(d+'T00:00:00'); return dt.getDate()+' '+['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][dt.getMonth()]+' '+dt.getFullYear(); } catch(e) { return d; }
+}
+
+function getVideoEmbed(url) {
+  if (!url) return '';
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) return `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (ttMatch) return `<iframe src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  return `<iframe src="${esc(url)}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
 }

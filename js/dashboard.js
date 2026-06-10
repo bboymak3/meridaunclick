@@ -694,6 +694,7 @@
                     category: fd.get('category') || 'general',
                     image: fd.get('image') || '',
                     description: fd.get('description') || '',
+                    video_url: fd.get('video_url') || '',
                     business_id: parseInt(businessId),
                 };
                 await api.post('/marketplace', body);
