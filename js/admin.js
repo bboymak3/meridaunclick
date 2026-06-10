@@ -312,15 +312,13 @@
 
             tbody.innerHTML = businesses.map(p => {
                 const coverImg = p.cover_image || '';
-                const priceStr = formatPrice(p.price, p.currency);
                 return `
                     <tr data-business-id="${p.id}">
                         <td>${p.id}</td>
                         <td>${coverImg ? `<img src="${coverImg}" alt="" class="admin-thumb" onerror="this.style.display='none'">` : '<div class="admin-thumb-placeholder"><i class="fas fa-image"></i></div>'}</td>
                         <td><a href="business.html?id=${p.id}" target="_blank" title="${p.title}">${truncateText(p.title, 35)}</a></td>
                         <td>${getBusinessTypeLabel(p.business_type)}</td>
-                        <td>${getOperationTypeLabel(p.business_type)}</td>
-                        <td>${priceStr}</td>
+                        <td>${p.city || '--'}, ${p.state || '--'}</td>
                         <td>${p.owner_name || '--'}</td>
                         <td>${getStatusBadge(p.status)}</td>
                         <td>${p.featured ? '<i class="fas fa-star text-warning"></i>' : '<i class="far fa-star text-muted"></i>'}</td>
@@ -363,21 +361,12 @@
         try {
             const business = await api.get(`/businesses/${businessId}`);
 
-            if (modalTitle) modalTitle.textContent = business.title || 'Propiedad';
+            if (modalTitle) modalTitle.textContent = business.title || 'Negocio';
 
             const images = business.images || [];
             const imgHTML = images.length > 0
                 ? images.map(img => `<img src="${img.url}" alt="" class="admin-modal-thumb" onerror="this.style.display='none'">`).join('')
                 : '<p class="text-muted">Sin imágenes</p>';
-
-            const features = [];
-            if (business.has_pool) features.push('Piscina');
-            if (business.has_garden) features.push('Jardín');
-            if (business.has_ac) features.push('A/C');
-            if (business.has_kitchen) features.push('Cocina');
-            if (business.has_furniture) features.push('Amueblado');
-            if (business.has_security) features.push('Seguridad');
-            if (business.has_elevator) features.push('Ascensor');
 
             if (modalBody) {
                 modalBody.innerHTML = `
@@ -385,17 +374,15 @@
                         <div class="admin-prop-images">${imgHTML}</div>
                         <div class="admin-prop-info">
                             <div class="detail-row"><strong>Tipo:</strong> ${getBusinessTypeLabel(business.business_type)}</div>
-                            <div class="detail-row"><strong>Operación:</strong> ${getOperationTypeLabel(business.business_type)}</div>
-                            <div class="detail-row"><strong>Precio:</strong> ${formatPrice(business.price, business.currency)}</div>
+                            <div class="detail-row"><strong>Categoría:</strong> ${business.category_name || '--'}</div>
                             <div class="detail-row"><strong>Dirección:</strong> ${business.address || '--'}</div>
-                            <div class="detail-row"><strong>Ciudad:</strong> ${business.city || '--'}, ${business.state || '--'}</div>
-                            <div class="detail-row"><strong>Propietario:</strong> ${business.owner_name || '--'} (${business.owner_email || '--'})</div>
-                            <div class="detail-row"><strong>Habitaciones:</strong> ${business.bedrooms || '--'}</div>
-                            <div class="detail-row"><strong>Baños:</strong> ${business.bathrooms || '--'}</div>
-                            <div class="detail-row"><strong>Área:</strong> ${business.area || '--'} ${business.area_unit || 'm²'}</div>
-                            ${features.length > 0 ? `<div class="detail-row"><strong>Características:</strong> ${features.join(', ')}</div>` : ''}
+                            <div class="detail-row"><strong>Ubicación:</strong> ${business.city || '--'}, ${business.state || '--'}</div>
+                            <div class="detail-row"><strong>Teléfono:</strong> ${business.phone || '--'}</div>
+                            <div class="detail-row"><strong>WhatsApp:</strong> ${business.whatsapp || '--'}</div>
+                            <div class="detail-row"><strong>Propietario:</strong> ${business.owner_name || '--'} (${business.owner_email || business.owner_phone || '--'})</div>
                             <div class="detail-row"><strong>Estado:</strong> ${getStatusBadge(business.status)}</div>
                             <div class="detail-row"><strong>Vistas:</strong> ${business.views || 0}</div>
+                            <div class="detail-row"><strong>Destacada:</strong> ${business.featured ? 'Sí' : 'No'}</div>
                             <div class="detail-row"><strong>Creada:</strong> ${formatDateTime(business.created_at)}</div>
                             <div class="detail-row"><strong>Descripción:</strong> ${business.description || 'Sin descripción'}</div>
                         </div>
@@ -1389,14 +1376,14 @@
             const filter = document.getElementById('adminProductStatusFilter');
             const statusFilter = filter ? filter.value : '';
             
-            let url = `/api/marketplace?page=${productsPage}&limit=${PAGE_LIMIT}&all=true`;
+            let url = `/marketplace?page=${productsPage}&limit=${PAGE_LIMIT}&all=true`;
             if (statusFilter) url += `&status=${statusFilter}`;
             
             const data = await api.get(url);
             const products = data.products || [];
             
             // Update badge
-            const pendingCount = await api.get('/api/marketplace?status=pending&all=true&limit=1');
+            const pendingCount = await api.get('/marketplace?status=pending&all=true&limit=1');
             const badge = document.getElementById('adminProductsBadge');
             if (badge) badge.textContent = pendingCount.pagination?.total || 0;
             

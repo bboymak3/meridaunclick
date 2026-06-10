@@ -324,8 +324,7 @@
                             </td>
                             <td>${truncateText(p.title, 30)}</td>
                             <td>${getBusinessTypeLabel(p.business_type)}</td>
-                            <td>${getOperationTypeLabel(p.business_type)}</td>
-                            <td class="dash-price">${formatPrice(p.price, p.currency)}</td>
+                            <td>${p.city || '--'}, ${p.state || '--'}</td>
                             <td>${getStatusBadge(p.status)}</td>
                             <td>${p.views || 0}</td>
                             <td class="dash-actions">
@@ -1134,8 +1133,7 @@
                             </div>
                         </td>
                         <td>${getBusinessTypeLabel(p.business_type)}</td>
-                        <td>${getOperationTypeLabel(p.business_type)}</td>
-                        <td class="dash-price">${formatPrice(p.price, p.currency)}</td>
+                        <td>${p.city || '--'}, ${p.state || '--'}</td>
                         <td>${getStatusBadge(p.status)}</td>
                         <td>${p.owner_name || 'Usuario'}</td>
                         <td>${formatDate(p.created_at)}</td>
