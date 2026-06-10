@@ -949,13 +949,13 @@
                     <div class="profile-form-section">
                         <div class="profile-form-section-title"><i class="fas fa-store"></i> <span>Publicar desde tu Negocio</span></div>
                         <div class="profile-input-group">
-                            <label for="mpProdBusiness">Negocio / Comercio (opcional)</label>
+                            <label for="mpProdBusiness">Negocio / Comercio (requerido)</label>
                             <div class="profile-input-wrapper"><i class="fas fa-store"></i>
                             <select id="mpProdBusiness" name="business_id">
-                                <option value="">Publicar como usuario independiente</option>
+                                <option value="">Cargando...</option>
                             </select>
                             </div>
-                            <small class="profile-input-hint">Selecciona desde cuál negocio quieres publicar este producto.</small>
+                            <small class="profile-input-hint">Selecciona desde cuál negocio quieres publicar. Si no tienes negocios registrados, regístra uno aquí.</small>
                         </div>
                     </div>
                     <div class="profile-form-section">
@@ -1390,26 +1390,61 @@
         function openModal() {
             if (modal) modal.classList.remove('hidden');
             
-            // Load user's businesses into selector
-            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            // Load user's businesses into selector (filtered by user_id)
+            const token = localStorage.getItem('meridaunclick_token') || sessionStorage.getItem('meridaunclick_token');
             if (token) {
-                fetch('/api/businesses?limit=50', {
-                    headers: { 'Authorization': 'Bearer ' + token }
-                })
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    const businesses = data.businesses || data.results || data || [];
-                    const select = document.getElementById('mpProdBusiness');
-                    if (select) {
-                        select.innerHTML = '<option value="">Publicar como usuario independiente</option>';
-                        businesses.forEach(function(b) {
-                            var opt = document.createElement('option');
-                            opt.value = b.id;
-                            opt.textContent = b.title || b.name || 'Negocio #' + b.id;
-                            select.appendChild(opt);
+                // Decode JWT to get user.id
+                try {
+                    var parts = token.split('.');
+                    var payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+                    var userId = payload.id;
+                    
+                    if (userId) {
+                        fetch('/api/businesses?user_id=' + userId + '&limit=50', {
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        })
+                        .then(function(r) { return r.json(); })
+                        .then(function(data) {
+                            var businesses = data.businesses || data.results || data || [];
+                            var select = document.getElementById('mpProdBusiness');
+                            if (select) {
+                                if (businesses.length > 0) {
+                                    select.innerHTML = '<option value="" disabled selected>Selecciona un negocio</option>';
+                                    businesses.forEach(function(b) {
+                                        var opt = document.createElement('option');
+                                        opt.value = b.id;
+                                        opt.textContent = b.title || b.name || 'Negocio #' + b.id;
+                                        select.appendChild(opt);
+                                    });
+                                    select.disabled = false;
+                                } else {
+                                    select.innerHTML = '<option value="">-- Debe registrar un negocio primero --</option>';
+                                    select.disabled = true;
+                                }
+                            }
+                        }).catch(function() {
+                            var select = document.getElementById('mpProdBusiness');
+                            if (select) {
+                                select.innerHTML = '<option value="">-- Error al cargar negocios --</option>';
+                                select.disabled = true;
+                            }
                         });
                     }
-                }).catch(function() {});
+                } catch(e) {
+                    // JWT decode failed, show disabled
+                    var select = document.getElementById('mpProdBusiness');
+                    if (select) {
+                        select.innerHTML = '<option value="">-- Error de sesi\u00f3n --</option>';
+                        select.disabled = true;
+                    }
+                }
+            } else {
+                // No token
+                var select = document.getElementById('mpProdBusiness');
+                if (select) {
+                    select.innerHTML = '<option value="">-- Debes iniciar sesi\u00f3n --</option>';
+                    select.disabled = true;
+                }
             }
         }
         
@@ -1483,16 +1518,23 @@
         if (saveBtn) saveBtn.addEventListener('click', function() {
             if (!form.checkValidity()) { form.reportValidity(); return; }
             
-            const fd = new FormData(form);
+            var fd = new FormData(form);
+            var businessId = fd.get('business_id');
+            
+            // Validate business_id is required
+            if (!businessId) {
+                showToast('Debes seleccionar un negocio. Registra uno primero desde \'Nuevo Negocio\'.', 'error');
+                return;
+            }
+            
             const body = {
                 name: fd.get('name'),
                 price: parseFloat(fd.get('price')) || 0,
                 category: fd.get('category') || 'general',
                 image: uploadedImageUrl || fd.get('image') || '',
                 description: fd.get('description') || '',
+                business_id: parseInt(businessId)
             };
-            const businessId = fd.get('business_id');
-            if (businessId) body.business_id = parseInt(businessId);
             
             const token = localStorage.getItem('token') || sessionStorage.getItem('token');
             

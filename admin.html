@@ -84,9 +84,9 @@
                         <span>Mensajes</span>
                         <span class="badge" id="adminMsgBadge">0</span>
                     </a>
-                    <a href="#" class="admin-nav-link" data-tab="products">
-                        <i class="fas fa-shopping-bag"></i>
-                        <span>Productos</span>
+                    <a href="#" class="admin-nav-link" id="adminNavProductsB2">
+                        <i class="fas fa-boxes-stacked"></i>
+                        <span>Productos B2</span>
                         <span class="badge" id="adminProductsBadge">0</span>
                     </a>
                     <a href="#" class="admin-nav-link" data-tab="jobs">
@@ -475,48 +475,7 @@
                     </div>
                 </div>
 
-                <!-- ==================== PRODUCTS TAB ==================== -->
-                <div class="admin-tab hidden" id="tabProducts">
-                    <div class="admin-card">
-                        <div class="admin-card-header">
-                            <h3><i class="fas fa-shopping-bag"></i> Gestión de Productos (Marketplace)</h3>
-                            <div class="admin-card-actions">
-                                <select id="adminProductStatusFilter" class="form-select-sm">
-                                    <option value="">Todos los estados</option>
-                                    <option value="pending">Pendientes</option>
-                                    <option value="approved">Aprobados</option>
-                                    <option value="rejected">Rechazados</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="admin-card-body">
-                            <div class="admin-table-responsive">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Producto</th>
-                                            <th>Categoría</th>
-                                            <th>Precio</th>
-                                            <th>Usuario</th>
-                                            <th>Estatus</th>
-                                            <th>Fecha</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="adminProductsTableBody">
-                                        <tr class="empty-row">
-                                            <td colspan="8">
-                                                <div class="empty-state-sm"><p>Cargando productos...</p></div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="admin-pagination" id="adminProductsPagination"></div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- ==================== JOBS TAB ==================== -->
                 <div class="admin-tab hidden" id="tabJobs">
@@ -880,6 +839,154 @@
 
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
+
+    <style>
+        .modal-xl { max-width: 95vw; max-height: 92vh; }
+        .modal-xl .modal-body { max-height: calc(92vh - 140px); overflow-y: auto; }
+    </style>
+
+    <!-- Productos B2 Modal -->
+    <div class="modal hidden" id="adminProductsB2Modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-xl">
+            <div class="modal-header">
+                <h3><i class="fas fa-boxes-stacked" style="color:#059669;"></i> Productos B2 - Gestión Completa</h3>
+                <button class="modal-close" id="adminProductsB2Close">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:0;">
+                <!-- Toolbar -->
+                <div style="padding:16px 20px;border-bottom:1px solid #e5e7eb;display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
+                    <select id="b2StatusFilter" class="form-select-sm">
+                        <option value="">Todos</option>
+                        <option value="pending">Pendientes</option>
+                        <option value="approved">Aprobados</option>
+                        <option value="rejected">Rechazados</option>
+                    </select>
+                    <input type="text" id="b2SearchInput" class="form-input-sm" placeholder="Buscar producto...">
+                    <div style="flex:1;"></div>
+                    <span id="b2ResultsCount" style="font-size:0.82rem;color:#64748b;">0 productos</span>
+                    <button class="btn btn-primary btn-sm" id="b2CreateBtn" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-weight:700;">
+                        <i class="fas fa-plus"></i> Nuevo Producto
+                    </button>
+                    <button class="btn btn-secondary btn-sm" id="b2RefreshBtn"><i class="fas fa-sync-alt"></i> Actualizar</button>
+                </div>
+                <!-- Products Table -->
+                <div class="admin-table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Producto</th>
+                                <th>Negocio</th>
+                                <th>Categoría</th>
+                                <th>Precio</th>
+                                <th>Propietario</th>
+                                <th>Estatus</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="b2ProductsBody">
+                            <tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p>Cargando...</p></div></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination -->
+                <div style="padding:12px 20px;border-top:1px solid #e5e7eb;">
+                    <div id="b2Pagination" style="display:flex;align-items:center;justify-content:center;gap:6px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Edit Sub-Modal (nested inside Products B2) -->
+    <div class="modal hidden" id="b2EditModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3 id="b2EditTitle"><i class="fas fa-edit"></i> Editar Producto</h3>
+                <button class="modal-close" id="b2EditClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="b2EditForm" class="profile-form">
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-store"></i> <span>Negocio Asociado</span></div>
+                        <div class="profile-input-group">
+                            <label>Negocio / Comercio</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-store"></i>
+                            <select id="b2EditBusiness" name="business_id">
+                                <option value="">Sin negocio asociado</option>
+                            </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-box"></i> <span>Información del Producto</span></div>
+                        <div class="profile-input-group">
+                            <label>Nombre *</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-box"></i>
+                            <input type="text" id="b2EditName" name="name" required placeholder="Nombre del producto">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label>Precio ($)</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-dollar-sign"></i>
+                                <input type="number" id="b2EditPrice" name="price" required min="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label>Categoría</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-tag"></i>
+                                <select id="b2EditCategory" name="category">
+                                    <option value="general">General</option>
+                                    <option value="vehiculos">Vehículos</option>
+                                    <option value="inmuebles">Inmuebles</option>
+                                    <option value="electronica">Electrónica</option>
+                                    <option value="servicios">Servicios</option>
+                                    <option value="ropa">Ropa</option>
+                                    <option value="hogar">Hogar</option>
+                                </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-image"></i> <span>Imagen</span></div>
+                        <div class="profile-input-group">
+                            <label>URL de Imagen</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-image"></i>
+                            <input type="url" id="b2EditImage" name="image" placeholder="URL de imagen">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-flag"></i> <span>Estado</span></div>
+                        <div class="profile-input-group">
+                            <label>Estatus</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-flag"></i>
+                            <select id="b2EditStatus" name="status">
+                                <option value="pending">Pendiente</option>
+                                <option value="approved">Aprobado</option>
+                                <option value="rejected">Rechazado</option>
+                            </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-align-left"></i> <span>Descripción</span></div>
+                        <div class="profile-textarea-wrapper">
+                            <textarea id="b2EditDescription" name="description" rows="4" placeholder="Descripción del producto..."></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="b2EditCancel">Cancelar</button>
+                <button class="btn btn-primary" id="b2EditSave"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
 
     <script src="js/app.js"></script>
     <script src="js/admin.js"></script>

@@ -1154,6 +1154,218 @@
         }
     }
 
+    // ─── Productos B2 Modal System ──────────────────────────
+    let b2Page = 1;
+
+    function setupB2Modal() {
+        const navLink = document.getElementById('adminNavProductsB2');
+        const modal = document.getElementById('adminProductsB2Modal');
+        if (navLink && modal) {
+            navLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                modal.classList.remove('hidden');
+                b2Page = 1;
+                loadB2Products();
+            });
+        }
+        // Close B2 modal
+        const b2Close = document.getElementById('adminProductsB2Close');
+        if (b2Close && modal) b2Close.addEventListener('click', () => modal.classList.add('hidden'));
+        if (modal) modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+
+        // B2 Edit sub-modal
+        const editModal = document.getElementById('b2EditModal');
+        const editClose = document.getElementById('b2EditClose');
+        const editCancel = document.getElementById('b2EditCancel');
+        const editSave = document.getElementById('b2EditSave');
+        if (editClose && editModal) editClose.addEventListener('click', () => editModal.classList.add('hidden'));
+        if (editCancel && editModal) editCancel.addEventListener('click', () => editModal.classList.add('hidden'));
+        if (editModal) editModal.querySelector('.modal-overlay')?.addEventListener('click', () => editModal.classList.add('hidden'));
+        if (editSave) editSave.addEventListener('click', saveB2Product);
+
+        // B2 toolbar
+        const createBtn = document.getElementById('b2CreateBtn');
+        if (createBtn) createBtn.addEventListener('click', () => openB2EditModal(null));
+
+        const refreshBtn = document.getElementById('b2RefreshBtn');
+        if (refreshBtn) refreshBtn.addEventListener('click', loadB2Products);
+
+        const statusFilter = document.getElementById('b2StatusFilter');
+        if (statusFilter) statusFilter.addEventListener('change', () => { b2Page = 1; loadB2Products(); });
+
+        const searchInput = document.getElementById('b2SearchInput');
+        if (searchInput) searchInput.addEventListener('input', debounce(() => { b2Page = 1; loadB2Products(); }, 400));
+    }
+
+    async function loadB2Products() {
+        const tbody = document.getElementById('b2ProductsBody');
+        if (!tbody) return;
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p><i class="fas fa-spinner fa-spin"></i> Cargando...</p></div></td></tr>';
+
+        try {
+            const statusVal = document.getElementById('b2StatusFilter')?.value || '';
+            const searchVal = document.getElementById('b2SearchInput')?.value || '';
+            let endpoint = `/marketplace?page=${b2Page}&limit=15&all=true`;
+            if (statusVal) endpoint += `&status=${statusVal}`;
+            if (searchVal) endpoint += `&search=${encodeURIComponent(searchVal)}`;
+
+            const data = await api.get(endpoint);
+            const products = data.products || [];
+
+            if (products.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p>No hay productos.</p></div></td></tr>';
+            } else {
+                tbody.innerHTML = products.map(p => {
+                    const imgHTML = p.image ? `<img src="${escapeHtml(p.image)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">` : '<i class="fas fa-box" style="color:#ccc;font-size:1.2rem;"></i>';
+                    const statusBadge = getStatusBadge(p.status || 'pending');
+                    return `<tr>
+                        <td>${p.id}</td>
+                        <td><div style="display:flex;align-items:center;gap:8px;">${imgHTML}<span style="font-weight:600;">${escapeHtml(p.name || 'Sin nombre')}</span></div></td>
+                        <td>${escapeHtml(p.business_name || '—')}</td>
+                        <td><span class="badge badge-default">${escapeHtml(p.category || 'general')}</span></td>
+                        <td style="font-weight:600;color:#059669;">$${parseFloat(p.price || 0).toFixed(2)}</td>
+                        <td><div style="font-size:0.8rem;">${escapeHtml(p.owner_name || '—')}<br><span style="color:#999;">${escapeHtml(p.owner_email || '')}</span></div></td>
+                        <td>${statusBadge}</td>
+                        <td style="font-size:0.8rem;color:#888;">${formatDate(p.created_at)}</td>
+                        <td>
+                            ${p.status === 'pending' ? `<button class="btn btn-xs btn-success" onclick="window._adminB2Approve(${p.id})" title="Aprobar"><i class="fas fa-check"></i></button>` : ''}
+                            ${p.status !== 'rejected' ? `<button class="btn btn-xs btn-danger" onclick="window._adminB2Reject(${p.id})" title="Rechazar"><i class="fas fa-ban"></i></button>` : ''}
+                            <button class="btn btn-xs btn-outline" onclick="window._adminB2Edit(${p.id})" title="Editar"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-xs btn-danger" onclick="window._adminB2Delete(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+
+            const countEl = document.getElementById('b2ResultsCount');
+            const total = data.pagination?.total || products.length;
+            if (countEl) countEl.textContent = `${total} productos`;
+
+            // Update badge
+            const badge = document.getElementById('adminProductsBadge');
+            if (badge) {
+                const pendingCount = products.filter(p => p.status === 'pending').length;
+                badge.textContent = pendingCount > 0 ? pendingCount : total;
+                badge.style.display = (pendingCount > 0 || total > 0) ? '' : 'none';
+            }
+
+            // Pagination
+            renderAdminPagination('b2Pagination', data.pagination, (page) => { b2Page = page; loadB2Products(); });
+        } catch (error) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p>Error al cargar productos.</p></div></td></tr>';
+            showToast(error.message, 'error');
+        }
+    }
+
+    async function openB2EditModal(productId) {
+        const editModal = document.getElementById('b2EditModal');
+        if (!editModal) return;
+
+        const title = document.getElementById('b2EditTitle');
+        if (productId) {
+            title.innerHTML = '<i class="fas fa-edit"></i> Editar Producto';
+        } else {
+            title.innerHTML = '<i class="fas fa-plus-circle"></i> Crear Producto';
+        }
+
+        // Load businesses for selector
+        try {
+            const bizData = await api.get('/businesses?status=approved&limit=100');
+            const bizSelect = document.getElementById('b2EditBusiness');
+            if (bizSelect) {
+                bizSelect.innerHTML = '<option value="">Sin negocio asociado</option>';
+                if (bizData.businesses) {
+                    bizData.businesses.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.title || b.name || 'Negocio #' + b.id;
+                        bizSelect.appendChild(opt);
+                    });
+                }
+            }
+        } catch (err) { console.error('Error loading businesses for B2 edit:', err); }
+
+        // If editing, load product data
+        if (productId) {
+            try {
+                const product = await api.get(`/marketplace/${productId}`);
+                document.getElementById('b2EditName').value = product.name || '';
+                document.getElementById('b2EditPrice').value = product.price || 0;
+                document.getElementById('b2EditCategory').value = product.category || 'general';
+                document.getElementById('b2EditImage').value = product.image || '';
+                document.getElementById('b2EditStatus').value = product.status || 'pending';
+                document.getElementById('b2EditDescription').value = product.description || '';
+                if (product.business_id) document.getElementById('b2EditBusiness').value = product.business_id;
+            } catch (err) {
+                showToast('Error al cargar producto', 'error');
+                return;
+            }
+        } else {
+            document.getElementById('b2EditForm').reset();
+        }
+
+        editModal.dataset.productId = productId || '';
+        editModal.classList.remove('hidden');
+    }
+
+    async function saveB2Product() {
+        const editModal = document.getElementById('b2EditModal');
+        const productId = editModal?.dataset?.productId;
+        const saveBtn = document.getElementById('b2EditSave');
+
+        const name = document.getElementById('b2EditName')?.value?.trim();
+        const price = parseFloat(document.getElementById('b2EditPrice')?.value) || 0;
+        const category = document.getElementById('b2EditCategory')?.value || 'general';
+        const image = document.getElementById('b2EditImage')?.value?.trim() || '';
+        const status = document.getElementById('b2EditStatus')?.value || 'pending';
+        const description = document.getElementById('b2EditDescription')?.value?.trim() || '';
+        const business_id = document.getElementById('b2EditBusiness')?.value || '';
+
+        if (!name) { showToast('El nombre es requerido', 'error'); return; }
+
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; }
+
+        try {
+            const body = { name, price, category, image, status, description };
+            if (business_id) body.business_id = parseInt(business_id);
+
+            if (productId) {
+                await api.put(`/marketplace/${productId}`, body);
+                showToast('Producto actualizado', 'success');
+            } else {
+                await api.post('/marketplace', body);
+                showToast('Producto creado', 'success');
+            }
+            editModal.classList.add('hidden');
+            loadB2Products();
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
+        }
+    }
+
+    async function adminB2Approve(id) {
+        try { await api.post(`/marketplace/${id}/approve`); showToast('Producto aprobado', 'success'); loadB2Products(); }
+        catch(e) { showToast(e.message, 'error'); }
+    }
+    async function adminB2Reject(id) {
+        try { await api.post(`/marketplace/${id}/reject`); showToast('Producto rechazado', 'info'); loadB2Products(); }
+        catch(e) { showToast(e.message, 'error'); }
+    }
+    function adminB2Edit(id) { openB2EditModal(id); }
+    async function adminB2Delete(id) {
+        if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+        try { await api.delete(`/marketplace/${id}`); showToast('Producto eliminado', 'success'); loadB2Products(); }
+        catch(e) { showToast(e.message, 'error'); }
+    }
+
+    // Expose B2 functions for inline onclick handlers
+    window._adminB2Approve = adminB2Approve;
+    window._adminB2Reject = adminB2Reject;
+    window._adminB2Edit = adminB2Edit;
+    window._adminB2Delete = adminB2Delete;
+
     // ─── Expose functions for inline onclick handlers ───────────
     window.admin = {
         viewBusiness,
