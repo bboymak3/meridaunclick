@@ -537,16 +537,16 @@ export async function onRequestGet(context) {
                 </div>
 
                 ${(() => { const instagram = business.instagram; const facebook = business.facebook; const twitter = business.twitter; const tiktok = business.tiktok; const youtube = business.youtube; if (!instagram && !facebook && !twitter && !tiktok && !youtube) return ''; return `
-                <div class="pd-social-section" style="padding:16px 20px;">
-                  <div style="font-size:0.85rem;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
+                <div class="pd-social-section" style="padding:20px 24px;">
+                  <div style="font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
                     <i class="fas fa-share-nodes" style="color:#059669;"></i> Redes Sociales
                   </div>
-                  <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    ${instagram ? `<a href="${escapeHtml(instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
-                    ${facebook ? `<a href="${escapeHtml(facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:#1877f2;color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-facebook-f"></i> Facebook</a>` : ''}
-                    ${twitter ? `<a href="${escapeHtml(twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:#000;color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-x-twitter"></i> X (Twitter)</a>` : ''}
-                    ${tiktok ? `<a href="${escapeHtml(tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:#010101;color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-tiktok"></i> TikTok</a>` : ''}
-                    ${youtube ? `<a href="${escapeHtml(youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;background:#ff0000;color:#fff;text-decoration:none;font-size:0.85rem;font-weight:600;"><i class="fab fa-youtube"></i> YouTube</a>` : ''}
+                  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    ${instagram ? `<a href="${escapeHtml(instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-instagram" style="font-size:1.2rem;"></i> Instagram</a>` : ''}
+                    ${facebook ? `<a href="${escapeHtml(facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#1877f2;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-facebook-f" style="font-size:1.2rem;"></i> Facebook</a>` : ''}
+                    ${twitter ? `<a href="${escapeHtml(twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#000;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-x-twitter" style="font-size:1.2rem;"></i> X (Twitter)</a>` : ''}
+                    ${tiktok ? `<a href="${escapeHtml(tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#010101;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-tiktok" style="font-size:1.2rem;"></i> TikTok</a>` : ''}
+                    ${youtube ? `<a href="${escapeHtml(youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#ff0000;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-youtube" style="font-size:1.2rem;"></i> YouTube</a>` : ''}
                   </div>
                 </div>`; })()}
 

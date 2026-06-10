@@ -15,7 +15,10 @@ export async function onRequestGet(context) {
     const product = await env.DB.prepare(
       `SELECT p.*, 
               b.title as business_name, b.slug as business_slug, b.city, b.state,
-              b.phone as business_phone, b.whatsapp as business_whatsapp
+              b.phone as business_phone, b.whatsapp as business_whatsapp,
+              b.instagram as business_instagram, b.facebook as business_facebook,
+              b.twitter as business_twitter, b.tiktok as business_tiktok,
+              b.youtube as business_youtube, b.video_url as business_video_url
        FROM products p
        LEFT JOIN businesses b ON p.business_id = b.id
        WHERE p.slug = ? AND (p.status = 'approved' OR p.status IS NULL)`
@@ -26,7 +29,10 @@ export async function onRequestGet(context) {
       if (!isNaN(numericSlug)) {
         const byId = await env.DB.prepare(
           `SELECT p.*, b.title as business_name, b.slug as business_slug,
-                  b.city, b.state, b.whatsapp as business_whatsapp
+                  b.city, b.state, b.whatsapp as business_whatsapp,
+                  b.instagram as business_instagram, b.facebook as business_facebook,
+                  b.twitter as business_twitter, b.tiktok as business_tiktok,
+                  b.youtube as business_youtube, b.video_url as business_video_url
            FROM products p
            LEFT JOIN businesses b ON p.business_id = b.id
            WHERE p.id = ? AND (p.status = 'approved' OR p.status IS NULL)`
@@ -396,6 +402,21 @@ export async function onRequestGet(context) {
                     </div>
                 </div>`}
             </div>` : ''}
+
+            ${(() => { const instagram = product.business_instagram; const facebook = product.business_facebook; const twitter = product.business_twitter; const tiktok = product.business_tiktok; const youtube = product.business_youtube; if (!instagram && !facebook && !twitter && !tiktok && !youtube) return ''; return `
+            <hr class="pd-divider">
+            <div class="pd-biz-section">
+                <div class="pd-biz-section-label" style="font-size:1rem;font-weight:700;color:#0f172a;text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-share-nodes" style="color:#059669;"></i> Redes Sociales del Negocio
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
+                    ${instagram ? `<a href="${esc(instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-instagram" style="font-size:1.2rem;"></i> Instagram</a>` : ''}
+                    ${facebook ? `<a href="${esc(facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#1877f2;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-facebook-f" style="font-size:1.2rem;"></i> Facebook</a>` : ''}
+                    ${twitter ? `<a href="${esc(twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#000;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-x-twitter" style="font-size:1.2rem;"></i> X (Twitter)</a>` : ''}
+                    ${tiktok ? `<a href="${esc(tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#010101;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-tiktok" style="font-size:1.2rem;"></i> TikTok</a>` : ''}
+                    ${youtube ? `<a href="${esc(youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#ff0000;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-youtube" style="font-size:1.2rem;"></i> YouTube</a>` : ''}
+                </div>
+            </div>`; })()}
         </div>
 
         ${relatedHtml}
