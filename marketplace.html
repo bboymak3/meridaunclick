@@ -337,6 +337,11 @@
             opacity: 0.6;
         }
 
+        a.mp-card-image-placeholder {
+            text-decoration: none;
+            color: inherit;
+        }
+
         .mp-card-category-badge {
             position: absolute;
             top: 12px;
@@ -1180,15 +1185,33 @@
                 const badgeClass = getCategoryBadgeClass(product.category);
                 const catIcon = getCategoryIcon(product.category);
                 const price = formatPrice(product.price);
-                const desc = product.description || 'Sin descripción disponible.';
+                const desc = product.description || 'Sin descripcion disponible.';
                 const productId = product.id || '';
+                const productSlug = product.slug || productId;
+                const productUrl = '/producto/' + productSlug;
 
                 const imageHtml = product.image
-                    ? '<img src="' + escapeHtml(product.image) + '" alt="' + escapeHtml(product.name) + '" loading="lazy">'
-                    : '<div class="mp-card-image-placeholder"><i class="fas fa-image"></i><span>Sin imagen</span></div>';
+                    ? '<a href="' + productUrl + '"><img src="' + escapeHtml(product.image) + '" alt="' + escapeHtml(product.name) + '" loading="lazy"></a>'
+                    : '<a href="' + productUrl + '" class="mp-card-image-placeholder"><i class="fas fa-image"></i><span>Sin imagen</span></a>';
 
+                // WhatsApp: use business WhatsApp if available
+                const waNumber = product.business_whatsapp ? product.business_whatsapp.replace(/[^0-9]/g, '') : '';
                 const whatsappMsg = encodeURIComponent('Hola, me interesa el producto: ' + product.name + '. Vi el anuncio en Un Click.');
-                const whatsappUrl = 'https://wa.me/?text=' + whatsappMsg;
+                const whatsappUrl = waNumber
+                    ? 'https://wa.me/' + waNumber + '?text=' + whatsappMsg
+                    : 'https://wa.me/?text=' + whatsappMsg;
+
+                // Business name
+                const businessHtml = product.business_name
+                    ? '<div style="display:flex;align-items:center;gap:5px;font-size:0.78rem;color:#64748b;margin-bottom:4px;">' +
+                        '<i class="fas fa-store" style="color:#059669;font-size:0.68rem;"></i> ' +
+                        (product.business_slug
+                            ? '<a href="/negocio/' + product.business_slug + '" style="color:#1a73e8;text-decoration:none;font-weight:500;">' + escapeHtml(product.business_name) + '</a>'
+                            : '<span style="font-weight:500;">' + escapeHtml(product.business_name) + '</span>'
+                        ) +
+                        (product.business_city ? ' <span style="color:#94a3b8;">· ' + escapeHtml(product.business_city) + '</span>' : '') +
+                      '</div>'
+                    : '';
 
                 return '' +
                     '<article class="mp-card">' +
@@ -1199,7 +1222,10 @@
                             '</span>' +
                         '</div>' +
                         '<div class="mp-card-body">' +
-                            '<h3 class="mp-card-name">' + escapeHtml(product.name) + '</h3>' +
+                            '<a href="' + productUrl + '" style="text-decoration:none;color:inherit;">' +
+                                '<h3 class="mp-card-name">' + escapeHtml(product.name) + '</h3>' +
+                            '</a>' +
+                            businessHtml +
                             '<div class="mp-card-price">' + price + '</div>' +
                             '<p class="mp-card-desc">' + escapeHtml(desc) + '</p>' +
                         '</div>' +
@@ -1208,15 +1234,16 @@
                             '<div class="mp-card-details-meta">' +
                                 '<span><i class="fas fa-tag"></i> ' + catLabel + '</span>' +
                                 (product.created_at ? '<span><i class="far fa-clock"></i> ' + timeAgo(product.created_at) + '</span>' : '') +
+                                (product.business_name ? '<span><i class="fas fa-store"></i> ' + escapeHtml(product.business_name) + '</span>' : '') +
                             '</div>' +
                         '</div>' +
                         '<div class="mp-card-footer">' +
                             '<a href="' + whatsappUrl + '" target="_blank" rel="noopener noreferrer" class="mp-btn-whatsapp">' +
                                 '<i class="fab fa-whatsapp"></i> Contactar' +
                             '</a>' +
-                            '<button class="mp-btn-details" onclick="toggleDetails(' + productId + ', this)">' +
-                                'Ver Detalles <i class="fas fa-chevron-down"></i>' +
-                            '</button>' +
+                            '<a href="' + productUrl + '" class="mp-btn-details">' +
+                                'Ver Ficha <i class="fas fa-chevron-right"></i>' +
+                            '</a>' +
                         '</div>' +
                     '</article>';
             }

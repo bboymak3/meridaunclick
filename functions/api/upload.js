@@ -38,7 +38,7 @@ async function verifyJWT(token, secret) {
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE = 50 * 1024 * 1024; // 50MB (compression applied client-side)
 // Images are served through our own /api/serve/ endpoint (no public R2 access needed)
 // The key is stored in DB; the serve endpoint reads from R2 binding
 const R2_SERVE_BASE = '/api/serve';
@@ -120,7 +120,7 @@ export async function onRequestPost(context) {
 
     // Validate file size
     if (file.size > MAX_SIZE) {
-      return new Response(JSON.stringify({ error: 'El archivo excede el tamaño máximo de 5MB' }), {
+      return new Response(JSON.stringify({ error: 'El archivo excede el tamaño máximo de 50MB' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

@@ -51,6 +51,17 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Migrate businesses without slug (backfill from title)
+    try {
+      const noSlug = await env.DB.prepare("SELECT id, title FROM businesses WHERE slug IS NULL OR slug = '' LIMIT 50").all();
+      for (const b of noSlug.results) {
+        const s = (b.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 120);
+        if (s) await env.DB.prepare('UPDATE businesses SET slug = ? WHERE id = ?').bind(s, b.id).run();
+      }
+    } catch (e) {
+      // Ignore migration errors
+    }
+
     const url = new URL(request.url);
     const params = url.searchParams;
 

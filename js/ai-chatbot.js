@@ -323,18 +323,12 @@
     }
 
     try {
-      // The settings endpoint requires admin auth, so we use a public endpoint
-      // We'll try to fetch and if it fails (401), we default to enabled
-      // In a real setup, there would be a public settings endpoint or
-      // the chatbot setting would be exposed via a different mechanism
-
-      // Try fetching settings (may fail for non-admin users)
-      // Use fetch directly to avoid triggering apiCall's 401 handler which clears tokens
-      const data = await fetch('/api/settings', {
+      // Use the public settings endpoint (no auth required)
+      const data = await fetch('/api/settings/public', {
         headers: { 'Content-Type': 'application/json' }
       }).then(r => r.ok ? r.json() : null).catch(() => null);
 
-      const settings = data?.settings || {};
+      const settings = data || {};
       const result = {
         enabled: settings.ai_chatbot_enabled === '1',
         welcome: settings.ai_chatbot_welcome || '',

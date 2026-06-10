@@ -166,7 +166,7 @@
         // Update title
         const titles = {
             overview: 'Resumen',
-            businesses: 'Mis Propiedades',
+            businesses: 'Mis Negocios',
             messages: 'Mensajes',
             favorites: 'Favoritos',
             products: 'Mis Productos',
@@ -241,8 +241,8 @@
                             <td colspan="6">
                                 <div class="empty-state">
                                     <i class="fas fa-inbox"></i>
-                                    <p>No tienes propiedades aun.</p>
-                                    <a href="new-business.html" class="btn btn-primary btn-sm">Publicar Propiedad</a>
+                                    <p>No tienes negocios aun.</p>
+                                    <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
                                 </div>
                             </td>
                         </tr>
@@ -310,8 +310,8 @@
                             <td colspan="8">
                                 <div class="empty-state">
                                     <i class="fas fa-inbox"></i>
-                                    <p>${filter ? 'No hay propiedades con ese filtro.' : 'No tienes propiedades.'}</p>
-                                    <a href="new-business.html" class="btn btn-primary btn-sm">Publicar Propiedad</a>
+                                    <p>${filter ? 'No hay negocios con ese filtro.' : 'No tienes negocios.'}</p>
+                                    <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
                                 </div>
                             </td>
                         </tr>
@@ -328,6 +328,7 @@
                             <td>${getStatusBadge(p.status)}</td>
                             <td>${p.views || 0}</td>
                             <td class="dash-actions">
+                                <button class="btn-icon" onclick="openServicesManager(${p.id}, '${escapeAttr(p.title)}')" title="Servicios"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i></button>
                                 <a href="business.html?id=${p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
                                 <a href="new-business.html?id=${p.id}" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
                                 <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
@@ -413,8 +414,8 @@
                 favoritesGrid.innerHTML = `
                     <div class="empty-state">
                         <i class="fas fa-heart"></i>
-                        <p>No tienes propiedades favoritas.</p>
-                        <a href="search.html" class="btn btn-primary btn-sm">Explorar Propiedades</a>
+                        <p>No tienes negocios favoritos.</p>
+                        <a href="search.html" class="btn btn-primary btn-sm">Explorar Negocios</a>
                     </div>
                 `;
             } else {
@@ -599,7 +600,7 @@
     async function deleteBusiness(id) {
         try {
             await api.delete(`/businesses/${id}`);
-            showToast('Propiedad eliminada exitosamente', 'success');
+            showToast('Negocio eliminado exitosamente', 'success');
 
             // Reload current section
             const activeSection = document.querySelector('.sidebar-link.active');
@@ -609,7 +610,7 @@
                 loadOverviewData();
             }
         } catch (error) {
-            showToast(error.message || 'Error al eliminar la propiedad', 'error');
+            showToast(error.message || 'Error al eliminar el negocio', 'error');
         }
     }
 
@@ -619,7 +620,9 @@
         if (!tbody) return;
 
         try {
-            const data = await api.get('/marketplace?limit=100');
+            // Fetch ALL user's products (all statuses) using all=true and user_id filter
+            const userId = currentUser?.id;
+            const data = await api.get(`/marketplace?limit=100&all=true&user_id=${userId}`);
             const products = data.products || [];
 
             if (products.length === 0) {
@@ -634,16 +637,20 @@
                 return;
             }
 
-            tbody.innerHTML = products.map(p => `
+            tbody.innerHTML = products.map(p => {
+                const statusLabel = p.status === 'approved' ? '<span class="status-badge status-approved">Activo</span>' : p.status === 'pending' ? '<span class="status-badge status-pending">Pendiente</span>' : p.status === 'rejected' ? '<span class="status-badge status-rejected">Rechazado</span>' : '<span class="status-badge">' + (p.status || '-') + '</span>';
+                return `
                 <tr>
                     <td><div class="dash-prop-name">${p.image ? `<img src="${p.image}" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}<span>${p.name || 'Sin nombre'}</span></div></td>
                     <td>${p.category || 'General'}</td>
                     <td class="dash-price">$${Number(p.price || 0).toLocaleString('es-VE')}</td>
+                    <td>${statusLabel}</td>
                     <td>${formatDate(p.created_at)}</td>
                     <td class="dash-actions">
                         <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                     </td>
-                </tr>`).join('');
+                </tr>`;
+            }).join('');
         } catch (error) {
             console.error('Error loading products:', error);
         }
@@ -819,6 +826,194 @@
             loadMyProducts();
         } catch (error) {
             showToast(error.message || 'Error al eliminar', 'error');
+        }
+    };
+
+    // ─── Utility: escape HTML attributes ──────────────────────────
+    function escapeAttr(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SERVICES MANAGEMENT
+    // ═══════════════════════════════════════════════════════════════
+
+    let currentServicesBusinessId = null;
+
+    // Open services manager for a business
+    window.openServicesManager = async function(businessId, businessTitle) {
+        currentServicesBusinessId = businessId;
+        const panel = document.getElementById('servicesManagerPanel');
+        const nameEl = document.getElementById('servicesBusinessName');
+        if (panel) panel.style.display = '';
+        if (nameEl) nameEl.textContent = businessTitle || `Negocio #${businessId}`;
+
+        // Reset form
+        resetServiceForm();
+
+        // Load services
+        await loadBusinessServicesManager(businessId);
+    };
+
+    // Setup services panel close button
+    const closeServicesPanel = document.getElementById('closeServicesPanel');
+    if (closeServicesPanel) {
+        closeServicesPanel.addEventListener('click', () => {
+            const panel = document.getElementById('servicesManagerPanel');
+            if (panel) panel.style.display = 'none';
+            currentServicesBusinessId = null;
+            resetServiceForm();
+        });
+    }
+
+    // Setup cancel edit button
+    const cancelServiceBtn = document.getElementById('cancelServiceBtn');
+    if (cancelServiceBtn) {
+        cancelServiceBtn.addEventListener('click', () => {
+            resetServiceForm();
+        });
+    }
+
+    function resetServiceForm() {
+        const editId = document.getElementById('editServiceId');
+        const titleInput = document.getElementById('serviceTitleInput');
+        const descInput = document.getElementById('serviceDescInput');
+        const formTitle = document.getElementById('serviceFormTitle');
+        const saveBtn = document.getElementById('saveServiceBtn');
+        const cancelBtn = document.getElementById('cancelServiceBtn');
+
+        if (editId) editId.value = '';
+        if (titleInput) titleInput.value = '';
+        if (descInput) descInput.value = '';
+        if (formTitle) formTitle.textContent = 'Agregar Servicio';
+        if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+    }
+
+    // Load services for a business into the manager
+    async function loadBusinessServicesManager(businessId) {
+        const container = document.getElementById('businessServicesManager');
+        if (!container) return;
+
+        try {
+            const data = await api.get(`/businesses/${businessId}/services`);
+            const services = data.services || [];
+
+            if (services.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state" style="padding:30px;">
+                        <i class="fas fa-concierge-bell" style="font-size:2rem;color:#ccc;"></i>
+                        <p style="margin-top:8px;">Este negocio aún no tiene servicios registrados.</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = services.map(s => `
+                <div class="service-manager-item" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff;border:1px solid #e8e8e8;border-radius:10px;margin-bottom:10px;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.95rem;color:#333;">${escapeHtml_service(s.title)}</div>
+                        <div style="font-size:0.85rem;color:#666;margin-top:3px;">${escapeHtml_service(s.description || 'Sin descripción')}</div>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn-icon" onclick="editService(${s.id}, '${escapeAttr(s.title)}', '${escapeAttr(s.description || '')}')" title="Editar"><i class="fas fa-edit" style="color:#3b82f6;"></i></button>
+                        <button class="btn-icon" onclick="deleteService(${s.id})" title="Eliminar"><i class="fas fa-trash" style="color:#e74c3c;"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading services:', error);
+            container.innerHTML = `
+                <div class="empty-state" style="padding:30px;">
+                    <i class="fas fa-exclamation-circle" style="color:#e74c3c;"></i>
+                    <p style="margin-top:8px;">Error al cargar servicios.</p>
+                </div>`;
+        }
+    }
+
+    // Escape HTML helper (not to conflict with any other)
+    function escapeHtml_service(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Save (create or update) a service
+    const saveServiceBtn = document.getElementById('saveServiceBtn');
+    if (saveServiceBtn) {
+        saveServiceBtn.addEventListener('click', async () => {
+            const titleInput = document.getElementById('serviceTitleInput');
+            const descInput = document.getElementById('serviceDescInput');
+            const editId = document.getElementById('editServiceId');
+
+            const title = titleInput ? titleInput.value.trim() : '';
+            const description = descInput ? descInput.value.trim() : '';
+
+            if (!title) {
+                showToast('El nombre del servicio es requerido', 'error');
+                return;
+            }
+
+            if (!currentServicesBusinessId) {
+                showToast('No se ha seleccionado un negocio', 'error');
+                return;
+            }
+
+            try {
+                const body = { title, description };
+
+                if (editId && editId.value) {
+                    // Update existing service
+                    const serviceId = editId.value;
+                    await api.put(`/businesses/${currentServicesBusinessId}/services/${serviceId}`, body);
+                    showToast('Servicio actualizado correctamente', 'success');
+                } else {
+                    // Create new service
+                    await api.post(`/businesses/${currentServicesBusinessId}/services`, body);
+                    showToast('Servicio agregado correctamente', 'success');
+                }
+
+                resetServiceForm();
+                await loadBusinessServicesManager(currentServicesBusinessId);
+            } catch (error) {
+                showToast(error.message || 'Error al guardar servicio', 'error');
+            }
+        });
+    }
+
+    // Edit service - populate form with existing data
+    window.editService = function(serviceId, title, description) {
+        const editIdEl = document.getElementById('editServiceId');
+        const titleInput = document.getElementById('serviceTitleInput');
+        const descInput = document.getElementById('serviceDescInput');
+        const formTitle = document.getElementById('serviceFormTitle');
+        const saveBtn = document.getElementById('saveServiceBtn');
+        const cancelBtn = document.getElementById('cancelServiceBtn');
+
+        if (editIdEl) editIdEl.value = serviceId;
+        if (titleInput) titleInput.value = title;
+        if (descInput) descInput.value = description;
+        if (formTitle) formTitle.textContent = 'Editar Servicio';
+        if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-check"></i> Actualizar';
+        if (cancelBtn) cancelBtn.style.display = '';
+
+        // Scroll to form
+        const formArea = document.getElementById('serviceFormArea');
+        if (formArea) formArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+
+    // Delete service
+    window.deleteService = async function(serviceId) {
+        if (!confirm('¿Eliminar este servicio?')) return;
+        if (!currentServicesBusinessId) return;
+
+        try {
+            await api.delete(`/businesses/${currentServicesBusinessId}/services/${serviceId}`);
+            showToast('Servicio eliminado', 'success');
+            await loadBusinessServicesManager(currentServicesBusinessId);
+        } catch (error) {
+            showToast(error.message || 'Error al eliminar servicio', 'error');
         }
     };
 

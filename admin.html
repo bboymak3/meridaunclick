@@ -587,6 +587,182 @@
         </div>
     </div>
 
+    <!-- Business Edit Modal -->
+    <div class="modal hidden" id="adminBusinessEditModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3 id="adminBizEditTitle"><i class="fas fa-building" style="color:#1a73e8"></i> Editar Negocio</h3>
+                <button class="modal-close" id="adminBizEditClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="adminBizEditForm" class="profile-form">
+                    <!-- Información Básica -->
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-store"></i> <span>Información del Negocio</span></div>
+                        <div class="profile-input-group">
+                            <label>Nombre del Negocio *</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-store"></i>
+                            <input type="text" id="bizEditTitle" name="title" class="form-control" required placeholder="Nombre del negocio">
+                            </div>
+                        </div>
+                        <div class="profile-input-group">
+                            <label>Descripción</label>
+                            <div class="profile-textarea-wrapper">
+                                <textarea id="bizEditDescription" name="description" rows="3" placeholder="Describe tu negocio..." maxlength="1000"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label>Tipo de Negocio</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-tag"></i>
+                                <select id="bizEditType" name="business_type">
+                                    <option value="comercio">Comercio</option>
+                                    <option value="servicio">Servicio</option>
+                                    <option value="restaurante">Restaurante</option>
+                                    <option value="profesional">Profesional</option>
+                                    <option value="otro">Otro</option>
+                                </select>
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label>Categoría</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-list"></i>
+                                <select id="bizEditCategory" name="category_id">
+                                    <option value="">Seleccionar...</option>
+                                </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Imagen -->
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-image"></i> <span>Imagen del Negocio</span></div>
+                        <div id="bizEditImagePreview" style="margin-bottom:10px;"></div>
+                        <div class="profile-input-group">
+                            <label>Subir Imagen</label>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                                    <i class="fas fa-upload"></i> Subir archivo
+                                    <input type="file" id="bizEditImageFile" accept="image/*" style="display:none;">
+                                </label>
+                                <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                                    <i class="fas fa-camera"></i> Tomar foto
+                                    <input type="file" id="bizEditImageCamera" accept="image/*" capture="environment" style="display:none;">
+                                </label>
+                                <span id="bizEditImageStatus" style="font-size:0.8rem;color:#6b7280;"></span>
+                            </div>
+                            <div class="profile-input-wrapper" style="margin-top:8px;"><i class="fas fa-link"></i>
+                            <input type="url" id="bizEditImageURL" placeholder="O pega una URL de imagen">
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Contacto -->
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-phone-alt"></i> <span>Contacto</span></div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label>Teléfono</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-phone"></i>
+                                <input type="tel" id="bizEditPhone" name="phone" placeholder="+58 414 0000000">
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label>WhatsApp</label>
+                                <div class="profile-input-wrapper"><i class="fab fa-whatsapp" style="color:#25d366"></i>
+                                <input type="tel" id="bizEditWhatsApp" name="whatsapp" placeholder="+58 414 0000000">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label>Email de Contacto</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-envelope"></i>
+                                <input type="email" id="bizEditEmail" name="email_contact" placeholder="contacto@negocio.com">
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label>Sitio Web</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-globe"></i>
+                                <input type="url" id="bizEditWebsite" name="website" placeholder="https://...">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label>Instagram</label>
+                                <div class="profile-input-wrapper"><i class="fab fa-instagram" style="color:#E4405F"></i>
+                                <input type="text" id="bizEditInstagram" name="instagram" placeholder="@usuario">
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label>Facebook</label>
+                                <div class="profile-input-wrapper"><i class="fab fa-facebook" style="color:#1877F2"></i>
+                                <input type="url" id="bizEditFacebook" name="facebook" placeholder="https://facebook.com/...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Ubicación -->
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-map-marker-alt"></i> <span>Ubicación</span></div>
+                        <div class="profile-input-group">
+                            <label>Dirección</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-map-pin"></i>
+                            <input type="text" id="bizEditAddress" name="address" placeholder="Dirección completa">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label>Ciudad</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-city"></i>
+                                <input type="text" id="bizEditCity" name="city" placeholder="Mérida">
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label>Estado</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-map"></i>
+                                <input type="text" id="bizEditState" name="state" placeholder="Mérida">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Horario y Servicios -->
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-clock"></i> <span>Horario y Servicios</span></div>
+                        <div class="profile-input-group">
+                            <label>Horario de Atención</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-clock"></i>
+                            <input type="text" id="bizEditSchedule" name="schedule" placeholder="Lun-Vie 8:00-18:00, Sáb 9:00-14:00">
+                            </div>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:16px;margin-top:8px;">
+                            <label class="feature-checkbox" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;">
+                                <input type="checkbox" id="bizEditParking" value="1"> Estacionamiento
+                            </label>
+                            <label class="feature-checkbox" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;">
+                                <input type="checkbox" id="bizEditWifi" value="1"> WiFi
+                            </label>
+                            <label class="feature-checkbox" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;">
+                                <input type="checkbox" id="bizEditCard" value="1"> Tarjeta
+                            </label>
+                            <label class="feature-checkbox" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;">
+                                <input type="checkbox" id="bizEditDelivery" value="1"> Delivery
+                            </label>
+                            <label class="feature-checkbox" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;">
+                                <input type="checkbox" id="bizEditOutdoor" value="1"> Área al aire libre
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="adminBizEditCancel">Cancelar</button>
+                <button class="btn btn-primary" id="adminBizEditSave"><i class="fas fa-save"></i> Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
     <!-- User Edit Modal -->
     <div class="modal hidden" id="adminUserModal">
         <div class="modal-overlay"></div>
@@ -956,11 +1132,23 @@
                         </div>
                     </div>
                     <div class="profile-form-section">
-                        <div class="profile-form-section-title"><i class="fas fa-image"></i> <span>Imagen</span></div>
+                        <div class="profile-form-section-title"><i class="fas fa-image"></i> <span>Imagen del Producto</span></div>
+                        <div id="b2EditImagePreview" style="margin-bottom:10px;"></div>
                         <div class="profile-input-group">
-                            <label>URL de Imagen</label>
-                            <div class="profile-input-wrapper"><i class="fas fa-image"></i>
-                            <input type="url" id="b2EditImage" name="image" placeholder="URL de imagen">
+                            <label>Subir Imagen</label>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                                    <i class="fas fa-upload"></i> Subir archivo
+                                    <input type="file" id="b2EditImageFile" accept="image/*" style="display:none;">
+                                </label>
+                                <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                                    <i class="fas fa-camera"></i> Tomar foto
+                                    <input type="file" id="b2EditImageCamera" accept="image/*" capture="environment" style="display:none;">
+                                </label>
+                                <span id="b2EditImageStatus" style="font-size:0.8rem;color:#6b7280;"></span>
+                            </div>
+                            <div class="profile-input-wrapper" style="margin-top:8px;"><i class="fas fa-link"></i>
+                            <input type="url" id="b2EditImageURL" placeholder="O pega una URL de imagen">
                             </div>
                         </div>
                     </div>
@@ -995,10 +1183,20 @@
     <script src="js/app.js"></script>
     <script src="js/admin.js"></script>
     <script>
-    // Force Service Worker update on admin page
+    // Force Service Worker update + cache bust on admin page
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistration().then(reg => {
-            if (reg) reg.update();
+            if (reg) {
+                reg.update();
+                // If new SW is waiting, force activate it immediately
+                if (reg.waiting) {
+                    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                }
+            }
+        });
+        // Listen for SW controller change and auto-reload
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            window.location.reload();
         });
     }
     </script>

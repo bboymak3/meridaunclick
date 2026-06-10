@@ -879,6 +879,7 @@
             document.getElementById('bizEditDescription').value = biz.description || '';
             document.getElementById('bizEditType').value = biz.business_type || 'comercio';
             if (biz.category_id) document.getElementById('bizEditCategory').value = biz.category_id;
+            adminBizEditModal.dataset.currentCategoryId = biz.category_id || 1;
             document.getElementById('bizEditPhone').value = biz.phone || '';
             document.getElementById('bizEditWhatsApp').value = biz.whatsapp || '';
             document.getElementById('bizEditEmail').value = biz.email_contact || '';
@@ -897,17 +898,9 @@
             document.getElementById('bizEditDelivery').checked = !!biz.has_delivery;
             document.getElementById('bizEditOutdoor').checked = !!biz.has_outdoor;
 
-            // Show current image
-            const currentImage = biz.image || (biz.images && biz.images[0] && biz.images[0].url) || '';
-            if (preview) {
-                if (currentImage) {
-                    preview.innerHTML = `<img src="${currentImage}" style="max-width:200px;max-height:150px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
-                } else {
-                    preview.innerHTML = '<span style="color:#999;font-size:0.85rem;">Sin imagen</span>';
-                }
-            }
-            // Store current image URL for reference
-            adminBizEditModal.dataset.currentImage = currentImage;
+            // Load images gallery
+            adminBizEditModal.dataset.imageCount = (biz.images || []).length;
+            loadBizEditGallery(businessId);
 
         } catch (error) {
             showToast('Error al cargar datos del negocio', 'error');
@@ -915,10 +908,54 @@
         }
     }
 
+    // ─── Image Compression (client-side) ────────────────────────
+    // Reduces image resolution before upload to save R2 storage and bandwidth
+    // Max longest side: 1920px, JPEG/WebP quality: 0.75
+    function compressImage(file, maxSize, quality) {
+        maxSize = maxSize || 1920;
+        quality = quality || 0.75;
+        return new Promise((resolve, reject) => {
+            // Don't compress GIFs or tiny files (< 200KB)
+            if (file.type === 'image/gif' || file.size < 200 * 1024) {
+                resolve(file);
+                return;
+            }
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = function () {
+                URL.revokeObjectURL(url);
+                let w = img.width, h = img.height;
+                // Only resize if exceeds max dimension
+                if (w <= maxSize && h <= maxSize) {
+                    resolve(file);
+                    return;
+                }
+                if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+                else { w = Math.round(w * maxSize / h); h = maxSize; }
+                const canvas = document.createElement('canvas');
+                canvas.width = w;
+                canvas.height = h;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                // Use WebP if supported, else JPEG
+                const mimeType = canvas.toDataURL('image/webp').startsWith('data:image/webp') ? 'image/webp' : 'image/jpeg';
+                const ext = mimeType === 'image/webp' ? 'webp' : 'jpg';
+                canvas.toBlob(function (blob) {
+                    if (!blob) { resolve(file); return; }
+                    const compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.') + ext, { type: mimeType });
+                    const pct = Math.round((1 - compressed.size / file.size) * 100);
+                    console.log(`Image compressed: ${(file.size/1024/1024).toFixed(1)}MB → ${(compressed.size/1024/1024).toFixed(1)}MB (${pct}% reduction)`);
+                    resolve(compressed);
+                }, mimeType, quality);
+            };
+            img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+            img.src = url;
+        });
+    }
+
     async function handleBizImageUpload(file) {
         if (!file) return;
         const statusEl = document.getElementById('bizEditImageStatus');
-        const preview = document.getElementById('bizEditImagePreview');
         const businessId = adminBizEditModal?.dataset?.businessId;
 
         if (!businessId) { showToast('Error: no se identificó el negocio', 'error'); return; }
@@ -926,6 +963,7 @@
         if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
 
         try {
+            // Step 1: Upload file to R2
             const formData = new FormData();
             formData.append('file', file);
             formData.append('business_id', businessId);
@@ -939,17 +977,69 @@
             });
             const data = await response.json();
 
-            if (data.url) {
-                if (preview) preview.innerHTML = `<img src="${data.url}" style="max-width:200px;max-height:150px;border-radius:8px;object-fit:cover;">`;
-                if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Imagen subida';
-                adminBizEditModal.dataset.currentImage = data.url;
-            } else {
+            if (!data.url) {
                 if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + (data.error || 'Error al subir');
+                return;
             }
+
+            // Step 2: Register image in images table
+            const imgCount = adminBizEditModal.dataset.imageCount ? parseInt(adminBizEditModal.dataset.imageCount) : 0;
+            const isFirst = imgCount === 0;
+            await api.post(`/images/${businessId}`, {
+                url: data.url,
+                is_cover: isFirst ? 1 : 0
+            });
+
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Imagen subida';
+            adminBizEditModal.dataset.imageCount = imgCount + 1;
+
+            // Refresh gallery
+            loadBizEditGallery(businessId);
         } catch (error) {
-            if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> Error de conexión';
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + error.message;
         }
     }
+
+    // Load business images gallery in edit modal
+    async function loadBizEditGallery(businessId) {
+        const galleryEl = document.getElementById('bizEditGallery');
+        if (!galleryEl || !businessId) return;
+
+        try {
+            const biz = await api.get(`/businesses/${businessId}`);
+            const images = biz.images || [];
+            adminBizEditModal.dataset.imageCount = images.length;
+
+            if (images.length === 0) {
+                galleryEl.innerHTML = '<span style="color:#999;font-size:0.85rem;">Sin imágenes</span>';
+                return;
+            }
+
+            galleryEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+                images.map(img => `
+                    <div style="position:relative;display:inline-block;border-radius:8px;overflow:hidden;border:2px solid ${img.is_cover ? '#f59e0b' : '#e5e7eb'};">
+                        <img src="${img.url}" style="width:100px;height:80px;object-fit:cover;" onerror="this.style.display='none'">
+                        ${img.is_cover ? '<span style="position:absolute;top:2px;left:2px;background:#f59e0b;color:#fff;font-size:0.6rem;padding:1px 4px;border-radius:4px;">Portada</span>' : ''}
+                        <button type="button" onclick="window._adminDeleteBizImage(${businessId}, ${img.id})" style="position:absolute;top:2px;right:2px;background:rgba(220,53,69,0.9);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Eliminar">&times;</button>
+                    </div>
+                `).join('') +
+                '</div>';
+        } catch (err) {
+            console.error('Error loading gallery:', err);
+        }
+    }
+
+    // Delete business image
+    async function deleteBizImage(businessId, imageId) {
+        try {
+            await api.delete(`/images/${businessId}?image_id=${imageId}`);
+            showToast('Imagen eliminada', 'success');
+            loadBizEditGallery(businessId);
+        } catch (err) {
+            showToast('Error al eliminar: ' + err.message, 'error');
+        }
+    }
+    window._adminDeleteBizImage = deleteBizImage;
 
     async function saveBusiness() {
         if (!adminBizEditModal) return;
@@ -966,8 +1056,8 @@
             const body = {
                 title,
                 description: document.getElementById('bizEditDescription')?.value?.trim() || '',
-                business_type: document.getElementById('bizEditType')?.value || 'comercio',
-                category_id: parseInt(document.getElementById('bizEditCategory')?.value) || null,
+                business_type: document.getElementById('bizEditType')?.value || 'negocio',
+                category_id: parseInt(document.getElementById('bizEditCategory')?.value) || adminBizEditModal.dataset.currentCategoryId || 1,
                 phone: document.getElementById('bizEditPhone')?.value?.trim() || '',
                 whatsapp: document.getElementById('bizEditWhatsApp')?.value?.trim() || '',
                 email_contact: document.getElementById('bizEditEmail')?.value?.trim() || '',
@@ -1541,11 +1631,16 @@
         const preview = document.getElementById('b2EditImagePreview');
         const editModal = document.getElementById('b2EditModal');
 
-        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo...';
 
         try {
+            // Compress image client-side before upload
+            const compressedFile = await compressImage(file);
+
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+
             const formData = new FormData();
-            formData.append('file', file);
+            formData.append('file', compressedFile);
             formData.append('product_type', 'marketplace');
 
             const token = localStorage.getItem(TOKEN_KEY);

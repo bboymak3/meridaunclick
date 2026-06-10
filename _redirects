@@ -1,0 +1,19 @@
+# Un Click - Cloudflare Pages Redirects
+# https://developers.cloudflare.com/pages/configuration/redirects/
+
+# Seguridad: redirigir robots.txt dinámico a la raíz (los crawlers buscan /robots.txt)
+/robots.txt /api/robots 200
+
+# SEO: redirigir www a apex (sin www)
+https://www.aunclick.pages.dev/* https://aunclick.pages.dev/:splat 301
+
+# Redirecciones de páginas antiguas o renombradas
+/reservar.html /reservas.html 301
+/cupón.html /cupones.html 301
+/eventos /entretenimiento.html 301
+/negocio.html /search.html 301
+/registro.html /new-business.html 301
+/perfil.html /dashboard.html 301
+
+# Redirigir sitemap estático al endpoint dinámico
+/sitemap.xml /api/sitemap 200
