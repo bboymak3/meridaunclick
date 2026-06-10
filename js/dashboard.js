@@ -266,7 +266,7 @@
                             <td>${p.views || 0}</td>
                             <td class="dash-actions">
                                 <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
-                                <a href="new-/negocio/${p.slug || p.id}" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
+                                <a onclick="openEditBusinessModal(${p.id})" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
                                 <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
@@ -334,7 +334,7 @@
                             <td class="dash-actions">
                                 <button class="btn-icon" onclick="openServicesManager(${p.id}, '${escapeAttr(p.title)}')" title="Servicios"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i></button>
                                 <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
-                                <a href="new-/negocio/${p.slug || p.id}" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
+                                <a onclick="openEditBusinessModal(${p.id})" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
                                 <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </td>
                         </tr>
@@ -1553,5 +1553,203 @@
     } else {
         initDashboard();
     }
+
+
+    // ─── Edit Business Modal ─────────────────────────────
+    let editBizVideoMode = 'file';
+
+    window.openEditBusinessModal = async function(id) {
+        const modal = document.getElementById('editBusinessModal');
+        const loading = document.getElementById('editBizLoading');
+        const form = document.getElementById('editBizForm');
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        loading.style.display = '';
+        form.style.display = 'none';
+
+        // Reset features
+        document.querySelectorAll('#editBizFeatures .eb-feature').forEach(f => f.classList.remove('checked'));
+        document.getElementById('ebVideoPreview').style.display = 'none';
+        document.getElementById('ebVideoFileInfo').innerHTML = '';
+        document.getElementById('editBizVideoUrlHidden').value = '';
+        document.getElementById('editBizVideoUrl').value = '';
+        document.getElementById('editBizVideoFileInput').value = '';
+
+        try {
+            const data = await api.get('/businesses/' + id);
+            const biz = data.business || data;
+            document.getElementById('editBizId').value = biz.id;
+            populateEditBizForm(biz);
+            loading.style.display = 'none';
+            form.style.display = '';
+        } catch(e) {
+            loading.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><p>Error al cargar datos del negocio</p>';
+        }
+    };
+
+    window.closeEditBusinessModal = function() {
+        const modal = document.getElementById('editBusinessModal');
+        if (modal) modal.classList.add('hidden');
+    };
+
+    function populateEditBizForm(biz) {
+        const el = (id, val) => { const e = document.getElementById(id); if (e && val) e.value = val; };
+        el('editBizTitle', biz.title);
+        el('editBizDesc', biz.description);
+        el('editBizCat', biz.category || biz.category_id);
+        el('editBizType', biz.business_type);
+        el('editBizPhone', biz.phone);
+        el('editBizWhatsapp', biz.whatsapp);
+        el('editBizEmail', biz.email_contact || biz.email);
+        el('editBizWebsite', biz.website);
+        el('editBizInstagram', biz.instagram);
+        el('editBizFacebook', biz.facebook);
+        el('editBizTwitter', biz.twitter);
+        el('editBizTiktok', biz.tiktok);
+        el('editBizYoutube', biz.youtube);
+        el('editBizAddress', biz.address);
+        el('editBizCity', biz.city);
+        el('editBizState', biz.state);
+        el('editBizLat', biz.lat || biz.latitude);
+        el('editBizLng', biz.lng || biz.longitude);
+        el('editBizSchedule', biz.schedule);
+
+        // Features
+        const features = biz.features || biz.caracteristicas || '';
+        const featList = typeof features === 'string' ? features.split(',') : features;
+        document.querySelectorAll('#editBizFeatures .eb-feature').forEach(f => {
+            if (featList.includes(f.dataset.feature)) f.classList.add('checked');
+        });
+
+        // Video
+        if (biz.video_url) {
+            document.getElementById('editBizVideoUrlHidden').value = biz.video_url;
+            showEditBizVideoPreview(biz.video_url);
+            setEditBizVideoMode('url');
+            document.getElementById('editBizVideoUrl').value = biz.video_url;
+        } else {
+            setEditBizVideoMode('file');
+        }
+    }
+
+    window.setEditBizVideoMode = function(mode) {
+        editBizVideoMode = mode;
+        document.getElementById('ebVideoTabFile').classList.toggle('active', mode === 'file');
+        document.getElementById('ebVideoTabUrl').classList.toggle('active', mode === 'url');
+        document.getElementById('ebVideoFileContent').classList.toggle('active', mode === 'file');
+        document.getElementById('ebVideoUrlContent').classList.toggle('active', mode === 'url');
+    };
+
+    window.handleEditBizVideoFile = function(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('video/')) {
+            showToast('Solo se permiten archivos de video', 'error');
+            return;
+        }
+        if (file.size > 50 * 1024 * 1024) {
+            showToast('El video no puede superar 50MB', 'error');
+            return;
+        }
+
+        // Show local preview
+        const preview = document.getElementById('ebVideoPreview');
+        preview.style.display = 'block';
+        preview.innerHTML = '<video src="' + URL.createObjectURL(file) + '" controls></video>';
+
+        document.getElementById('ebVideoFileInfo').innerHTML =
+            '<div class="eb-video-file-info"><i class="fas fa-check-circle"></i> ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + 'MB)</div>';
+
+        // Upload
+        const token = getToken();
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('product_type', 'video');
+
+        fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData,
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.url) {
+                document.getElementById('editBizVideoUrlHidden').value = data.url;
+                showToast('Video subido correctamente', 'success');
+            } else {
+                showToast(data.error || 'Error al subir video', 'error');
+            }
+        })
+        .catch(() => showToast('Error de conexion al subir video', 'error'));
+    };
+
+    function showEditBizVideoPreview(url) {
+        if (!url) return;
+        const preview = document.getElementById('ebVideoPreview');
+        preview.style.display = 'block';
+        const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+        if (ytMatch) {
+            preview.innerHTML = '<iframe src="https://www.youtube.com/embed/' + ytMatch[1] + '" allowfullscreen></iframe>';
+            return;
+        }
+        const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+        if (ttMatch) {
+            preview.innerHTML = '<iframe src="https://www.tiktok.com/embed/v2/' + ttMatch[1] + '" allowfullscreen></iframe>';
+            return;
+        }
+        preview.innerHTML = '<video src="' + url + '" controls></video>';
+    }
+
+    window.saveEditBusiness = async function() {
+        const id = document.getElementById('editBizId').value;
+        if (!id) return;
+
+        const btn = document.getElementById('editBizSaveBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+
+        try {
+            const features = [];
+            document.querySelectorAll('#editBizFeatures .eb-feature.checked').forEach(f => features.push(f.dataset.feature));
+
+            const payload = {
+                title: document.getElementById('editBizTitle').value,
+                description: document.getElementById('editBizDesc').value,
+                category: document.getElementById('editBizCat').value,
+                business_type: document.getElementById('editBizType').value,
+                phone: document.getElementById('editBizPhone').value,
+                whatsapp: document.getElementById('editBizWhatsapp').value,
+                email_contact: document.getElementById('editBizEmail').value,
+                website: document.getElementById('editBizWebsite').value,
+                instagram: document.getElementById('editBizInstagram').value,
+                facebook: document.getElementById('editBizFacebook').value,
+                twitter: document.getElementById('editBizTwitter').value,
+                tiktok: document.getElementById('editBizTiktok').value,
+                youtube: document.getElementById('editBizYoutube').value,
+                address: document.getElementById('editBizAddress').value,
+                city: document.getElementById('editBizCity').value,
+                state: document.getElementById('editBizState').value,
+                lat: parseFloat(document.getElementById('editBizLat').value) || null,
+                lng: parseFloat(document.getElementById('editBizLng').value) || null,
+                schedule: document.getElementById('editBizSchedule').value,
+                features: features.join(','),
+                video_url: document.getElementById('editBizVideoUrlHidden').value || document.getElementById('editBizVideoUrl').value || '',
+            };
+
+            await api.put('/businesses/' + id, payload);
+            showToast('Negocio actualizado exitosamente', 'success');
+            closeEditBusinessModal();
+            // Reload current section
+            const activeSection = document.querySelector('.sidebar-link.active');
+            if (activeSection) switchSection(activeSection.dataset.section);
+            else loadOverviewData();
+        } catch(e) {
+            showToast(e.message || 'Error al guardar', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+        }
+    };
+
 
 })();
