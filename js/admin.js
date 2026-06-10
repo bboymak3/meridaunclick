@@ -32,6 +32,7 @@
     const tabMessages = document.getElementById('tabMessages');
     const tabFacebook = document.getElementById('tabFacebook');
     const tabJobs = document.getElementById('tabJobs');
+    const tabSettings = document.getElementById('tabSettings');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -1542,13 +1543,8 @@
         }
     }
 
-    // ─── HTML Escape Helper ──────────────────────────────────
-    function escapeHtml(str) {
-        if (!str) return '';
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
+    // ─── HTML Escape Helper (aliased above as escapeHtml = escHtml) ──
+    // Note: escHtml declared above, escapeHtml is an alias. Do NOT re-declare.
 
     // ─── Featured Businesses Selector ──────────────────────────
     async function loadFeaturedSelector() {
