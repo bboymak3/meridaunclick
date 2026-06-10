@@ -61,8 +61,8 @@ export async function onRequestGet(context) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${escapeHtml(description)}">
     <title>${escapeHtml(title)} - Landing Page | Un Click Venezuela</title>
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="${baseUrl}/landing/${business.slug}">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="canonical" href="${baseUrl}/negocio/${business.slug}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="business.business">

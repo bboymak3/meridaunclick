@@ -40,13 +40,6 @@ export async function onRequestGet(context) {
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>
   </url>\n`;
-        // Landing page for each business
-        dynamicUrls += `  <url>
-    <loc>${baseUrl}/web/${biz.slug}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <priority>0.7</priority>
-    <changefreq>weekly</changefreq>
-  </url>\n`;
       }
 
       // Also add legacy redirect URLs for businesses without slug
