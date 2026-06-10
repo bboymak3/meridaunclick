@@ -67,6 +67,12 @@
     const adminMsgModalClose = document.getElementById('adminMsgModalClose');
     const adminMsgModalCloseBtn = document.getElementById('adminMsgModalCloseBtn');
 
+    // Business Edit Modal
+    const adminBizEditModal = document.getElementById('adminBusinessEditModal');
+    const adminBizEditClose = document.getElementById('adminBizEditClose');
+    const adminBizEditSave = document.getElementById('adminBizEditSave');
+    const adminBizEditCancel = document.getElementById('adminBizEditCancel');
+
     // ─── Initialization ─────────────────────────────────────────
     async function init() {
         // Check auth
@@ -103,6 +109,7 @@
         setupFacebookListeners();
         setupJobListeners();
         setupB2Modal();
+        setupBusinessEditModal();
         loadBusinessesForJobSelect();
 
         // Load initial data
@@ -325,6 +332,7 @@
                         <td>${p.featured ? '<i class="fas fa-star text-warning"></i>' : '<i class="far fa-star text-muted"></i>'}</td>
                         <td class="admin-actions">
                             <button class="btn btn-xs btn-outline" onclick="window.admin.viewBusiness(${p.id})" title="Ver"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-xs btn-outline" onclick="window.admin.editBusiness(${p.id})" title="Editar"><i class="fas fa-edit"></i></button>
                             ${p.status === 'pending' ? `
                                 <button class="btn btn-xs btn-success" onclick="window.admin.approveBusiness(${p.id})" title="Aprobar"><i class="fas fa-check"></i></button>
                                 <button class="btn btn-xs btn-danger" onclick="window.admin.rejectBusiness(${p.id})" title="Rechazar"><i class="fas fa-ban"></i></button>
@@ -393,6 +401,9 @@
 
             if (modalFooter) {
                 modalFooter.innerHTML = `
+                    <button class="btn btn-primary" onclick="document.getElementById('adminBusinessModal').classList.add('hidden'); window.admin.editBusiness(${businessId});">
+                        <i class="fas fa-edit"></i> Editar
+                    </button>
                     ${business.status === 'pending' ? `
                         <button class="btn btn-success" onclick="window.admin.approveBusiness(${businessId}); document.getElementById('adminBusinessModal').classList.add('hidden');">
                             <i class="fas fa-check"></i> Aprobar
@@ -808,6 +819,185 @@
         if (adminDeleteModal) adminDeleteModal.classList.remove('hidden');
     }
 
+    // ─── Business Edit Modal ──────────────────────────────────
+    function setupBusinessEditModal() {
+        if (adminBizEditClose && adminBizEditModal) adminBizEditClose.addEventListener('click', () => adminBizEditModal.classList.add('hidden'));
+        if (adminBizEditCancel && adminBizEditModal) adminBizEditCancel.addEventListener('click', () => adminBizEditModal.classList.add('hidden'));
+        if (adminBizEditModal) adminBizEditModal.querySelector('.modal-overlay')?.addEventListener('click', () => adminBizEditModal.classList.add('hidden'));
+        if (adminBizEditSave) adminBizEditSave.addEventListener('click', saveBusiness);
+
+        // Image upload handlers for business edit
+        const bizFileInput = document.getElementById('bizEditImageFile');
+        const bizCameraInput = document.getElementById('bizEditImageCamera');
+        if (bizFileInput) bizFileInput.addEventListener('change', (e) => handleBizImageUpload(e.target.files[0]));
+        if (bizCameraInput) bizCameraInput.addEventListener('change', (e) => handleBizImageUpload(e.target.files[0]));
+
+        // Image URL handler for business edit
+        const bizURLInput = document.getElementById('bizEditImageURL');
+        if (bizURLInput) bizURLInput.addEventListener('input', () => {
+            const url = bizURLInput.value.trim();
+            const preview = document.getElementById('bizEditImagePreview');
+            if (preview && url) {
+                preview.innerHTML = `<img src="${url}" style="max-width:200px;max-height:150px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
+            }
+        });
+    }
+
+    async function editBusiness(businessId) {
+        if (!adminBizEditModal) return;
+        adminBizEditModal.classList.remove('hidden');
+        adminBizEditModal.dataset.businessId = businessId;
+
+        // Reset form
+        const form = document.getElementById('adminBizEditForm');
+        if (form) form.reset();
+
+        // Reset image preview
+        const preview = document.getElementById('bizEditImagePreview');
+        if (preview) preview.innerHTML = '<div style="color:#999;font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+
+        // Load categories for select
+        try {
+            const catsData = await api.get('/categories');
+            const catSelect = document.getElementById('bizEditCategory');
+            if (catSelect && catsData.categories) {
+                catSelect.innerHTML = '<option value="">Seleccionar...</option>';
+                catsData.categories.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.id;
+                    opt.textContent = c.name;
+                    catSelect.appendChild(opt);
+                });
+            }
+        } catch (err) { console.error('Error loading categories:', err); }
+
+        // Load business data
+        try {
+            const biz = await api.get(`/businesses/${businessId}`);
+
+            document.getElementById('bizEditTitle').value = biz.title || '';
+            document.getElementById('bizEditDescription').value = biz.description || '';
+            document.getElementById('bizEditType').value = biz.business_type || 'comercio';
+            if (biz.category_id) document.getElementById('bizEditCategory').value = biz.category_id;
+            document.getElementById('bizEditPhone').value = biz.phone || '';
+            document.getElementById('bizEditWhatsApp').value = biz.whatsapp || '';
+            document.getElementById('bizEditEmail').value = biz.email_contact || '';
+            document.getElementById('bizEditWebsite').value = biz.website || '';
+            document.getElementById('bizEditInstagram').value = biz.instagram || '';
+            document.getElementById('bizEditFacebook').value = biz.facebook || '';
+            document.getElementById('bizEditAddress').value = biz.address || '';
+            document.getElementById('bizEditCity').value = biz.city || '';
+            document.getElementById('bizEditState').value = biz.state || '';
+            document.getElementById('bizEditSchedule').value = biz.schedule || '';
+
+            // Features
+            document.getElementById('bizEditParking').checked = !!biz.has_parking;
+            document.getElementById('bizEditWifi').checked = !!biz.has_wifi;
+            document.getElementById('bizEditCard').checked = !!biz.has_card;
+            document.getElementById('bizEditDelivery').checked = !!biz.has_delivery;
+            document.getElementById('bizEditOutdoor').checked = !!biz.has_outdoor;
+
+            // Show current image
+            const currentImage = biz.image || (biz.images && biz.images[0] && biz.images[0].url) || '';
+            if (preview) {
+                if (currentImage) {
+                    preview.innerHTML = `<img src="${currentImage}" style="max-width:200px;max-height:150px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
+                } else {
+                    preview.innerHTML = '<span style="color:#999;font-size:0.85rem;">Sin imagen</span>';
+                }
+            }
+            // Store current image URL for reference
+            adminBizEditModal.dataset.currentImage = currentImage;
+
+        } catch (error) {
+            showToast('Error al cargar datos del negocio', 'error');
+            adminBizEditModal.classList.add('hidden');
+        }
+    }
+
+    async function handleBizImageUpload(file) {
+        if (!file) return;
+        const statusEl = document.getElementById('bizEditImageStatus');
+        const preview = document.getElementById('bizEditImagePreview');
+        const businessId = adminBizEditModal?.dataset?.businessId;
+
+        if (!businessId) { showToast('Error: no se identificó el negocio', 'error'); return; }
+
+        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('business_id', businessId);
+            formData.append('product_type', 'business');
+
+            const token = localStorage.getItem(TOKEN_KEY);
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.url) {
+                if (preview) preview.innerHTML = `<img src="${data.url}" style="max-width:200px;max-height:150px;border-radius:8px;object-fit:cover;">`;
+                if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Imagen subida';
+                adminBizEditModal.dataset.currentImage = data.url;
+            } else {
+                if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + (data.error || 'Error al subir');
+            }
+        } catch (error) {
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> Error de conexión';
+        }
+    }
+
+    async function saveBusiness() {
+        if (!adminBizEditModal) return;
+        const businessId = adminBizEditModal.dataset.businessId;
+        if (!businessId) return;
+
+        const title = document.getElementById('bizEditTitle')?.value?.trim();
+        if (!title) { showToast('El nombre es requerido', 'error'); return; }
+
+        const saveBtn = document.getElementById('adminBizEditSave');
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; }
+
+        try {
+            const body = {
+                title,
+                description: document.getElementById('bizEditDescription')?.value?.trim() || '',
+                business_type: document.getElementById('bizEditType')?.value || 'comercio',
+                category_id: parseInt(document.getElementById('bizEditCategory')?.value) || null,
+                phone: document.getElementById('bizEditPhone')?.value?.trim() || '',
+                whatsapp: document.getElementById('bizEditWhatsApp')?.value?.trim() || '',
+                email_contact: document.getElementById('bizEditEmail')?.value?.trim() || '',
+                website: document.getElementById('bizEditWebsite')?.value?.trim() || '',
+                instagram: document.getElementById('bizEditInstagram')?.value?.trim() || '',
+                facebook: document.getElementById('bizEditFacebook')?.value?.trim() || '',
+                address: document.getElementById('bizEditAddress')?.value?.trim() || '',
+                city: document.getElementById('bizEditCity')?.value?.trim() || '',
+                state: document.getElementById('bizEditState')?.value?.trim() || '',
+                schedule: document.getElementById('bizEditSchedule')?.value?.trim() || '',
+                has_parking: document.getElementById('bizEditParking')?.checked ? 1 : 0,
+                has_wifi: document.getElementById('bizEditWifi')?.checked ? 1 : 0,
+                has_card: document.getElementById('bizEditCard')?.checked ? 1 : 0,
+                has_delivery: document.getElementById('bizEditDelivery')?.checked ? 1 : 0,
+                has_outdoor: document.getElementById('bizEditOutdoor')?.checked ? 1 : 0,
+                image: adminBizEditModal.dataset.currentImage || '',
+            };
+
+            await api.put(`/businesses/${businessId}`, body);
+            showToast('Negocio actualizado exitosamente', 'success');
+            adminBizEditModal.classList.add('hidden');
+            loadProperties();
+            loadDashboardStats();
+        } catch (error) {
+            showToast(error.message, 'error');
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; }
+        }
+    }
+
     // ─── Messages Management ────────────────────────────────────
     async function loadMessages() {
         const tbody = document.getElementById('adminMsgsTableBody');
@@ -1196,6 +1386,24 @@
 
         const searchInput = document.getElementById('b2SearchInput');
         if (searchInput) searchInput.addEventListener('input', debounce(() => { b2Page = 1; loadB2Products(); }, 400));
+
+        // B2 Image upload handlers
+        const b2FileInput = document.getElementById('b2EditImageFile');
+        const b2CameraInput = document.getElementById('b2EditImageCamera');
+        if (b2FileInput) b2FileInput.addEventListener('change', (e) => handleB2ImageUpload(e.target.files[0]));
+        if (b2CameraInput) b2CameraInput.addEventListener('change', (e) => handleB2ImageUpload(e.target.files[0]));
+
+        // B2 Image URL handler
+        const b2URLInput = document.getElementById('b2EditImageURL');
+        if (b2URLInput) b2URLInput.addEventListener('input', () => {
+            const url = b2URLInput.value.trim();
+            const preview = document.getElementById('b2EditImagePreview');
+            const editModal2 = document.getElementById('b2EditModal');
+            if (preview && url) {
+                preview.innerHTML = `<img src="${url}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
+                if (editModal2) editModal2.dataset.currentImage = url;
+            }
+        });
     }
 
     async function loadB2Products() {
@@ -1269,6 +1477,13 @@
             title.innerHTML = '<i class="fas fa-plus-circle"></i> Crear Producto';
         }
 
+        // Reset image preview
+        const preview = document.getElementById('b2EditImagePreview');
+        if (preview) preview.innerHTML = '';
+        const statusEl = document.getElementById('b2EditImageStatus');
+        if (statusEl) statusEl.innerHTML = '';
+        editModal.dataset.currentImage = '';
+
         // Load businesses for selector
         try {
             const bizData = await api.get('/businesses?status=approved&limit=100');
@@ -1293,20 +1508,67 @@
                 document.getElementById('b2EditName').value = product.name || '';
                 document.getElementById('b2EditPrice').value = product.price || 0;
                 document.getElementById('b2EditCategory').value = product.category || 'general';
-                document.getElementById('b2EditImage').value = product.image || '';
                 document.getElementById('b2EditStatus').value = product.status || 'pending';
                 document.getElementById('b2EditDescription').value = product.description || '';
                 if (product.business_id) document.getElementById('b2EditBusiness').value = product.business_id;
+
+                // Handle image
+                const imageURL = product.image || '';
+                const urlInput = document.getElementById('b2EditImageURL');
+                if (urlInput) urlInput.value = imageURL;
+                editModal.dataset.currentImage = imageURL;
+                if (preview && imageURL) {
+                    preview.innerHTML = `<img src="${imageURL}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
+                }
             } catch (err) {
                 showToast('Error al cargar producto', 'error');
                 return;
             }
         } else {
             document.getElementById('b2EditForm').reset();
+            // Clear the URL input specifically (reset may not clear all)
+            const urlInput = document.getElementById('b2EditImageURL');
+            if (urlInput) urlInput.value = '';
         }
 
         editModal.dataset.productId = productId || '';
         editModal.classList.remove('hidden');
+    }
+
+    async function handleB2ImageUpload(file) {
+        if (!file) return;
+        const statusEl = document.getElementById('b2EditImageStatus');
+        const preview = document.getElementById('b2EditImagePreview');
+        const editModal = document.getElementById('b2EditModal');
+
+        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('product_type', 'marketplace');
+
+            const token = localStorage.getItem(TOKEN_KEY);
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.url) {
+                if (preview) preview.innerHTML = `<img src="${data.url}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;">`;
+                if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Imagen subida';
+                if (editModal) editModal.dataset.currentImage = data.url;
+                // Clear URL input when file is uploaded
+                const urlInput = document.getElementById('b2EditImageURL');
+                if (urlInput) urlInput.value = '';
+            } else {
+                if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + (data.error || 'Error al subir');
+            }
+        } catch (error) {
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> Error de conexión';
+        }
     }
 
     async function saveB2Product() {
@@ -1317,10 +1579,14 @@
         const name = document.getElementById('b2EditName')?.value?.trim();
         const price = parseFloat(document.getElementById('b2EditPrice')?.value) || 0;
         const category = document.getElementById('b2EditCategory')?.value || 'general';
-        const image = document.getElementById('b2EditImage')?.value?.trim() || '';
         const status = document.getElementById('b2EditStatus')?.value || 'pending';
         const description = document.getElementById('b2EditDescription')?.value?.trim() || '';
         const business_id = document.getElementById('b2EditBusiness')?.value || '';
+
+        // Get image: prefer uploaded file, fallback to URL input
+        const uploadedImage = editModal?.dataset?.currentImage || '';
+        const urlImage = document.getElementById('b2EditImageURL')?.value?.trim() || '';
+        const image = uploadedImage || urlImage;
 
         if (!name) { showToast('El nombre es requerido', 'error'); return; }
 
@@ -1370,6 +1636,7 @@
     // ─── Expose functions for inline onclick handlers ───────────
     window.admin = {
         viewBusiness,
+        editBusiness,
         approveBusiness,
         rejectBusiness,
         toggleFeatured,
