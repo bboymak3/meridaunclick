@@ -378,6 +378,38 @@ export async function onRequestGet(context) {
             .lp-mobile-cta { display: flex; }
             .lp-section { padding: 60px 20px; }
             .lp-cta { padding-bottom: 80px; }
+            .lp-fab { bottom: 80px; }
+        }
+
+        /* === Floating WhatsApp FAB === */
+        .lp-fab {
+            position: fixed; bottom: 28px; right: 28px; z-index: 200;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: #25d366; color: #fff; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; box-shadow: 0 4px 20px rgba(37,211,102,0.4);
+            transition: transform 0.3s, box-shadow 0.3s;
+            animation: fabPulse 2s ease-in-out infinite;
+        }
+        .lp-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 28px rgba(37,211,102,0.5);
+        }
+        .lp-fab-tooltip {
+            position: absolute; right: 72px; top: 50%; transform: translateY(-50%);
+            background: #fff; color: #0f172a; padding: 8px 14px; border-radius: 10px;
+            font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .lp-fab-tooltip::after {
+            content: ''; position: absolute; left: 100%; top: 50%; transform: translateY(-50%);
+            border: 6px solid transparent; border-left-color: #fff;
+        }
+        .lp-fab:hover .lp-fab-tooltip { opacity: 1; }
+        @keyframes fabPulse {
+            0%, 100% { box-shadow: 0 4px 20px rgba(37,211,102,0.4); }
+            50% { box-shadow: 0 4px 30px rgba(37,211,102,0.6), 0 0 0 8px rgba(37,211,102,0.1); }
         }
     </style>
 </head>
@@ -600,6 +632,13 @@ ${(business.lat || business.latitude) ? `
     ${whatsappNumber ? `<a href="${whatsappLink}" target="_blank" rel="noopener" class="wa-btn"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
     ${phoneClean ? `<a href="tel:${phoneClean}" class="call-btn"><i class="fas fa-phone"></i> Llamar</a>` : ''}
 </div>
+
+<!-- FLOATING WHATSAPP FAB -->
+${whatsappNumber ? `
+<a href="${whatsappLink}" target="_blank" rel="noopener" class="lp-fab" aria-label="Contactar por WhatsApp">
+    <i class="fab fa-whatsapp"></i>
+    <span class="lp-fab-tooltip">Escribenos por WhatsApp</span>
+</a>` : ''}
 
 <script>
 // Sticky nav shadow on scroll
