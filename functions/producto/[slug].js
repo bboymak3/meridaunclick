@@ -403,18 +403,19 @@ export async function onRequestGet(context) {
                 </div>`}
             </div>` : ''}
 
-            ${(() => { const instagram = product.business_instagram; const facebook = product.business_facebook; const twitter = product.business_twitter; const tiktok = product.business_tiktok; const youtube = product.business_youtube; if (!instagram && !facebook && !twitter && !tiktok && !youtube) return ''; return `
+            ${(() => { const instagram = product.business_instagram; const facebook = product.business_facebook; const twitter = product.business_twitter; const tiktok = product.business_tiktok; const youtube = product.business_youtube; const hasSocial = instagram || facebook || twitter || tiktok || youtube; const hasWeb = product.business_slug; if (!hasSocial && !hasWeb) return ''; return `
             <hr class="pd-divider">
             <div class="pd-biz-section">
                 <div class="pd-biz-section-label" style="font-size:1rem;font-weight:700;color:#0f172a;text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:8px;">
-                    <i class="fas fa-share-nodes" style="color:#059669;"></i> Redes Sociales del Negocio
+                    <i class="fas fa-share-nodes" style="color:#059669;"></i> Redes Sociales y Web
                 </div>
-                <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;">
-                    ${instagram ? `<a href="${esc(instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-instagram" style="font-size:1.2rem;"></i> Instagram</a>` : ''}
-                    ${facebook ? `<a href="${esc(facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#1877f2;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-facebook-f" style="font-size:1.2rem;"></i> Facebook</a>` : ''}
-                    ${twitter ? `<a href="${esc(twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#000;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-x-twitter" style="font-size:1.2rem;"></i> X (Twitter)</a>` : ''}
-                    ${tiktok ? `<a href="${esc(tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#010101;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-tiktok" style="font-size:1.2rem;"></i> TikTok</a>` : ''}
-                    ${youtube ? `<a href="${esc(youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:13px 24px;border-radius:14px;background:#ff0000;color:#fff;text-decoration:none;font-size:1.08rem;font-weight:700;"><i class="fab fa-youtube" style="font-size:1.2rem;"></i> YouTube</a>` : ''}
+                <div style="display:flex;gap:15px;flex-wrap:wrap;margin-top:12px;">
+                    ${hasWeb ? `<a href="/web/${esc(product.business_slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:linear-gradient(135deg,#059669,#0ea5e9);color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fas fa-globe" style="font-size:1.5rem;"></i> Sitio Web</a>` : ''}
+                    ${instagram ? `<a href="${esc(instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-instagram" style="font-size:1.5rem;"></i> Instagram</a>` : ''}
+                    ${facebook ? `<a href="${esc(facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#1877f2;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-facebook-f" style="font-size:1.5rem;"></i> Facebook</a>` : ''}
+                    ${twitter ? `<a href="${esc(twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#000;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-x-twitter" style="font-size:1.5rem;"></i> X (Twitter)</a>` : ''}
+                    ${tiktok ? `<a href="${esc(tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#010101;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-tiktok" style="font-size:1.5rem;"></i> TikTok</a>` : ''}
+                    ${youtube ? `<a href="${esc(youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#ff0000;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-youtube" style="font-size:1.5rem;"></i> YouTube</a>` : ''}
                 </div>
             </div>`; })()}
         </div>

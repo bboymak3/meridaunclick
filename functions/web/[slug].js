@@ -753,7 +753,7 @@ ${images.results.length > 1 ? `
 </section>
 
 <!-- SOCIAL -->
-${(business.instagram || business.facebook || business.twitter || business.tiktok || business.youtube) ? `
+${(business.instagram || business.facebook || business.twitter || business.tiktok || business.youtube || business.slug) ? `
 <section class="lp-section lp-section-grey">
     <div class="lp-container">
         <div class="lp-section-header">
@@ -761,11 +761,12 @@ ${(business.instagram || business.facebook || business.twitter || business.tikto
             <h2 class="lp-section-title">Nuestras Redes Sociales</h2>
         </div>
         <div class="lp-social-grid">
-            ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:15px 28px;border-radius:16px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-weight:700;font-size:1.2rem;"><i class="fab fa-instagram" style="font-size:1.4rem;"></i> Instagram</a>` : ''}
-            ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:15px 28px;border-radius:16px;background:#1877f2;color:#fff;text-decoration:none;font-weight:700;font-size:1.2rem;"><i class="fab fa-facebook-f" style="font-size:1.4rem;"></i> Facebook</a>` : ''}
-            ${business.twitter ? `<a href="${escapeHtml(business.twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:15px 28px;border-radius:16px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:1.2rem;"><i class="fab fa-x-twitter" style="font-size:1.4rem;"></i> X (Twitter)</a>` : ''}
-            ${business.tiktok ? `<a href="${escapeHtml(business.tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:15px 28px;border-radius:16px;background:#010101;color:#fff;text-decoration:none;font-weight:700;font-size:1.2rem;"><i class="fab fa-tiktok" style="font-size:1.4rem;"></i> TikTok</a>` : ''}
-            ${business.youtube ? `<a href="${escapeHtml(business.youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:15px 28px;border-radius:16px;background:#ff0000;color:#fff;text-decoration:none;font-weight:700;font-size:1.2rem;"><i class="fab fa-youtube" style="font-size:1.4rem;"></i> YouTube</a>` : ''}
+            ${business.slug ? `<a href="${baseUrl}/negocio/${escapeHtml(business.slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#059669,#0ea5e9);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fas fa-store" style="font-size:1.75rem;"></i> Ficha del Negocio</a>` : ''}
+            ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-instagram" style="font-size:1.75rem;"></i> Instagram</a>` : ''}
+            ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#1877f2;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-facebook-f" style="font-size:1.75rem;"></i> Facebook</a>` : ''}
+            ${business.twitter ? `<a href="${escapeHtml(business.twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-x-twitter" style="font-size:1.75rem;"></i> X (Twitter)</a>` : ''}
+            ${business.tiktok ? `<a href="${escapeHtml(business.tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#010101;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-tiktok" style="font-size:1.75rem;"></i> TikTok</a>` : ''}
+            ${business.youtube ? `<a href="${escapeHtml(business.youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#ff0000;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-youtube" style="font-size:1.75rem;"></i> YouTube</a>` : ''}
         </div>
     </div>
 </section>
