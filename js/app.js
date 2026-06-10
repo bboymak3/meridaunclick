@@ -309,6 +309,76 @@ async function getCurrentUser() {
     }
 }
 
+// ─── Web Page Selector Modal ────────────────────────────────────
+function showWebPageSelector() {
+    // Remove existing modal if any
+    const existing = document.getElementById('webPageSelectorModal');
+    if (existing) { existing.remove(); return; }
+
+    const modal = document.createElement('div');
+    modal.id = 'webPageSelectorModal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+    modal.innerHTML = `
+        <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;max-height:80vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="padding:20px 24px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#0f172a;"><i class="fas fa-globe" style="color:#0ea5e9;margin-right:8px;"></i>Mis Paginas Web</h3>
+                <button id="webPageSelectorClose" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;padding:4px;"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="webPageSelectorBody" style="padding:16px 24px 24px;overflow-y:auto;max-height:60vh;">
+                <div style="text-align:center;padding:30px 0;color:#94a3b8;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:12px;font-size:0.9rem;">Cargando tus negocios...</p>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Close handlers
+    document.getElementById('webPageSelectorClose').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+    // Fetch businesses
+    const api = getApi();
+    api.get('/user/my-businesses').then(res => {
+        const body = document.getElementById('webPageSelectorBody');
+        if (!res.data || res.data.length === 0) {
+            body.innerHTML = `
+                <div style="text-align:center;padding:20px 0;color:#64748b;">
+                    <i class="fas fa-store" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
+                    <p style="font-size:0.95rem;font-weight:600;">No tienes negocios registrados</p>
+                    <p style="font-size:0.85rem;margin-top:4px;">Primero crea un negocio para generar su pagina web.</p>
+                    <a href="/new-business.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#059669;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Crear Negocio</a>
+                </div>`;
+            return;
+        }
+
+        let html = '<p style="font-size:0.82rem;color:#94a3b8;margin-bottom:14px;">Selecciona a que negocio le quieres generar la pagina web:</p>';
+        res.data.forEach(b => {
+            const coverImg = b.cover_image || '';
+            html += `
+                <a href="/web/${b.slug}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px;border:1px solid #e5e7eb;border-radius:12px;margin-bottom:10px;text-decoration:none;color:inherit;transition:all 0.2s;background:#fff;" onmouseover="this.style.borderColor='#0ea5e9';this.style.boxShadow='0 4px 12px rgba(14,165,233,0.1)';" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none';">
+                    <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
+                        ${coverImg ? `<img src="${coverImg}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<i class="fas fa-store" style="font-size:1.2rem;color:#94a3b8;"></i>'}
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:0.95rem;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.title || 'Sin nombre'}</div>
+                        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${b.city || ''}${b.state ? ', ' + b.state : ''} ${b.category_name ? ' · ' + b.category_name : ''}</div>
+                    </div>
+                    <div style="flex-shrink:0;color:#0ea5e9;font-size:0.8rem;font-weight:600;display:flex;align-items:center;gap:4px;">
+                        Ver <i class="fas fa-external-link-alt" style="font-size:0.7rem;"></i>
+                    </div>
+                </a>`;
+        });
+
+        body.innerHTML = html;
+    }).catch(() => {
+        const body = document.getElementById('webPageSelectorBody');
+        if (body) body.innerHTML = '<p style="text-align:center;color:#ef4444;padding:20px;">Error al cargar tus negocios. Intenta de nuevo.</p>';
+    });
+}
+
+// ─── Navigation ────────────────────────────────────────────────
 function updateNav() {
     const navLoginItem = document.getElementById('navLoginItem');
     const navUserItem = document.getElementById('navUserItem');
@@ -353,30 +423,17 @@ function updateNav() {
                 const divider = dropdownMenu.querySelector('.nav-dropdown-divider');
                 const webLi = document.createElement('li');
                 webLi.id = 'navWebPageItem';
-                webLi.innerHTML = `<a href="#" class="nav-link" id="navWebPageBtn" style="color:#0ea5e9;"><i class="fas fa-globe"></i> Crear Pagina Web</a>`;
+                webLi.innerHTML = `<a href="#" class="nav-link" id="navWebPageBtn" style="color:#0ea5e9;"><i class="fas fa-globe"></i> Pagina Web</a>`;
                 if (divider) {
                     dropdownMenu.insertBefore(webLi, divider);
                 } else {
                     dropdownMenu.appendChild(webLi);
                 }
-                // Fetch user's business slug and set link
-                const token = localStorage.getItem('meridaunclick_token');
-                if (token) {
-                    const api = getApi();
-                    api.get('/user/my-businesses').then(res => {
-                        if (res.data && res.data.length > 0 && res.data[0].slug) {
-                            const btn = document.getElementById('navWebPageBtn');
-                            if (btn) btn.href = '/web/' + res.data[0].slug;
-                        }
-                    }).catch(() => {});
-                }
                 const webBtn = document.getElementById('navWebPageBtn');
                 if (webBtn) {
                     webBtn.addEventListener('click', function(e) {
-                        if (this.href === '#' || this.href === window.location.href + '#') {
-                            e.preventDefault();
-                            showToast('Primero crea un negocio para generar tu pagina web', 'info');
-                        }
+                        e.preventDefault();
+                        showWebPageSelector();
                     });
                 }
             }
