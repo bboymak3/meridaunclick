@@ -572,15 +572,18 @@ async function loadBusinessProducts(businessId) {
         }
 
         section.style.display = '';
-        if (viewAll) viewAll.href = `marketplace.html?business_id=${businessId}`;
+        if (viewAll) viewAll.href = `/marketplace.html?business_id=${businessId}`;
 
         grid.innerHTML = products.map(p => {
             const imgSrc = p.image || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="%23f1f5f9"><rect width="200" height="160"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14" font-family="sans-serif">Sin imagen</text></svg>');
-            return `<a href="marketplace.html" class="product-card">
+            const productSlug = p.slug || p.id;
+            const productUrl = `/producto/${productSlug}`;
+            const productPrice = p.price ? `$${Number(p.price).toLocaleString('es-VE')}` : '';
+            return `<a href="${productUrl}" class="product-card">
                 <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.style.display='none'">
                 <div class="product-card-body">
                     <div class="product-card-name">${escapeHtml(p.name || 'Sin nombre')}</div>
-                    <div class="product-card-price">$${parseFloat(p.price || 0).toFixed(2)}</div>
+                    ${productPrice ? `<div class="product-card-price">${productPrice}</div>` : ''}
                 </div>
             </a>`;
         }).join('');

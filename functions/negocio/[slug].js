@@ -96,44 +96,182 @@ export async function onRequestGet(context) {
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>U</text></svg>">
     <style>
+/* === Compact Business Cards (for similar businesses) === */
+.business-detail-page .business-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.business-detail-page .business-card {
+    background: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.business-detail-page .business-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+.business-detail-page .business-card-image {
+    height: 120px;
+    overflow: hidden;
+    position: relative;
+}
+.business-detail-page .business-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.business-detail-page .business-card-badges {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    display: flex;
+    gap: 4px;
+    z-index: 2;
+}
+.business-detail-page .business-card-badges .card-badge {
+    font-size: 0.58rem;
+    padding: 2px 7px;
+    border-radius: 6px;
+    font-weight: 600;
+}
+.business-detail-page .business-card-fav,
+.business-detail-page .btn-share-wa-card {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    background: rgba(255,255,255,0.9);
+    border: none;
+    cursor: pointer;
+    z-index: 2;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.business-detail-page .business-card-fav { top: 6px; right: 38px; color: #e74c3c; }
+.business-detail-page .btn-share-wa-card { top: 6px; right: 6px; color: #25d366; }
+.business-detail-page .business-card-body {
+    padding: 8px 10px 10px;
+}
+.business-detail-page .business-card-title {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 2px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.business-detail-page .business-card-location {
+    font-size: 0.65rem;
+    color: #64748b;
+    margin: 0 0 3px;
+}
+.business-detail-page .business-card-location i { font-size: 0.58rem; }
+.business-detail-page .business-card-desc {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.business-detail-page .business-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+/* === Compact Product Cards (for business products) === */
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 16px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
 }
 .product-card {
     background: #fff;
-    border-radius: 12px;
+    border-radius: 10px;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     transition: transform 0.2s, box-shadow 0.2s;
     text-decoration: none;
     color: inherit;
 }
 .product-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    border-color: #059669;
 }
 .product-card img {
     width: 100%;
-    height: 160px;
+    height: 120px;
     object-fit: cover;
 }
 .product-card-body {
-    padding: 12px;
+    padding: 8px 10px 10px;
 }
 .product-card-name {
     font-weight: 600;
-    font-size: 0.9rem;
-    margin-bottom: 4px;
+    font-size: 0.75rem;
+    margin-bottom: 3px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #1e293b;
 }
 .product-card-price {
     color: #059669;
     font-weight: 700;
-    font-size: 1.05rem;
+    font-size: 0.82rem;
+}
+
+/* Section styling */
+.business-detail-page .section {
+    margin-top: 24px;
+}
+.business-detail-page .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+.business-detail-page .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+/* Compact gallery */
+.business-detail-page .gallery-main {
+    aspect-ratio: 16/9;
+    max-height: 300px;
+}
+
+@media (max-width: 640px) {
+    .business-detail-page .business-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .business-detail-page .business-card-image {
+        height: 100px;
+    }
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .product-card img {
+        height: 100px;
+    }
 }
 .jobs-list .job-item {
     background: #fff;
