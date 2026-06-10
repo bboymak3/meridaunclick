@@ -1517,6 +1517,8 @@
         if (!str) return '';
         return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
+    // Alias used in B2 products section and old products section
+    const escapeHtml = escHtml;
 
     async function executeD1Action(sql, successMsg, callback) {
         try {

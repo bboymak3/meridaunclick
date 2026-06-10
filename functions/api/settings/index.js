@@ -57,12 +57,24 @@ const DEFAULT_SETTINGS = {
   registrations_enabled: '1',
   maintenance_mode: '0',
   site_name: 'AuNclick Mérida',
-  site_description: 'Directorio de negocios, eventos y servicios en Mérida, Venezuela',
+  site_description: 'Directorio de negocios y servicios en Mérida, Venezuela',
   contact_email: '',
   whatsapp_number: '',
   max_businesses_per_user: '10',
   require_approval: '1',
   featured_price: '0',
+  // Toggle settings used by admin panel
+  ai_chatbot_enabled: '0',
+  ai_chatbot_welcome: '',
+  reviews_enabled: '1',
+  coupons_enabled: '1',
+  bookings_enabled: '0',
+  points_enabled: '0',
+  emergency_enabled: '1',
+  // Points configuration
+  points_per_visit: '10',
+  points_per_review: '20',
+  points_per_booking: '15',
 };
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
