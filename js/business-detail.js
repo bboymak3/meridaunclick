@@ -397,6 +397,15 @@ function populateBusinessDetail(b) {
 
     // Lightbox init
     initLightbox(images);
+
+    // ─── SEO Meta Description ─────────────────────────────────
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) metaDesc.content = `${b.title || 'Negocio'} - ${b.category_name || ''} en ${b.city || 'Mérida'}, ${b.state || 'Venezuela'}. ${b.description ? b.description.substring(0, 150) : 'Visita Un Click para más información.'}`;
+
+    // ─── Load Business Products, Jobs, Services ─────────────
+    loadBusinessProducts(b.id);
+    loadBusinessJobs(b.id);
+    loadBusinessServices(b.id);
 }
 
 // ─── Gallery Navigation ─────────────────────────────────────
@@ -535,6 +544,100 @@ async function loadSimilarBusinesses(currentBusiness) {
         }
     } catch (error) {
         console.warn('Error loading similar businesses:', error);
+    }
+}
+
+// ─── Business Products ──────────────────────────────────────
+async function loadBusinessProducts(businessId) {
+    const section = document.getElementById('productsSection');
+    const grid = document.getElementById('businessProductsGrid');
+    const viewAll = document.getElementById('viewAllProducts');
+    if (!section || !grid) return;
+
+    try {
+        const data = await api.get(`/marketplace?business_id=${businessId}&status=approved&limit=12`);
+        const products = data.products || [];
+        
+        if (products.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = '';
+        if (viewAll) viewAll.href = `marketplace.html?business_id=${businessId}`;
+
+        grid.innerHTML = products.map(p => {
+            const imgSrc = p.image || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="%23f1f5f9"><rect width="200" height="160"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14" font-family="sans-serif">Sin imagen</text></svg>');
+            return `<a href="marketplace.html" class="product-card">
+                <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.style.display='none'">
+                <div class="product-card-body">
+                    <div class="product-card-name">${escapeHtml(p.name || 'Sin nombre')}</div>
+                    <div class="product-card-price">$${parseFloat(p.price || 0).toFixed(2)}</div>
+                </div>
+            </a>`;
+        }).join('');
+    } catch (err) {
+        console.warn('Error loading business products:', err);
+    }
+}
+
+// ─── Business Jobs ───────────────────────────────────────────
+async function loadBusinessJobs(businessId) {
+    const section = document.getElementById('jobsSection');
+    const list = document.getElementById('businessJobsList');
+    const viewAll = document.getElementById('viewAllJobs');
+    if (!section || !list) return;
+
+    try {
+        const data = await api.get(`/jobs?business_id=${businessId}&limit=10`);
+        const jobs = data.jobs || [];
+
+        if (jobs.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = '';
+        if (viewAll) viewAll.href = `empleo.html?business_id=${businessId}`;
+
+        list.innerHTML = jobs.map(j => `
+            <a href="empleo.html" class="job-item" style="text-decoration:none;color:inherit;">
+                <div class="job-item-icon"><i class="fas fa-briefcase"></i></div>
+                <div class="job-item-info">
+                    <div class="job-item-title">${escapeHtml(j.title)}</div>
+                    <div class="job-item-meta">${escapeHtml(j.job_type || 'Tiempo completo')} · ${escapeHtml(j.city || j.state || 'Venezuela')}</div>
+                </div>
+            </a>
+        `).join('');
+    } catch (err) {
+        console.warn('Error loading business jobs:', err);
+    }
+}
+
+// ─── Business Services ──────────────────────────────────────
+async function loadBusinessServices(businessId) {
+    const section = document.getElementById('servicesSection');
+    const list = document.getElementById('businessServicesList');
+    if (!section || !list) return;
+
+    try {
+        const data = await api.get(`/businesses/${businessId}/services`);
+        const services = data.services || [];
+
+        if (services.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = '';
+        list.innerHTML = services.map(s => `
+            <div class="service-item">
+                <h3>${escapeHtml(s.title)}</h3>
+                <p>${escapeHtml(s.description || '')}</p>
+            </div>
+        `).join('');
+    } catch (err) {
+        console.warn('Error loading business services:', err);
     }
 }
 

@@ -99,6 +99,12 @@ export async function onRequestGet(context) {
       bindings.push(category);
     }
 
+    const businessId = params.get('business_id');
+    if (businessId) {
+      conditions.push('p.business_id = ?');
+      bindings.push(parseInt(businessId));
+    }
+
     if (search) {
       conditions.push('(p.name LIKE ? OR p.description LIKE ?)');
       bindings.push(`%${search}%`, `%${search}%`);

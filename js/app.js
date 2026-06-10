@@ -881,7 +881,7 @@ async function loadFeaturedProperties() {
     try {
         // Respect selected state
         const selectedState = getSelectedState();
-        let endpoint = '/businesses?status=approved&limit=8&featured=1';
+        let endpoint = '/businesses?status=approved&limit=3&featured=1';
         if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
 
         const data = await api.get(endpoint);

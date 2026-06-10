@@ -1542,6 +1542,114 @@
         }
     }
 
+    // ─── HTML Escape Helper ──────────────────────────────────
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // ─── Featured Businesses Selector ──────────────────────────
+    async function loadFeaturedSelector() {
+        const container = document.getElementById('featuredBusinessesContainer');
+        if (!container) return;
+
+        try {
+            // Get all approved businesses
+            const data = await api.get('/businesses?status=approved&limit=200');
+            const businesses = data.businesses || [];
+
+            if (businesses.length === 0) {
+                container.innerHTML = '<p style="color:#9ca3af;font-size:0.85rem;">No hay negocios aprobados.</p>';
+                return;
+            }
+
+            // Get currently featured businesses
+            const featuredData = await api.get('/businesses?status=approved&limit=3&featured=1');
+            const featured = featuredData.businesses || [];
+            const featuredIds = new Set(featured.map(b => b.id));
+
+            let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+
+            // Show currently featured
+            html += '<div style="margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Negocios actualmente destacados:</div>';
+
+            featured.forEach(b => {
+                html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #f59e0b;border-radius:10px;background:#fffbeb;cursor:pointer;">
+                    <input type="checkbox" class="featured-checkbox" value="${b.id}" checked style="width:18px;height:18px;accent-color:#f59e0b;">
+                    <img src="${b.cover_image || (b.images && b.images[0] && b.images[0].url) || ''}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.88rem;">${escapeHtml(b.title)}</div>
+                        <div style="font-size:0.78rem;color:#6b7280;">${escapeHtml(b.category_name || b.city || '')}</div>
+                    </div>
+                </label>`;
+            });
+
+            // Show non-featured
+            const nonFeatured = businesses.filter(b => !featuredIds.has(b.id));
+            if (nonFeatured.length > 0) {
+                html += '<div style="margin-top:12px;margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Otros negocios (selecciona para destacar):</div>';
+
+                nonFeatured.forEach(b => {
+                    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;">
+                        <input type="checkbox" class="featured-checkbox" value="${b.id}" style="width:18px;height:18px;accent-color:#f59e0b;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(b.title)}</div>
+                            <div style="font-size:0.78rem;color:#6b7280;">${escapeHtml(b.category_name || b.city || '')}</div>
+                        </div>
+                    </label>`;
+                });
+            }
+
+            html += '</div>';
+            html += '<button class="btn btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="window._adminSaveFeatured()"><i class="fas fa-save"></i> Guardar Destacados</button>';
+
+            container.innerHTML = html;
+
+            // Limit to 3 checkboxes
+            const checkboxes = container.querySelectorAll('.featured-checkbox');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const checked = container.querySelectorAll('.featured-checkbox:checked');
+                    if (checked.length > 3) {
+                        cb.checked = false;
+                        showToast('Máximo 3 negocios destacados', 'warning');
+                    }
+                });
+            });
+
+        } catch (err) {
+            console.error('Error loading featured selector:', err);
+            container.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al cargar negocios.</p>';
+        }
+    }
+
+    async function saveFeaturedBusinesses() {
+        const container = document.getElementById('featuredBusinessesContainer');
+        if (!container) return;
+
+        const checked = container.querySelectorAll('.featured-checkbox:checked');
+        const selectedIds = Array.from(checked).map(cb => parseInt(cb.value));
+
+        try {
+            // First, remove all featured flags
+            await api.put('/businesses/featured/clear', {});
+
+            // Then, set featured for selected businesses
+            for (const id of selectedIds) {
+                await api.put(`/businesses/${id}`, { featured: 1 });
+            }
+
+            showToast(`${selectedIds.length} negocio(s) destacado(s) guardado(s)`, 'success');
+            loadFeaturedSelector();
+        } catch (err) {
+            showToast('Error al guardar destacados: ' + err.message, 'error');
+        }
+    }
+
+    window._adminSaveFeatured = saveFeaturedBusinesses;
+
     // ─── Settings Functions ───────────────────────────────────
     async function loadSettings() {
         try {
@@ -1562,6 +1670,9 @@
             console.error('Error loading settings:', error);
             showToast('Error al cargar configuración', 'error');
         }
+
+        // Load featured businesses selector
+        loadFeaturedSelector();
     }
 
     async function saveSettings() {

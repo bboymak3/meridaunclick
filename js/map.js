@@ -253,7 +253,7 @@
         var filters = getFilterValues();
         var endpoint = '/businesses?status=approved&limit=100';
 
-        if (filters.business_type) endpoint += '&business_type=' + encodeURIComponent(filters.business_type);
+        if (filters.categoria) endpoint += '&categoria=' + encodeURIComponent(filters.categoria);
         if (filters.state) endpoint += '&state=' + encodeURIComponent(filters.state);
         if (filters.city) endpoint += '&city=' + encodeURIComponent(filters.city);
 
@@ -340,7 +340,7 @@
 
     function getFilterValues() {
         return {
-            business_type: mapTipo ? mapTipo.value : '',
+            categoria: mapTipo ? mapTipo.value : '',
             state: mapEstado ? mapEstado.value : '',
             city: mapCiudad ? (mapCiudad.value || '').trim() : '',
         };
@@ -500,7 +500,6 @@
         if (params.estado) endpoint += '&state=' + encodeURIComponent(params.estado);
         if (params.categoria) endpoint += '&categoria=' + encodeURIComponent(params.categoria);
         if (params.city) endpoint += '&city=' + encodeURIComponent(params.city);
-        if (params.business_type) endpoint += '&business_type=' + encodeURIComponent(params.business_type);
         if (params.search) endpoint += '&search=' + encodeURIComponent(params.search);
 
         api.get(endpoint).then(function (data) {
