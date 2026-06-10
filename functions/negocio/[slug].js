@@ -151,6 +151,11 @@ export async function onRequestGet(context) {
     font-size: 1.3rem;
 }
 
+/* Top spacing for ficha */
+.business-detail-page .business-content {
+    padding-top: 10px;
+}
+
 /* === Compact Business Cards (for similar businesses) === */
 .business-detail-page .business-grid {
     display: grid;
@@ -471,18 +476,6 @@ export async function onRequestGet(context) {
             </div>
 
             <div class="business-content hidden" id="businessContent">
-                <div class="business-gallery" id="businessGallery">
-                    <div class="gallery-main">
-                        <img id="mainImage" src="" alt="" class="gallery-main-img">
-                        <button class="gallery-nav gallery-prev" id="galleryPrev" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
-                        <button class="gallery-nav gallery-next" id="galleryNext" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
-                        <div class="gallery-counter"><span id="galleryCurrent">1</span> / <span id="galleryTotal">1</span></div>
-                        <button class="gallery-fullscreen" id="galleryFullscreen" aria-label="Pantalla completa"><i class="fas fa-expand"></i></button>
-                        <div class="gallery-badges" id="galleryBadges"></div>
-                    </div>
-                    <div class="gallery-thumbnails" id="galleryThumbnails"></div>
-                </div>
-
                 <div class="compact-info-card">
                     <div class="compact-top-row">
                         <div class="compact-price-row"><span id="propDetailBadges"></span></div>
@@ -509,6 +502,18 @@ export async function onRequestGet(context) {
                         <p>${escapeHtml(business.description || 'Sin descripción disponible.')}</p>
                     </div>
                     <button class="description-toggle" id="descriptionToggle" style="display:none;">Leer más <i class="fas fa-chevron-down"></i></button>
+                </div>
+
+                <div class="business-gallery" id="businessGallery">
+                    <div class="gallery-main">
+                        <img id="mainImage" src="" alt="" class="gallery-main-img">
+                        <button class="gallery-nav gallery-prev" id="galleryPrev" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+                        <button class="gallery-nav gallery-next" id="galleryNext" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+                        <div class="gallery-counter"><span id="galleryCurrent">1</span> / <span id="galleryTotal">1</span></div>
+                        <button class="gallery-fullscreen" id="galleryFullscreen" aria-label="Pantalla completa"><i class="fas fa-expand"></i></button>
+                        <div class="gallery-badges" id="galleryBadges"></div>
+                    </div>
+                    <div class="gallery-thumbnails" id="galleryThumbnails"></div>
                 </div>
 
                 <div class="business-section hidden" id="featuresSection">
