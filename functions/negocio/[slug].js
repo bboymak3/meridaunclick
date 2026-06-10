@@ -533,7 +533,7 @@ export async function onRequestGet(context) {
                         <a href="#" class="btn btn-whatsapp btn-full btn-lg" id="mainWhatsApp" style="display:none;" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Contactar por WhatsApp</a>
                         <button class="btn btn-primary btn-full btn-lg" id="openChatBtn" style="margin-top:8px;"><i class="fas fa-comment-dots"></i> Enviar Mensaje</button>
                         <button class="btn btn-share-wa btn-full btn-lg" id="shareWhatsAppBtn" style="margin-top:8px;"><i class="fab fa-whatsapp"></i> Compartir por WhatsApp</button>
-                        <a href="/landing/${business.slug}" target="_blank" rel="noopener" class="btn btn-full btn-lg" id="landingPageBtn" style="margin-top:8px;background:#0ea5e9;color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-external-link-alt"></i> Landing Page</a>
+                        <a href="/web/${business.slug}" target="_blank" rel="noopener" class="btn btn-full btn-lg" id="landingPageBtn" style="margin-top:8px;background:#0ea5e9;color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px;"><i class="fas fa-external-link-alt"></i> Landing Page</a>
                     </div>
                 </div>
 
