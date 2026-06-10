@@ -167,8 +167,7 @@ export async function onRequestGet(context) {
                p.user_id, p.business_id, p.status, p.created_at, p.updated_at, p.slug,
                b.title as business_name, b.slug as business_slug,
                b.city as business_city, b.state as business_state,
-               b.phone as business_phone, b.whatsapp as business_whatsapp,
-               b.cover_image as business_cover
+               b.phone as business_phone, b.whatsapp as business_whatsapp
         FROM products p
         LEFT JOIN businesses b ON p.business_id = b.id
         ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;

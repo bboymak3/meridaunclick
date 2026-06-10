@@ -16,7 +16,7 @@ export async function onRequestGet(context) {
       `SELECT p.*, 
               b.title as business_name, b.slug as business_slug, b.city, b.state,
               b.phone as business_phone, b.whatsapp as business_whatsapp,
-              b.address as business_address, b.cover_image as business_cover,
+              b.address as business_address,
               b.instagram as business_instagram, b.website as business_website
        FROM products p
        LEFT JOIN businesses b ON p.business_id = b.id
