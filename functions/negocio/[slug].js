@@ -96,6 +96,61 @@ export async function onRequestGet(context) {
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>U</text></svg>">
     <style>
+/* === Business Ficha - 30% Larger === */
+.business-detail-page .compact-info-card {
+    padding: 22px;
+}
+.business-detail-page .compact-title {
+    font-size: 1.95rem;
+    line-height: 1.35;
+}
+.business-detail-page .compact-address {
+    font-size: 1.14rem;
+    margin-bottom: 12px;
+}
+.business-detail-page .compact-address i {
+    font-size: 1rem;
+}
+.business-detail-page .feature-chips {
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.business-detail-page .feature-chip {
+    padding: 8px 15px;
+    font-size: 0.95rem;
+    gap: 7px;
+}
+.business-detail-page .feature-chip i {
+    font-size: 1rem;
+}
+.business-detail-page .compact-description {
+    font-size: 1.05rem;
+    line-height: 1.75;
+}
+.business-detail-page .compact-description.collapsed {
+    max-height: 104px;
+}
+.business-detail-page .compact-description.collapsed::after {
+    height: 52px;
+}
+.business-detail-page .compact-top-row {
+    margin-bottom: 8px;
+}
+.business-detail-page .btn-favorite {
+    width: 40px;
+    height: 40px;
+    font-size: 1.15rem;
+}
+.business-detail-page .compact-price {
+    font-size: 2.4rem;
+}
+.business-detail-page .description-toggle {
+    font-size: 1rem;
+}
+.business-detail-page .business-section-title {
+    font-size: 1.3rem;
+}
+
 /* === Compact Business Cards (for similar businesses) === */
 .business-detail-page .business-grid {
     display: grid;
