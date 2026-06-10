@@ -344,6 +344,43 @@ function updateNav() {
         } else if (adminLinkItem) {
             adminLinkItem.remove();
         }
+
+        // Add "Crear Pagina Web" in "Más" dropdown for logged-in users
+        const existingWebLink = document.getElementById('navWebPageItem');
+        if (!existingWebLink) {
+            const dropdownMenu = document.querySelector('.nav-dropdown-menu');
+            if (dropdownMenu) {
+                const divider = dropdownMenu.querySelector('.nav-dropdown-divider');
+                const webLi = document.createElement('li');
+                webLi.id = 'navWebPageItem';
+                webLi.innerHTML = `<a href="#" class="nav-link" id="navWebPageBtn" style="color:#0ea5e9;"><i class="fas fa-globe"></i> Crear Pagina Web</a>`;
+                if (divider) {
+                    dropdownMenu.insertBefore(webLi, divider);
+                } else {
+                    dropdownMenu.appendChild(webLi);
+                }
+                // Fetch user's business slug and set link
+                const token = localStorage.getItem('meridaunclick_token');
+                if (token) {
+                    const api = getApi();
+                    api.get('/user/my-businesses').then(res => {
+                        if (res.data && res.data.length > 0 && res.data[0].slug) {
+                            const btn = document.getElementById('navWebPageBtn');
+                            if (btn) btn.href = '/web/' + res.data[0].slug;
+                        }
+                    }).catch(() => {});
+                }
+                const webBtn = document.getElementById('navWebPageBtn');
+                if (webBtn) {
+                    webBtn.addEventListener('click', function(e) {
+                        if (this.href === '#' || this.href === window.location.href + '#') {
+                            e.preventDefault();
+                            showToast('Primero crea un negocio para generar tu pagina web', 'info');
+                        }
+                    });
+                }
+            }
+        }
     } else {
         navLoginItem.classList.remove('hidden');
         navUserItem.classList.add('hidden');
@@ -351,6 +388,10 @@ function updateNav() {
         // Remove admin link if exists
         const adminLinkItem = document.getElementById('navAdminItem');
         if (adminLinkItem) adminLinkItem.remove();
+
+        // Remove "Crear Pagina Web" if not logged in
+        const webLinkItem = document.getElementById('navWebPageItem');
+        if (webLinkItem) webLinkItem.remove();
 
         // Make "Publicar" link require login
         const publishLinks = document.querySelectorAll('a[href="new-business.html"]');
