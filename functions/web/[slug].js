@@ -832,7 +832,7 @@ window.addEventListener('scroll', () => {
     if (nav) nav.classList.toggle('scrolled', window.scrollY > 50);
 });
 </script>
-
+<script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${business.id},event_type:'view',source:'landing'})}).catch(function(){})},0);</script>
 </body>
 </html>`;
 

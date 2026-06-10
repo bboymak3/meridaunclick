@@ -596,6 +596,7 @@ export async function onRequestGet(context) {
     <script src="/js/chat.js"></script>
     <script src="/js/review-widget.js"></script>
     <script src="/js/ai-chatbot.js"></script>
+    <script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${business.id},event_type:'view',source:'ficha'})}).catch(function(){})},0);</script>
 </body>
 </html>`;
 

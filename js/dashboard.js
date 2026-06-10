@@ -171,6 +171,7 @@
             favorites: 'Favoritos',
             products: 'Mis Productos',
             profile: 'Mi Perfil',
+            stats: 'Estadísticas',
             admin: 'Panel de Administracion',
         };
         if (sectionTitle) sectionTitle.textContent = titles[sectionId] || 'Resumen';
@@ -191,6 +192,9 @@
                 break;
             case 'products':
                 loadMyProducts();
+                break;
+            case 'stats':
+                loadBusinessStats();
                 break;
             case 'admin':
                 loadAdminData();
@@ -1395,6 +1399,86 @@
             showToast(error.message || 'Error al rechazar propiedad', 'error');
         }
     };
+
+    // ─── Business Stats ───────────────────────────────────────
+    let currentStatsPeriod = '7d';
+
+    async function loadBusinessStats(businessId) {
+        try {
+            // Get user's businesses first
+            const myBiz = await api.get('/user/my-businesses');
+            const businesses = myBiz.data || [];
+
+            if (businesses.length === 0) {
+                const body = document.getElementById('statsPerBusinessBody');
+                if (body) body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">No tienes negocios registrados.</td></tr>';
+                return;
+            }
+
+            // If no specific business, aggregate all
+            let allStats = { total_views: 0, total_whatsapp_clicks: 0, total_website_clicks: 0, total_shares: 0 };
+            let rows = [];
+
+            for (const biz of businesses) {
+                try {
+                    const stats = await api.get(`/business-stats/${biz.id}?period=${currentStatsPeriod}`);
+                    allStats.total_views += stats.total_views || 0;
+                    allStats.total_whatsapp_clicks += stats.total_whatsapp_clicks || 0;
+                    allStats.total_website_clicks += stats.total_website_clicks || 0;
+                    allStats.total_shares += stats.total_shares || 0;
+
+                    rows.push(`
+                        <tr>
+                            <td><a href="/negocio/${biz.slug || biz.id}" style="color:#059669;font-weight:600;text-decoration:none;">${biz.title || 'Sin título'}</a></td>
+                            <td><span style="font-weight:700;color:#1e293b;">${(stats.total_views || 0).toLocaleString()}</span></td>
+                            <td><span style="font-weight:700;color:#25d366;">${(stats.total_whatsapp_clicks || 0).toLocaleString()}</span></td>
+                            <td><span style="font-weight:700;color:#0ea5e9;">${(stats.total_website_clicks || 0).toLocaleString()}</span></td>
+                            <td><span style="font-weight:700;color:#8b5cf6;">${(stats.total_shares || 0).toLocaleString()}</span></td>
+                        </tr>
+                    `);
+                } catch(e) {
+                    rows.push(`
+                        <tr>
+                            <td>${biz.title || 'Sin título'}</td>
+                            <td colspan="4" style="color:#94a3b8;">Sin datos</td>
+                        </tr>
+                    `);
+                }
+            }
+
+            // Update summary cards
+            const elViews = document.getElementById('statTotalViews');
+            const elWA = document.getElementById('statTotalWA');
+            const elWeb = document.getElementById('statTotalWeb');
+            const elShares = document.getElementById('statTotalShares');
+            if (elViews) elViews.textContent = allStats.total_views.toLocaleString();
+            if (elWA) elWA.textContent = allStats.total_whatsapp_clicks.toLocaleString();
+            if (elWeb) elWeb.textContent = allStats.total_website_clicks.toLocaleString();
+            if (elShares) elShares.textContent = allStats.total_shares.toLocaleString();
+
+            // Update table
+            const body = document.getElementById('statsPerBusinessBody');
+            if (body) body.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">Sin datos para este período.</td></tr>';
+
+        } catch (error) {
+            console.error('Stats error:', error);
+            showToast('Error al cargar estadísticas', 'error');
+        }
+    }
+
+    // Period button handlers
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('period-btn')) {
+            currentStatsPeriod = e.target.dataset.period;
+            document.querySelectorAll('.period-btn').forEach(b => {
+                b.style.background = '#fff';
+                b.classList.remove('active');
+            });
+            e.target.style.background = '#f1f5f9';
+            e.target.classList.add('active');
+            loadBusinessStats();
+        }
+    });
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {
