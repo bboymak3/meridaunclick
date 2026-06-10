@@ -273,7 +273,7 @@ export async function onRequestGet(context) {
                 <p class="pd-desc">${esc(product.description || 'Sin descripcion disponible.')}</p>
                 <div class="pd-meta">
                     <div class="pd-meta-chip"><i class="fas fa-tag"></i> ${catLabel}</div>
-                    ${product.created_at ? `<div class="pd-meta-chip"><i class="far fa-clock"></i> ${fmtDate(product.created_at)}</div>` : ''}
+                    ${(product.created_at && fmtDate(product.created_at) && !fmtDate(product.created_at).includes('NaN')) ? `<div class="pd-meta-chip"><i class="far fa-clock"></i> ${fmtDate(product.created_at)}</div>` : ''}
                     ${waNumber ? `<div class="pd-meta-chip"><i class="fab fa-whatsapp"></i> WA</div>` : ''}
                 </div>
                 <div class="pd-actions">
