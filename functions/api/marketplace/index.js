@@ -88,34 +88,34 @@ export async function onRequestGet(context) {
 
     // Only show approved products to public (unless admin mode)
     if (!allProducts) {
-      conditions.push("(status = 'approved' OR status IS NULL)");
+      conditions.push("(p.status = 'approved' OR p.status IS NULL)");
     } else if (statusFilter) {
-      conditions.push('status = ?');
+      conditions.push('p.status = ?');
       bindings.push(statusFilter);
     }
 
     if (category) {
-      conditions.push('category = ?');
+      conditions.push('p.category = ?');
       bindings.push(category);
     }
 
     if (search) {
-      conditions.push('(name LIKE ? OR description LIKE ?)');
+      conditions.push('(p.name LIKE ? OR p.description LIKE ?)');
       bindings.push(`%${search}%`, `%${search}%`);
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Sort options
-    let orderBy = 'sort_order ASC, created_at DESC';
-    if (sort === 'price_asc') orderBy = 'price ASC';
-    else if (sort === 'price_desc') orderBy = 'price DESC';
-    else if (sort === 'oldest') orderBy = 'created_at ASC';
-    else if (sort === 'name_asc') orderBy = 'name ASC';
-    else orderBy = 'sort_order ASC, created_at DESC';
+    let orderBy = 'p.sort_order ASC, p.created_at DESC';
+    if (sort === 'price_asc') orderBy = 'p.price ASC';
+    else if (sort === 'price_desc') orderBy = 'p.price DESC';
+    else if (sort === 'oldest') orderBy = 'p.created_at ASC';
+    else if (sort === 'name_asc') orderBy = 'p.name ASC';
+    else orderBy = 'p.sort_order ASC, p.created_at DESC';
 
     // Count total
-    const countQuery = `SELECT COUNT(*) as total FROM products ${whereClause}`;
+    const countQuery = `SELECT COUNT(*) as total FROM products p ${whereClause}`;
     const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();
     const total = countResult.total;
 
@@ -124,13 +124,15 @@ export async function onRequestGet(context) {
     if (allProducts) {
       // Admin mode: include user info
       query = `
-        SELECT p.*, u.name as owner_name, u.email as owner_email, b.title as business_name
+        SELECT p.id, p.name, p.price, p.category, p.image, p.description, p.sort_order,
+               p.user_id, p.business_id, p.status, p.created_at, p.updated_at,
+               u.name as owner_name, u.email as owner_email, b.title as business_name
         FROM products p
         LEFT JOIN users u ON p.user_id = u.id
         LEFT JOIN businesses b ON p.business_id = b.id
         ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
     } else {
-      query = `SELECT * FROM products ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
+      query = `SELECT * FROM products p ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`;
     }
     const products = await env.DB.prepare(query).bind(...bindings, limit, offset).all();
 
