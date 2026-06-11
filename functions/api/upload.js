@@ -84,7 +84,8 @@ export async function onRequestPost(context) {
     const formData = await request.formData();
     const file = formData.get('file');
     const businessId = formData.get('business_id');
-    const productType = formData.get('product_type'); // 'marketplace' or 'business'
+    const propertyId = formData.get('property_id');
+    const productType = formData.get('product_type'); // 'marketplace', 'business', 'property', 'video'
 
     if (!file) {
       return new Response(JSON.stringify({ error: 'No se proporcionó ningún archivo' }), {
@@ -93,8 +94,8 @@ export async function onRequestPost(context) {
       });
     }
 
-    if (!businessId && productType !== 'marketplace') {
-      return new Response(JSON.stringify({ error: 'business_id es requerido o product_type debe ser marketplace' }), {
+    if (!businessId && !propertyId && productType !== 'marketplace' && productType !== 'video') {
+      return new Response(JSON.stringify({ error: 'business_id, property_id es requerido o product_type debe ser marketplace/video' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -126,10 +127,26 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Verify business exists and user owns it (or is admin) — or allow marketplace/video uploads
+    // Verify ownership based on product_type
     if (productType === 'marketplace' || productType === 'video') {
-      // Marketplace uploads - any authenticated user can upload
+      // Marketplace/video uploads - any authenticated user can upload
+    } else if (productType === 'property' || propertyId) {
+      // Property uploads - verify property ownership
+      const property = await env.DB.prepare('SELECT * FROM properties WHERE id = ?').bind(propertyId).first();
+      if (!property) {
+        return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      if (user.role !== 'admin' && user.id !== property.user_id) {
+        return new Response(JSON.stringify({ error: 'No tienes permiso para subir imágenes a esta propiedad' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     } else {
+      // Business uploads
       const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(businessId).first();
       if (!business) {
         return new Response(JSON.stringify({ error: 'Negocio no encontrado' }), {
@@ -137,7 +154,6 @@ export async function onRequestPost(context) {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-
       if (user.role !== 'admin' && user.id !== business.user_id) {
         return new Response(JSON.stringify({ error: 'No tienes permiso para subir imágenes a este negocio' }), {
           status: 403,
@@ -158,6 +174,8 @@ export async function onRequestPost(context) {
       key = `${r2Folder}/marketplace/${user.id}/${timestamp}_${sanitizedName}`;
     } else if (productType === 'video') {
       key = `${r2Folder}/videos/${user.id}/${timestamp}_${sanitizedName}`;
+    } else if (productType === 'property' || propertyId) {
+      key = `${r2Folder}/properties/${propertyId}/${timestamp}_${sanitizedName}`;
     } else {
       key = `${r2Folder}/businesses/${businessId}/${timestamp}_${sanitizedName}`;
     }

@@ -310,3 +310,26 @@ Stage Summary:
 - 1 file created: functions/api/featured-items/index.js
 - 3 D1 database alterations executed
 - All reported bugs addressed
+---
+Task ID: r2-migration-merida
+Agent: Main
+Task: Migrar R2 de properties/ a merida/ y actualizar todas las URLs en generico_db
+
+Work Log:
+- Listados 20 objetos R2 en properties/ (imágenes de propiedades)
+- Copiados 20 objetos properties/* → merida/properties/* via wrangler r2 object get/put
+- Listados 19 objetos R2 en dubraska/ (imágenes de productos antiguos)
+- Copiados 19 objetos dubraska/* → merida/marketplace/* via wrangler r2 object get/put
+- Actualizadas 14 URLs en property_images: properties%2F → merida%2Fproperties%2F
+- Actualizadas 45 URLs en products: /api/images/dubraska/ → /api/serve?key=merida%2Fmarketplace%2F
+- Verificación final: 0 URLs antiguas restantes en ninguna tabla
+- R2 contiene: merida/properties/ (20), merida/businesses/ (13), merida/marketplace/ (29+)
+- Actualizado upload.js para soportar product_type=property con property_id, guarda en merida/properties/{id}/
+- Actualizado property-form.js para enviar product_type=property al upload
+
+Stage Summary:
+- Todas las imágenes ahora se sirven bajo /api/serve?key=merida/...
+- R2_FOLDER = "merida" configurado en wrangler.toml
+- Nuevos uploads de propiedades irán a merida/properties/{propertyId}/
+- Nuevos uploads de marketplace irán a merida/marketplace/{userId}/
+- Nuevos uploads de negocios irán a merida/businesses/{businessId}/

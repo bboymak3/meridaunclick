@@ -847,6 +847,7 @@
                         const formData = new FormData();
                         formData.append('file', img.file);
                         formData.append('property_id', propertyId.toString());
+                        formData.append('product_type', 'property');
 
                         // Upload file to storage
                         const uploadResult = await api.postFormData('/upload', formData);
