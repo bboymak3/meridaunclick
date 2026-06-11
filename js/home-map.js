@@ -100,26 +100,23 @@
     function loadAllData() {
         if (!map || !markerLayer) return;
 
-        var promises = [
-            fetch('/api/businesses?status=approved&limit=100')
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    allBusinesses = data.businesses || [];
-                })
-                .catch(function (err) {
-                    console.error('Error loading businesses:', err);
-                }),
-            fetch('/api/properties?status=approved&limit=100')
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                    allProperties = data.properties || [];
-                })
-                .catch(function (err) {
-                    console.error('Error loading properties:', err);
-                })
-        ];
+        var bizPromise = api.get('/businesses?status=approved&limit=100')
+            .then(function (data) {
+                allBusinesses = data.businesses || [];
+            })
+            .catch(function (err) {
+                console.error('Error loading businesses:', err);
+            });
 
-        Promise.all(promises).then(function () {
+        var propPromise = api.get('/properties?status=approved&limit=100')
+            .then(function (data) {
+                allProperties = data.properties || [];
+            })
+            .catch(function (err) {
+                console.error('Error loading properties:', err);
+            });
+
+        Promise.all([bizPromise, propPromise]).then(function () {
             renderMarkers();
 
             // Hide overlay if markers exist

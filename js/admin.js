@@ -2452,7 +2452,7 @@
             // Remove existing product featured items
             const existing = await api.get('/featured-items?item_type=product');
             for (const item of (existing.featured_items || [])) {
-                try { await api.delete(`/featured-items?id=${item.id}`); } catch(e) {}
+                try { await api.delete(`/featured-items/${item.id}`); } catch(e) {}
             }
             // Add new featured products
             for (const id of selectedIds) {
@@ -2540,7 +2540,7 @@
         try {
             const existing = await api.get('/featured-items?item_type=property');
             for (const item of (existing.featured_items || [])) {
-                try { await api.delete(`/featured-items?id=${item.id}`); } catch(e) {}
+                try { await api.delete(`/featured-items/${item.id}`); } catch(e) {}
             }
             for (const id of selectedIds) {
                 try { await api.post('/featured-items', { item_type: 'property', item_id: id }); } catch(e) {}

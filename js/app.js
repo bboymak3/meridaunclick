@@ -227,7 +227,18 @@ async function apiCall(endpoint, options = {}) {
 
     try {
         const response = await fetch(url, config);
-        const data = await response.json();
+
+        // Handle empty or non-JSON responses safely
+        const text = await response.text();
+        let data;
+        try {
+            data = text ? JSON.parse(text) : {};
+        } catch (parseErr) {
+            if (!response.ok) {
+                throw new Error(`Error ${response.status}: ${response.statusText}`);
+            }
+            data = {};
+        }
 
         if (!response.ok) {
             // Handle 401 - token expired or invalid

@@ -119,17 +119,13 @@ export async function onRequestPost(context) {
 
     // Set featured flag on the actual item
     if (item_type === 'business') {
-      await env.DB.prepare('UPDATE businesses SET featured = 1, featured_at = datetime(?) WHERE id = ?')
-        .bind(start_date || null, parseInt(item_id)).run();
+      try { await env.DB.prepare('UPDATE businesses SET featured = 1 WHERE id = ?').bind(parseInt(item_id)).run(); } catch(e) {}
     } else if (item_type === 'product') {
-      await env.DB.prepare('UPDATE products SET featured = 1, featured_at = datetime(?) WHERE id = ?')
-        .bind(start_date || null, parseInt(item_id)).run();
+      try { await env.DB.prepare('UPDATE products SET featured = 1 WHERE id = ?').bind(parseInt(item_id)).run(); } catch(e) {}
     } else if (item_type === 'property') {
-      await env.DB.prepare('UPDATE properties SET featured = 1 WHERE id = ?')
-        .bind(parseInt(item_id)).run();
+      try { await env.DB.prepare('UPDATE properties SET featured = 1 WHERE id = ?').bind(parseInt(item_id)).run(); } catch(e) {}
     } else if (item_type === 'job') {
-      await env.DB.prepare('UPDATE job_listings SET featured = 1 WHERE id = ?')
-        .bind(parseInt(item_id)).run();
+      try { await env.DB.prepare('UPDATE job_listings SET featured = 1 WHERE id = ?').bind(parseInt(item_id)).run(); } catch(e) {}
     }
 
     // Also record in featured_items table
