@@ -1,6 +1,34 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: 7-8-final
+Agent: Main
+Task: Paso 7-8 completos: Inmuebles destacados en index, Foto desde URL, Admin selector
+
+Work Log:
+- index.html: nueva seccion 5 "Inmuebles Destacados" con grid de cards, link a millano.pages.dev
+- Secciones renumeradas (6 Categorias, 7 Mapa, 8 Como Funciona, 9 Stats, 10 CTA)
+- app.js: nueva funcion loadFeaturedInmuebles() - fetch /properties?status=approved&limit=6, fallback a latest
+- Cards de inmuebles: imagen, badge tipo+operacion, titulo, ubicacion, hab./banos, precio, link a millano
+- Soporte para featured badge gold en inmuebles (via featured_items?type=property)
+- Funcion escapeHtml() agregada a app.js como utilidad global
+- new-business.html: campo "Agregar foto desde URL" con input URL + boton "Agregar"
+- business-form.js: setupPhotoFromUrl() valida URL, agrega a uploadedImages con flag isFromUrl
+- business-form.js: submit maneja urlImages por separado - registra en DB via /images/:id sin upload R2
+- admin.html: nuevo selector "Inmuebles Destacados en Inicio" (hasta 6, checkboxes con tipo+operacion)
+- admin.js: loadFeaturedPropertiesSelector() + saveFeaturedProperties() con featured_items API
+- loadSettings() ahora llama loadFeaturedPropertiesSelector()
+- SW cache bumped a v39
+- Push a main, deploy exitoso (200)
+
+Stage Summary:
+- Index ahora muestra 4 secciones destacadas: Negocios, Productos, Empleos, Inmuebles
+- Inmuebles link a millano.pages.dev (portal de casas separado)
+- Admin puede seleccionar hasta 6 inmuebles destacados desde Settings
+- Formulario de negocio ahora acepta fotos desde URL (no solo upload)
+- Sistema de destacados completo: 4 tipos de contenido con badges gold
+
+---
 Task ID: 7-8
 Agent: Main
 Task: Paso 7 (Banner/Logo/SEO) + Paso 8 (Pulimento UI, Twitter Cards, Animaciones)
