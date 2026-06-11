@@ -36,8 +36,8 @@ async function verifyJWT(token, secret) {
   return payload;
 }
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
-const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime'];
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'mov'];
 const MAX_SIZE = 50 * 1024 * 1024; // 50MB (compression applied client-side)
 // Images are served through our own /api/serve/ endpoint (no public R2 access needed)
 // The key is stored in DB; the serve endpoint reads from R2 binding
@@ -126,8 +126,8 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Verify business exists and user owns it (or is admin) — or allow marketplace uploads
-    if (productType === 'marketplace') {
+    // Verify business exists and user owns it (or is admin) — or allow marketplace/video uploads
+    if (productType === 'marketplace' || productType === 'video') {
       // Marketplace uploads - any authenticated user can upload
     } else {
       const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(businessId).first();
@@ -156,6 +156,8 @@ export async function onRequestPost(context) {
     let key;
     if (productType === 'marketplace') {
       key = `${r2Folder}/marketplace/${user.id}/${timestamp}_${sanitizedName}`;
+    } else if (productType === 'video') {
+      key = `${r2Folder}/videos/${user.id}/${timestamp}_${sanitizedName}`;
     } else {
       key = `${r2Folder}/businesses/${businessId}/${timestamp}_${sanitizedName}`;
     }

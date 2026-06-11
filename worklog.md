@@ -286,3 +286,27 @@ Stage Summary:
 - `/api/user/my-businesses` endpoint now exists and returns user's businesses
 - "Página Web" menu item restored in "Más" dropdown (desktop + mobile)
 - All changes pushed to main branch
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix multiple bugs reported by user - map filters, video upload, featured items, cache, R2 images
+
+Work Log:
+- Installed wrangler CLI (v4.100.0) and authenticated with Cloudflare API token
+- Verified all 33 tables exist in D1 remote database
+- Added 5 missing indexes for properties tables
+- Added `featured` column to `job_listings` table (was missing, caused "no such column: featured" error)
+- Added `featured` column to `products` table
+- Fixed upload API (`functions/api/upload.js`) to support video files (mp4, webm, mov) and `product_type=video`
+- Created new endpoint `functions/api/featured-items/index.js` (GET/POST/DELETE) that was missing
+- Fixed map page: added toggle buttons for Negocios/Propiedades, added `loadMapProperties()`, `createPropertyMarker()`, `renderPropertyList()`, `showMapType()` functions
+- Fixed bug in map.js line 394: `data.slug` was undefined, changed to lookup from allBusinesses array
+- Fixed 11 property image URLs in D1: converted from direct R2 URLs (returning 400) to `/api/serve?key=...` format
+- Updated `_headers` to use `must-revalidate` instead of `immutable` for CSS/JS files (1 hour cache)
+- Bumped service worker version from v40 to v41 to force cache refresh
+
+Stage Summary:
+- 7 files modified: upload.js, map.js, map.html, _headers, sw.js, worklog.md
+- 1 file created: functions/api/featured-items/index.js
+- 3 D1 database alterations executed
+- All reported bugs addressed

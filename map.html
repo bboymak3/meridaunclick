@@ -429,6 +429,11 @@
                 <button class="map-sidebar-close" id="mapSidebarClose" aria-label="Cerrar">&times;</button>
                 <div class="map-filters">
                     <h3><i class="fas fa-filter"></i> Filtros</h3>
+                    <!-- Toggle Negocios / Propiedades -->
+                    <div class="map-type-toggle" style="display:flex;gap:6px;margin-bottom:10px;">
+                        <button class="btn btn-primary btn-sm" id="mapToggleNegocios" style="flex:1;" onclick="casasMap.showType('businesses')"><i class="fas fa-store"></i> Negocios</button>
+                        <button class="btn btn-secondary btn-sm" id="mapTogglePropiedades" style="flex:1;" onclick="casasMap.showType('properties')"><i class="fas fa-home"></i> Propiedades</button>
+                    </div>
                     <div class="form-group">
                         <label for="mapTipo">Categorías</label>
                         <select id="mapTipo" class="form-select">
@@ -479,7 +484,7 @@
 
                 <!-- Results List -->
                 <div class="map-result-count" id="mapResultCount">
-                    <span id="mapCountText">0 negocios encontradas</span>
+                    <span id="mapCountText">0 resultados</span>
                 </div>
                 <div class="map-results">
                     <div class="map-business-list" id="mapBusinessList">

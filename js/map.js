@@ -19,6 +19,7 @@
     let allBusinesses = [];
     let activeCardId = null;
     let miniMapInitialized = false;
+    let currentMapType = 'businesses'; // 'businesses' or 'properties'
 
     // ─── DOM Elements ───────────────────────────────────────────
     const mapContainer = document.getElementById('map');
@@ -391,7 +392,12 @@
                 if (!isNaN(lat) && !isNaN(lng) && map) {
                     flyToBusiness(id);
                 } else {
-                    window.location.href = '/negocio/' + (data.slug || id);
+                    var biz = allBusinesses.find(function(b) { return b.id === id; });
+                    if (currentMapType === 'properties') {
+                        window.location.href = '/property-detail.html?id=' + id;
+                    } else {
+                        window.location.href = '/negocio/' + (biz && biz.slug ? biz.slug : id);
+                    }
                 }
             });
         });
@@ -521,12 +527,186 @@
         });
     }
 
+    // ─── Load Map Properties (Inmuebles) ─────────────────────
+    function loadMapProperties() {
+        if (!isMapView) return;
+
+        if (mapLoading) mapLoading.style.display = '';
+
+        var filters = getFilterValues();
+        var endpoint = '/properties?status=approved&limit=100';
+
+        if (filters.categoria) endpoint += '&property_type=' + encodeURIComponent(filters.categoria);
+        if (filters.state) endpoint += '&state=' + encodeURIComponent(filters.state);
+        if (filters.city) endpoint += '&city=' + encodeURIComponent(filters.city);
+
+        api.get(endpoint).then(function (data) {
+            allBusinesses = data.properties || [];
+
+            if (markerLayer) markerLayer.clearLayers();
+            markers = [];
+
+            if (mapResultCount) {
+                mapResultCount.textContent = allBusinesses.length + ' propiedades encontradas';
+            }
+
+            var validItems = allBusinesses.filter(function (p) { return p.lat && p.lng; });
+
+            validItems.forEach(function (property) {
+                var marker = createPropertyMarker(property);
+                if (marker) {
+                    markers.push({ marker: marker, business: property });
+                    markerLayer.addLayer(marker);
+                }
+            });
+
+            if (validItems.length > 0) {
+                fitAllMarkers();
+            }
+
+            renderPropertyList(allBusinesses);
+
+        }).catch(function (error) {
+            console.error('Error loading map properties:', error);
+            showToast('Error al cargar propiedades en el mapa', 'error');
+        }).finally(function () {
+            if (mapLoading) mapLoading.style.display = 'none';
+        });
+    }
+
+    // ─── Create Property Marker ─────────────────────────────────
+    function createPropertyMarker(property) {
+        if (!property.lat || !property.lng || typeof L === 'undefined') return null;
+
+        var coverImage = property.cover_image || '';
+        var title = property.title || 'Propiedad';
+        var price = property.price ? '$' + Number(property.price).toLocaleString('es-VE') : '';
+        var opLabel = (property.operation_type || '').replace('_', ' ');
+
+        var icon = L.divIcon({
+            className: 'custom-map-marker',
+            html: '<div class="marker-pin" style="background-color: #059669;">'
+                + '<span class="marker-price" style="font-size:10px;"><i class="fas fa-home"></i></span>'
+                + '</div>'
+                + '<div class="marker-shadow"></div>',
+            iconSize: [40, 52],
+            iconAnchor: [20, 52],
+            popupAnchor: [0, -56],
+        });
+
+        var marker = L.marker([property.lat, property.lng], { icon: icon });
+
+        var imgTag = coverImage
+            ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display='none'"></div>'
+            : '';
+
+        var address = property.city ? (property.state ? property.city + ', ' + property.state : property.city) : '';
+
+        var popupHTML = '<div class="map-popup">'
+            + imgTag
+            + '<div class="map-popup-content">'
+            + '<h4 class="map-popup-title">' + title + '</h4>'
+            + '<div class="map-popup-badges">'
+            + '<span class="map-popup-badge">' + opLabel + '</span>'
+            + (price ? '<span class="map-popup-badge" style="background:#059669;">' + price + '</span>' : '')
+            + '</div>'
+            + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
+            + '<a href="/property-detail.html?id=' + property.id + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
+            + '</div>'
+            + '</div>';
+
+        if (typeof popupHTML !== 'string' || popupHTML.length === 0) {
+            popupHTML = '<div class="map-popup"><div class="map-popup-content"><h4>' + title + '</h4><p>Propiedad</p></div></div>';
+        }
+
+        marker.bindPopup(popupHTML, {
+            maxWidth: 300, minWidth: 260,
+            closeButton: true, autoPan: true,
+            autoPanPaddingTopLeft: [20, 60],
+            autoPanPaddingBottomRight: [20, 20],
+        });
+
+        marker.on('click', function () {
+            highlightCard(property.id);
+        });
+
+        return marker;
+    }
+
+    // ─── Render Property List ───────────────────────────────────
+    function renderPropertyList(properties) {
+        if (!mapBusinessList) return;
+
+        if (properties.length === 0) {
+            mapBusinessList.innerHTML = '<div class="map-no-results"><i class="fas fa-search"></i><p>No se encontraron propiedades.</p></div>';
+            return;
+        }
+
+        mapBusinessList.innerHTML = properties.map(function (p) {
+            var coverImage = p.cover_image || '';
+            var opLabel = (p.operation_type || '').replace('_', ' ');
+            var price = p.price ? '$' + Number(p.price).toLocaleString('es-VE') : '';
+            var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
+
+            return '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p.lat || '') + '" data-lng="' + (p.lng || '') + '">'
+                + (coverImage ? '<img src="' + coverImage + '" alt="' + (p.title || 'Propiedad') + '" onerror="this.style.display=\'none\'">' : '')
+                + '<div class="card-info">'
+                + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin título') + '</div>'
+                + '<div class="card-location">' + address + '</div>'
+                + '<div class="card-badges">'
+                + '<span class="card-badge badge-type">' + opLabel + '</span>'
+                + (price ? '<span class="card-badge badge-price">' + price + '</span>' : '')
+                + '</div>'
+                + '</div>'
+                + '</div>';
+        }).join('');
+
+        // Click on sidebar card
+        mapBusinessList.querySelectorAll('.map-business-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                var id = parseInt(card.dataset.businessId);
+                var lat = parseFloat(card.dataset.lat);
+                var lng = parseFloat(card.dataset.lng);
+
+                highlightCard(id);
+
+                if (!isNaN(lat) && !isNaN(lng) && map) {
+                    flyToBusiness(id);
+                } else {
+                    window.location.href = '/property-detail.html?id=' + id;
+                }
+            });
+        });
+    }
+
+    // ─── Toggle Map Type ─────────────────────────────────────────
+    function showMapType(type) {
+        currentMapType = type;
+        var btnNegocios = document.getElementById('mapToggleNegocios');
+        var btnPropiedades = document.getElementById('mapTogglePropiedades');
+
+        if (btnNegocios) {
+            btnNegocios.className = type === 'businesses' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+        }
+        if (btnPropiedades) {
+            btnPropiedades.className = type === 'properties' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+        }
+
+        if (type === 'properties') {
+            loadMapProperties();
+        } else {
+            loadMapBusinesses();
+        }
+    }
+
     // ─── Expose for external use ────────────────────────────────
     window.casasMap = {
         flyToBusiness: flyToBusiness,
         fitAllMarkers: fitAllMarkers,
         filterBusinesses: loadMapBusinesses,
         loadMapBusinesses: loadMapBusinesses,
+        loadMapProperties: loadMapProperties,
+        showType: showMapType,
         invalidateSize: function () {
             if (map) map.invalidateSize();
             if (window._miniMap) window._miniMap.invalidateSize();
