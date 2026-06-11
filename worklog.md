@@ -1,6 +1,37 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: 7-8
+Agent: Main
+Task: Paso 7 (Banner/Logo/SEO) + Paso 8 (Pulimento UI, Twitter Cards, Animaciones)
+
+Work Log:
+- Agregadas 14 nuevas keys a DEFAULT_SETTINGS en /api/settings/index.js: hero_title, hero_subtitle, hero_badge, hero_image_url, hero_cta_text, hero_cta_link, logo_url, logo_text, meta_title, meta_description, meta_keywords, og_image_url, footer_text, footer_link_url/footer_link_text
+- PUBLIC_KEYS actualizado en /api/settings/public.js con todas las nuevas keys + defaults
+- Admin.html: 5 nuevas secciones en tab Settings: Banner Hero (titulo, subtitulo, badge, imagen fondo, CTA), Logo (URL imagen, texto), SEO (meta title/description/keywords, OG image), Footer (texto, enlace)
+- Admin.html: vista previa en tiempo real del hero con parseo de {highlight}...{end}
+- admin.js: loadSettings() ahora llama updateHeroPreview(); nueva funcion updateHeroPreview() con listeners input
+- index.html: IDs agregados a hero (heroSection, heroBg, heroBadge, heroBadgeText, heroTitle, heroSubtitle), nav-logo (navLogo, navLogoIcon, brandNameText), meta tags (metaDescription, metaKeywords, pageTitle, ogTitle, ogDescription, ogImage)
+- index.html: Twitter Card meta tags agregados (twitter:card, twitter:title, twitter:description, twitter:image) + canonical URL
+- app.js: nueva funcion loadPublicSettings() - fetch /settings/public y aplica: hero bg image + overlay, badge, titulo con highlight, logo image/text, meta tags, OG + Twitter, footer
+- app.js: IntersectionObserver para fade-in de secciones .idx-section al scroll
+- css/styles.css: skeleton loading animations, section fade-in transitions, hero entrance animation, card hover improvements, toast transitions, admin settings styling
+- SW cache bumped a v38
+- Push a main, deploy exitoso en aunclick.pages.dev (200)
+
+Stage Summary:
+- Admin puede gestionar completamente la apariencia del sitio desde Settings: hero banner, logo, SEO, footer
+- Hero soporta imagen de fondo personalizada con overlay automatico para legibilidad
+- Titulo del hero soporta syntax {highlight}texto{end} para texto resaltado
+- Logo soporta imagen custom (reemplaza icono FA) y texto personalizado
+- Meta tags (title, description, keywords) actualizables desde admin
+- Open Graph + Twitter Card tags sincronizados automaticamente
+- Secciones del index hacen fade-in al scroll (IntersectionObserver)
+- Animacion de entrada del hero con fade + slide up
+- Cards mejoradas con hover elevation (translateY + shadow)
+- Skeleton CSS disponible para futuros loading states
+
+---
 Task ID: 6-fix
 Agent: Main
 Task: Correccion de URLs - casasbarinas.pages.dev -> millano.pages.dev
