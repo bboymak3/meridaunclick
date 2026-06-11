@@ -58,24 +58,6 @@ export async function onRequestGet(context) {
       });
     }
 
-    // Ensure slug column exists in products table
-    try {
-      await env.DB.prepare('ALTER TABLE products ADD COLUMN slug TEXT').run();
-    } catch (e) {
-      // Column already exists — ignore
-    }
-
-    // Migrate products without slug
-    try {
-      const noSlug = await env.DB.prepare("SELECT id, name FROM products WHERE slug IS NULL OR slug = '' LIMIT 50").all();
-      for (const p of noSlug.results) {
-        const s = (p.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, '').replace(/\s+/g, '-').substring(0, 120);
-        if (s) await env.DB.prepare('UPDATE products SET slug = ? WHERE id = ?').bind(s, p.id).run();
-      }
-    } catch (e) {
-      // Ignore migration errors
-    }
-
     // Check if marketplace is enabled
     try {
       const setting = await env.DB.prepare('SELECT value FROM admin_settings WHERE key = ?').bind('marketplace_enabled').first();

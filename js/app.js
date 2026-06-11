@@ -1027,6 +1027,11 @@ const PROPERTY_TYPE_LABELS = {
 const OPERATION_TYPE_LABELS = { venta: 'Venta', alquiler: 'Alquiler', venta_alquiler: 'Venta y Alquiler' };
 const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', Bs: 'Bs' };
 
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
 function createPropertyCard(p) {
     const typeLabel = PROPERTY_TYPE_LABELS[p.property_type] || p.property_type;
     const opLabel = OPERATION_TYPE_LABELS[p.operation_type] || p.operation_type;
