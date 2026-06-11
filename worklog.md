@@ -1,6 +1,31 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: 4
+Agent: Main
+Task: Paso 4 - Destacados en index (productos+empleos), tipo usuario persona natural
+
+Work Log:
+- Added "Productos Destacados" section to index.html (after Negocios Destacados)
+- Added "Empleos Destacados" section to index.html (after Productos Destacados)
+- Created loadFeaturedProducts() in app.js: fetches /marketplace?status=approved&limit=8
+- Created loadFeaturedJobs() in app.js: fetches /jobs?status=approved&limit=6
+- Product cards: image, title, price, location, condition badge (Nuevo/Usado)
+- Job cards: title, company, location, job type badge, salary, hover effects
+- Added user_type radio selector to registration form in login.html
+- Two options: "Negocio" (default, blue) and "Persona Natural" (marketplace only)
+- Radio cards with visual toggle styling (border + background change on select)
+- Updated auth.js to read user_type from radio and send to register API
+- Renumbered index.html sections (1-9: Hero, Negocios, Productos, Empleos, Categorías, Mapa, Cómo funciona, Stats, CTA)
+- SW cache bumped to v34
+
+Stage Summary:
+- Index page now shows 3 sections of highlighted content: Negocios, Productos, Empleos
+- Registration now lets users choose between "Negocio" and "Persona Natural" account types
+- Persona Natural users are flagged in DB for marketplace-only access
+- All deployed to aunclick.pages.dev (SW v34)
+
+---
 Task ID: 3
 Agent: Main
 Task: Paso 3 - Plans tab in admin, WhatsApp conditional, subscriptions management
