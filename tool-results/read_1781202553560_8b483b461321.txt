@@ -1,0 +1,1644 @@
+     1→/**
+     2→ * Un Click - Core Application Module
+     3→ * Common module loaded on ALL pages
+     4→ * Directorio Nacional de Negocios de Venezuela
+     5→ */
+     6→
+     7→// ─── API Configuration ──────────────────────────────────────────
+     8→const API = '/api';
+     9→
+    10→// ─── Token Management ──────────────────────────────────────────
+    11→const TOKEN_KEY = 'meridaunclick_token';
+    12→const USER_KEY = 'meridaunclick_user';
+    13→
+    14→// ─── Venezuela States ────────────────────────────────────────────
+    15→const VENEZUELA_STATES = [
+    16→  { name: 'Amazonas', slug: 'amazonas' },
+    17→  { name: 'Anzoátegui', slug: 'anzoategui' },
+    18→  { name: 'Apure', slug: 'apure' },
+    19→  { name: 'Aragua', slug: 'aragua' },
+    20→  { name: 'Barinas', slug: 'barinas' },
+    21→  { name: 'Bolívar', slug: 'bolivar' },
+    22→  { name: 'Carabobo', slug: 'carabobo' },
+    23→  { name: 'Cojedes', slug: 'cojedes' },
+    24→  { name: 'Delta Amacuro', slug: 'delta-amacuro' },
+    25→  { name: 'Distrito Capital', slug: 'distrito-capital' },
+    26→  { name: 'Falcón', slug: 'falcon' },
+    27→  { name: 'Guárico', slug: 'guarico' },
+    28→  { name: 'Lara', slug: 'lara' },
+    29→  { name: 'Mérida', slug: 'merida' },
+    30→  { name: 'Miranda', slug: 'miranda' },
+    31→  { name: 'Monagas', slug: 'monagas' },
+    32→  { name: 'Nueva Esparta', slug: 'nueva-esparta' },
+    33→  { name: 'Portuguesa', slug: 'portuguesa' },
+    34→  { name: 'Sucre', slug: 'sucre' },
+    35→  { name: 'Táchira', slug: 'tachira' },
+    36→  { name: 'Trujillo', slug: 'trujillo' },
+    37→  { name: 'Vargas', slug: 'vargas' },
+    38→  { name: 'Yaracuy', slug: 'yaracuy' },
+    39→  { name: 'Zulia', slug: 'zulia' },
+    40→];
+    41→
+    42→const LOCATION_KEY = 'aunclick_selected_state';
+    43→
+    44→// ─── Location Selector System ───────────────────────────────────
+    45→function getSelectedState() {
+    46→  return localStorage.getItem(LOCATION_KEY) || '';
+    47→}
+    48→
+    49→function setSelectedState(stateName) {
+    50→  if (stateName) {
+    51→    localStorage.setItem(LOCATION_KEY, stateName);
+    52→  } else {
+    53→    localStorage.removeItem(LOCATION_KEY);
+    54→  }
+    55→  updateBrandDisplay(stateName);
+    56→  updateLocationLabel(stateName);
+    57→  // Reload businesses if on index or search page
+    58→  const featuredGrid = document.getElementById('featuredGrid');
+    59→  if (featuredGrid) {
+    60→    loadFeaturedProperties();
+    61→  }
+    62→  const searchGrid = document.getElementById('searchResultsGrid');
+    63→  if (searchGrid) {
+    64→    executeSearch(1);
+    65→  }
+    66→}
+    67→
+    68→function updateBrandDisplay(stateName) {
+    69→  // Update all #brandCity elements
+    70→  document.querySelectorAll('#brandCity').forEach(el => {
+    71→    el.textContent = stateName ? stateName + ' ' : '';
+    72→  });
+    73→  // Update page title dynamically
+    74→  if (stateName) {
+    75→    document.title = stateName + ' Un Click - Directorio de Negocios en Venezuela';
+    76→  } else {
+    77→    document.title = 'Un Click - Directorio de Negocios en Venezuela';
+    78→  }
+    79→}
+    80→
+    81→function updateLocationLabel(stateName) {
+    82→  const label = document.getElementById('locationLabel');
+    83→  if (label) {
+    84→    label.textContent = stateName || 'Todo Venezuela';
+    85→  }
+    86→}
+    87→
+    88→function initLocationSelector() {
+    89→  const locationBtn = document.getElementById('locationBtn');
+    90→  const locationDropdown = document.getElementById('locationDropdown');
+    91→  const locationList = document.getElementById('locationList');
+    92→  const locationSearchInput = document.getElementById('locationSearchInput');
+    93→  const locationSelector = document.getElementById('locationSelector');
+    94→
+    95→  if (!locationBtn || !locationDropdown || !locationList) return;
+    96→
+    97→  // Populate states list
+    98→  locationList.innerHTML = VENEZUELA_STATES.map(state => `
+    99→    <div class="location-option" data-state="${state.name}">
+   100→      <i class="fas fa-map-marker-alt"></i>
+   101→      <span>${state.name}</span>
+   102→    </div>
+   103→  `).join('');
+   104→
+   105→  // Toggle dropdown
+   106→  locationBtn.addEventListener('click', (e) => {
+   107→    e.stopPropagation();
+   108→    locationDropdown.classList.toggle('hidden');
+   109→    locationBtn.classList.toggle('active');
+   110→    if (!locationDropdown.classList.contains('hidden') && locationSearchInput) {
+   111→      locationSearchInput.value = '';
+   112→      filterLocations('');
+   113→      locationSearchInput.focus();
+   114→    }
+   115→  });
+   116→
+   117→  // Close dropdown when clicking outside
+   118→  document.addEventListener('click', (e) => {
+   119→    if (!locationSelector.contains(e.target)) {
+   120→      locationDropdown.classList.add('hidden');
+   121→      locationBtn.classList.remove('active');
+   122→    }
+   123→  });
+   124→
+   125→  // State option click
+   126→  locationList.addEventListener('click', (e) => {
+   127→    const option = e.target.closest('.location-option');
+   128→    if (option) {
+   129→      const stateName = option.dataset.state || '';
+   130→      setSelectedState(stateName);
+   131→      locationDropdown.classList.add('hidden');
+   132→      locationBtn.classList.remove('active');
+   133→    }
+   134→  });
+   135→
+   136→  // "Todo Venezuela" option click
+   137→  const allVzlaOption = locationDropdown.querySelector('.location-option[data-state=""]');
+   138→  if (allVzlaOption) {
+   139→    allVzlaOption.addEventListener('click', () => {
+   140→      setSelectedState('');
+   141→      locationDropdown.classList.add('hidden');
+   142→      locationBtn.classList.remove('active');
+   143→    });
+   144→  }
+   145→
+   146→  // Search/filter states
+   147→  if (locationSearchInput) {
+   148→    locationSearchInput.addEventListener('input', (e) => {
+   149→      filterLocations(e.target.value.toLowerCase());
+   150→    });
+   151→    // Prevent form submission
+   152→    locationSearchInput.addEventListener('keydown', (e) => {
+   153→      if (e.key === 'Enter') e.preventDefault();
+   154→    });
+   155→  }
+   156→
+   157→  // Restore saved state
+   158→  const savedState = getSelectedState();
+   159→  if (savedState) {
+   160→    updateBrandDisplay(savedState);
+   161→    updateLocationLabel(savedState);
+   162→  }
+   163→}
+   164→
+   165→function filterLocations(query) {
+   166→  const locationList = document.getElementById('locationList');
+   167→  if (!locationList) return;
+   168→
+   169→  const options = locationList.querySelectorAll('.location-option');
+   170→  options.forEach(option => {
+   171→    const stateName = (option.dataset.state || '').toLowerCase();
+   172→    option.style.display = (!query || stateName.includes(query)) ? '' : 'none';
+   173→  });
+   174→}
+   175→
+   176→function getToken() {
+   177→    return localStorage.getItem(TOKEN_KEY);
+   178→}
+   179→
+   180→function setToken(token) {
+   181→    localStorage.setItem(TOKEN_KEY, token);
+   182→}
+   183→
+   184→function removeToken() {
+   185→    localStorage.removeItem(TOKEN_KEY);
+   186→    localStorage.removeItem(USER_KEY);
+   187→}
+   188→
+   189→function isAuthenticated() {
+   190→    const token = getToken();
+   191→    if (!token) return false;
+   192→    // Check if token is expired (simple JWT check)
+   193→    try {
+   194→        const payload = JSON.parse(atob(token.split('.')[1]));
+   195→        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+   196→            removeToken();
+   197→            return false;
+   198→        }
+   199→        return true;
+   200→    } catch {
+   201→        return false;
+   202→    }
+   203→}
+   204→
+   205→// ─── API Helper ────────────────────────────────────────────────
+   206→async function apiCall(endpoint, options = {}) {
+   207→    const url = `${API}${endpoint}`;
+   208→    const config = {
+   209→        headers: {
+   210→            'Content-Type': 'application/json',
+   211→            ...options.headers,
+   212→        },
+   213→        ...options,
+   214→    };
+   215→
+   216→    // Add auth header if token exists
+   217→    const token = getToken();
+   218→    if (token) {
+   219→        config.headers['Authorization'] = `Bearer ${token}`;
+   220→    }
+   221→
+   222→    // Remove headers from config if it's FormData (let browser set Content-Type with boundary)
+   223→    if (options.body instanceof FormData) {
+   224→        delete config.headers['Content-Type'];
+   225→        config.body = options.body;
+   226→    }
+   227→
+   228→    try {
+   229→        const response = await fetch(url, config);
+   230→        const data = await response.json();
+   231→
+   232→        if (!response.ok) {
+   233→            // Handle 401 - token expired or invalid
+   234→            // Only clear the token; do NOT auto-redirect.
+   235→            // Each page decides if it needs auth via requireAuth().
+   236→            if (response.status === 401) {
+   237→                removeToken();
+   238→            }
+   239→            throw new Error(data.error || `Error ${response.status}: ${response.statusText}`);
+   240→        }
+   241→
+   242→        return data;
+   243→    } catch (error) {
+   244→        if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+   245→            throw new Error('Error de conexión. Verifica tu conexión a internet.');
+   246→        }
+   247→        throw error;
+   248→    }
+   249→}
+   250→
+   251→// Shorthand API methods
+   252→const api = {
+   253→    get(url) {
+   254→        return apiCall(url, { method: 'GET' });
+   255→    },
+   256→    post(url, data) {
+   257→        return apiCall(url, {
+   258→            method: 'POST',
+   259→            body: typeof data === 'string' ? data : JSON.stringify(data),
+   260→        });
+   261→    },
+   262→    put(url, data) {
+   263→        return apiCall(url, {
+   264→            method: 'PUT',
+   265→            body: JSON.stringify(data),
+   266→        });
+   267→    },
+   268→    delete(url) {
+   269→        return apiCall(url, { method: 'DELETE' });
+   270→    },
+   271→    postFormData(url, formData) {
+   272→        return apiCall(url, {
+   273→            method: 'POST',
+   274→            body: formData,
+   275→        });
+   276→    },
+   277→};
+   278→
+   279→// ─── Utility Functions ──────────────────────────────────────────
+   280→function escapeHtml(str) {
+   281→    if (!str) return '';
+   282→    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+   283→}
+   284→
+   285→// ─── User Functions ────────────────────────────────────────────
+   286→function getCachedUser() {
+   287→    try {
+   288→        const cached = localStorage.getItem(USER_KEY);
+   289→        return cached ? JSON.parse(cached) : null;
+   290→    } catch {
+   291→        return null;
+   292→    }
+   293→}
+   294→
+   295→function setCachedUser(user) {
+   296→    localStorage.setItem(USER_KEY, JSON.stringify(user));
+   297→}
+   298→
+   299→async function getCurrentUser() {
+   300→    if (!isAuthenticated()) return null;
+   301→
+   302→    // Try cache first
+   303→    const cached = getCachedUser();
+   304→    if (cached) return cached;
+   305→
+   306→    try {
+   307→        const data = await api.get('/auth/me');
+   308→        if (data.user) {
+   309→            setCachedUser(data.user);
+   310→            return data.user;
+   311→        }
+   312→        return null;
+   313→    } catch {
+   314→        return null;
+   315→    }
+   316→}
+   317→
+   318→// ─── Web Page Selector Modal ────────────────────────────────────
+   319→function showWebPageSelector() {
+   320→    // Remove existing modal if any
+   321→    const existing = document.getElementById('webPageSelectorModal');
+   322→    if (existing) { existing.remove(); return; }
+   323→
+   324→    const modal = document.createElement('div');
+   325→    modal.id = 'webPageSelectorModal';
+   326→    modal.style.cssText = 'position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+   327→    modal.innerHTML = `
+   328→        <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;max-height:80vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+   329→            <div style="padding:20px 24px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+   330→                <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#0f172a;"><i class="fas fa-globe" style="color:#0ea5e9;margin-right:8px;"></i>Mis Paginas Web</h3>
+   331→                <button id="webPageSelectorClose" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;padding:4px;"><i class="fas fa-times"></i></button>
+   332→            </div>
+   333→            <div id="webPageSelectorBody" style="padding:16px 24px 24px;overflow-y:auto;max-height:60vh;">
+   334→                <div style="text-align:center;padding:30px 0;color:#94a3b8;">
+   335→                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+   336→                    <p style="margin-top:12px;font-size:0.9rem;">Cargando tus negocios...</p>
+   337→                </div>
+   338→            </div>
+   339→        </div>
+   340→    `;
+   341→    document.body.appendChild(modal);
+   342→
+   343→    // Close handlers
+   344→    document.getElementById('webPageSelectorClose').addEventListener('click', () => modal.remove());
+   345→    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+   346→
+   347→    // Check if user is logged in
+   348→    const token = localStorage.getItem('meridaunclick_token');
+   349→    if (!token) {
+   350→        const body = document.getElementById('webPageSelectorBody');
+   351→        body.innerHTML = `
+   352→            <div style="text-align:center;padding:20px 0;color:#64748b;">
+   353→                <i class="fas fa-user-lock" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
+   354→                <p style="font-size:0.95rem;font-weight:600;">Inicia sesion para ver tus paginas web</p>
+   355→                <p style="font-size:0.85rem;margin-top:4px;">Necesitas tener una cuenta y al menos un negocio registrado.</p>
+   356→                <a href="/login.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#059669;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Iniciar Sesion</a>
+   357→            </div>`;
+   358→        return;
+   359→    }
+   360→
+   361→    // Fetch businesses
+   362→    api.get('/user/my-businesses').then(res => {
+   363→        const body = document.getElementById('webPageSelectorBody');
+   364→        const businesses = res.data || [];
+   365→        if (businesses.length === 0) {
+   366→            body.innerHTML = `
+   367→                <div style="text-align:center;padding:20px 0;color:#64748b;">
+   368→                    <i class="fas fa-store" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
+   369→                    <p style="font-size:0.95rem;font-weight:600;">No tienes negocios registrados</p>
+   370→                    <p style="font-size:0.85rem;margin-top:4px;">Primero crea un negocio para generar su pagina web.</p>
+   371→                    <a href="/new-business.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#059669;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Crear Negocio</a>
+   372→                </div>`;
+   373→            return;
+   374→        }
+   375→
+   376→        let html = '<p style="font-size:0.82rem;color:#94a3b8;margin-bottom:14px;">Selecciona a que negocio le quieres generar la pagina web:</p>';
+   377→        businesses.forEach(b => {
+   378→            const coverImg = b.cover_image || '';
+   379→            html += `
+   380→                <a href="/web/${b.slug}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px;border:1px solid #e5e7eb;border-radius:12px;margin-bottom:10px;text-decoration:none;color:inherit;transition:all 0.2s;background:#fff;" onmouseover="this.style.borderColor='#0ea5e9';this.style.boxShadow='0 4px 12px rgba(14,165,233,0.1)';" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none';">
+   381→                    <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
+   382→                        ${coverImg ? `<img src="${coverImg}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<i class="fas fa-store" style="font-size:1.2rem;color:#94a3b8;"></i>'}
+   383→                    </div>
+   384→                    <div style="flex:1;min-width:0;">
+   385→                        <div style="font-size:0.95rem;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.title || 'Sin nombre'}</div>
+   386→                        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${b.city || ''}${b.state ? ', ' + b.state : ''} ${b.category_name ? ' · ' + b.category_name : ''}</div>
+   387→                    </div>
+   388→                    <div style="flex-shrink:0;color:#0ea5e9;font-size:0.8rem;font-weight:600;display:flex;align-items:center;gap:4px;">
+   389→                        Ver <i class="fas fa-external-link-alt" style="font-size:0.7rem;"></i>
+   390→                    </div>
+   391→                </a>`;
+   392→        });
+   393→
+   394→        body.innerHTML = html;
+   395→    }).catch(() => {
+   396→        const body = document.getElementById('webPageSelectorBody');
+   397→        if (body) body.innerHTML = '<p style="text-align:center;color:#ef4444;padding:20px;">Error al cargar tus negocios. Intenta de nuevo.</p>';
+   398→    });
+   399→}
+   400→
+   401→// ─── Add Web Page Menu Item ────────────────────────────────────
+   402→function addWebPageMenuItem() {
+   403→    const existing = document.getElementById('navWebPageItem');
+   404→    if (existing) return;
+   405→    const dropdownMenu = document.querySelector('.nav-dropdown-menu');
+   406→    if (!dropdownMenu) return;
+   407→    const divider = dropdownMenu.querySelector('.nav-dropdown-divider');
+   408→    const webLi = document.createElement('li');
+   409→    webLi.id = 'navWebPageItem';
+   410→    webLi.innerHTML = `<a href="#" class="nav-link" id="navWebPageBtn" style="color:#0ea5e9;"><i class="fas fa-globe"></i> Pagina Web</a>`;
+   411→    if (divider) {
+   412→        dropdownMenu.insertBefore(webLi, divider);
+   413→    } else {
+   414→        dropdownMenu.appendChild(webLi);
+   415→    }
+   416→    const webBtn = document.getElementById('navWebPageBtn');
+   417→    if (webBtn) {
+   418→        webBtn.addEventListener('click', function(e) {
+   419→            e.preventDefault();
+   420→            showWebPageSelector();
+   421→        });
+   422→    }
+   423→}
+   424→
+   425→// ─── Navigation ────────────────────────────────────────────────
+   426→function updateNav() {
+   427→    const navLoginItem = document.getElementById('navLoginItem');
+   428→    const navUserItem = document.getElementById('navUserItem');
+   429→    const navUserName = document.getElementById('navUserName');
+   430→
+   431→    if (!navLoginItem || !navUserItem) return;
+   432→
+   433→    if (isAuthenticated()) {
+   434→        navLoginItem.classList.add('hidden');
+   435→        navUserItem.classList.remove('hidden');
+   436→
+   437→        const user = getCachedUser();
+   438→        if (user && navUserName) {
+   439→            navUserName.innerHTML = `<i class="fas fa-user-circle"></i> ${user.name || 'Mi Cuenta'}`;
+   440→        }
+   441→
+   442→        // Show golden "Publicar Producto" CTA for logged-in users
+   443→        const mobileCtaProduct = document.getElementById('mobileCtaProduct');
+   444→        if (mobileCtaProduct) mobileCtaProduct.style.display = '';
+   445→
+   446→        // Show admin link for admin users
+   447→        let adminLinkItem = document.getElementById('navAdminItem');
+   448→        if (user && user.role === 'admin') {
+   449→            if (!adminLinkItem) {
+   450→                adminLinkItem = document.createElement('li');
+   451→                adminLinkItem.id = 'navAdminItem';
+   452→                adminLinkItem.innerHTML = `<a href="admin.html" class="nav-link nav-admin-link"><i class="fas fa-shield-alt"></i> Admin</a>`;
+   453→                // Insert before the user item
+   454→                navUserItem.parentNode.insertBefore(adminLinkItem, navUserItem);
+   455→            } else {
+   456→                adminLinkItem.classList.remove('hidden');
+   457→            }
+   458→        } else if (adminLinkItem) {
+   459→            adminLinkItem.remove();
+   460→        }
+   461→
+   462→        // Add "Crear Pagina Web" in "Más" dropdown for logged-in users
+   463→        addWebPageMenuItem();
+   464→
+   465→    } else {
+   466→        navLoginItem.classList.remove('hidden');
+   467→        navUserItem.classList.add('hidden');
+   468→
+   469→        // Remove admin link if exists
+   470→        const adminLinkItem = document.getElementById('navAdminItem');
+   471→        if (adminLinkItem) adminLinkItem.remove();
+   472→
+   473→        // Also show web page link for non-logged users
+   474→        addWebPageMenuItem();
+   475→
+   476→        // Make "Publicar" link require login
+   477→        const publishLinks = document.querySelectorAll('a[href="new-business.html"]');
+   478→        publishLinks.forEach(link => {
+   479→            link.addEventListener('click', function(e) {
+   480→                e.preventDefault();
+   481→                const redirect = encodeURIComponent('new-business.html');
+   482→                window.location.href = `login.html?redirect=${redirect}`;
+   483→            });
+   484→        });
+   485→    }
+   486→}
+   487→
+   488→// ─── UI Helpers ────────────────────────────────────────────────
+   489→function showToast(message, type = 'info') {
+   490→    let container = document.getElementById('toastContainer');
+   491→    if (!container) {
+   492→        container = document.createElement('div');
+   493→        container.id = 'toastContainer';
+   494→        container.className = 'toast-container';
+   495→        document.body.appendChild(container);
+   496→    }
+   497→
+   498→    const icons = {
+   499→        success: 'fa-check-circle',
+   500→        error: 'fa-exclamation-circle',
+   501→        warning: 'fa-exclamation-triangle',
+   502→        info: 'fa-info-circle',
+   503→    };
+   504→
+   505→    const toast = document.createElement('div');
+   506→    toast.className = `toast toast-${type}`;
+   507→    toast.innerHTML = `
+   508→        <i class="fas ${icons[type] || icons.info}"></i>
+   509→        <span>${message}</span>
+   510→        <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+   511→    `;
+   512→
+   513→    container.appendChild(toast);
+   514→
+   515→    // Trigger animation
+   516→    requestAnimationFrame(() => {
+   517→        toast.classList.add('toast-show');
+   518→    });
+   519→
+   520→    // Auto remove after 4 seconds
+   521→    setTimeout(() => {
+   522→        toast.classList.remove('toast-show');
+   523→        toast.classList.add('toast-hide');
+   524→        setTimeout(() => toast.remove(), 300);
+   525→    }, 4000);
+   526→}
+   527→
+   528→
+   529→
+   530→function formatPrice(price, currency = 'USD') {
+   531→    if (price == null || isNaN(price)) return '--';
+   532→
+   533→    const formatted = new Intl.NumberFormat('es-VE', {
+   534→        minimumFractionDigits: 0,
+   535→        maximumFractionDigits: 2,
+   536→    }).format(price);
+   537→
+   538→    const symbols = {
+   539→        'USD': '$',
+   540→        'EUR': '€',
+   541→        'Bs': 'Bs.',
+   542→    };
+   543→
+   544→    const symbol = symbols[currency] || '$';
+   545→    return `${symbol} ${formatted}`;
+   546→}
+   547→
+   548→function formatDate(dateStr) {
+   549→    if (!dateStr) return '--';
+   550→    try {
+   551→        const date = new Date(dateStr);
+   552→        return date.toLocaleDateString('es-VE', {
+   553→            year: 'numeric',
+   554→            month: 'short',
+   555→            day: 'numeric',
+   556→        });
+   557→    } catch {
+   558→        return dateStr;
+   559→    }
+   560→}
+   561→
+   562→function formatDateTime(dateStr) {
+   563→    if (!dateStr) return '--';
+   564→    try {
+   565→        const date = new Date(dateStr);
+   566→        return date.toLocaleDateString('es-VE', {
+   567→            year: 'numeric',
+   568→            month: 'short',
+   569→            day: 'numeric',
+   570→            hour: '2-digit',
+   571→            minute: '2-digit',
+   572→        });
+   573→    } catch {
+   574→        return dateStr;
+   575→    }
+   576→}
+   577→
+   578→function truncateText(text, maxLen = 100) {
+   579→    if (!text) return '';
+   580→    if (text.length <= maxLen) return text;
+   581→    return text.substring(0, maxLen).trim() + '...';
+   582→}
+   583→
+   584→
+   585→function debounce(fn, delay = 300) {
+   586→    let timer;
+   587→    return function (...args) {
+   588→        clearTimeout(timer);
+   589→        timer = setTimeout(() => fn.apply(this, args), delay);
+   590→    };
+   591→}
+   592→
+   593→// ─── Favorites ─────────────────────────────────────────────────
+   594→async function toggleFavorite(businessId) {
+   595→    if (!isAuthenticated()) {
+   596→        showToast('Inicia sesión para guardar favoritos', 'warning');
+   597→        setTimeout(() => {
+   598→            window.location.href = `login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+   599→        }, 1500);
+   600→        return;
+   601→    }
+   602→
+   603→    try {
+   604→        const response = await api.post('/favorites', { business_id: parseInt(businessId) });
+   605→        showToast('Negocio guardado en favoritos', 'success');
+   606→        updateFavoriteButtons(businessId, true);
+   607→        return true;
+   608→    } catch (error) {
+   609→        // Check if it's a 409 (already favorited) - then remove it
+   610→        if (error.message.includes('ya está en tus favoritos')) {
+   611→            try {
+   612→                await api.delete(`/favorites?business_id=${businessId}`);
+   613→                showToast('Negocio removido de favoritos', 'info');
+   614→                updateFavoriteButtons(businessId, false);
+   615→                return false;
+   616→            } catch (removeError) {
+   617→                showToast(removeError.message, 'error');
+   618→            }
+   619→        } else {
+   620→            showToast(error.message, 'error');
+   621→        }
+   622→        return null;
+   623→    }
+   624→}
+   625→
+   626→function updateFavoriteButtons(businessId, isFavorited) {
+   627→    document.querySelectorAll(`.btn-favorite[data-business-id="${businessId}"]`).forEach(btn => {
+   628→        const icon = btn.querySelector('i');
+   629→        if (icon) {
+   630→            icon.className = isFavorited ? 'fas fa-heart' : 'far fa-heart';
+   631→        }
+   632→        if (isFavorited) {
+   633→            btn.classList.add('favorited');
+   634→        } else {
+   635→            btn.classList.remove('favorited');
+   636→        }
+   637→    });
+   638→}
+   639→
+   640→async function checkFavorite(businessId) {
+   641→    if (!isAuthenticated()) return false;
+   642→    try {
+   643→        const data = await api.get(`/favorites/check?business_id=${businessId}`);
+   644→        return data.is_favorited || false;
+   645→    } catch {
+   646→        return false;
+   647→    }
+   648→}
+   649→
+   650→// ─── Business Type Display Names ───────────────────────────────
+   651→const BUSINESS_TYPE_LABELS = {
+   652→    'negocio': 'Negocio',
+   653→    'profesional': 'Profesional',
+   654→    'servicio': 'Servicio',
+   655→    'restaurante': 'Restaurante',
+   656→    'tienda': 'Tienda',
+   657→    'otro': 'Otro',
+   658→};
+   659→
+   660→function getBusinessTypeLabel(type) {
+   661→    if (!type) return '--';
+   662→    return BUSINESS_TYPE_LABELS[type?.toLowerCase()] || type;
+   663→}
+   664→
+   665→
+   666→// ─── Business URL Helper ─────────────────────────────────────
+   667→function getBusinessUrl(business) {
+   668→    if (!business) return '#';
+   669→    if (business.slug) return '/negocio/' + business.slug;
+   670→    return '/business.html?id=' + business.id;
+   671→}
+   672→
+   673→// ─── WhatsApp Share ────────────────────────────────────────────
+   674→function shareBusinessWhatsApp(business) {
+   675→    if (!business) return;
+   676→    const type = getBusinessTypeLabel(business.business_type);
+   677→    const url = 'https://aunclick.pages.dev' + getBusinessUrl(business);
+   678→    const title = business.title || 'Negocio';
+   679→
+   680→    let msg = `🏪 *${title}*\n`;
+   681→    msg += `📌 ${type}\n`;
+   682→    if (business.city) msg += `📍 ${business.city}${business.state ? ', ' + business.state : ''}\n`;
+   683→    msg += `\n🔗 ${url}`;
+   684→    msg += `\n\n📌 Publicado en Un Click`;
+   685→
+   686→    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+   687→}
+   688→
+   689→// ─── Status Helpers ────────────────────────────────────────────
+   690→const STATUS_LABELS = {
+   691→    'pending': 'Pendiente',
+   692→    'approved': 'Publicada',
+   693→    'rejected': 'Rechazada',
+   694→    'closed': 'Cerrada',
+   695→};
+   696→
+   697→function getStatusLabel(status) {
+   698→    return STATUS_LABELS[status?.toLowerCase()] || status || '--';
+   699→}
+   700→
+   701→function getStatusBadge(status) {
+   702→    const classes = {
+   703→        'pending': 'badge badge-warning',
+   704→        'approved': 'badge badge-success',
+   705→        'rejected': 'badge badge-danger',
+   706→        'closed': 'badge badge-info',
+   707→    };
+   708→    const cls = classes[status?.toLowerCase()] || 'badge';
+   709→    return `<span class="${cls}">${getStatusLabel(status)}</span>`;
+   710→}
+   711→
+   712→// ─── Business Card HTML Generator ──────────────────────────────
+   713→function createBusinessCard(business) {
+   714→    if (!business) return '';
+   715→
+   716→    const coverImage = business.cover_image || business.images?.[0]?.url || '';
+   717→    const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
+   718→        '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23e0e0e0"><rect width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="16" font-family="sans-serif">Sin imagen</text></svg>'
+   719→    );
+   720→    const imgSrc = coverImage || placeholderImg;
+   721→    const typeLabel = business.category_name || getBusinessTypeLabel(business.business_type);
+   722→    const address = business.city ? (business.state ? `${business.city}, ${business.state}` : business.city) : '--';
+   723→    const descSnippet = business.description ? `<p class="business-card-desc">${truncateText(business.description, 80)}</p>` : '';
+   724→
+   725→    const featuredBadge = business.featured ? '<span class="card-badge badge-featured"><i class="fas fa-star"></i> Destacada</span>' : '';
+   726→    const statusBadge = business.status && business.status !== 'approved' ? `<span class="card-badge badge-${business.status}">${getStatusLabel(business.status)}</span>` : '';
+   727→
+   728→    const bizUrl = getBusinessUrl(business);
+   729→    return `
+   730→        <article class="business-card" data-business-id="${business.id}">
+   731→            <a href="${bizUrl}" class="business-card-link">
+   732→                <div class="business-card-image">
+   733→                    <img src="${imgSrc}" alt="${business.title || 'Sin título'}" loading="lazy" onerror="this.src='${placeholderImg}'">
+   734→                    <div class="business-card-badges">
+   735→                        <span class="card-badge badge-type">${typeLabel}</span>
+   736→                        ${featuredBadge}${statusBadge}
+   737→                    </div>
+   738→                    <button class="btn-favorite business-card-fav" data-business-id="${business.id}" aria-label="Agregar a favoritos" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(${business.id});">
+   739→                        <i class="far fa-heart"></i>
+   740→                    </button>
+   741→                    <button class="btn-share-wa-card" data-business-id="${business.id}" aria-label="Compartir por WhatsApp" onclick="event.preventDefault(); event.stopPropagation();">
+   742→                        <i class="fab fa-whatsapp"></i>
+   743→                    </button>
+   744→                </div>
+   745→                <div class="business-card-body">
+   746→                    <h3 class="business-card-title">${business.title || 'Sin título'}</h3>
+   747→                    <p class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${address}</p>
+   748→                    ${descSnippet}
+   749→                </div>
+   750→            </a>
+   751→        </article>
+   752→    `;
+   753→}
+   754→
+   755→// ─── WhatsApp Share Delegation for Cards ─────────────────────
+   756→document.addEventListener('click', (e) => {
+   757→    const shareBtn = e.target.closest('.btn-share-wa-card');
+   758→    if (!shareBtn) return;
+   759→    const businessId = parseInt(shareBtn.dataset.businessId);
+   760→    if (!businessId) return;
+   761→
+   762→    // Fetch business data then share
+   763→    api.get(`/businesses/${businessId}`).then(business => {
+   764→        shareBusinessWhatsApp(business);
+   765→    }).catch(() => {
+   766→        // Minimal share with just the link
+   767→        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en Un Click:\nhttps://aunclick.pages.dev/negocio/' + businessId)}`, '_blank');
+   768→    });
+   769→});
+   770→
+   771→// ─── Search Params Helper ──────────────────────────────────────
+   772→function getSearchParams() {
+   773→    const params = new URLSearchParams(window.location.search);
+   774→    return {
+   775→        estado: params.get('estado') || '',
+   776→        categoria: params.get('categoria') || '',
+   777→        city: params.get('ciudad') || params.get('city') || '',
+   778→        search: params.get('q') || params.get('search') || '',
+   779→        business_type: params.get('tipo_negocio') || '',
+   780→        page: params.get('page') || 1,
+   781→        limit: params.get('limit') || 12,
+   782→    };
+   783→}
+   784→
+   785→
+   786→
+   787→// ─── Auth Redirect Helper ──────────────────────────────────────
+   788→function requireAuth() {
+   789→    if (!isAuthenticated()) {
+   790→        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+   791→        window.location.href = `login.html?redirect=${redirect}`;
+   792→        return false;
+   793→    }
+   794→    return true;
+   795→}
+   796→
+   797→// ─── Logout Handler ────────────────────────────────────────────
+   798→function handleLogout() {
+   799→    removeToken();
+   800→    showToast('Has cerrado sesión', 'info');
+   801→    setTimeout(() => {
+   802→        window.location.href = 'index.html';
+   803→    }, 1000);
+   804→}
+   805→
+   806→// ─── Mobile Search Modal ──────────────────────────────────────
+   807→function initMobileSearchModal() {
+   808→    const trigger = document.getElementById('mobileSearchTrigger');
+   809→    const searchForm = document.getElementById('heroSearchForm');
+   810→    const backdrop = document.getElementById('mobileSearchBackdrop');
+   811→    const closeBtn = document.getElementById('searchModalClose');
+   812→
+   813→    if (!trigger || !searchForm) return;
+   814→
+   815→    function openSearchModal() {
+   816→        searchForm.classList.add('mobile-open');
+   817→        trigger.classList.add('active');
+   818→        if (backdrop) backdrop.classList.add('visible');
+   819→        document.body.style.overflow = 'hidden';
+   820→    }
+   821→
+   822→    function closeSearchModal() {
+   823→        searchForm.classList.remove('mobile-open');
+   824→        trigger.classList.remove('active');
+   825→        if (backdrop) backdrop.classList.remove('visible');
+   826→        document.body.style.overflow = '';
+   827→    }
+   828→
+   829→    trigger.addEventListener('click', () => {
+   830→        if (searchForm.classList.contains('mobile-open')) {
+   831→            closeSearchModal();
+   832→        } else {
+   833→            openSearchModal();
+   834→        }
+   835→    });
+   836→
+   837→    if (closeBtn) {
+   838→        closeBtn.addEventListener('click', (e) => {
+   839→            e.preventDefault();
+   840→            e.stopPropagation();
+   841→            closeSearchModal();
+   842→        });
+   843→    }
+   844→
+   845→    if (backdrop) {
+   846→        backdrop.addEventListener('click', closeSearchModal);
+   847→    }
+   848→
+   849→    // Allow form submission (search) to work normally
+   850→    searchForm.addEventListener('submit', () => {
+   851→        // Let the form submit naturally to search.html
+   852→        document.body.style.overflow = '';
+   853→    });
+   854→}
+   855→
+   856→// ─── Public Site Settings (Hero, Logo, SEO) ────────────────────
+   857→async function loadPublicSettings() {
+   858→    try {
+   859→        const s = await api.get('/settings/public');
+   860→        if (!s) return;
+   861→
+   862→        // ── Hero Section ──
+   863→        const heroSection = document.getElementById('heroSection');
+   864→        const heroBg = document.getElementById('heroBg');
+   865→        const heroBadge = document.getElementById('heroBadge');
+   866→        const heroBadgeText = document.getElementById('heroBadgeText');
+   867→        const heroTitle = document.getElementById('heroTitle');
+   868→        const heroSubtitle = document.getElementById('heroSubtitle');
+   869→
+   870→        if (heroSection) {
+   871→            // Hero background image
+   872→            if (s.hero_image_url && heroBg) {
+   873→                heroBg.style.cssText = 'position:absolute;inset:0;background:url(' + s.hero_image_url + ') center/cover no-repeat;';
+   874→                heroBg.style.opacity = '1';
+   875→                // Add overlay for readability
+   876→                const overlay = document.createElement('div');
+   877→                overlay.style.cssText = 'position:absolute;inset:0;background:linear-gradient(135deg,rgba(10,15,26,0.85),rgba(15,23,42,0.75));';
+   878→                heroBg.appendChild(overlay);
+   879→            }
+   880→
+   881→            // Hero badge
+   882→            if (s.hero_badge && heroBadge && heroBadgeText) {
+   883→                heroBadgeText.textContent = s.hero_badge;
+   884→            }
+   885→
+   886→            // Hero title with {highlight}...{end} support
+   887→            if (s.hero_title && heroTitle) {
+   888→                const parsedTitle = s.hero_title
+   889→                    .replace(/\{highlight\}/g, '<span class="idx-hero-highlight">')
+   890→                    .replace(/\{end\}/g, '</span>');
+   891→                heroTitle.innerHTML = parsedTitle;
+   892→            }
+   893→
+   894→            // Hero subtitle
+   895→            if (s.hero_subtitle && heroSubtitle) {
+   896→                heroSubtitle.textContent = s.hero_subtitle;
+   897→            }
+   898→        }
+   899→
+   900→        // ── Logo ──
+   901→        const navLogo = document.getElementById('navLogo');
+   902→        const navLogoIcon = document.getElementById('navLogoIcon');
+   903→        const brandNameText = document.getElementById('brandNameText');
+   904→
+   905→        if (navLogo) {
+   906→            if (s.logo_url && navLogoIcon) {
+   907→                // Replace icon with image logo
+   908→                const img = document.createElement('img');
+   909→                img.src = s.logo_url;
+   910→                img.alt = 'Logo';
+   911→                img.style.cssText = 'height:32px;width:auto;margin-right:6px;';
+   912→                navLogoIcon.replaceWith(img);
+   913→            }
+   914→            if (s.logo_text && brandNameText) {
+   915→                brandNameText.textContent = s.logo_text;
+   916→            }
+   917→        }
+   918→
+   919→        // ── Meta Tags / SEO ──
+   920→        if (s.meta_title) {
+   921→            const titleEl = document.getElementById('pageTitle');
+   922→            if (titleEl) titleEl.textContent = s.meta_title;
+   923→            const ogTitleEl = document.getElementById('ogTitle');
+   924→            if (ogTitleEl) ogTitleEl.setAttribute('content', s.meta_title);
+   925→        }
+   926→        if (s.meta_description) {
+   927→            const descEl = document.getElementById('metaDescription');
+   928→            if (descEl) descEl.setAttribute('content', s.meta_description);
+   929→            const ogDescEl = document.getElementById('ogDescription');
+   930→            if (ogDescEl) ogDescEl.setAttribute('content', s.meta_description);
+   931→        }
+   932→        if (s.meta_keywords) {
+   933→            const kwEl = document.getElementById('metaKeywords');
+   934→            if (kwEl) kwEl.setAttribute('content', s.meta_keywords);
+   935→        }
+   936→        if (s.og_image_url) {
+   937→            const ogImgEl = document.getElementById('ogImage');
+   938→            if (ogImgEl) ogImgEl.setAttribute('content', s.og_image_url);
+   939→            const twImgEl = document.getElementById('twitterImage');
+   940→            if (twImgEl) twImgEl.setAttribute('content', s.og_image_url);
+   941→        }
+   942→
+   943→        // ── Twitter Card (sync with OG) ──
+   944→        if (s.meta_title) {
+   945→            const twTitleEl = document.getElementById('twitterTitle');
+   946→            if (twTitleEl) twTitleEl.setAttribute('content', s.meta_title);
+   947→        }
+   948→        if (s.meta_description) {
+   949→            const twDescEl = document.getElementById('twitterDescription');
+   950→            if (twDescEl) twDescEl.setAttribute('content', s.meta_description);
+   951→        }
+   952→
+   953→        // ── Footer ──
+   954→        if (s.footer_text) {
+   955→            const footerEl = document.querySelector('.footer-bottom p');
+   956→            if (footerEl) footerEl.innerHTML = s.footer_text;
+   957→        }
+   958→        if (s.footer_link_url && s.footer_link_text) {
+   959→            const footerEl = document.querySelector('.footer-bottom');
+   960→            if (footerEl) {
+   961→                const link = document.createElement('a');
+   962→                link.href = s.footer_link_url;
+   963→                link.textContent = s.footer_link_text;
+   964→                link.style.cssText = 'color:#60a5fa;text-decoration:none;margin-left:8px;';
+   965→                footerEl.querySelector('p')?.appendChild(link);
+   966→            }
+   967→        }
+   968→    } catch (e) {
+   969→        // Silently fail - site works with defaults
+   970→        console.warn('Could not load public settings:', e);
+   971→    }
+   972→}
+   973→
+   974→// ─── Initialization ────────────────────────────────────────────
+   975→document.addEventListener('DOMContentLoaded', () => {
+   976→    // Load public site settings (hero, logo, SEO) - first thing
+   977→    loadPublicSettings();
+   978→
+   979→    // Update navigation bar
+   980→    updateNav();
+   981→
+   982→    // Initialize location selector (loads saved state, updates brand)
+   983→    initLocationSelector();
+   984→
+   985→    // Initialize mobile search modal
+   986→    initMobileSearchModal();
+   987→
+   988→    // Hamburger menu toggle
+   989→    const navToggle = document.getElementById('navToggle');
+   990→    const navMenu = document.getElementById('navMenu');
+   991→
+   992→    if (navToggle && navMenu) {
+   993→        navToggle.addEventListener('click', () => {
+   994→            navMenu.classList.toggle('active');
+   995→            navToggle.classList.toggle('active');
+   996→        });
+   997→
+   998→        // Close menu when clicking a link
+   999→        navMenu.querySelectorAll('.nav-link').forEach(link => {
+  1000→            link.addEventListener('click', () => {
+  1001→                navMenu.classList.remove('active');
+  1002→                navToggle.classList.remove('active');
+  1003→            });
+  1004→        });
+  1005→
+  1006→        // Close menu when clicking outside
+  1007→        document.addEventListener('click', (e) => {
+  1008→            if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+  1009→                navMenu.classList.remove('active');
+  1010→                navToggle.classList.remove('active');
+  1011→            }
+  1012→        });
+  1013→    }
+  1014→
+  1015→    // Navbar dropdown toggle ("Más")
+  1016→    document.querySelectorAll('.nav-dropdown-toggle').forEach(toggleBtn => {
+  1017→        toggleBtn.addEventListener('click', (e) => {
+  1018→            e.stopPropagation();
+  1019→            const menu = toggleBtn.nextElementSibling;
+  1020→            if (menu) {
+  1021→                // Close other dropdowns
+  1022→                document.querySelectorAll('.nav-dropdown-menu.active').forEach(m => {
+  1023→                    if (m !== menu) m.classList.remove('active');
+  1024→                });
+  1025→                document.querySelectorAll('.nav-dropdown-toggle.active').forEach(b => {
+  1026→                    if (b !== toggleBtn) b.classList.remove('active');
+  1027→                });
+  1028→                menu.classList.toggle('active');
+  1029→                toggleBtn.classList.toggle('active');
+  1030→            }
+  1031→        });
+  1032→    });
+  1033→
+  1034→    // Close dropdown when clicking outside
+  1035→    document.addEventListener('click', (e) => {
+  1036→        if (!e.target.closest('.nav-dropdown')) {
+  1037→            document.querySelectorAll('.nav-dropdown-menu.active').forEach(m => m.classList.remove('active'));
+  1038→            document.querySelectorAll('.nav-dropdown-toggle.active').forEach(b => b.classList.remove('active'));
+  1039→        }
+  1040→    });
+  1041→
+  1042→    // Logout button handler
+  1043→    const logoutBtn = document.getElementById('navLogout');
+  1044→    if (logoutBtn) {
+  1045→        logoutBtn.addEventListener('click', (e) => {
+  1046→            e.preventDefault();
+  1047→            handleLogout();
+  1048→        });
+  1049→    }
+  1050→
+  1051→    // Handle redirect param after login
+  1052→    const urlParams = new URLSearchParams(window.location.search);
+  1053→    const redirectParam = urlParams.get('redirect');
+  1054→    if (redirectParam && isAuthenticated()) {
+  1055→        window.location.href = redirectParam;
+  1056→    }
+  1057→
+  1058→    // Load featured businesses on index page
+  1059→    const featuredGrid = document.getElementById('featuredGrid');
+  1060→    if (featuredGrid) {
+  1061→        loadFeaturedProperties();
+  1062→    }
+  1063→
+  1064→    // Load featured products on index page
+  1065→    const featuredProductsGrid = document.getElementById('featuredProductsGrid');
+  1066→    if (featuredProductsGrid) {
+  1067→        loadFeaturedProducts();
+  1068→    }
+  1069→
+  1070→    // Load featured jobs on index page
+  1071→    const featuredJobsList = document.getElementById('featuredJobsList');
+  1072→    if (featuredJobsList) {
+  1073→        loadFeaturedJobs();
+  1074→    }
+  1075→
+  1076→    // Load featured properties (inmuebles) on index page
+  1077→    const featuredPropertiesGrid = document.getElementById('featuredPropertiesGrid');
+  1078→    if (featuredPropertiesGrid) {
+  1079→        loadFeaturedInmuebles();
+  1080→    }
+  1081→
+  1082→    // Load stats on index page
+  1083→    const statProperties = document.getElementById('statProperties');
+  1084→    if (statProperties) {
+  1085→        loadSiteStats();
+  1086→    }
+  1087→
+  1088→    // ── Section fade-in animations (Paso 8) ──
+  1089→    const sections = document.querySelectorAll('.idx-section');
+  1090→    if (sections.length > 0 && 'IntersectionObserver' in window) {
+  1091→        const observer = new IntersectionObserver((entries) => {
+  1092→            entries.forEach(entry => {
+  1093→                if (entry.isIntersecting) {
+  1094→                    entry.target.classList.add('visible');
+  1095→                    observer.unobserve(entry.target);
+  1096→                }
+  1097→            });
+  1098→        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+  1099→        sections.forEach(s => observer.observe(s));
+  1100→    }
+  1101→});
+  1102→
+  1103→// ─── Index Page: Featured Properties ───────────────────────────
+  1104→async function loadFeaturedProperties() {
+  1105→    const grid = document.getElementById('featuredGrid');
+  1106→    const emptyState = document.getElementById('featuredEmpty');
+  1107→    const loading = document.getElementById('featuredLoading');
+  1108→    if (!grid) return;
+  1109→
+  1110→    try {
+  1111→        // Respect selected state
+  1112→        const selectedState = getSelectedState();
+  1113→        let endpoint = '/businesses?status=approved&limit=3&featured=1';
+  1114→        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1115→
+  1116→        const data = await api.get(endpoint);
+  1117→        let businesses = data.businesses || [];
+  1118→
+  1119→        // If no featured businesses, get latest approved
+  1120→        if (businesses.length === 0) {
+  1121→            let fallbackEndpoint = '/businesses?status=approved&limit=8';
+  1122→            if (selectedState) fallbackEndpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1123→            const allData = await api.get(fallbackEndpoint);
+  1124→            businesses = allData.businesses || [];
+  1125→        }
+  1126→
+  1127→        if (loading) loading.remove();
+  1128→
+  1129→        if (businesses.length === 0) {
+  1130→            if (emptyState) emptyState.style.display = '';
+  1131→            return;
+  1132→        }
+  1133→
+  1134→        if (emptyState) emptyState.style.display = 'none';
+  1135→        grid.innerHTML = businesses.map(p => createBusinessCard(p)).join('');
+  1136→    } catch (error) {
+  1137→        if (loading) loading.remove();
+  1138→        if (emptyState) emptyState.style.display = '';
+  1139→        console.error('Error loading featured businesses:', error);
+  1140→    }
+  1141→}
+  1142→
+  1143→// ─── Index Page: Featured Products ───────────────────────────
+  1144→async function loadFeaturedProducts() {
+  1145→    const grid = document.getElementById('featuredProductsGrid');
+  1146→    const emptyState = document.getElementById('featuredProductsEmpty');
+  1147→    const loading = document.getElementById('featuredProductsLoading');
+  1148→    if (!grid) return;
+  1149→
+  1150→    try {
+  1151→        const selectedState = getSelectedState();
+  1152→        let endpoint = '/marketplace?status=approved&limit=8&featured=1';
+  1153→        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1154→
+  1155→        const data = await api.get(endpoint);
+  1156→        let products = data.products || [];
+  1157→
+  1158→        // If no featured products, get latest approved
+  1159→        if (products.length === 0) {
+  1160→            let fallbackEndpoint = '/marketplace?status=approved&limit=8';
+  1161→            if (selectedState) fallbackEndpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1162→            const allData = await api.get(fallbackEndpoint);
+  1163→            products = allData.products || [];
+  1164→        }
+  1165→
+  1166→        if (loading) loading.remove();
+  1167→
+  1168→        if (products.length === 0) {
+  1169→            if (emptyState) emptyState.style.display = '';
+  1170→            return;
+  1171→        }
+  1172→
+  1173→        if (emptyState) emptyState.style.display = 'none';
+  1174→
+  1175→        // Get featured item IDs from featured_items API for badge
+  1176→        let featuredIds = new Set();
+  1177→        try {
+  1178→            const fiData = await api.get('/featured-items?type=product');
+  1179→            (fiData.featured_items || []).forEach(f => featuredIds.add(f.item_id));
+  1180→        } catch (e) {}
+  1181→
+  1182→        grid.innerHTML = products.map(p => {
+  1183→            const images = (() => { try { return JSON.parse(p.images || '[]'); } catch { return []; } })();
+  1184→            const coverImage = images[0] || p.image || '';
+  1185→            const price = p.price ? `$${Number(p.price).toFixed(2)}` : '';
+  1186→            const condition = p.condition === 'new' ? 'Nuevo' : p.condition === 'used' ? 'Usado' : '';
+  1187→            const isFeatured = p.featured_at || featuredIds.has(p.id);
+  1188→
+  1189→            return `
+  1190→                <a href="marketplace.html?producto=${p.id}" class="product-card" style="position:relative;">
+  1191→                    ${isFeatured ? '<span style="position:absolute;top:8px;left:8px;z-index:2;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:0.65rem;padding:2px 8px;border-radius:6px;font-weight:700;"><i class="fas fa-star"></i> Destacado</span>' : ''}
+  1192→                    ${coverImage
+  1193→                        ? `<img src="${coverImage}" alt="${p.name || 'Producto'}" onerror="this.src='data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='200' height='160' fill='%23e0e0e0'><rect width='200' height='160'/><text x='50%' y='50%' text-anchor='middle' dy='.3em' fill='%23999' font-size='14' font-family='sans-serif'>Sin imagen</text></svg>")}'">`
+  1194→                        : `<div style="width:100%;height:160px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-box" style="font-size:2rem;color:#ccc;"></i></div>`}
+  1195→                    <div class="product-card-body">
+  1196→                        <div class="product-card-name">${p.name || 'Sin titulo'}</div>
+  1197→                        ${price ? `<div class="product-card-price">${price}</div>` : ''}
+  1198→                        <div style="font-size:0.75rem;color:#888;margin-top:4px;">${p.business_city || p.city || ''} ${p.business_state || p.state ? ', ' + (p.business_state || p.state) : ''}</div>
+  1199→                        ${condition ? `<span style="font-size:0.7rem;padding:2px 8px;border-radius:8px;background:${condition === 'Nuevo' ? '#e8f5e9' : '#fff3e0'};color:${condition === 'Nuevo' ? '#2e7d32' : '#e65100'};font-weight:600;">${condition}</span>` : ''}
+  1200→                    </div>
+  1201→                </a>
+  1202→            `;
+  1203→        }).join('');
+  1204→    } catch (error) {
+  1205→        if (loading) loading.remove();
+  1206→        if (emptyState) emptyState.style.display = '';
+  1207→        console.error('Error loading featured products:', error);
+  1208→    }
+  1209→}
+  1210→
+  1211→// ─── Index Page: Featured Jobs ───────────────────────────────
+  1212→async function loadFeaturedJobs() {
+  1213→    const list = document.getElementById('featuredJobsList');
+  1214→    const emptyState = document.getElementById('featuredJobsEmpty');
+  1215→    const loading = document.getElementById('featuredJobsLoading');
+  1216→    if (!list) return;
+  1217→
+  1218→    try {
+  1219→        const selectedState = getSelectedState();
+  1220→        let endpoint = '/jobs?status=approved&limit=6&featured=1';
+  1221→        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1222→
+  1223→        const data = await api.get(endpoint);
+  1224→        let jobs = data.jobs || [];
+  1225→
+  1226→        // If no featured jobs, get latest approved
+  1227→        if (jobs.length === 0) {
+  1228→            let fallbackEndpoint = '/jobs?status=approved&limit=6';
+  1229→            if (selectedState) fallbackEndpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1230→            const allData = await api.get(fallbackEndpoint);
+  1231→            jobs = allData.jobs || [];
+  1232→        }
+  1233→
+  1234→        if (loading) loading.remove();
+  1235→
+  1236→        if (jobs.length === 0) {
+  1237→            if (emptyState) emptyState.style.display = '';
+  1238→            return;
+  1239→        }
+  1240→
+  1241→        if (emptyState) emptyState.style.display = 'none';
+  1242→
+  1243→        // Get featured item IDs from featured_items API for badge
+  1244→        let featuredIds = new Set();
+  1245→        try {
+  1246→            const fiData = await api.get('/featured-items?type=job');
+  1247→            (fiData.featured_items || []).forEach(f => featuredIds.add(f.item_id));
+  1248→        } catch (e) {}
+  1249→
+  1250→        const jobTypeLabels = {
+  1251→            'tiempo_completo': 'Tiempo Completo',
+  1252→            'medio_tiempo': 'Medio Tiempo',
+  1253→            'contrato': 'Contrato',
+  1254→            'remoto': 'Remoto',
+  1255→            'freelance': 'Freelance',
+  1256→        };
+  1257→
+  1258→        list.innerHTML = jobs.map(j => {
+  1259→            const typeLabel = jobTypeLabels[j.job_type] || j.job_type || '';
+  1260→            const salaryText = j.salary || 'A convenir';
+  1261→            const locationText = [j.city, j.state].filter(Boolean).join(', ') || 'Venezuela';
+  1262→            const isFeatured = j.featured === 1 || featuredIds.has(j.id);
+  1263→
+  1264→            return `
+  1265→                <a href="empleo.html?job=${j.id}" style="text-decoration:none;color:inherit;display:block;margin-bottom:12px;">
+  1266→                    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;transition:box-shadow 0.2s,transform 0.2s;cursor:pointer;position:relative;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';this.style.transform='translateY(-1px)';" onmouseout="this.style.boxShadow='';this.style.transform='';">
+  1267→                        ${isFeatured ? '<span style="position:absolute;top:8px;right:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:0.6rem;padding:2px 7px;border-radius:6px;font-weight:700;"><i class="fas fa-star"></i> Destacado</span>' : ''}
+  1268→                        <div style="width:44px;height:44px;border-radius:10px;background:#fef3c7;color:#f59e0b;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+  1269→                            <i class="fas fa-briefcase"></i>
+  1270→                        </div>
+  1271→                        <div style="flex:1;min-width:0;">
+  1272→                            <div style="font-weight:600;font-size:0.95rem;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${j.title || 'Sin titulo'}</div>
+  1273→                            <div style="font-size:0.8rem;color:#6b7280;">${j.company_name || ''} &middot; ${locationText}</div>
+  1274→                        </div>
+  1275→                        <div style="text-align:right;flex-shrink:0;">
+  1276→                            ${typeLabel ? `<span style="font-size:0.7rem;padding:3px 8px;border-radius:8px;background:#eff6ff;color:#1a73e8;font-weight:600;">${typeLabel}</span>` : ''}
+  1277→                            <div style="font-size:0.78rem;color:#059669;font-weight:600;margin-top:4px;">${salaryText}</div>
+  1278→                        </div>
+  1279→                    </div>
+  1280→                </a>
+  1281→            `;
+  1282→        }).join('');
+  1283→    } catch (error) {
+  1284→        if (loading) loading.remove();
+  1285→        if (emptyState) emptyState.style.display = '';
+  1286→        console.error('Error loading featured jobs:', error);
+  1287→    }
+  1288→}
+  1289→
+  1290→// ─── Index Page: Featured Inmuebles (Properties) ─────────────
+  1291→async function loadFeaturedInmuebles() {
+  1292→    const grid = document.getElementById('featuredPropertiesGrid');
+  1293→    const emptyState = document.getElementById('featuredPropertiesEmpty');
+  1294→    const loading = document.getElementById('featuredPropertiesLoading');
+  1295→    if (!grid) return;
+  1296→
+  1297→    try {
+  1298→        const selectedState = getSelectedState();
+  1299→        let endpoint = '/properties?status=approved&limit=6&featured=1';
+  1300→        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1301→
+  1302→        const data = await api.get(endpoint);
+  1303→        let properties = data.properties || [];
+  1304→
+  1305→        // If no featured properties, get latest approved
+  1306→        if (properties.length === 0) {
+  1307→            let fallbackEndpoint = '/properties?status=approved&limit=6';
+  1308→            if (selectedState) fallbackEndpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1309→            const allData = await api.get(fallbackEndpoint);
+  1310→            properties = allData.properties || [];
+  1311→        }
+  1312→
+  1313→        if (loading) loading.remove();
+  1314→
+  1315→        if (properties.length === 0) {
+  1316→            if (emptyState) emptyState.style.display = '';
+  1317→            return;
+  1318→        }
+  1319→
+  1320→        if (emptyState) emptyState.style.display = 'none';
+  1321→
+  1322→        // Get featured item IDs for badge
+  1323→        let featuredIds = new Set();
+  1324→        try {
+  1325→            const fiData = await api.get('/featured-items?type=property');
+  1326→            (fiData.featured_items || []).forEach(f => featuredIds.add(f.item_id));
+  1327→        } catch (e) {}
+  1328→
+  1329→        const typeLabels = { casa: 'Casa', apartamento: 'Apartamento', local_comercial: 'Local Comercial', terreno: 'Terreno', oficina: 'Oficina', finca: 'Finca' };
+  1330→        const opLabels = { venta: 'Venta', alquiler: 'Alquiler' };
+  1331→
+  1332→        grid.innerHTML = properties.map(p => {
+  1333→            const typeLabel = typeLabels[p.property_type] || p.property_type || '';
+  1334→            const opLabel = opLabels[p.operation_type] || p.operation_type || '';
+  1335→            const imgUrl = p.cover_image || 'https://placehold.co/400x250/059669/fff?text=Inmueble';
+  1336→            const priceText = '$' + Number(p.price).toLocaleString() + (p.currency ? ' ' + p.currency : '');
+  1337→            const locationText = [p.city, p.state].filter(Boolean).join(', ') || 'Venezuela';
+  1338→            const beds = p.bedrooms ? p.bedrooms + ' hab.' : '';
+  1339→            const baths = p.bathrooms ? p.bathrooms + ' baños' : '';
+  1340→            const details = [beds, baths].filter(Boolean).join(' · ');
+  1341→            const isFeatured = featuredIds.has(p.id);
+  1342→
+  1343→            return `
+  1344→                <a href="https://millano.pages.dev/property.html?id=${p.id}" target="_blank" style="text-decoration:none;color:inherit;">
+  1345→                    <div class="product-card" style="position:relative;">
+  1346→                        ${isFeatured ? '<span style="position:absolute;top:10px;left:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:0.65rem;padding:3px 8px;border-radius:6px;font-weight:700;z-index:2;"><i class="fas fa-star"></i> Destacado</span>' : ''}
+  1347→                        <img src="${imgUrl}" alt="${escapeHtml(p.title || 'Inmueble')}" style="width:100%;height:160px;object-fit:cover;" onerror="this.src='https://placehold.co/400x250/059669/fff?text=Inmueble'">
+  1348→                        <div class="product-card-body">
+  1349→                            <div style="font-size:0.7rem;padding:2px 8px;border-radius:6px;background:#ecfdf5;color:#059669;font-weight:600;display:inline-block;margin-bottom:4px;">${opLabel} · ${typeLabel}</div>
+  1350→                            <div class="product-card-name">${escapeHtml(p.title || 'Sin titulo')}</div>
+  1351→                            <div style="font-size:0.8rem;color:#6b7280;margin-bottom:6px;"><i class="fas fa-map-marker-alt" style="font-size:0.7rem;"></i> ${escapeHtml(locationText)}</div>
+  1352→                            ${details ? `<div style="font-size:0.75rem;color:#9ca3af;margin-bottom:6px;">${details}</div>` : ''}
+  1353→                            <div class="product-card-price">${priceText}</div>
+  1354→                        </div>
+  1355→                    </div>
+  1356→                </a>
+  1357→            `;
+  1358→        }).join('');
+  1359→    } catch (error) {
+  1360→        if (loading) loading.remove();
+  1361→        if (emptyState) emptyState.style.display = '';
+  1362→        console.error('Error loading featured properties:', error);
+  1363→    }
+  1364→}
+  1365→
+  1366→// ─── Index Page: Site Stats ────────────────────────────────────
+  1367→async function loadSiteStats() {
+  1368→    const statProps = document.getElementById('statProperties');
+  1369→    const statUsers = document.getElementById('statUsers');
+  1370→    if (!statProps) return;
+  1371→
+  1372→    try {
+  1373→        const data = await api.get('/businesses?status=approved&limit=1');
+  1374→        const totalApproved = data.pagination?.total || 0;
+  1375→        statProps.textContent = totalApproved;
+  1376→    } catch {
+  1377→        statProps.textContent = '0';
+  1378→    }
+  1379→
+  1380→    try {
+  1381→        // Try to get users count (may fail without auth)
+  1382→        const data = await api.get('/stats');
+  1383→        if (data.stats) {
+  1384→            statProps.textContent = data.stats.approved_businesses || 0;
+  1385→            if (statUsers) statUsers.textContent = data.stats.total_users || 0;
+  1386→        }
+  1387→    } catch {
+  1388→        // Stats endpoint requires auth/admin - use fallback
+  1389→    }
+  1390→}
+  1391→
+  1392→// ═══════════════════════════════════════════════════════════════
+  1393→// SEARCH PAGE (search.html)
+  1394→// ═══════════════════════════════════════════════════════════════
+  1395→(function initSearchPage() {
+  1396→    document.addEventListener('DOMContentLoaded', () => {
+  1397→        const searchGrid = document.getElementById('searchResultsGrid');
+  1398→        if (!searchGrid) return; // Not on search page
+  1399→
+  1400→        // Populate filter fields from URL params
+  1401→        const params = getSearchParams();
+  1402→        if (params.estado && document.getElementById('sEstado')) document.getElementById('sEstado').value = params.estado;
+  1403→        if (params.categoria && document.getElementById('sCategoria')) document.getElementById('sCategoria').value = params.categoria;
+  1404→        if (params.city && document.getElementById('sCiudad')) document.getElementById('sCiudad').value = params.city;
+  1405→        if (params.business_type && document.getElementById('sTipoNegocio')) document.getElementById('sTipoNegocio').value = params.business_type;
+  1406→        if (params.search && document.getElementById('sBusqueda')) document.getElementById('sBusqueda').value = params.search;
+  1407→
+  1408→        // Search button
+  1409→        const searchBtn = document.getElementById('searchBtn');
+  1410→        if (searchBtn) {
+  1411→            searchBtn.addEventListener('click', (e) => {
+  1412→                e.preventDefault();
+  1413→                executeSearch(1);
+  1414→            });
+  1415→        }
+  1416→
+  1417→        // Sort change
+  1418→        const sSort = document.getElementById('sSort');
+  1419→        if (sSort) {
+  1420→            sSort.addEventListener('change', () => executeSearch(params.page));
+  1421→        }
+  1422→
+  1423→        // Extended sort (in collapsible filters)
+  1424→        const sOrdenar = document.getElementById('sOrdenar');
+  1425→        if (sOrdenar) {
+  1426→            sOrdenar.addEventListener('change', () => executeSearch(params.page));
+  1427→        }
+  1428→
+  1429→        // Toggle extended filters
+  1430→        const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+  1431→        const extendedFilters = document.getElementById('extendedFilters');
+  1432→        if (toggleFiltersBtn && extendedFilters) {
+  1433→            toggleFiltersBtn.addEventListener('click', () => {
+  1434→                extendedFilters.classList.toggle('hidden');
+  1435→            });
+  1436→        }
+  1437→
+  1438→        // View toggle (grid/list)
+  1439→        const gridViewBtn = document.getElementById('gridViewBtn');
+  1440→        const listViewBtn = document.getElementById('listViewBtn');
+  1441→        if (gridViewBtn && listViewBtn) {
+  1442→            gridViewBtn.addEventListener('click', () => {
+  1443→                searchGrid.classList.remove('list-view');
+  1444→                searchGrid.classList.add('grid-view');
+  1445→                gridViewBtn.classList.add('active');
+  1446→                listViewBtn.classList.remove('active');
+  1447→            });
+  1448→            listViewBtn.addEventListener('click', () => {
+  1449→                searchGrid.classList.remove('grid-view');
+  1450→                searchGrid.classList.add('list-view');
+  1451→                listViewBtn.classList.add('active');
+  1452→                gridViewBtn.classList.remove('active');
+  1453→            });
+  1454→        }
+  1455→
+  1456→        // Clear filters
+  1457→        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+  1458→        if (clearFiltersBtn) {
+  1459→            clearFiltersBtn.addEventListener('click', () => {
+  1460→                window.location.href = 'search.html';
+  1461→            });
+  1462→        }
+  1463→
+  1464→        // Execute initial search
+  1465→        executeSearch(params.page);
+  1466→    });
+  1467→
+  1468→    async function executeSearch(page = 1) {
+  1469→        const searchLoading = document.getElementById('searchLoading');
+  1470→        const noResults = document.getElementById('noResults');
+  1471→        const searchGrid = document.getElementById('searchResultsGrid');
+  1472→        const resultsCount = document.getElementById('resultsCount');
+  1473→        const activeFiltersEl = document.getElementById('activeFilters');
+  1474→        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+  1475→        const paginationEl = document.getElementById('pagination');
+  1476→
+  1477→        if (!searchGrid) return;
+  1478→
+  1479→        // Show loading
+  1480→        if (searchLoading) searchLoading.classList.remove('hidden');
+  1481→        if (noResults) noResults.classList.add('hidden');
+  1482→        searchGrid.innerHTML = '';
+  1483→        if (paginationEl) paginationEl.classList.add('hidden');
+  1484→
+  1485→        // Gather filter values
+  1486→        const estado = document.getElementById('sEstado')?.value || '';
+  1487→        const categoria = document.getElementById('sCategoria')?.value || '';
+  1488→        const ciudad = document.getElementById('sCiudad')?.value?.trim() || '';
+  1489→        const tipoNegocio = document.getElementById('sTipoNegocio')?.value || '';
+  1490→        const q = document.getElementById('sBusqueda')?.value?.trim() || '';
+  1491→        const sort = document.getElementById('sSort')?.value || document.getElementById('sOrdenar')?.value || '';
+  1492→
+  1493→        // Build API endpoint
+  1494→        let endpoint = `/businesses?status=approved&page=${page}&limit=12`;
+  1495→        if (estado) endpoint += `&state=${encodeURIComponent(estado)}`;
+  1496→        if (categoria) endpoint += `&categoria=${encodeURIComponent(categoria)}`;
+  1497→        if (ciudad) endpoint += `&city=${encodeURIComponent(ciudad)}`;
+  1498→        if (tipoNegocio) endpoint += `&business_type=${encodeURIComponent(tipoNegocio)}`;
+  1499→        if (q) endpoint += `&search=${encodeURIComponent(q)}`;
+  1500→
+  1501→        // Sort mapping
+  1502→        const sortMap = {
+  1503→            'reciente': 'newest',
+  1504→            'visto': 'views_desc',
+  1505→        };
+  1506→        if (sort && sort !== 'relevancia') endpoint += `&sort=${sortMap[sort] || sort}`;
+  1507→
+  1508→        try {
+  1509→            const data = await api.get(endpoint);
+  1510→            const businesses = data.businesses || [];
+  1511→            const paginationData = data.pagination || {};
+  1512→
+  1513→            if (searchLoading) searchLoading.classList.add('hidden');
+  1514→
+  1515→            // Results count
+  1516→            if (resultsCount) {
+  1517→                resultsCount.textContent = `${paginationData.total || 0} resultados encontrados`;
+  1518→            }
+  1519→
+  1520→            // Active filter tags
+  1521→            if (activeFiltersEl) {
+  1522→                let tags = '';
+  1523→                if (estado) tags += `<span class="active-filter-tag"><i class="fas fa-map"></i> ${estado} <button onclick="this.parentElement.remove(); document.getElementById('sEstado').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1524→                if (categoria) tags += `<span class="active-filter-tag"><i class="fas fa-tag"></i> ${categoria} <button onclick="this.parentElement.remove(); document.getElementById('sCategoria').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1525→                if (ciudad) tags += `<span class="active-filter-tag"><i class="fas fa-map-marker-alt"></i> ${ciudad} <button onclick="this.parentElement.remove(); document.getElementById('sCiudad').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1526→                if (tipoNegocio) tags += `<span class="active-filter-tag">${getBusinessTypeLabel(tipoNegocio)} <button onclick="this.parentElement.remove(); document.getElementById('sTipoNegocio').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1527→                if (q) tags += `<span class="active-filter-tag"><i class="fas fa-search"></i> "${truncateText(q, 20)}" <button onclick="this.parentElement.remove(); document.getElementById('sBusqueda').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1528→                activeFiltersEl.innerHTML = tags;
+  1529→                if (clearFiltersBtn) {
+  1530→                    clearFiltersBtn.classList.toggle('hidden', !tags);
+  1531→                }
+  1532→            }
+  1533→
+  1534→            // No results
+  1535→            if (businesses.length === 0) {
+  1536→                if (noResults) noResults.classList.remove('hidden');
+  1537→                return;
+  1538→            }
+  1539→
+  1540→            // Render business cards
+  1541→            searchGrid.innerHTML = businesses.map(p => createBusinessCard(p)).join('');
+  1542→
+  1543→            // Pagination
+  1544→            renderPagination(paginationEl, paginationData, executeSearch);
+  1545→
+  1546→            // Update URL without reload
+  1547→            updateSearchURL(estado, categoria, ciudad, tipoNegocio, q, page);
+  1548→
+  1549→        } catch (error) {
+  1550→            if (searchLoading) searchLoading.classList.add('hidden');
+  1551→            searchGrid.innerHTML = '<div class="no-results"><i class="fas fa-exclamation-circle fa-3x"></i><h2>Error de búsqueda</h2><p>No se pudieron cargar los resultados. Intenta nuevamente.</p></div>';
+  1552→            console.error('Search error:', error);
+  1553→        }
+  1554→    }
+  1555→
+  1556→    function updateSearchURL(estado, categoria, ciudad, tipoNegocio, q, page) {
+  1557→        const url = new URL(window.location);
+  1558→        url.searchParams.delete('estado');
+  1559→        url.searchParams.delete('categoria');
+  1560→        url.searchParams.delete('ciudad');
+  1561→        url.searchParams.delete('tipo_negocio');
+  1562→        url.searchParams.delete('q');
+  1563→        url.searchParams.delete('page');
+  1564→
+  1565→        if (estado) url.searchParams.set('estado', estado);
+  1566→        if (categoria) url.searchParams.set('categoria', categoria);
+  1567→        if (ciudad) url.searchParams.set('ciudad', ciudad);
+  1568→        if (tipoNegocio) url.searchParams.set('tipo_negocio', tipoNegocio);
+  1569→        if (q) url.searchParams.set('q', q);
+  1570→        if (page && page > 1) url.searchParams.set('page', page);
+  1571→
+  1572→        window.history.replaceState({}, '', url.toString());
+  1573→    }
+  1574→
+  1575→    function renderPagination(container, paginationData, onPageChange) {
+  1576→        if (!container || !paginationData) return;
+  1577→
+  1578→        const { page, totalPages, total } = paginationData;
+  1579→
+  1580→        if (totalPages <= 1) {
+  1581→            container.classList.add('hidden');
+  1582→            return;
+  1583→        }
+  1584→
+  1585→        container.classList.remove('hidden');
+  1586→        const prevBtn = document.getElementById('paginationPrev');
+  1587→        const nextBtn = document.getElementById('paginationNext');
+  1588→        const pagesContainer = document.getElementById('paginationPages');
+  1589→
+  1590→        if (prevBtn) prevBtn.disabled = page <= 1;
+  1591→        if (nextBtn) nextBtn.disabled = page >= totalPages;
+  1592→
+  1593→        if (pagesContainer) {
+  1594→            let html = '';
+  1595→            const maxVisible = 5;
+  1596→            let start = Math.max(1, page - Math.floor(maxVisible / 2));
+  1597→            let end = Math.min(totalPages, start + maxVisible - 1);
+  1598→            if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+  1599→
+  1600→            if (start > 1) {
+  1601→                html += `<button class="pagination-btn" data-page="1">1</button>`;
+  1602→                if (start > 2) html += '<span class="pagination-dots">...</span>';
+  1603→            }
+  1604→            for (let i = start; i <= end; i++) {
+  1605→                html += `<button class="pagination-btn ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+  1606→            }
+  1607→            if (end < totalPages) {
+  1608→                if (end < totalPages - 1) html += '<span class="pagination-dots">...</span>';
+  1609→                html += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+  1610→            }
+  1611→
+  1612→            pagesContainer.innerHTML = html;
+  1613→
+  1614→            pagesContainer.querySelectorAll('.pagination-btn').forEach(btn => {
+  1615→                btn.addEventListener('click', () => {
+  1616→                    const p = parseInt(btn.dataset.page);
+  1617→                    if (p) onPageChange(p);
+  1618→                });
+  1619→            });
+  1620→        }
+  1621→
+  1622→        if (prevBtn) {
+  1623→            prevBtn.onclick = () => { if (page > 1) onPageChange(page - 1); };
+  1624→        }
+  1625→        if (nextBtn) {
+  1626→            nextBtn.onclick = () => { if (page < totalPages) onPageChange(page + 1); };
+  1627→        }
+  1628→    }
+  1629→})();
+  1630→
+  1631→
+  1632→// ─── Force SW update check ─────────────────────────────────
+  1633→if ('serviceWorker' in navigator) {
+  1634→    navigator.serviceWorker.addEventListener('controllerchange', () => {
+  1635→        // New SW activated, reload to get fresh assets
+  1636→        window.location.reload();
+  1637→    });
+  1638→    // Check for updates every 60 seconds
+  1639→    setInterval(() => {
+  1640→        navigator.serviceWorker.getRegistration().then(reg => {
+  1641→            if (reg) reg.update();
+  1642→        });
+  1643→    }, 60000);
+  1644→}
