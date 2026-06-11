@@ -1,0 +1,709 @@
+   100→   179→   218→
+   101→   180→   219→        sections.forEach(section => observer.observe(section));
+   102→   181→   220→
+   103→   182→   221→        // Focus tracking on inputs within sections
+   104→   183→   222→        sections.forEach(section => {
+   105→   184→   223→            const inputs = section.querySelectorAll('input, select, textarea');
+   106→   185→   224→            inputs.forEach(input => {
+   107→   186→   225→                input.addEventListener('focus', () => {
+   108→   187→   226→                    sections.forEach(s => s.classList.remove('in-focus'));
+   109→   188→   227→                    section.classList.add('in-focus');
+   110→   189→   228→                    const sectionNum = parseInt(section.dataset.section);
+   111→   190→   229→                    updateStepIndicator(sectionNum);
+   112→   191→   230→                });
+   113→   192→   231→            });
+   114→   193→   232→        });
+   115→   194→   233→    }
+   116→   195→   234→
+   117→   196→   235→    function updateStepIndicator(activeStep) {
+   118→   197→   236→        const steps = document.querySelectorAll('.pf-step');
+   119→   198→   237→        const stepLines = document.querySelectorAll('.pf-step-line');
+   120→   199→   238→
+   121→   200→   239→        steps.forEach((step, i) => {
+   122→   201→   240→            const stepNum = i + 1;
+   123→   202→   241→            step.classList.remove('active', 'completed');
+   124→   203→   242→            if (stepNum < activeStep) {
+   125→   204→   243→                step.classList.add('completed');
+   126→   205→   244→            } else if (stepNum === activeStep) {
+   127→   206→   245→                step.classList.add('active');
+   128→   207→   246→            }
+   129→   208→   247→        });
+   130→   209→   248→
+   131→   210→   249→        stepLines.forEach((line, i) => {
+   132→   211→   250→            const lineStep = i + 1;
+   133→   212→   251→            line.classList.toggle('active', lineStep < activeStep);
+   134→   213→   252→        });
+   135→   214→   253→    }
+   136→   215→   254→
+   137→   216→   255→    // ─── Currency Radio Buttons ─────────────────────────────────
+   138→   217→   256→    function setupCurrencySelector() {
+   139→   218→   257→        const radios = document.querySelectorAll('input[name="moneda"]');
+   140→   219→   258→        const priceSymbol = document.getElementById('priceSymbol');
+   141→   220→   259→
+   142→   221→   260→        const symbols = { 'USD': '$', 'EUR': '€', 'Bs': 'Bs' };
+   143→   222→   261→
+   144→   223→   262→        radios.forEach(radio => {
+   145→   224→   263→            radio.addEventListener('change', () => {
+   146→   225→   264→                if (priceSymbol) {
+   147→   226→   265→                    priceSymbol.textContent = symbols[radio.value] || '$';
+   148→   227→   266→                }
+   149→   228→   267→            });
+   150→   229→   268→        });
+   151→   230→   269→    }
+   152→   231→   270→
+   153→   232→   271→    function getSelectedCurrency() {
+   154→   233→   272→        const checked = document.querySelector('input[name="moneda"]:checked');
+   155→   234→   273→        return checked ? checked.value : 'USD';
+   156→   235→   274→    }
+   157→   236→   275→
+   158→   237→   276→    // ─── Initialization ─────────────────────────────────────────
+   159→   238→   277→    function initForm() {
+   160→   239→   278→        // Check authentication
+   161→   240→   279→        if (!requireAuth()) return;
+   162→   241→   280→
+   163→   242→   281→        // Check for edit mode via URL param
+   164→   243→   282→        const urlParams = new URLSearchParams(window.location.search);
+   165→   244→   283→        const editId = urlParams.get('id');
+   166→   245→   284→        if (editId) {
+   167→   246→   285→            editingPropertyId = parseInt(editId);
+   168→   247→   286→            loadPropertyForEdit(editingPropertyId);
+   169→   248→   287→        }
+   170→   249→   288→
+   171→   250→   289→        // Set up event listeners
+   172→   251→   290→        setupPhotoUpload();
+   173→   252→   291→        setupFormSubmit();
+   174→   253→   292→        setupCharCounters();
+   175→   254→   293→        setupStepProgress();
+   176→   255→   294→        setupCurrencySelector();
+   177→   256→   295→
+   178→   257→   296→        // Initialize location picker map
+   179→   258→   297→        initLocationPicker();
+   180→   259→   298→    }
+   181→   260→   299→
+   182→   261→   300→    // ─── Load Property for Editing ──────────────────────────────
+   183→   262→   301→    async function loadPropertyForEdit(propertyId) {
+   184→   263→   302→        try {
+   185→   264→   303→            const property = await api.get(`/properties/${propertyId}`);
+   186→   265→   304→
+   187→   266→   305→            if (formTitle) {
+   188→   267→   306→                formTitle.textContent = 'Editar Propiedad';
+   189→   268→   307→            }
+   190→   269→   308→            if (submitBtnText) {
+   191→   270→   309→                submitBtnText.textContent = 'Guardar Cambios';
+   192→   271→   310→            }
+   193→   272→   311→
+   194→   273→   312→            updateFormFromProperty(property);
+   195→   274→   313→        } catch (error) {
+   196→   275→   314→            showToast('Error al cargar la propiedad para editar', 'error');
+   197→   276→   315→            console.error('Error loading property:', error);
+   198→   277→   316→        }
+   199→   278→   317→    }
+   200→   279→   318→
+   201→   280→   319→    // ─── Populate Form from Property Data ───────────────────────
+   202→   281→   320→    function updateFormFromProperty(property) {
+   203→   282→   321→        if (!property) return;
+   204→   283→   322→
+   205→   284→   323→        const setValue = (id, value) => {
+   206→   285→   324→            const el = document.getElementById(id);
+   207→   286→   325→            if (el) el.value = value || '';
+   208→   287→   326→        };
+   209→   288→   327→
+   210→   289→   328→        setValue('propTitle', property.title);
+   211→   290→   329→        setValue('propDescription', property.description);
+   212→   291→   330→        setValue('propPrecio', property.price);
+   213→   292→   331→        // Currency - now uses radio buttons
+   214→   293→   332→        const currencyRadio = document.querySelector(`input[name="moneda"][value="${property.currency || 'USD'}"]`);
+   215→   294→   333→        if (currencyRadio) currencyRadio.checked = true;
+   216→   295→   334→        const priceSymbol = document.getElementById('priceSymbol');
+   217→   296→   335→        if (priceSymbol) {
+   218→   297→   336→            const symbols = { 'USD': '$', 'EUR': '€', 'Bs': 'Bs' };
+   219→   298→   337→            priceSymbol.textContent = symbols[property.currency || 'USD'] || '$';
+   220→   299→   338→        }
+   221→   300→   339→        setValue('propDireccion', property.address);
+   222→   301→   340→        setValue('propCiudad', property.city);
+   223→   302→   341→        setValue('propEstado', property.state);
+   224→   303→   342→        setValue('propLat', property.lat);
+   225→   304→   343→        setValue('propLng', property.lng);
+   226→   305→   344→
+   227→   306→   345→        // Update map marker if coordinates exist
+   228→   307→   346→        if (property.lat && property.lng && locationMap && locationMarker) {
+   229→   308→   347→            selectedLat = property.lat;
+   230→   309→   348→            selectedLng = property.lng;
+   231→   310→   349→            locationMarker.setLatLng([selectedLat, selectedLng]);
+   232→   311→   350→            locationMap.flyTo([selectedLat, selectedLng], 15, { duration: 0.5 });
+   233→   312→   351→            updateCoordinateFields();
+   234→   313→   352→        }
+   235→   314→   353→        setValue('propHabitaciones', property.bedrooms);
+   236→   315→   354→        setValue('propBanos', property.bathrooms);
+   237→   316→   355→        setValue('propEstacionamientos', property.parking_spaces);
+   238→   317→   356→        setValue('propPisos', property.floors);
+   239→   318→   357→        setValue('propArea', property.area);
+   240→   319→   358→        setValue('propAreaUnidad', property.area_unit);
+   241→   320→   359→        setValue('propAno', property.year_built);
+   242→   321→   360→
+   243→   322→   361→        // Property type - capitalize for display in select
+   244→   323→   362→        const propTipo = document.getElementById('propTipo');
+   245→   324→   363→        if (propTipo && property.property_type) {
+   246→   325→   364→            const typeMap = {
+   247→   326→   365→                'casa': 'Casa',
+   248→   327→   366→                'apartamento': 'Apartamento',
+   249→   328→   367→                'terreno': 'Terreno',
+   250→   329→   368→                'local_comercial': 'Local Comercial',
+   251→   330→   369→                'oficina': 'Oficina',
+   252→   331→   370→                'hotel': 'Hotel',
+   253→   332→   371→                'finca': 'Finca',
+   254→   333→   372→                'galpon': 'Galpón',
+   255→   334→   373→                'estacionamiento': 'Estacionamiento',
+   256→   335→   374→                'otro': 'Otro',
+   257→   336→   375→            };
+   258→   337→   376→            propTipo.value = typeMap[property.property_type.toLowerCase()] || property.property_type;
+   259→   338→   377→        }
+   260→   339→   378→
+   261→   340→   379→        // Operation type
+   262→   341→   380→        const propOperacion = document.getElementById('propOperacion');
+   263→   342→   381→        if (propOperacion && property.operation_type) {
+   264→   343→   382→            const opMap = {
+   265→   344→   383→                'venta': 'Venta',
+   266→   345→   384→                'alquiler': 'Alquiler',
+   267→   346→   385→                'venta_alquiler': 'Venta y Alquiler',
+   268→   347→   386→            };
+   269→   348→   387→            propOperacion.value = opMap[property.operation_type.toLowerCase()] || property.operation_type;
+   270→   349→   388→        }
+   271→   350→   389→
+   272→   351→   390→        // Features checkboxes
+   273→   352→   391→        const featuresMap = {
+   274→   353→   392→            'has_pool': 'Piscina',
+   275→   354→   393→            'has_garden': 'Jardín',
+   276→   355→   394→            'has_ac': 'Aire Acondicionado',
+   277→   356→   395→            'has_kitchen': 'Cocina',
+   278→   357→   396→            'has_furniture': 'Amueblado',
+   279→   358→   397→            'has_security': 'Seguridad',
+   280→   359→   398→            'has_elevator': 'Ascensor',
+   281→   360→   399→        };
+   282→   361→   400→        for (const [field, label] of Object.entries(featuresMap)) {
+   283→   362→   401→            if (property[field]) {
+   284→   363→   402→                const checkbox = propertyForm?.querySelector(`input[name="caracteristicas"][value="${label}"]`);
+   285→   364→   403→                if (checkbox) checkbox.checked = true;
+   286→   365→   404→            }
+   287→   366→   405→        }
+   288→   367→   406→
+   289→   368→   407→        // Load existing images
+   290→   369→   408→        if (property.images && property.images.length > 0) {
+   291→   370→   409→            uploadedImages = property.images.map((img, index) => ({
+   292→   371→   410→                url: img.url,
+   293→   372→   411→                file: null,
+   294→   373→   412→                preview: img.url || img.thumbnail_url,
+   295→   374→   413→                isExisting: true,
+   296→   375→   414→                imageId: img.id,
+   297→   376→   415→                isCover: img.is_cover,
+   298→   377→   416→                orderIndex: img.order_index,
+   299→   378→   417→            }));
+   300→   379→   418→            renderPhotoPreviews();
+   301→   380→   419→        }
+   302→   381→   420→
+   303→   382→   421→        // Trigger char counters for edit mode
+   304→   383→   422→        const titleInput = document.getElementById('propTitle');
+   305→   384→   423→        const descInput = document.getElementById('propDescription');
+   306→   385→   424→        const titleCount = document.getElementById('titleCharCount');
+   307→   386→   425→        const descCount = document.getElementById('descCharCount');
+   308→   387→   426→        if (titleInput && titleCount) {
+   309→   388→   427→            const len = (titleInput.value || '').length;
+   310→   389→   428→            titleCount.textContent = len + '/150';
+   311→   390→   429→        }
+   312→   391→   430→        if (descInput && descCount) {
+   313→   392→   431→            const len = (descInput.value || '').length;
+   314→   393→   432→            descCount.textContent = len + '/2000';
+   315→   394→   433→        }
+   316→   395→   434→    }
+   317→   396→   435→
+   318→   397→   436→    // ─── Photo Upload Setup ─────────────────────────────────────
+   319→   398→   437→    function setupPhotoUpload() {
+   320→   399→   438→        if (!uploadArea || !photoInput) return;
+   321→   400→   439→
+   322→   401→   440→        // Click to upload (gallery)
+   323→   402→   441→        uploadArea.addEventListener('click', () => {
+   324→   403→   442→            photoInput.click();
+   325→   404→   443→        });
+   326→   405→   444→
+   327→   406→   445→        // File input change
+   328→   407→   446→        photoInput.addEventListener('change', (e) => {
+   329→   408→   447→            if (e.target.files) {
+   330→   409→   448→                handlePhotoUpload(Array.from(e.target.files));
+   331→   410→   449→                photoInput.value = ''; // Reset so same file can be selected again
+   332→   411→   450→            }
+   333→   412→   451→        });
+   334→   413→   452→
+   335→   414→   453→        // Drag and drop
+   336→   415→   454→        uploadArea.addEventListener('dragover', (e) => {
+   337→   416→   455→            e.preventDefault();
+   338→   417→   456→            e.stopPropagation();
+   339→   418→   457→            uploadArea.classList.add('active');
+   340→   419→   458→        });
+   341→   420→   459→
+   342→   421→   460→        uploadArea.addEventListener('dragleave', (e) => {
+   343→   422→   461→            e.preventDefault();
+   344→   423→   462→            e.stopPropagation();
+   345→   424→   463→            uploadArea.classList.remove('active');
+   346→   425→   464→        });
+   347→   426→   465→
+   348→   427→   466→        uploadArea.addEventListener('drop', (e) => {
+   349→   428→   467→            e.preventDefault();
+   350→   429→   468→            e.stopPropagation();
+   351→   430→   469→            uploadArea.classList.remove('active');
+   352→   431→   470→
+   353→   432→   471→            const files = Array.from(e.dataTransfer.files);
+   354→   433→   472→            handlePhotoUpload(files);
+   355→   434→   473→        });
+   356→   435→   474→
+   357→   436→   475→        // Gallery button
+   358→   437→   476→        const galleryBtn = document.getElementById('galleryBtn');
+   359→   438→   477→        if (galleryBtn) {
+   360→   439→   478→            galleryBtn.addEventListener('click', () => {
+   361→   440→   479→                photoInput.click();
+   362→   441→   480→            });
+   363→   442→   481→        }
+   364→   443→   482→
+   365→   444→   483→        // Camera button
+   366→   445→   484→        const cameraBtn = document.getElementById('cameraBtn');
+   367→   446→   485→        const cameraInput = document.getElementById('cameraInput');
+   368→   447→   486→        if (cameraBtn && cameraInput) {
+   369→   448→   487→            cameraBtn.addEventListener('click', () => {
+   370→   449→   488→                cameraInput.click();
+   371→   450→   489→            });
+   372→   451→   490→            cameraInput.addEventListener('change', (e) => {
+   373→   452→   491→                if (e.target.files) {
+   374→   453→   492→                    handlePhotoUpload(Array.from(e.target.files));
+   375→   454→   493→                    cameraInput.value = '';
+   376→   455→   494→                }
+   377→   456→   495→            });
+   378→   457→   496→        }
+   379→   458→   497→    }
+   380→   459→   498→
+   381→   460→   499→    // ─── Handle Photo Upload ────────────────────────────────────
+   382→   461→   500→    function handlePhotoUpload(files) {
+   383→   462→   501→        if (!files || files.length === 0) return;
+   384→   463→   502→
+   385→   464→   503→        // Check total count
+   386→   465→   504→        const remaining = MAX_PHOTOS - uploadedImages.length;
+   387→   466→   505→        if (remaining <= 0) {
+   388→   467→   506→            showToast(`Máximo ${MAX_PHOTOS} imágenes permitidas`, 'warning');
+   389→   468→   507→            return;
+   390→   469→   508→        }
+   391→   470→   509→
+   392→   471→   510→        const validFiles = files.slice(0, remaining);
+   393→   472→   511→
+   394→   473→   512→        for (const file of validFiles) {
+   395→   474→   513→            // Validate file extension
+   396→   475→   514→            const extension = file.name.split('.').pop().toLowerCase();
+   397→   476→   515→            if (!ALLOWED_EXTENSIONS.includes(extension)) {
+   398→   477→   516→                showToast(`Archivo "${file.name}" no es un formato soportado. Usa JPG, PNG, WebP o GIF.`, 'error');
+   399→   478→   517→                continue;
+   400→   479→   518→            }
+   401→   480→   519→
+   402→   481→   520→            // Validate file type
+   403→   482→   521→            if (!ALLOWED_TYPES.includes(file.type)) {
+   404→   483→   522→                showToast(`Tipo de archivo "${file.name}" no soportado.`, 'error');
+   405→   484→   523→                continue;
+   406→   485→   524→            }
+   407→   486→   525→
+   408→   487→   526→            // Validate file size
+   409→   488→   527→            if (file.size > MAX_FILE_SIZE) {
+   410→   489→   528→                showToast(`Archivo "${file.name}" excede el límite de 5MB.`, 'error');
+   411→   490→   529→                continue;
+   412→   491→   530→            }
+   413→   492→   531→
+   414→   493→   532→            // Create preview
+   415→   494→   533→            const reader = new FileReader();
+   416→   495→   534→            reader.onload = (e) => {
+   417→   496→   535→                uploadedImages.push({
+   418→   497→   536→                    url: null,
+   419→   498→   537→                    file: file,
+   420→   499→   538→                    preview: e.target.result,
+   421→   500→   539→                    isExisting: false,
+   422→   501→   540→                });
+   423→   502→   541→                renderPhotoPreviews();
+   424→   503→   542→            };
+   425→   504→   543→            reader.readAsDataURL(file);
+   426→   505→   544→        }
+   427→   506→   545→    }
+   428→   507→   546→
+   429→   508→   547→    // ─── Render Photo Previews ──────────────────────────────────
+   430→   509→   548→    function renderPhotoPreviews() {
+   431→   510→   549→        if (!photosPreview) return;
+   432→   511→   550→
+   433→   512→   551→        photosPreview.innerHTML = '';
+   434→   513→   552→
+   435→   514→   553→        uploadedImages.forEach((img, index) => {
+   436→   515→   554→            const wrapper = document.createElement('div');
+   437→   516→   555→            wrapper.className = 'photo-preview-item';
+   438→   517→   556→            wrapper.draggable = true;
+   439→   518→   557→            wrapper.dataset.index = index;
+   440→   519→   558→
+   441→   520→   559→            wrapper.innerHTML = `
+   442→   521→   560→                <img src="${img.preview}" alt="Preview ${index + 1}">
+   443→   522→   561→                ${index === 0 ? '<span class="photo-cover-badge">Principal</span>' : ''}
+   444→   523→   562→                <button type="button" class="photo-remove-btn" title="Eliminar imagen">
+   445→   524→   563→                    <i class="fas fa-times"></i>
+   446→   525→   564→                </button>
+   447→   526→   565→            `;
+   448→   527→   566→
+   449→   528→   567→            // Remove button
+   450→   529→   568→            const removeBtn = wrapper.querySelector('.photo-remove-btn');
+   451→   530→   569→            removeBtn.addEventListener('click', (e) => {
+   452→   531→   570→                e.stopPropagation();
+   453→   532→   571→                removePhoto(index);
+   454→   533→   572→            });
+   455→   534→   573→
+   456→   535→   574→            // Drag to reorder
+   457→   536→   575→            wrapper.addEventListener('dragstart', (e) => {
+   458→   537→   576→                e.dataTransfer.setData('text/plain', index.toString());
+   459→   538→   577→                wrapper.classList.add('dragging');
+   460→   539→   578→            });
+   461→   540→   579→
+   462→   541→   580→            wrapper.addEventListener('dragend', () => {
+   463→   542→   581→                wrapper.classList.remove('dragging');
+   464→   543→   582→            });
+   465→   544→   583→
+   466→   545→   584→            wrapper.addEventListener('dragover', (e) => {
+   467→   546→   585→                e.preventDefault();
+   468→   547→   586→                wrapper.classList.add('drag-over');
+   469→   548→   587→            });
+   470→   549→   588→
+   471→   550→   589→            wrapper.addEventListener('dragleave', () => {
+   472→   551→   590→                wrapper.classList.remove('drag-over');
+   473→   552→   591→            });
+   474→   553→   592→
+   475→   554→   593→            wrapper.addEventListener('drop', (e) => {
+   476→   555→   594→                e.preventDefault();
+   477→   556→   595→                wrapper.classList.remove('drag-over');
+   478→   557→   596→                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+   479→   558→   597→                const toIndex = index;
+   480→   559→   598→                if (fromIndex !== toIndex) {
+   481→   560→   599→                    const item = uploadedImages.splice(fromIndex, 1)[0];
+   482→   561→   600→                    uploadedImages.splice(toIndex, 0, item);
+   483→   562→   601→                    renderPhotoPreviews();
+   484→   563→   602→                }
+   485→   564→   603→            });
+   486→   565→   604→
+   487→   566→   605→            photosPreview.appendChild(wrapper);
+   488→   567→   606→        });
+   489→   568→   607→
+   490→   569→   608→        // Update upload area message
+   491→   570→   609→        if (uploadPlaceholder) {
+   492→   571→   610→            if (uploadedImages.length >= MAX_PHOTOS) {
+   493→   572→   611→                uploadPlaceholder.innerHTML = `
+   494→   573→   612→                    <i class="fas fa-check-circle"></i>
+   495→   574→   613→                    <h3>Máximo de imágenes alcanzado</h3>
+   496→   575→   614→                    <p>Has alcanzado el límite de ${MAX_PHOTOS} imágenes</p>
+   497→   576→   615→                `;
+   498→   577→   616→                uploadArea.style.pointerEvents = 'none';
+   499→   578→   617→                uploadArea.style.opacity = '0.6';
+   500→   579→   618→            } else {
+   501→   580→   619→                uploadArea.style.pointerEvents = '';
+   502→   581→   620→                uploadArea.style.opacity = '';
+   503→   582→   621→            }
+   504→   583→   622→        }
+   505→   584→   623→    }
+   506→   585→   624→
+   507→   586→   625→    // ─── Remove Photo ───────────────────────────────────────────
+   508→   587→   626→    function removePhoto(index) {
+   509→   588→   627→        if (index < 0 || index >= uploadedImages.length) return;
+   510→   589→   628→
+   511→   590→   629→        const removed = uploadedImages[index];
+   512→   591→   630→        uploadedImages.splice(index, 1);
+   513→   592→   631→        renderPhotoPreviews();
+   514→   593→   632→
+   515→   594→   633→        if (removed.isExisting) {
+   516→   595→   634→            showToast('La imagen se eliminará al guardar los cambios', 'info');
+   517→   596→   635→        }
+   518→   597→   636→    }
+   519→   598→   637→
+   520→   599→   638→    // ─── Setup Form Submit ──────────────────────────────────────
+   521→   600→   639→    function setupFormSubmit() {
+   522→   601→   640→        if (!propertyForm) return;
+   523→   602→   641→
+   524→   603→   642→        propertyForm.addEventListener('submit', handleFormSubmit);
+   525→   604→   643→    }
+   526→   605→   644→
+   527→   606→   645→    // ─── Handle Form Submit ─────────────────────────────────────
+   528→   607→   646→    async function handleFormSubmit(e) {
+   529→   608→   647→        e.preventDefault();
+   530→   609→   648→
+   531→   610→   649→        if (isSubmitting) return;
+   532→   611→   650→
+   533→   612→   651→        // Clear previous errors
+   534→   613→   652→        document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+   535→   614→   653→
+   536→   615→   654→        // Gather form values
+   537→   616→   655→        const getValue = (id) => {
+   538→   617→   656→            const el = document.getElementById(id);
+   539→   618→   657→            return el ? el.value.trim() : '';
+   540→   619→   658→        };
+   541→   620→   659→
+   542→   621→   660→        const getValueNum = (id) => {
+   543→   622→   661→            const el = document.getElementById(id);
+   544→   623→   662→            return el ? parseFloat(el.value) : null;
+   545→   624→   663→        };
+   546→   625→   664→
+   547→   626→   665→        const title = getValue('propTitle');
+   548→   627→   666→        const description = getValue('propDescription');
+   549→   628→   667→        const tipo = getValue('propTipo');
+   550→   629→   668→        const operacion = getValue('propOperacion');
+   551→   630→   669→        const precio = getValueNum('propPrecio');
+   552→   631→   670→        const moneda = getSelectedCurrency();
+   553→   632→   671→        const direccion = getValue('propDireccion');
+   554→   633→   672→        const ciudad = getValue('propCiudad');
+   555→   634→   673→        const estado = getValue('propEstado');
+   556→   635→   674→        let lat = getValueNum('propLat');
+   557→   636→   675→        let lng = getValueNum('propLng');
+   558→   637→   676→        const habitaciones = getValueNum('propHabitaciones');
+   559→   638→   677→        const banos = getValueNum('propBanos');
+   560→   639→   678→        const estacionamientos = getValueNum('propEstacionamientos');
+   561→   640→   679→        const pisos = getValueNum('propPisos');
+   562→   641→   680→        const area = getValueNum('propArea');
+   563→   642→   681→        const areaUnidad = getValue('propAreaUnidad');
+   564→   643→   682→        const ano = getValueNum('propAno');
+   565→   644→   683→
+   566→   645→   684→        // ── Validation ──
+   567→   646→   685→        let hasError = false;
+   568→   647→   686→
+   569→   648→   687→        if (!title) {
+   570→   649→   688→            showFormError('propTitle', 'El título es requerido');
+   571→   650→   689→            hasError = true;
+   572→   651→   690→        } else if (title.length > 150) {
+   573→   652→   691→            showFormError('propTitle', 'El título no puede exceder 150 caracteres');
+   574→   653→   692→            hasError = true;
+   575→   654→   693→        }
+   576→   655→   694→
+   577→   656→   695→        if (!description) {
+   578→   657→   696→            showFormError('propDescription', 'La descripción es requerida');
+   579→   658→   697→            hasError = true;
+   580→   659→   698→        }
+   581→   660→   699→
+   582→   661→   700→        if (!tipo) {
+   583→   662→   701→            showFormError('propTipo', 'Selecciona un tipo de propiedad');
+   584→   663→   702→            hasError = true;
+   585→   664→   703→        }
+   586→   665→   704→
+   587→   666→   705→        if (!operacion) {
+   588→   667→   706→            showFormError('propOperacion', 'Selecciona un tipo de operación');
+   589→   668→   707→            hasError = true;
+   590→   669→   708→        }
+   591→   670→   709→
+   592→   671→   710→        if (!precio || precio <= 0) {
+   593→   672→   711→            showFormError('propPrecio', 'Ingresa un precio válido');
+   594→   673→   712→            hasError = true;
+   595→   674→   713→        }
+   596→   675→   714→
+   597→   676→   715→        if (!direccion) {
+   598→   677→   716→            showFormError('propDireccion', 'La dirección es requerida');
+   599→   678→   717→            hasError = true;
+   600→   679→   718→        }
+   601→   680→   719→
+   602→   681→   720→        if (!ciudad) {
+   603→   682→   721→            showFormError('propCiudad', 'La ciudad es requerida');
+   604→   683→   722→            hasError = true;
+   605→   684→   723→        }
+   606→   685→   724→
+   607→   686→   725→        if (!area || area <= 0) {
+   608→   687→   726→            showFormError('propArea', 'El área es requerida');
+   609→   688→   727→            hasError = true;
+   610→   689→   728→        }
+   611→   690→   729→
+   612→   691→   730→        if (hasError) {
+   613→   692→   731→            showToast('Por favor corrige los errores en el formulario', 'error');
+   614→   693→   732→            // Scroll to first error
+   615→   694→   733→            const firstError = document.querySelector('.form-error:not(:empty)');
+   616→   695→   734→            if (firstError) {
+   617→   696→   735→                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+   618→   697→   736→            }
+   619→   698→   737→            return;
+   620→   699→   738→        }
+   621→   700→   739→
+   622→   701→   740→        // Default coordinates to Barinas if not provided
+   623→   702→   741→        if (isNaN(lat) || isNaN(lng)) {
+   624→   703→   742→            lat = BARINAS_DEFAULT.lat;
+   625→   704→   743→            lng = BARINAS_DEFAULT.lng;
+   626→   705→   744→        }
+   627→   706→   745→
+   628→   707→   746→        // Map form values to API field names
+   629→   708→   747→        const tipoMap = {
+   630→   709→   748→            'Casa': 'casa',
+   631→   710→   749→            'Apartamento': 'apartamento',
+   632→   711→   750→            'Terreno': 'terreno',
+   633→   712→   751→            'Local Comercial': 'local_comercial',
+   634→   713→   752→            'Oficina': 'oficina',
+   635→   714→   753→            'Hotel': 'hotel',
+   636→   715→   754→            'Finca': 'finca',
+   637→   716→   755→            'Galpón': 'Galpón',
+   638→   717→   756→            'Estacionamiento': 'estacionamiento',
+   639→   718→   757→            'Otro': 'otro',
+   640→   719→   758→        };
+   641→   720→   759→
+   642→   721→   760→        const operacionMap = {
+   643→   722→   761→            'Venta': 'venta',
+   644→   723→   762→            'Alquiler': 'alquiler',
+   645→   724→   763→            'Venta y Alquiler': 'venta_alquiler',
+   646→   725→   764→        };
+   647→   726→   765→
+   648→   727→   766→        // Gather features
+   649→   728→   767→        const features = {};
+   650→   729→   768→        const featureMap = {
+   651→   730→   769→            'Piscina': 'has_pool',
+   652→   731→   770→            'Jardín': 'has_garden',
+   653→   732→   771→            'Aire Acondicionado': 'has_ac',
+   654→   733→   772→            'Cocina': 'has_kitchen',
+   655→   734→   773→            'Amueblado': 'has_furniture',
+   656→   735→   774→            'Seguridad': 'has_security',
+   657→   736→   775→            'Ascensor': 'has_elevator',
+   658→   737→   776→        };
+   659→   738→   777→
+   660→   739→   778→        const checkedFeatures = propertyForm.querySelectorAll('input[name="caracteristicas"]:checked');
+   661→   740→   779→        checkedFeatures.forEach(cb => {
+   662→   741→   780→            const apiField = featureMap[cb.value];
+   663→   742→   781→            if (apiField) features[apiField] = true;
+   664→   743→   782→        });
+   665→   744→   783→
+   666→   745→   784→        const propertyData = {
+   667→   746→   785→            title,
+   668→   747→   786→            description,
+   669→   748→   787→            property_type: tipoMap[tipo] || tipo.toLowerCase(),
+   670→   749→   788→            operation_type: operacionMap[operacion] || operacion.toLowerCase(),
+   671→   750→   789→            price: precio,
+   672→   751→   790→            currency: moneda || 'USD',
+   673→   752→   791→            address: direccion,
+   674→   753→   792→            city: ciudad,
+   675→   754→   793→            state: estado || 'Barinas',
+   676→   755→   794→            lat,
+   677→   756→   795→            lng,
+   678→   757→   796→            bedrooms: habitaciones || null,
+   679→   758→   797→            bathrooms: banos || null,
+   680→   759→   798→            parking_spaces: estacionamientos || null,
+   681→   760→   799→            area,
+   682→   761→   800→            area_unit: areaUnidad || 'm2',
+   683→   762→   801→            year_built: ano || null,
+   684→   763→   802→            floors: pisos || null,
+   685→   764→   803→            ...features,
+   686→   765→   804→        };
+   687→   766→   805→
+   688→   767→   806→        // Submit
+   689→   768→   807→        isSubmitting = true;
+   690→   769→   808→        if (submitBtn) {
+   691→   770→   809→            submitBtn.disabled = true;
+   692→   771→   810→            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+   693→   772→   811→        }
+   694→   773→   812→
+   695→   774→   813→        try {
+   696→   775→   814→            let propertyId = editingPropertyId;
+   697→   776→   815→
+   698→   777→   816→            if (editingPropertyId) {
+   699→   778→   817→                // Update existing property
+   700→   779→   818→                await api.put(`/properties/${editingPropertyId}`, propertyData);
+   701→   780→   819→                propertyId = editingPropertyId;
+   702→   781→   820→            } else {
+   703→   782→   821→                // Create new property
+   704→   783→   822→                const result = await api.post('/properties', propertyData);
+   705→   784→   823→                propertyId = result.property_id;
+   706→   785→   824→            }
+   707→   786→   825→
+   708→   787→   826→            // Upload new images (files that haven't been uploaded yet)
+   709→   788→   827→            const newFiles = uploadedImages.filter(img => !img.isExisting && img.file);
+   710→   789→   828→            let imagesUploaded = 0;
+   711→   790→   829→            let r2NotConfigured = false;
+   712→   791→   830→
+   713→   792→   831→            if (newFiles.length > 0 && propertyId) {
+   714→   793→   832→                for (let i = 0; i < newFiles.length; i++) {
+   715→   794→   833→                    try {
+   716→   795→   834→                        const img = newFiles[i];
+   717→   796→   835→                        const formData = new FormData();
+   718→   797→   836→                        formData.append('file', img.file);
+   719→   798→   837→                        formData.append('property_id', propertyId.toString());
+   720→   799→   838→
+   721→   800→   839→                        // Upload file to R2
+   722→   801→   840→                        const uploadResult = await api.postFormData('/upload', formData);
+   723→   802→   841→
+   724→   803→   842→                        if (uploadResult.url) {
+   725→   804→   843→                            // Register image in DB
+   726→   805→   844→                            const isCover = (i === 0 && !uploadedImages.some(u => u.isExisting && u.isCover));
+   727→   806→   845→                            await api.post(`/images/${propertyId}`, {
+   728→   807→   846→                                url: uploadResult.url,
+   729→   808→   847→                                is_cover: isCover,
+   730→   809→   848→                                order_index: uploadedImages.indexOf(img),
+   731→   810→   849→                            });
+   732→   811→   850→                            imagesUploaded++;
+   733→   812→   851→                        }
+   734→   813→   852→                    } catch (uploadError) {
+   735→   814→   853→                        console.error('Error uploading image:', uploadError);
+   736→   815→   854→                        // Detect if R2 is not configured
+   737→   816→   855→                        if (uploadError.message && (
+   738→   817→   856→                            uploadError.message.includes('R2') ||
+   739→   818→   857→                            uploadError.message.includes('Almacenamiento') ||
+   740→   819→   858→                            uploadError.message.includes('r2')
+   741→   820→   859→                        )) {
+   742→   821→   860→                            r2NotConfigured = true;
+   743→   822→   861→                        } else {
+   744→   823→   862→                            showToast(`Error al subir imagen ${i + 1}: ${uploadError.message}`, 'warning');
+   745→   824→   863→                        }
+   746→   825→   864→                    }
+   747→   826→   865→                }
+   748→   827→   866→            }
+   749→   828→   867→
+   750→   829→   868→            // Show success with appropriate message
+   751→   830→   869→            if (editingPropertyId) {
+   752→   831→   870→                showToast('Propiedad actualizada exitosamente', 'success');
+   753→   832→   871→            } else {
+   754→   833→   872→                showToast('Propiedad publicada exitosamente. Pendiente de aprobación.', 'success');
+   755→   834→   873→            }
+   756→   835→   874→
+   757→   836→   875→            // Show R2 warning if needed
+   758→   837→   876→            if (r2NotConfigured) {
+   759→   838→   877→                setTimeout(() => {
+   760→   839→   878→                    showToast('Las imágenes no se pudieron subir. Configura el bucket R2 en Cloudflare.', 'warning');
+   761→   840→   879→                }, 500);
+   762→   841→   880→            } else if (newFiles.length > 0 && imagesUploaded === 0 && newFiles.length > 0) {
+   763→   842→   881→                setTimeout(() => {
+   764→   843→   882→                    showToast('No se subieron imágenes. Revisa la configuración de R2.', 'warning');
+   765→   844→   883→                }, 500);
+   766→   845→   884→            }
+   767→   846→   885→
+   768→   847→   886→            // Redirect to dashboard
+   769→   848→   887→            setTimeout(() => {
+   770→   849→   888→                window.location.href = 'dashboard.html';
+   771→   850→   889→            }, 1500);
+   772→   851→   890→
+   773→   852→   891→        } catch (error) {
+   774→   853→   892→            showToast(error.message || 'Error al guardar la propiedad', 'error');
+   775→   854→   893→        } finally {
+   776→   855→   894→            isSubmitting = false;
+   777→   856→   895→            if (submitBtn) {
+   778→   857→   896→                submitBtn.disabled = false;
+   779→   858→   897→                submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> <span id="submitBtnText">${editingPropertyId ? 'Guardar Cambios' : 'Publicar Propiedad'}</span>`;
+   780→   859→   898→            }
+   781→   860→   899→        }
+   782→   861→   900→    }
+   783→   862→   901→
+   784→   863→   902→    // ─── Form Error Helper ──────────────────────────────────────
+   785→   864→   903→    function showFormError(fieldId, message) {
+   786→   865→   904→        const field = document.getElementById(fieldId);
+   787→   866→   905→        if (field) {
+   788→   867→   906→            field.classList.add('input-error');
+   789→   868→   907→            // Find or create error span
+   790→   869→   908→            let errorSpan = field.parentElement.querySelector('.form-error');
+   791→   870→   909→            if (!errorSpan) {
+   792→   871→   910→                errorSpan = field.closest('.form-group')?.querySelector('.form-error');
+   793→   872→   911→            }
+   794→   873→   912→            if (errorSpan) {
+   795→   874→   913→                errorSpan.textContent = message;
+   796→   875→   914→            }
+   797→   876→   915→        }
+   798→   877→   916→    }
+   799→   878→   917→
+   800→   879→   918→    // ─── Initialize on DOM Ready ────────────────────────────────
+   801→   880→   919→    if (document.readyState === 'loading') {
+   802→   881→   920→        document.addEventListener('DOMContentLoaded', initForm);
+   803→   882→   921→    } else {
+   804→   883→   922→        initForm();
+   805→   884→   923→    }
+   806→   885→   924→
+   807→   886→   925→})();
+   808→   887→   926→

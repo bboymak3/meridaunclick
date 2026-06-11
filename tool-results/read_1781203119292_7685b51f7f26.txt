@@ -1,0 +1,2002 @@
+     1→/**
+     2→ * Un Click - Admin Panel Module
+     3→ * Loaded on admin.html
+     4→ */
+     5→
+     6→(function () {
+     7→    'use strict';
+     8→
+     9→    // ─── State ──────────────────────────────────────────────────
+    10→    let currentTab = 'dashboard';
+    11→    let currentDeleteAction = null; // { type, id, callback }
+    12→    let currentRejectId = null;
+    13→
+    14→    // Pagination state
+    15→    let propsPage = 1;
+    16→    let usersPage = 1;
+    17→    let msgsPage = 1;
+    18→    let jobsPage = 1;
+    19→    let productsPage = 1;
+    20→    const PAGE_LIMIT = 15;
+    21→
+    22→    // ─── DOM Elements ───────────────────────────────────────────
+    23→    const adminDate = document.getElementById('adminDate');
+    24→    const adminPageTitle = document.getElementById('adminPageTitle');
+    25→    const adminSidebarToggle = document.getElementById('adminSidebarToggle');
+    26→    const adminSidebar = document.getElementById('adminSidebar');
+    27→
+    28→    // Tab panels
+    29→    const tabDashboard = document.getElementById('tabDashboard');
+    30→    const tabProperties = document.getElementById('tabProperties');
+    31→    const tabUsers = document.getElementById('tabUsers');
+    32→    const tabMessages = document.getElementById('tabMessages');
+    33→    const tabFacebook = document.getElementById('tabFacebook');
+    34→    const tabJobs = document.getElementById('tabJobs');
+    35→    const tabSettings = document.getElementById('tabSettings');
+    36→
+    37→    // Stat elements
+    38→    const adminTotalProps = document.getElementById('adminTotalProps');
+    39→    const adminPendingProps = document.getElementById('adminPendingProps');
+    40→    const adminTotalUsers = document.getElementById('adminTotalUsers');
+    41→    const adminTotalMsgs = document.getElementById('adminTotalMsgs');
+    42→    const adminPendingBadge = document.getElementById('adminPendingBadge');
+    43→    const adminMsgBadge = document.getElementById('adminMsgBadge');
+    44→
+    45→    // Modals
+    46→    const adminDeleteModal = document.getElementById('adminDeleteModal');
+    47→    const adminDeleteMsg = document.getElementById('adminDeleteMsg');
+    48→    const adminDeleteConfirm = document.getElementById('adminDeleteConfirm');
+    49→    const adminDeleteCancel = document.getElementById('adminDeleteCancel');
+    50→    const adminDeleteModalClose = document.getElementById('adminDeleteModalClose');
+    51→
+    52→    const adminRejectModal = document.getElementById('adminRejectModal');
+    53→    const adminRejectConfirm = document.getElementById('adminRejectConfirm');
+    54→    const adminRejectCancel = document.getElementById('adminRejectCancel');
+    55→    const adminRejectModalClose = document.getElementById('adminRejectModalClose');
+    56→    const rejectReason = document.getElementById('rejectReason');
+    57→
+    58→    const adminUserModal = document.getElementById('adminUserModal');
+    59→    const adminUserModalSave = document.getElementById('adminUserModalSave');
+    60→    const adminUserModalCancel = document.getElementById('adminUserModalCancel');
+    61→    const adminUserModalClose = document.getElementById('adminUserModalClose');
+    62→
+    63→    const adminBusinessModal = document.getElementById('adminBusinessModal');
+    64→    const adminPropModalClose = document.getElementById('adminPropModalClose');
+    65→
+    66→    const adminMsgModal = document.getElementById('adminMsgModal');
+    67→    const adminMsgModalClose = document.getElementById('adminMsgModalClose');
+    68→    const adminMsgModalCloseBtn = document.getElementById('adminMsgModalCloseBtn');
+    69→
+    70→    // Business Edit Modal
+    71→    const adminBizEditModal = document.getElementById('adminBusinessEditModal');
+    72→    const adminBizEditClose = document.getElementById('adminBizEditClose');
+    73→    const adminBizEditSave = document.getElementById('adminBizEditSave');
+    74→    const adminBizEditCancel = document.getElementById('adminBizEditCancel');
+    75→
+    76→    // ─── Initialization ─────────────────────────────────────────
+    77→    async function init() {
+    78→        // Check auth
+    79→        if (!isAuthenticated()) {
+    80→            window.location.href = 'login.html';
+    81→            return;
+    82→        }
+    83→
+    84→        // Check admin role
+    85→        const user = getCachedUser();
+    86→        if (!user || user.role !== 'admin') {
+    87→            showToast('Acceso denegado. Solo administradores.', 'error');
+    88→            setTimeout(() => {
+    89→                window.location.href = 'index.html';
+    90→            }, 1500);
+    91→            return;
+    92→        }
+    93→
+    94→        // Set current date
+    95→        if (adminDate) {
+    96→            adminDate.textContent = new Date().toLocaleDateString('es-VE', {
+    97→                weekday: 'long',
+    98→                year: 'numeric',
+    99→                month: 'long',
+   100→                day: 'numeric',
+   101→            });
+   102→        }
+   103→
+   104→        // Setup event listeners
+   105→        setupTabNavigation();
+   106→        setupSidebarToggle();
+   107→        setupModals();
+   108→        setupFilterListeners();
+   109→        setupFacebookListeners();
+   110→        setupJobListeners();
+   111→        setupB2Modal();
+   112→        setupBusinessEditModal();
+   113→        loadBusinessesForJobSelect();
+   114→
+   115→        // Load initial data
+   116→        loadDashboardTab();
+   117→    }
+   118→
+   119→    // ─── Tab Navigation ─────────────────────────────────────────
+   120→    function setupTabNavigation() {
+   121→        document.querySelectorAll('.admin-nav-link').forEach(link => {
+   122→            link.addEventListener('click', (e) => {
+   123→                e.preventDefault();
+   124→                const tab = link.dataset.tab;
+   125→                if (tab) switchTab(tab);
+   126→            });
+   127→        });
+   128→
+   129→        // Also handle data-tab links inside cards
+   130→        document.querySelectorAll('[data-tab]').forEach(el => {
+   131→            if (el.tagName === 'A') {
+   132→                el.addEventListener('click', (e) => {
+   133→                    e.preventDefault();
+   134→                    const tab = el.dataset.tab;
+   135→                    if (tab) switchTab(tab);
+   136→                });
+   137→            }
+   138→        });
+   139→    }
+   140→
+   141→    function switchTab(tab) {
+   142→        currentTab = tab;
+   143→
+   144→        // Update nav links
+   145→        document.querySelectorAll('.admin-nav-link').forEach(link => {
+   146→            link.classList.toggle('active', link.dataset.tab === tab);
+   147→        });
+   148→
+   149→        // Hide all tab panels
+   150→        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, settings: tabSettings };
+   151→        for (const [key, panel] of Object.entries(panels)) {
+   152→            if (panel) {
+   153→                panel.classList.toggle('hidden', key !== tab);
+   154→            }
+   155→        }
+   156→
+   157→        // Update page title
+   158→        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', settings: 'Configuración' };
+   159→        if (adminPageTitle) {
+   160→            adminPageTitle.textContent = titles[tab] || 'Dashboard';
+   161→        }
+   162→
+   163→        // Load tab data
+   164→        switch (tab) {
+   165→            case 'dashboard':
+   166→                loadDashboardTab();
+   167→                break;
+   168→            case 'businesses':
+   169→                propsPage = 1;
+   170→                loadProperties();
+   171→                break;
+   172→            case 'users':
+   173→                usersPage = 1;
+   174→                loadUsers();
+   175→                break;
+   176→            case 'messages':
+   177→                msgsPage = 1;
+   178→                loadMessages();
+   179→                break;
+   180→            case 'facebook':
+   181→                loadFacebookConfig();
+   182→                loadFacebookHistory();
+   183→                break;
+   184→            case 'products':
+   185→                productsPage = 1;
+   186→                loadProducts();
+   187→                break;
+   188→            case 'jobs':
+   189→                jobsPage = 1;
+   190→                loadJobs();
+   191→                break;
+   192→            case 'settings':
+   193→                loadSettings();
+   194→                break;
+   195→        }
+   196→
+   197→        // Close sidebar on mobile
+   198→        if (adminSidebar) {
+   199→            adminSidebar.classList.remove('active');
+   200→        }
+   201→    }
+   202→
+   203→    // ─── Sidebar Toggle ─────────────────────────────────────────
+   204→    function setupSidebarToggle() {
+   205→        if (adminSidebarToggle && adminSidebar) {
+   206→            adminSidebarToggle.addEventListener('click', () => {
+   207→                adminSidebar.classList.toggle('active');
+   208→            });
+   209→        }
+   210→    }
+   211→
+   212→    // ─── Dashboard Stats ────────────────────────────────────────
+   213→    async function loadDashboardStats() {
+   214→        try {
+   215→            const data = await api.get('/stats');
+   216→            if (data.stats) {
+   217→                const s = data.stats;
+   218→                if (adminTotalProps) adminTotalProps.textContent = s.total_businesses || 0;
+   219→                if (adminPendingProps) adminPendingProps.textContent = s.pending_businesses || 0;
+   220→                if (adminTotalUsers) adminTotalUsers.textContent = s.total_users || 0;
+   221→                if (adminTotalMsgs) adminTotalMsgs.textContent = s.total_contacts || 0;
+   222→                if (adminPendingBadge) adminPendingBadge.textContent = s.pending_businesses || 0;
+   223→                if (adminMsgBadge) adminMsgBadge.textContent = s.unread_contacts || 0;
+   224→            }
+   225→        } catch (error) {
+   226→            console.error('Error loading stats:', error);
+   227→        }
+   228→    }
+   229→
+   230→    async function loadDashboardTab() {
+   231→        await loadDashboardStats();
+   232→        loadRecentActivity();
+   233→        loadRecentProperties();
+   234→        loadRecentUsers();
+   235→    }
+   236→
+   237→    function loadRecentActivity() {
+   238→        // Activity is derived from recent businesses for now
+   239→    }
+   240→
+   241→    async function loadRecentProperties() {
+   242→        const tbody = document.getElementById('adminRecentProps');
+   243→        if (!tbody) return;
+   244→
+   245→        try {
+   246→            const data = await api.get('/businesses?status=&limit=5&page=1');
+   247→            const businesses = data.businesses || [];
+   248→
+   249→            if (businesses.length === 0) {
+   250→                tbody.innerHTML = '<tr class="empty-row"><td colspan="5"><div class="empty-state-sm"><p>No hay propiedades.</p></div></td></tr>';
+   251→                return;
+   252→            }
+   253→
+   254→            tbody.innerHTML = businesses.map(p => `
+   255→                <tr>
+   256→                    <td>${truncateText(p.title, 40)}</td>
+   257→                    <td>${getBusinessTypeLabel(p.business_type)}</td>
+   258→                    <td>${p.owner_name || '--'}</td>
+   259→                    <td>${getStatusBadge(p.status)}</td>
+   260→                    <td>${formatDate(p.created_at)}</td>
+   261→                </tr>
+   262→            `).join('');
+   263→        } catch (error) {
+   264→            tbody.innerHTML = '<tr class="empty-row"><td colspan="5"><div class="empty-state-sm"><p>Error al cargar.</p></div></td></tr>';
+   265→        }
+   266→    }
+   267→
+   268→    async function loadRecentUsers() {
+   269→        const tbody = document.getElementById('adminRecentUsers');
+   270→        if (!tbody) return;
+   271→
+   272→        try {
+   273→            const data = await api.get('/users?limit=5&page=1');
+   274→            const users = data.users || [];
+   275→
+   276→            if (users.length === 0) {
+   277→                tbody.innerHTML = '<tr class="empty-row"><td colspan="5"><div class="empty-state-sm"><p>No hay usuarios.</p></div></td></tr>';
+   278→                return;
+   279→            }
+   280→
+   281→            tbody.innerHTML = users.map(u => `
+   282→                <tr>
+   283→                    <td>${u.name || '--'}</td>
+   284→                    <td>${u.email || '--'}</td>
+   285→                    <td><span class="badge badge-${u.role === 'admin' ? 'info' : 'default'}">${u.role === 'admin' ? 'Admin' : 'Usuario'}</span></td>
+   286→                    <td>${u.is_active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>'}</td>
+   287→                    <td>${formatDate(u.created_at)}</td>
+   288→                </tr>
+   289→            `).join('');
+   290→        } catch (error) {
+   291→            tbody.innerHTML = '<tr class="empty-row"><td colspan="5"><div class="empty-state-sm"><p>Error al cargar.</p></div></td></tr>';
+   292→        }
+   293→    }
+   294→
+   295→    // ─── Properties Management ──────────────────────────────────
+   296→    async function loadProperties() {
+   297→        const tbody = document.getElementById('adminPropsTableBody');
+   298→        if (!tbody) return;
+   299→
+   300→        tbody.innerHTML = '<tr class="empty-row"><td colspan="10"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div></td></tr>';
+   301→
+   302→        try {
+   303→            // Build query params
+   304→            const statusFilter = document.getElementById('adminPropStatusFilter')?.value || '';
+   305→            const typeFilter = document.getElementById('adminPropTypeFilter')?.value || '';
+   306→            const searchVal = document.getElementById('adminPropSearch')?.value || '';
+   307→
+   308→            let endpoint = `/businesses?status=${statusFilter || ''}&page=${propsPage}&limit=${PAGE_LIMIT}`;
+   309→            if (typeFilter) endpoint += `&business_type=${typeFilter}`;
+   310→            if (searchVal) endpoint += `&search=${encodeURIComponent(searchVal)}`;
+   311→
+   312→            const data = await api.get(endpoint);
+   313→            const businesses = data.businesses || [];
+   314→
+   315→            if (businesses.length === 0) {
+   316→                tbody.innerHTML = '<tr class="empty-row"><td colspan="10"><div class="empty-state-sm"><p>No se encontraron propiedades.</p></div></td></tr>';
+   317→                return;
+   318→            }
+   319→
+   320→            tbody.innerHTML = businesses.map(p => {
+   321→                const coverImg = p.cover_image || '';
+   322→                return `
+   323→                    <tr data-business-id="${p.id}">
+   324→                        <td>${p.id}</td>
+   325→                        <td>${coverImg ? `<img src="${coverImg}" alt="" class="admin-thumb" onerror="this.style.display='none'">` : '<div class="admin-thumb-placeholder"><i class="fas fa-image"></i></div>'}</td>
+   326→                        <td><a href="/negocio/${p.slug || p.id}" target="_blank" title="${p.title}">${truncateText(p.title, 35)}</a></td>
+   327→                        <td>${getBusinessTypeLabel(p.business_type)}</td>
+   328→                        <td>${p.city || '--'}, ${p.state || '--'}</td>
+   329→                        <td>${p.owner_name || '--'}</td>
+   330→                        <td>${getStatusBadge(p.status)}</td>
+   331→                        <td>${p.featured ? '<i class="fas fa-star text-warning"></i>' : '<i class="far fa-star text-muted"></i>'}</td>
+   332→                        <td class="admin-actions">
+   333→                            <button class="btn btn-xs btn-outline" onclick="window.admin.viewBusiness(${p.id})" title="Ver"><i class="fas fa-eye"></i></button>
+   334→                            <button class="btn btn-xs btn-outline" onclick="window.admin.editBusiness(${p.id})" title="Editar"><i class="fas fa-edit"></i></button>
+   335→                            ${p.status === 'pending' ? `
+   336→                                <button class="btn btn-xs btn-success" onclick="window.admin.approveBusiness(${p.id})" title="Aprobar"><i class="fas fa-check"></i></button>
+   337→                                <button class="btn btn-xs btn-danger" onclick="window.admin.rejectBusiness(${p.id})" title="Rechazar"><i class="fas fa-ban"></i></button>
+   338→                            ` : ''}
+   339→                            <button class="btn btn-xs btn-outline" onclick="window.admin.toggleFeatured(${p.id}, ${p.featured ? 0 : 1})" title="Destacada"><i class="fas fa-star"></i></button>
+   340→                            <button class="btn btn-xs btn-danger" onclick="window.admin.deleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+   341→                        </td>
+   342→                    </tr>
+   343→                `;
+   344→            }).join('');
+   345→
+   346→            // Pagination
+   347→            renderAdminPagination('adminPropsPagination', data.pagination, (page) => {
+   348→                propsPage = page;
+   349→                loadProperties();
+   350→            });
+   351→
+   352→        } catch (error) {
+   353→            tbody.innerHTML = '<tr class="empty-row"><td colspan="10"><div class="empty-state-sm"><p>Error al cargar propiedades.</p></div></td></tr>';
+   354→            showToast(error.message, 'error');
+   355→        }
+   356→    }
+   357→
+   358→    async function viewBusiness(businessId) {
+   359→        if (!adminBusinessModal) return;
+   360→
+   361→        const modalBody = document.getElementById('adminPropModalBody');
+   362→        const modalTitle = document.getElementById('adminPropModalTitle');
+   363→        const modalFooter = document.getElementById('adminPropModalFooter');
+   364→
+   365→        if (modalBody) modalBody.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+   366→
+   367→        adminBusinessModal.classList.remove('hidden');
+   368→
+   369→        try {
+   370→            const business = await api.get(`/businesses/${businessId}`);
+   371→
+   372→            if (modalTitle) modalTitle.textContent = business.title || 'Negocio';
+   373→
+   374→            const images = business.images || [];
+   375→            const imgHTML = images.length > 0
+   376→                ? images.map(img => `<img src="${img.url}" alt="" class="admin-modal-thumb" onerror="this.style.display='none'">`).join('')
+   377→                : '<p class="text-muted">Sin imágenes</p>';
+   378→
+   379→            if (modalBody) {
+   380→                modalBody.innerHTML = `
+   381→                    <div class="admin-prop-detail">
+   382→                        <div class="admin-prop-images">${imgHTML}</div>
+   383→                        <div class="admin-prop-info">
+   384→                            <div class="detail-row"><strong>Tipo:</strong> ${getBusinessTypeLabel(business.business_type)}</div>
+   385→                            <div class="detail-row"><strong>Categoría:</strong> ${business.category_name || '--'}</div>
+   386→                            <div class="detail-row"><strong>Dirección:</strong> ${business.address || '--'}</div>
+   387→                            <div class="detail-row"><strong>Ubicación:</strong> ${business.city || '--'}, ${business.state || '--'}</div>
+   388→                            <div class="detail-row"><strong>Teléfono:</strong> ${business.phone || '--'}</div>
+   389→                            <div class="detail-row"><strong>WhatsApp:</strong> ${business.whatsapp || '--'}</div>
+   390→                            <div class="detail-row"><strong>Propietario:</strong> ${business.owner_name || '--'} (${business.owner_email || business.owner_phone || '--'})</div>
+   391→                            <div class="detail-row"><strong>Estado:</strong> ${getStatusBadge(business.status)}</div>
+   392→                            <div class="detail-row"><strong>Vistas:</strong> ${business.views || 0}</div>
+   393→                            <div class="detail-row"><strong>Destacada:</strong> ${business.featured ? 'Sí' : 'No'}</div>
+   394→                            <div class="detail-row"><strong>Creada:</strong> ${formatDateTime(business.created_at)}</div>
+   395→                            <div class="detail-row"><strong>Descripción:</strong> ${business.description || 'Sin descripción'}</div>
+   396→                        </div>
+   397→                    </div>
+   398→                `;
+   399→            }
+   400→
+   401→            if (modalFooter) {
+   402→                modalFooter.innerHTML = `
+   403→                    <button class="btn btn-primary" onclick="document.getElementById('adminBusinessModal').classList.add('hidden'); window.admin.editBusiness(${businessId});">
+   404→                        <i class="fas fa-edit"></i> Editar
+   405→                    </button>
+   406→                    ${business.status === 'pending' ? `
+   407→                        <button class="btn btn-success" onclick="window.admin.approveBusiness(${businessId}); document.getElementById('adminBusinessModal').classList.add('hidden');">
+   408→                            <i class="fas fa-check"></i> Aprobar
+   409→                        </button>
+   410→                        <button class="btn btn-danger" onclick="window.admin.rejectBusiness(${businessId}); document.getElementById('adminBusinessModal').classList.add('hidden');">
+   411→                            <i class="fas fa-ban"></i> Rechazar
+   412→                        </button>
+   413→                    ` : ''}
+   414→                    <button class="btn btn-secondary" onclick="document.getElementById('adminBusinessModal').classList.add('hidden');">Cerrar</button>
+   415→                `;
+   416→            }
+   417→        } catch (error) {
+   418→            if (modalBody) modalBody.innerHTML = `<p class="text-danger">Error al cargar la propiedad: ${error.message}</p>`;
+   419→        }
+   420→    }
+   421→
+   422→    async function approveBusiness(id) {
+   423→        try {
+   424→            await api.post(`/businesses/${id}/approve`);
+   425→            showToast('Propiedad aprobada exitosamente', 'success');
+   426→            loadProperties();
+   427→            loadDashboardStats();
+   428→        } catch (error) {
+   429→            showToast(error.message, 'error');
+   430→        }
+   431→    }
+   432→
+   433→    function rejectBusiness(id) {
+   434→        currentRejectId = id;
+   435→        if (rejectReason) rejectReason.value = '';
+   436→        if (adminRejectModal) adminRejectModal.classList.remove('hidden');
+   437→    }
+   438→
+   439→    async function confirmReject() {
+   440→        if (!currentRejectId) return;
+   441→
+   442→        try {
+   443→            await api.post(`/businesses/${currentRejectId}/reject`);
+   444→            showToast('Propiedad rechazada', 'info');
+   445→            closeRejectModal();
+   446→            loadProperties();
+   447→            loadDashboardStats();
+   448→        } catch (error) {
+   449→            showToast(error.message, 'error');
+   450→        }
+   451→    }
+   452→
+   453→    function closeRejectModal() {
+   454→        if (adminRejectModal) adminRejectModal.classList.add('hidden');
+   455→        currentRejectId = null;
+   456→    }
+   457→
+   458→    async function toggleFeatured(id, featured) {
+   459→        try {
+   460→            await api.put(`/businesses/${id}`, { featured: featured ? 1 : 0 });
+   461→            showToast(featured ? 'Propiedad marcada como destacada' : 'Propiedad removida de destacadas', 'success');
+   462→            loadProperties();
+   463→        } catch (error) {
+   464→            showToast(error.message, 'error');
+   465→        }
+   466→    }
+   467→
+   468→    function deleteBusiness(id) {
+   469→        if (adminDeleteMsg) adminDeleteMsg.textContent = '¿Estás seguro de que deseas eliminar esta propiedad? Esta acción no se puede deshacer y se eliminarán todas sus imágenes.';
+   470→        currentDeleteAction = { type: 'business', id };
+   471→        if (adminDeleteModal) adminDeleteModal.classList.remove('hidden');
+   472→    }
+   473→
+   474→    async function confirmDelete() {
+   475→        if (!currentDeleteAction) return;
+   476→
+   477→        try {
+   478→            if (currentDeleteAction.type === 'business') {
+   479→                await api.delete(`/businesses/${currentDeleteAction.id}`);
+   480→                showToast('Propiedad eliminada exitosamente', 'success');
+   481→                loadProperties();
+   482→                loadDashboardStats();
+   483→            } else if (currentDeleteAction.type === 'user') {
+   484→                await api.delete(`/users/${currentDeleteAction.id}`);
+   485→                showToast('Usuario eliminado exitosamente', 'success');
+   486→                loadUsers();
+   487→                loadDashboardStats();
+   488→            }
+   489→            closeDeleteModal();
+   490→        } catch (error) {
+   491→            showToast(error.message, 'error');
+   492→        }
+   493→    }
+   494→
+   495→    function closeDeleteModal() {
+   496→        if (adminDeleteModal) adminDeleteModal.classList.add('hidden');
+   497→        currentDeleteAction = null;
+   498→    }
+   499→
+   500→    // ─── Users Management ───────────────────────────────────────
+   501→    async function loadUsers() {
+   502→        const tbody = document.getElementById('adminUsersTableBody');
+   503→        if (!tbody) return;
+   504→
+   505→        tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div></td></tr>';
+   506→
+   507→        try {
+   508→            const roleFilter = document.getElementById('adminUserRoleFilter')?.value || '';
+   509→            const searchVal = document.getElementById('adminUserSearch')?.value || '';
+   510→
+   511→            let endpoint = `/users?page=${usersPage}&limit=${PAGE_LIMIT}`;
+   512→            if (roleFilter) endpoint += `&role=${roleFilter}`;
+   513→            if (searchVal) endpoint += `&search=${encodeURIComponent(searchVal)}`;
+   514→
+   515→            const data = await api.get(endpoint);
+   516→            const users = data.users || [];
+   517→
+   518→            if (users.length === 0) {
+   519→                tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p>No se encontraron usuarios.</p></div></td></tr>';
+   520→                return;
+   521→            }
+   522→
+   523→            const myUser = getCachedUser();
+   524→            const myId = myUser ? myUser.id : null;
+   525→
+   526→            tbody.innerHTML = users.map(u => {
+   527→                const initials = (u.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+   528→                const avatarHTML = u.avatar
+   529→                    ? `<div class="admin-user-avatar"><img src="${u.avatar}" alt=""></div>`
+   530→                    : `<div class="admin-user-avatar">${initials}</div>`;
+   531→                const isSelf = myId && (String(u.id) === String(myId));
+   532→                const currentRole = u.role || 'user';
+   533→                const selfLabel = isSelf ? ' <span style="color:#aaa;font-size:0.7rem">(Tú)</span>' : '';
+   534→
+   535→                // Role toggle
+   536→                let toggleHTML = `<div class="role-toggle" data-user-id="${u.id}" data-current-role="${currentRole}">`;
+   537→                toggleHTML += `<button class="role-toggle-btn ${currentRole === 'admin' ? 'active-admin' : ''} ${isSelf ? 'self-badge' : ''}" data-role="admin" ${isSelf ? 'disabled' : ''}><i class="fas fa-shield-alt"></i> Admin</button>`;
+   538→                toggleHTML += `<button class="role-toggle-btn ${currentRole === 'user' ? 'active-user' : ''} ${isSelf ? 'self-badge' : ''}" data-role="user" ${isSelf ? 'disabled' : ''}><i class="fas fa-user"></i> User</button>`;
+   539→                toggleHTML += `</div>`;
+   540→
+   541→                return `
+   542→                    <tr data-user-id="${u.id}">
+   543→                        <td>${u.id}</td>
+   544→                        <td>
+   545→                            <div class="admin-user-cell">
+   546→                                ${avatarHTML}
+   547→                                <div>
+   548→                                    <div class="admin-user-name">${u.name || '--'}${selfLabel}</div>
+   549→                                </div>
+   550→                            </div>
+   551→                        </td>
+   552→                        <td style="font-size:0.83rem; color:#666;">${u.email || '--'}</td>
+   553→                        <td style="font-size:0.83rem;">${u.phone || '<span style="color:#ccc">—</span>'}</td>
+   554→                        <td>
+   555→                            <span class="admin-role-badge-inline role-${currentRole}">
+   556→                                <i class="fas ${currentRole === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
+   557→                                ${currentRole === 'admin' ? 'Admin' : 'Usuario'}
+   558→                            </span>
+   559→                        </td>
+   560→                        <td>${u.is_active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>'}</td>
+   561→                        <td style="text-align:center; font-weight:600;">${u.business_count || 0}</td>
+   562→                        <td><span class="admin-user-date">${formatDate(u.created_at)}</span></td>
+   563→                        <td>
+   564→                            ${toggleHTML}
+   565→                            <div style="margin-top:6px; display:flex; gap:4px;">
+   566→                                <button class="btn btn-xs btn-outline" onclick="window.admin.editUser(${u.id})" title="Editar usuario"><i class="fas fa-edit"></i> Editar</button>
+   567→                                <button class="btn btn-xs btn-danger" onclick="window.admin.deleteUser(${u.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+   568→                            </div>
+   569→                        </td>
+   570→                    </tr>
+   571→                `;
+   572→            }).join('');
+   573→
+   574→            // Attach role toggle handlers
+   575→            tbody.querySelectorAll('.role-toggle-btn:not([disabled])').forEach(btn => {
+   576→                btn.addEventListener('click', (e) => {
+   577→                    e.stopPropagation();
+   578→                    const toggle = btn.closest('.role-toggle');
+   579→                    const userId = toggle.dataset.userId;
+   580→                    const currentRole = toggle.dataset.currentRole;
+   581→                    const newRole = btn.dataset.role;
+   582→                    if (newRole !== currentRole) {
+   583→                        toggleUserRole(userId, newRole, toggle);
+   584→                    }
+   585→                });
+   586→            });
+   587→
+   588→            renderAdminPagination('adminUsersPagination', data.pagination, (page) => {
+   589→                usersPage = page;
+   590→                loadUsers();
+   591→            });
+   592→
+   593→        } catch (error) {
+   594→            tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p>Error al cargar usuarios.</p></div></td></tr>';
+   595→            showToast(error.message, 'error');
+   596→        }
+   597→    }
+   598→
+   599→    async function toggleUserRole(userId, newRole, toggleEl) {
+   600→        const buttons = toggleEl.querySelectorAll('.role-toggle-btn');
+   601→        buttons.forEach(b => b.classList.add('saving-role'));
+   602→
+   603→        try {
+   604→            await api.put(`/users/${userId}`, { role: newRole });
+   605→            showToast(`Rol cambiado a ${newRole === 'admin' ? 'Administrador' : 'Usuario'} exitosamente`, 'success');
+   606→
+   607→            // Update toggle UI
+   608→            toggleEl.dataset.currentRole = newRole;
+   609→            buttons.forEach(b => {
+   610→                b.classList.remove('active-admin', 'active-user', 'active-agent', 'saving-role');
+   611→                if (b.dataset.role === newRole) {
+   612→                    b.classList.add(newRole === 'admin' ? 'active-admin' : newRole === 'agent' ? 'active-agent' : 'active-user');
+   613→                }
+   614→            });
+   615→
+   616→            // Update role badge inline
+   617→            const row = toggleEl.closest('tr');
+   618→            if (row) {
+   619→                const badgeCell = row.querySelectorAll('td')[4];
+   620→                if (badgeCell) {
+   621→                    badgeCell.innerHTML = `
+   622→                        <span class="admin-role-badge-inline role-${newRole}">
+   623→                            <i class="fas ${newRole === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
+   624→                            ${newRole === 'admin' ? 'Admin' : 'Usuario'}
+   625→                        </span>
+   626→                    `;
+   627→                }
+   628→            }
+   629→
+   630→            // Refresh stats and dashboard
+   631→            loadDashboardStats();
+   632→        } catch (error) {
+   633→            showToast(error.message || 'Error al cambiar rol', 'error');
+   634→            buttons.forEach(b => b.classList.remove('saving-role'));
+   635→        }
+   636→    }
+   637→
+   638→    async function editUser(userId) {
+   639→        if (!adminUserModal) return;
+   640→
+   641→        // Show loading state
+   642→        const modalBody = adminUserModal.querySelector('.modal-body');
+   643→        if (modalBody) {
+   644→            modalBody.innerHTML = '<div class="loading-spinner" style="padding:40px;text-align:center;"><i class="fas fa-spinner fa-spin" style="font-size:24px;color:#1a73e8;"></i><p style="margin-top:12px;color:#888;">Cargando datos del usuario...</p></div>';
+   645→        }
+   646→        adminUserModal.classList.remove('hidden');
+   647→
+   648→        try {
+   649→            const user = await api.get(`/users/${userId}`);
+   650→
+   651→            // Rebuild the modal body with the user data
+   652→            if (modalBody) {
+   653→                const initials = (user.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+   654→                const avatarHTML = user.avatar
+   655→                    ? `<div class="edit-user-avatar"><img src="${user.avatar}" alt=""></div>`
+   656→                    : `<div class="edit-user-avatar"><span>${initials}</span></div>`;
+   657→                const date = user.created_at ? new Date(user.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—';
+   658→
+   659→                modalBody.innerHTML = `
+   660→                    <!-- User Header -->
+   661→                    <div class="edit-user-header">
+   662→                        ${avatarHTML}
+   663→                        <div class="edit-user-meta">
+   664→                            <div class="edit-user-id">ID: <strong>${user.id}</strong></div>
+   665→                            <div class="edit-user-joined"><i class="fas fa-calendar"></i> Registro: ${date}</div>
+   666→                            <div class="edit-user-props"><i class="fas fa-building"></i> ${user.business_count || 0} propiedades</div>
+   667→                        </div>
+   668→                    </div>
+   669→
+   670→                    <form id="adminUserEditForm">
+   671→                        <!-- Datos Básicos -->
+   672→                        <div class="edit-user-section">
+   673→                            <div class="edit-user-section-title"><i class="fas fa-id-card"></i> Datos Básicos</div>
+   674→                            <div class="form-row">
+   675→                                <div class="form-group">
+   676→                                    <label for="editUserName">Nombre Completo</label>
+   677→                                    <div class="profile-input-wrapper">
+   678→                                        <i class="fas fa-user"></i>
+   679→                                        <input type="text" id="editUserName" name="name" class="form-control" required value="${(user.name || '').replace(/"/g, '&quot;')}" placeholder="Nombre del usuario">
+   680→                                    </div>
+   681→                                </div>
+   682→                                <div class="form-group">
+   683→                                    <label for="editUserEmail">Correo Electrónico</label>
+   684→                                    <div class="profile-input-wrapper">
+   685→                                        <i class="fas fa-envelope"></i>
+   686→                                        <input type="email" id="editUserEmail" name="email" class="form-control" required value="${(user.email || '').replace(/"/g, '&quot;')}" placeholder="correo@ejemplo.com">
+   687→                                    </div>
+   688→                                </div>
+   689→                            </div>
+   690→                        </div>
+   691→
+   692→                        <!-- Teléfonos -->
+   693→                        <div class="edit-user-section">
+   694→                            <div class="edit-user-section-title"><i class="fas fa-phone-alt"></i> Teléfonos de Contacto</div>
+   695→                            <div class="form-row">
+   696→                                <div class="form-group">
+   697→                                    <label for="editUserPhone">Teléfono</label>
+   698→                                    <div class="profile-input-wrapper">
+   699→                                        <i class="fas fa-phone"></i>
+   700→                                        <input type="tel" id="editUserPhone" name="phone" class="form-control" value="${(user.phone || '').replace(/"/g, '&quot;')}" placeholder="+58 414 0000000">
+   701→                                    </div>
+   702→                                </div>
+   703→                                <div class="form-group">
+   704→                                    <label for="editUserWhatsApp"><i class="fab fa-whatsapp" style="color:#25d366"></i> WhatsApp</label>
+   705→                                    <div class="profile-input-wrapper">
+   706→                                        <i class="fab fa-whatsapp" style="color:#25d366"></i>
+   707→                                        <input type="tel" id="editUserWhatsApp" name="whatsapp" class="form-control" value="${(user.whatsapp || '').replace(/"/g, '&quot;')}" placeholder="+58 414 0000000">
+   708→                                    </div>
+   709→                                    <small class="form-hint">Número visible para compradores</small>
+   710→                                </div>
+   711→                            </div>
+   712→                        </div>
+   713→
+   714→                        <!-- Biografía -->
+   715→                        <div class="edit-user-section">
+   716→                            <div class="edit-user-section-title"><i class="fas fa-align-left"></i> Biografía</div>
+   717→                            <div class="form-group">
+   718→                                <textarea id="editUserBio" name="bio" class="form-control" rows="3" placeholder="Descripción del usuario..." maxlength="500">${user.bio || ''}</textarea>
+   719→                            </div>
+   720→                        </div>
+   721→
+   722→                        <!-- Administración -->
+   723→                        <div class="edit-user-section edit-user-section-admin">
+   724→                            <div class="edit-user-section-title"><i class="fas fa-shield-alt"></i> Administración</div>
+   725→                            <div class="form-row">
+   726→                                <div class="form-group">
+   727→                                    <label for="editUserRole">Rol</label>
+   728→                                    <select id="editUserRole" name="role" class="form-control">
+   729→                                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>Usuario</option>
+   730→                                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Administrador</option>
+   731→                                        <option value="agent" ${user.role === 'agent' ? 'selected' : ''}>Agente</option>
+   732→                                    </select>
+   733→                                </div>
+   734→                                <div class="form-group">
+   735→                                    <label for="editUserStatus">Estado</label>
+   736→                                    <select id="editUserStatus" name="status" class="form-control">
+   737→                                        <option value="activo" ${user.is_active ? 'selected' : ''}>Activo</option>
+   738→                                        <option value="inactivo" ${!user.is_active ? 'selected' : ''}>Inactivo</option>
+   739→                                    </select>
+   740→                                </div>
+   741→                            </div>
+   742→                        </div>
+   743→                    </form>
+   744→                `;
+   745→            }
+   746→
+   747→            adminUserModal.dataset.userId = userId;
+   748→        } catch (error) {
+   749→            showToast('Error al cargar datos del usuario', 'error');
+   750→            adminUserModal.classList.add('hidden');
+   751→        }
+   752→    }
+   753→
+   754→    async function saveUser() {
+   755→        if (!adminUserModal) return;
+   756→
+   757→        const userId = adminUserModal.dataset.userId;
+   758→        if (!userId) return;
+   759→
+   760→        const name = document.getElementById('editUserName')?.value?.trim();
+   761→        const email = document.getElementById('editUserEmail')?.value?.trim();
+   762→        const phone = document.getElementById('editUserPhone')?.value?.trim();
+   763→        const whatsapp = document.getElementById('editUserWhatsApp')?.value?.trim();
+   764→        const bio = document.getElementById('editUserBio')?.value?.trim();
+   765→        const role = document.getElementById('editUserRole')?.value;
+   766→        const statusVal = document.getElementById('editUserStatus')?.value;
+   767→
+   768→        if (!name || !email) {
+   769→            showToast('Nombre y email son requeridos', 'error');
+   770→            return;
+   771→        }
+   772→
+   773→        const saveBtn = document.getElementById('adminUserModalSave');
+   774→        if (saveBtn) {
+   775→            saveBtn.disabled = true;
+   776→            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+   777→        }
+   778→
+   779→        try {
+   780→            await api.put(`/users/${userId}`, {
+   781→                name,
+   782→                email,
+   783→                phone,
+   784→                whatsapp,
+   785→                bio,
+   786→                role,
+   787→                is_active: statusVal === 'activo',
+   788→            });
+   789→
+   790→            showToast('Usuario actualizado exitosamente', 'success');
+   791→            adminUserModal.classList.add('hidden');
+   792→            loadUsers();
+   793→            loadDashboardStats();
+   794→        } catch (error) {
+   795→            showToast(error.message, 'error');
+   796→        } finally {
+   797→            if (saveBtn) {
+   798→                saveBtn.disabled = false;
+   799→                saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+   800→            }
+   801→        }
+   802→    }
+   803→
+   804→    function deleteUser(id) {
+   805→        if (adminDeleteMsg) adminDeleteMsg.textContent = '¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer. Las propiedades del usuario serán eliminadas también.';
+   806→        currentDeleteAction = { type: 'user', id };
+   807→        if (adminDeleteModal) adminDeleteModal.classList.remove('hidden');
+   808→    }
+   809→
+   810→    // ─── Business Edit Modal ──────────────────────────────────
+   811→    function setupBusinessEditModal() {
+   812→        if (adminBizEditClose && adminBizEditModal) adminBizEditClose.addEventListener('click', () => adminBizEditModal.classList.add('hidden'));
+   813→        if (adminBizEditCancel && adminBizEditModal) adminBizEditCancel.addEventListener('click', () => adminBizEditModal.classList.add('hidden'));
+   814→        if (adminBizEditModal) adminBizEditModal.querySelector('.modal-overlay')?.addEventListener('click', () => adminBizEditModal.classList.add('hidden'));
+   815→        if (adminBizEditSave) adminBizEditSave.addEventListener('click', saveBusiness);
+   816→
+   817→        // Image upload handlers for business edit
+   818→        const bizFileInput = document.getElementById('bizEditImageFile');
+   819→        const bizCameraInput = document.getElementById('bizEditImageCamera');
+   820→        if (bizFileInput) bizFileInput.addEventListener('change', (e) => handleBizImageUpload(e.target.files[0]));
+   821→        if (bizCameraInput) bizCameraInput.addEventListener('change', (e) => handleBizImageUpload(e.target.files[0]));
+   822→
+   823→        // Image URL handler for business edit
+   824→        const bizURLInput = document.getElementById('bizEditImageURL');
+   825→        if (bizURLInput) bizURLInput.addEventListener('input', () => {
+   826→            const url = bizURLInput.value.trim();
+   827→            const preview = document.getElementById('bizEditImagePreview');
+   828→            if (preview && url) {
+   829→                preview.innerHTML = `<img src="${url}" style="max-width:200px;max-height:150px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
+   830→            }
+   831→        });
+   832→    }
+   833→
+   834→    async function editBusiness(businessId) {
+   835→        if (!adminBizEditModal) return;
+   836→        adminBizEditModal.classList.remove('hidden');
+   837→        adminBizEditModal.dataset.businessId = businessId;
+   838→
+   839→        // Reset form
+   840→        const form = document.getElementById('adminBizEditForm');
+   841→        if (form) form.reset();
+   842→
+   843→        // Reset image preview
+   844→        const preview = document.getElementById('bizEditImagePreview');
+   845→        if (preview) preview.innerHTML = '<div style="color:#999;font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+   846→
+   847→        // Load categories for select
+   848→        try {
+   849→            const catsData = await api.get('/categories');
+   850→            const catSelect = document.getElementById('bizEditCategory');
+   851→            if (catSelect && catsData.categories) {
+   852→                catSelect.innerHTML = '<option value="">Seleccionar...</option>';
+   853→                catsData.categories.forEach(c => {
+   854→                    const opt = document.createElement('option');
+   855→                    opt.value = c.id;
+   856→                    opt.textContent = c.name;
+   857→                    catSelect.appendChild(opt);
+   858→                });
+   859→            }
+   860→        } catch (err) { console.error('Error loading categories:', err); }
+   861→
+   862→        // Load business data
+   863→        try {
+   864→            const biz = await api.get(`/businesses/${businessId}`);
+   865→
+   866→            document.getElementById('bizEditTitle').value = biz.title || '';
+   867→            document.getElementById('bizEditDescription').value = biz.description || '';
+   868→            document.getElementById('bizEditType').value = biz.business_type || 'comercio';
+   869→            if (biz.category_id) document.getElementById('bizEditCategory').value = biz.category_id;
+   870→            adminBizEditModal.dataset.currentCategoryId = biz.category_id || 1;
+   871→            document.getElementById('bizEditPhone').value = biz.phone || '';
+   872→            document.getElementById('bizEditWhatsApp').value = biz.whatsapp || '';
+   873→            document.getElementById('bizEditEmail').value = biz.email_contact || '';
+   874→            document.getElementById('bizEditWebsite').value = biz.website || '';
+   875→            document.getElementById('bizEditInstagram').value = biz.instagram || '';
+   876→            document.getElementById('bizEditFacebook').value = biz.facebook || '';
+   877→            document.getElementById('bizEditAddress').value = biz.address || '';
+   878→            document.getElementById('bizEditCity').value = biz.city || '';
+   879→            document.getElementById('bizEditState').value = biz.state || '';
+   880→            document.getElementById('bizEditSchedule').value = biz.schedule || '';
+   881→
+   882→            // Features
+   883→            document.getElementById('bizEditParking').checked = !!biz.has_parking;
+   884→            document.getElementById('bizEditWifi').checked = !!biz.has_wifi;
+   885→            document.getElementById('bizEditCard').checked = !!biz.has_card;
+   886→            document.getElementById('bizEditDelivery').checked = !!biz.has_delivery;
+   887→            document.getElementById('bizEditOutdoor').checked = !!biz.has_outdoor;
+   888→
+   889→            // Load images gallery
+   890→            adminBizEditModal.dataset.imageCount = (biz.images || []).length;
+   891→            loadBizEditGallery(businessId);
+   892→
+   893→        } catch (error) {
+   894→            showToast('Error al cargar datos del negocio', 'error');
+   895→            adminBizEditModal.classList.add('hidden');
+   896→        }
+   897→    }
+   898→
+   899→    // ─── Image Compression (client-side) ────────────────────────
+   900→    // Reduces image resolution before upload to save R2 storage and bandwidth
+   901→    // Max longest side: 1920px, JPEG/WebP quality: 0.75
+   902→    function compressImage(file, maxSize, quality) {
+   903→        maxSize = maxSize || 1920;
+   904→        quality = quality || 0.75;
+   905→        return new Promise((resolve, reject) => {
+   906→            // Don't compress GIFs or tiny files (< 200KB)
+   907→            if (file.type === 'image/gif' || file.size < 200 * 1024) {
+   908→                resolve(file);
+   909→                return;
+   910→            }
+   911→            const img = new Image();
+   912→            const url = URL.createObjectURL(file);
+   913→            img.onload = function () {
+   914→                URL.revokeObjectURL(url);
+   915→                let w = img.width, h = img.height;
+   916→                // Only resize if exceeds max dimension
+   917→                if (w <= maxSize && h <= maxSize) {
+   918→                    resolve(file);
+   919→                    return;
+   920→                }
+   921→                if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+   922→                else { w = Math.round(w * maxSize / h); h = maxSize; }
+   923→                const canvas = document.createElement('canvas');
+   924→                canvas.width = w;
+   925→                canvas.height = h;
+   926→                const ctx = canvas.getContext('2d');
+   927→                ctx.drawImage(img, 0, 0, w, h);
+   928→                // Use WebP if supported, else JPEG
+   929→                const mimeType = canvas.toDataURL('image/webp').startsWith('data:image/webp') ? 'image/webp' : 'image/jpeg';
+   930→                const ext = mimeType === 'image/webp' ? 'webp' : 'jpg';
+   931→                canvas.toBlob(function (blob) {
+   932→                    if (!blob) { resolve(file); return; }
+   933→                    const compressed = new File([blob], file.name.replace(/\.[^.]+$/, '.') + ext, { type: mimeType });
+   934→                    const pct = Math.round((1 - compressed.size / file.size) * 100);
+   935→                    console.log(`Image compressed: ${(file.size/1024/1024).toFixed(1)}MB → ${(compressed.size/1024/1024).toFixed(1)}MB (${pct}% reduction)`);
+   936→                    resolve(compressed);
+   937→                }, mimeType, quality);
+   938→            };
+   939→            img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+   940→            img.src = url;
+   941→        });
+   942→    }
+   943→
+   944→    async function handleBizImageUpload(file) {
+   945→        if (!file) return;
+   946→        const statusEl = document.getElementById('bizEditImageStatus');
+   947→        const businessId = adminBizEditModal?.dataset?.businessId;
+   948→
+   949→        if (!businessId) { showToast('Error: no se identificó el negocio', 'error'); return; }
+   950→
+   951→        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+   952→
+   953→        try {
+   954→            // Step 1: Upload file to R2
+   955→            const formData = new FormData();
+   956→            formData.append('file', file);
+   957→            formData.append('business_id', businessId);
+   958→            formData.append('product_type', 'business');
+   959→
+   960→            const token = localStorage.getItem(TOKEN_KEY);
+   961→            const response = await fetch('/api/upload', {
+   962→                method: 'POST',
+   963→                headers: { 'Authorization': `Bearer ${token}` },
+   964→                body: formData
+   965→            });
+   966→            const data = await response.json();
+   967→
+   968→            if (!data.url) {
+   969→                if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + (data.error || 'Error al subir');
+   970→                return;
+   971→            }
+   972→
+   973→            // Step 2: Register image in images table
+   974→            const imgCount = adminBizEditModal.dataset.imageCount ? parseInt(adminBizEditModal.dataset.imageCount) : 0;
+   975→            const isFirst = imgCount === 0;
+   976→            await api.post(`/images/${businessId}`, {
+   977→                url: data.url,
+   978→                is_cover: isFirst ? 1 : 0
+   979→            });
+   980→
+   981→            if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Imagen subida';
+   982→            adminBizEditModal.dataset.imageCount = imgCount + 1;
+   983→
+   984→            // Refresh gallery
+   985→            loadBizEditGallery(businessId);
+   986→        } catch (error) {
+   987→            if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + error.message;
+   988→        }
+   989→    }
+   990→
+   991→    // Load business images gallery in edit modal
+   992→    async function loadBizEditGallery(businessId) {
+   993→        const galleryEl = document.getElementById('bizEditGallery');
+   994→        if (!galleryEl || !businessId) return;
+   995→
+   996→        try {
+   997→            const biz = await api.get(`/businesses/${businessId}`);
+   998→            const images = biz.images || [];
+   999→            adminBizEditModal.dataset.imageCount = images.length;
+  1000→
+  1001→            if (images.length === 0) {
+  1002→                galleryEl.innerHTML = '<span style="color:#999;font-size:0.85rem;">Sin imágenes</span>';
+  1003→                return;
+  1004→            }
+  1005→
+  1006→            galleryEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+  1007→                images.map(img => `
+  1008→                    <div style="position:relative;display:inline-block;border-radius:8px;overflow:hidden;border:2px solid ${img.is_cover ? '#f59e0b' : '#e5e7eb'};">
+  1009→                        <img src="${img.url}" style="width:100px;height:80px;object-fit:cover;" onerror="this.style.display='none'">
+  1010→                        ${img.is_cover ? '<span style="position:absolute;top:2px;left:2px;background:#f59e0b;color:#fff;font-size:0.6rem;padding:1px 4px;border-radius:4px;">Portada</span>' : ''}
+  1011→                        <button type="button" onclick="window._adminDeleteBizImage(${businessId}, ${img.id})" style="position:absolute;top:2px;right:2px;background:rgba(220,53,69,0.9);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Eliminar">&times;</button>
+  1012→                    </div>
+  1013→                `).join('') +
+  1014→                '</div>';
+  1015→        } catch (err) {
+  1016→            console.error('Error loading gallery:', err);
+  1017→        }
+  1018→    }
+  1019→
+  1020→    // Delete business image
+  1021→    async function deleteBizImage(businessId, imageId) {
+  1022→        try {
+  1023→            await api.delete(`/images/${businessId}?image_id=${imageId}`);
+  1024→            showToast('Imagen eliminada', 'success');
+  1025→            loadBizEditGallery(businessId);
+  1026→        } catch (err) {
+  1027→            showToast('Error al eliminar: ' + err.message, 'error');
+  1028→        }
+  1029→    }
+  1030→    window._adminDeleteBizImage = deleteBizImage;
+  1031→
+  1032→    async function saveBusiness() {
+  1033→        if (!adminBizEditModal) return;
+  1034→        const businessId = adminBizEditModal.dataset.businessId;
+  1035→        if (!businessId) return;
+  1036→
+  1037→        const title = document.getElementById('bizEditTitle')?.value?.trim();
+  1038→        if (!title) { showToast('El nombre es requerido', 'error'); return; }
+  1039→
+  1040→        const saveBtn = document.getElementById('adminBizEditSave');
+  1041→        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; }
+  1042→
+  1043→        try {
+  1044→            const body = {
+  1045→                title,
+  1046→                description: document.getElementById('bizEditDescription')?.value?.trim() || '',
+  1047→                business_type: document.getElementById('bizEditType')?.value || 'negocio',
+  1048→                category_id: parseInt(document.getElementById('bizEditCategory')?.value) || adminBizEditModal.dataset.currentCategoryId || 1,
+  1049→                phone: document.getElementById('bizEditPhone')?.value?.trim() || '',
+  1050→                whatsapp: document.getElementById('bizEditWhatsApp')?.value?.trim() || '',
+  1051→                email_contact: document.getElementById('bizEditEmail')?.value?.trim() || '',
+  1052→                website: document.getElementById('bizEditWebsite')?.value?.trim() || '',
+  1053→                instagram: document.getElementById('bizEditInstagram')?.value?.trim() || '',
+  1054→                facebook: document.getElementById('bizEditFacebook')?.value?.trim() || '',
+  1055→                address: document.getElementById('bizEditAddress')?.value?.trim() || '',
+  1056→                city: document.getElementById('bizEditCity')?.value?.trim() || '',
+  1057→                state: document.getElementById('bizEditState')?.value?.trim() || '',
+  1058→                schedule: document.getElementById('bizEditSchedule')?.value?.trim() || '',
+  1059→                has_parking: document.getElementById('bizEditParking')?.checked ? 1 : 0,
+  1060→                has_wifi: document.getElementById('bizEditWifi')?.checked ? 1 : 0,
+  1061→                has_card: document.getElementById('bizEditCard')?.checked ? 1 : 0,
+  1062→                has_delivery: document.getElementById('bizEditDelivery')?.checked ? 1 : 0,
+  1063→                has_outdoor: document.getElementById('bizEditOutdoor')?.checked ? 1 : 0,
+  1064→                image: adminBizEditModal.dataset.currentImage || '',
+  1065→            };
+  1066→
+  1067→            await api.put(`/businesses/${businessId}`, body);
+  1068→            showToast('Negocio actualizado exitosamente', 'success');
+  1069→            adminBizEditModal.classList.add('hidden');
+  1070→            loadProperties();
+  1071→            loadDashboardStats();
+  1072→        } catch (error) {
+  1073→            showToast(error.message, 'error');
+  1074→        } finally {
+  1075→            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; }
+  1076→        }
+  1077→    }
+  1078→
+  1079→    // ─── Messages Management ────────────────────────────────────
+  1080→    async function loadMessages() {
+  1081→        const tbody = document.getElementById('adminMsgsTableBody');
+  1082→        if (!tbody) return;
+  1083→
+  1084→        tbody.innerHTML = '<tr class="empty-row"><td colspan="8"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div></td></tr>';
+  1085→
+  1086→        try {
+  1087→            const filterVal = document.getElementById('adminMsgFilter')?.value || '';
+  1088→
+  1089→            // Use contacts endpoint - we get all, then filter client-side
+  1090→            // Since there's no specific admin contacts endpoint, use businesses approach
+  1091→            let endpoint = `/contacts?`;
+  1092→            // Note: The contacts API only has POST. We'll need to get messages through a workaround.
+  1093→            // For now, we'll show an appropriate message or use stats data.
+  1094→
+  1095→            // The API currently only has POST for contacts. Admin messages view would need
+  1096→            // a GET endpoint. Let's show a placeholder and try.
+  1097→            try {
+  1098→                const data = await api.get('/contacts');
+  1099→                const messages = data.contacts || data || [];
+  1100→
+  1101→                if (Array.isArray(messages) && messages.length === 0) {
+  1102→                    tbody.innerHTML = '<tr class="empty-row"><td colspan="8"><div class="empty-state-sm"><p>No hay mensajes.</p></div></td></tr>';
+  1103→                    return;
+  1104→                }
+  1105→
+  1106→                if (Array.isArray(messages)) {
+  1107→                    tbody.innerHTML = messages.map(m => `
+  1108→                        <tr>
+  1109→                            <td>${formatDate(m.created_at)}</td>
+  1110→                            <td>${m.sender_name || '--'}</td>
+  1111→                            <td>${m.sender_email || '--'}</td>
+  1112→                            <td>${m.business_id || '--'}</td>
+  1113→                            <td>${truncateText(m.message, 60)}</td>
+  1114→                            <td>${m.sender_phone || '--'}</td>
+  1115→                            <td>${m.is_read ? '<span class="badge badge-default">Leído</span>' : '<span class="badge badge-warning">Nuevo</span>'}</td>
+  1116→                            <td>
+  1117→                                <button class="btn btn-xs btn-outline" onclick="window.admin.viewMessage(${m.id})" title="Ver"><i class="fas fa-eye"></i></button>
+  1118→                            </td>
+  1119→                        </tr>
+  1120→                    `).join('');
+  1121→                }
+  1122→            } catch {
+  1123→                tbody.innerHTML = '<tr class="empty-row"><td colspan="8"><div class="empty-state-sm"><p>No hay mensajes de contacto aún.</p></div></td></tr>';
+  1124→            }
+  1125→
+  1126→        } catch (error) {
+  1127→            tbody.innerHTML = '<tr class="empty-row"><td colspan="8"><div class="empty-state-sm"><p>Error al cargar mensajes.</p></div></td></tr>';
+  1128→        }
+  1129→    }
+  1130→
+  1131→    function viewMessage(messageId) {
+  1132→        // This would need a proper API endpoint to get message by ID
+  1133→        showToast('Función de detalle de mensaje próximamente disponible', 'info');
+  1134→    }
+  1135→
+  1136→    // ─── Modals Setup ───────────────────────────────────────────
+  1137→    function setupModals() {
+  1138→        // Delete modal
+  1139→        if (adminDeleteConfirm) adminDeleteConfirm.addEventListener('click', confirmDelete);
+  1140→        if (adminDeleteCancel) adminDeleteCancel.addEventListener('click', closeDeleteModal);
+  1141→        if (adminDeleteModalClose) adminDeleteModalClose.addEventListener('click', closeDeleteModal);
+  1142→        if (adminDeleteModal) {
+  1143→            adminDeleteModal.querySelector('.modal-overlay')?.addEventListener('click', closeDeleteModal);
+  1144→        }
+  1145→
+  1146→        // Settings save button
+  1147→        const adminSaveSettingsBtn = document.getElementById('adminSaveSettingsBtn');
+  1148→        if (adminSaveSettingsBtn) adminSaveSettingsBtn.addEventListener('click', saveSettings);
+  1149→
+  1150→        // Reject modal
+  1151→        if (adminRejectConfirm) adminRejectConfirm.addEventListener('click', confirmReject);
+  1152→        if (adminRejectCancel) adminRejectCancel.addEventListener('click', closeRejectModal);
+  1153→        if (adminRejectModalClose) adminRejectModalClose.addEventListener('click', closeRejectModal);
+  1154→        if (adminRejectModal) {
+  1155→            adminRejectModal.querySelector('.modal-overlay')?.addEventListener('click', closeRejectModal);
+  1156→        }
+  1157→
+  1158→        // User edit modal
+  1159→        if (adminUserModalSave) adminUserModalSave.addEventListener('click', saveUser);
+  1160→        if (adminUserModalCancel) adminUserModalCancel.addEventListener('click', () => adminUserModal?.classList.add('hidden'));
+  1161→        if (adminUserModalClose) adminUserModalClose.addEventListener('click', () => adminUserModal?.classList.add('hidden'));
+  1162→        if (adminUserModal) {
+  1163→            adminUserModal.querySelector('.modal-overlay')?.addEventListener('click', () => adminUserModal.classList.add('hidden'));
+  1164→        }
+  1165→
+  1166→        // Business detail modal
+  1167→        if (adminPropModalClose) adminPropModalClose.addEventListener('click', () => adminBusinessModal?.classList.add('hidden'));
+  1168→        if (adminBusinessModal) {
+  1169→            adminBusinessModal.querySelector('.modal-overlay')?.addEventListener('click', () => adminBusinessModal.classList.add('hidden'));
+  1170→        }
+  1171→
+  1172→        // Message detail modal
+  1173→        if (adminMsgModalClose) adminMsgModalClose.addEventListener('click', () => adminMsgModal?.classList.add('hidden'));
+  1174→        if (adminMsgModalCloseBtn) adminMsgModalCloseBtn.addEventListener('click', () => adminMsgModal?.classList.add('hidden'));
+  1175→        if (adminMsgModal) {
+  1176→            adminMsgModal.querySelector('.modal-overlay')?.addEventListener('click', () => adminMsgModal.classList.add('hidden'));
+  1177→        }
+  1178→    }
+  1179→
+  1180→    // ─── Filter Listeners ───────────────────────────────────────
+  1181→    function setupFilterListeners() {
+  1182→        // Business filters
+  1183→        const propStatusFilter = document.getElementById('adminPropStatusFilter');
+  1184→        const propTypeFilter = document.getElementById('adminPropTypeFilter');
+  1185→        const propSearch = document.getElementById('adminPropSearch');
+  1186→
+  1187→        if (propStatusFilter) propStatusFilter.addEventListener('change', () => { propsPage = 1; loadProperties(); });
+  1188→        if (propTypeFilter) propTypeFilter.addEventListener('change', () => { propsPage = 1; loadProperties(); });
+  1189→        if (propSearch) propSearch.addEventListener('input', debounce(() => { propsPage = 1; loadProperties(); }, 400));
+  1190→
+  1191→        // User filters
+  1192→        const userRoleFilter = document.getElementById('adminUserRoleFilter');
+  1193→        const userSearch = document.getElementById('adminUserSearch');
+  1194→
+  1195→        if (userRoleFilter) userRoleFilter.addEventListener('change', () => { usersPage = 1; loadUsers(); });
+  1196→        if (userSearch) userSearch.addEventListener('input', debounce(() => { usersPage = 1; loadUsers(); }, 400));
+  1197→
+  1198→        // Message filter
+  1199→        const msgFilter = document.getElementById('adminMsgFilter');
+  1200→        if (msgFilter) msgFilter.addEventListener('change', () => { msgsPage = 1; loadMessages(); });
+  1201→
+  1202→        // Products filter
+  1203→        const productStatusFilter = document.getElementById('adminProductStatusFilter');
+  1204→        if (productStatusFilter) productStatusFilter.addEventListener('change', () => { productsPage = 1; loadProducts(); });
+  1205→    }
+  1206→
+  1207→    // ─── Pagination Helper ──────────────────────────────────────
+  1208→    function renderAdminPagination(containerId, pagination, onPageChange) {
+  1209→        const container = document.getElementById(containerId);
+  1210→        if (!container || !pagination) return;
+  1211→
+  1212→        const { page, totalPages, total } = pagination;
+  1213→
+  1214→        if (totalPages <= 1) {
+  1215→            container.innerHTML = '';
+  1216→            return;
+  1217→        }
+  1218→
+  1219→        let pagesHTML = '';
+  1220→
+  1221→        // Previous button
+  1222→        pagesHTML += `<button class="pagination-btn" ${page <= 1 ? 'disabled' : ''} data-page="${page - 1}"><i class="fas fa-chevron-left"></i></button>`;
+  1223→
+  1224→        // Page numbers
+  1225→        const maxVisible = 5;
+  1226→        let startPage = Math.max(1, page - Math.floor(maxVisible / 2));
+  1227→        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+  1228→        if (endPage - startPage < maxVisible - 1) {
+  1229→            startPage = Math.max(1, endPage - maxVisible + 1);
+  1230→        }
+  1231→
+  1232→        if (startPage > 1) {
+  1233→            pagesHTML += `<button class="pagination-btn" data-page="1">1</button>`;
+  1234→            if (startPage > 2) pagesHTML += '<span class="pagination-dots">...</span>';
+  1235→        }
+  1236→
+  1237→        for (let i = startPage; i <= endPage; i++) {
+  1238→            pagesHTML += `<button class="pagination-btn ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+  1239→        }
+  1240→
+  1241→        if (endPage < totalPages) {
+  1242→            if (endPage < totalPages - 1) pagesHTML += '<span class="pagination-dots">...</span>';
+  1243→            pagesHTML += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+  1244→        }
+  1245→
+  1246→        // Next button
+  1247→        pagesHTML += `<button class="pagination-btn" ${page >= totalPages ? 'disabled' : ''} data-page="${page + 1}"><i class="fas fa-chevron-right"></i></button>`;
+  1248→
+  1249→        // Total info
+  1250→        pagesHTML += `<span class="pagination-info">Total: ${total}</span>`;
+  1251→
+  1252→        container.innerHTML = pagesHTML;
+  1253→
+  1254→        // Click handlers
+  1255→        container.querySelectorAll('.pagination-btn:not([disabled])').forEach(btn => {
+  1256→            btn.addEventListener('click', () => {
+  1257→                const p = parseInt(btn.dataset.page);
+  1258→                if (p && p >= 1 && p <= totalPages) {
+  1259→                    onPageChange(p);
+  1260→                }
+  1261→            });
+  1262→        });
+  1263→    }
+  1264→
+  1265→    // ─── Facebook Integration ───────────────────────────────────
+  1266→    async function loadFacebookConfig() {
+  1267→        try {
+  1268→            const data = await api.get('/facebook/config');
+  1269→            const config = data.config || {};
+  1270→
+  1271→            if (config.page_id) document.getElementById('fbPageId').value = config.page_id;
+  1272→            if (config.page_access_token) document.getElementById('fbAccessToken').value = config.page_access_token;
+  1273→            if (config.default_city) document.getElementById('fbCity').value = config.default_city;
+  1274→            if (config.auto_approve === '1') document.getElementById('fbAutoApprove').checked = true;
+  1275→
+  1276→            const statusEl = document.getElementById('fbConfigStatus');
+  1277→            if (config.page_id && config.page_access_token) {
+  1278→                statusEl.innerHTML = '<div style="color:#28a745;"><i class="fas fa-check-circle"></i> Facebook conectado. Token: ' + (config.page_access_token_masked || '***') + '</div>';
+  1279→            }
+  1280→        } catch (error) {
+  1281→            // Config not set yet, that's fine
+  1282→            const statusEl = document.getElementById('fbConfigStatus');
+  1283→            if (statusEl) statusEl.innerHTML = '<div style="color:#999;"><i class="fas fa-info-circle"></i> No configurado. Ingresa tu Page ID y Token de Facebook.</div>';
+  1284→        }
+  1285→    }
+  1286→
+  1287→    async function saveFacebookConfig() {
+  1288→        const pageId = document.getElementById('fbPageId')?.value?.trim();
+  1289→        const accessToken = document.getElementById('fbAccessToken')?.value?.trim();
+  1290→        const city = document.getElementById('fbCity')?.value?.trim() || 'Mérida';
+  1291→        const autoApprove = document.getElementById('fbAutoApprove')?.checked;
+  1292→
+  1293→        if (!pageId || !accessToken) {
+  1294→            showToast('Page ID y Token son requeridos', 'error');
+  1295→            return;
+  1296→        }
+  1297→
+  1298→        const statusEl = document.getElementById('fbConfigStatus');
+  1299→        statusEl.innerHTML = '<div style="color:#1a73e8;"><i class="fas fa-spinner fa-spin"></i> Guardando...</div>';
+  1300→
+  1301→        try {
+  1302→            const data = await api.post('/facebook/config', {
+  1303→                page_id: pageId,
+  1304→                page_access_token: accessToken,
+  1305→                default_city: city,
+  1306→                auto_approve: autoApprove,
+  1307→            });
+  1308→
+  1309→            if (data.success) {
+  1310→                statusEl.innerHTML = '<div style="color:#28a745;"><i class="fas fa-check-circle"></i> ' + data.message + '</div>';
+  1311→                showToast(data.message, 'success');
+  1312→            } else {
+  1313→                statusEl.innerHTML = '<div style="color:#e74c3c;"><i class="fas fa-times-circle"></i> ' + (data.error || 'Error al guardar') + '</div>';
+  1314→                showToast(data.error || 'Error al guardar', 'error');
+  1315→            }
+  1316→        } catch (error) {
+  1317→            statusEl.innerHTML = '<div style="color:#e74c3c;"><i class="fas fa-times-circle"></i> ' + error.message + '</div>';
+  1318→            showToast(error.message, 'error');
+  1319→        }
+  1320→    }
+  1321→
+  1322→    async function testFacebookConnection() {
+  1323→        const pageId = document.getElementById('fbPageId')?.value?.trim();
+  1324→        const accessToken = document.getElementById('fbAccessToken')?.value?.trim();
+  1325→
+  1326→        if (!pageId || !accessToken) {
+  1327→            showToast('Ingresa Page ID y Token primero', 'warning');
+  1328→            return;
+  1329→        }
+  1330→
+  1331→        const statusEl = document.getElementById('fbConfigStatus');
+  1332→        statusEl.innerHTML = '<div style="color:#1a73e8;"><i class="fas fa-spinner fa-spin"></i> Probando conexion con Facebook...</div>';
+  1333→
+  1334→        try {
+  1335→            const resp = await fetch(`https://graph.facebook.com/v18.0/${pageId}?fields=name,fan_count&access_token=${accessToken}`);
+  1336→            const data = await resp.json();
+  1337→
+  1338→            if (data.error) {
+  1339→                statusEl.innerHTML = '<div style="color:#e74c3c;"><i class="fas fa-times-circle"></i> Error: ' + data.error.message + ' (Codigo: ' + data.error.code + ')</div>';
+  1340→                showToast('Error de conexion con Facebook', 'error');
+  1341→            } else {
+  1342→                const fans = data.fan_count ? ' con ' + data.fan_count.toLocaleString() + ' seguidores' : '';
+  1343→                statusEl.innerHTML = '<div style="color:#28a745;"><i class="fas fa-check-circle"></i> Conexion exitosa! Pagina: <strong>' + (data.name || pageId) + '</strong>' + fans + '</div>';
+  1344→                showToast('Conexion exitosa con Facebook!', 'success');
+  1345→            }
+  1346→        } catch (error) {
+  1347→            statusEl.innerHTML = '<div style="color:#e74c3c;"><i class="fas fa-times-circle"></i> Error de conexion: ' + error.message + '</div>';
+  1348→            showToast('Error al conectar con Facebook', 'error');
+  1349→        }
+  1350→    }
+  1351→
+  1352→    async function importFromFacebook() {
+  1353→        const statusEl = document.getElementById('fbImportStatus');
+  1354→        statusEl.innerHTML = '<div style="color:#1a73e8;"><i class="fas fa-spinner fa-spin"></i> Importando posts desde Facebook... esto puede tomar unos segundos.</div>';
+  1355→
+  1356→        try {
+  1357→            const data = await api.post('/facebook/import', {});
+  1358→
+  1359→            if (data.success) {
+  1360→                let html = '<div style="color:#28a745;"><i class="fas fa-check-circle"></i> ' + data.message + '</div>';
+  1361→                if (data.results && data.results.length > 0) {
+  1362→                    html += '<div style="margin-top:12px;">';
+  1363→                    html += '<table class="admin-table" style="font-size:13px;"><thead><tr><th>Propiedad</th><th>Imagenes</th></tr></thead><tbody>';
+  1364→                    data.results.forEach(r => {
+  1365→                        html += '<tr><td><a href="/negocio/' + (r.business_slug || r.business_id) + '" target="_blank">' + (r.title || 'Sin titulo') + '</a></td><td>' + r.images + '</td></tr>';
+  1366→                    });
+  1367→                    html += '</tbody></table></div>';
+  1368→                }
+  1369→                statusEl.innerHTML = html;
+  1370→                showToast(data.message, 'success');
+  1371→                loadFacebookHistory();
+  1372→                loadDashboardStats();
+  1373→            } else {
+  1374→                statusEl.innerHTML = '<div style="color:#e74c3c;"><i class="fas fa-times-circle"></i> ' + (data.error || 'Error en la importacion') + '</div>';
+  1375→                showToast(data.error || 'Error al importar', 'error');
+  1376→            }
+  1377→        } catch (error) {
+  1378→            statusEl.innerHTML = '<div style="color:#e74c3c;"><i class="fas fa-times-circle"></i> ' + error.message + '</div>';
+  1379→            showToast(error.message, 'error');
+  1380→        }
+  1381→    }
+  1382→
+  1383→    async function loadFacebookHistory() {
+  1384→        const container = document.getElementById('fbHistoryContent');
+  1385→        if (!container) return;
+  1386→
+  1387→        container.innerHTML = '<p style="color:#999;"><i class="fas fa-spinner fa-spin"></i> Cargando historial...</p>';
+  1388→
+  1389→        try {
+  1390→            const data = await api.get('/facebook/history?limit=30');
+  1391→
+  1392→            if (!data.history || data.history.length === 0) {
+  1393→                container.innerHTML = '<p style="color:#999;"><i class="fas fa-inbox"></i> No hay importaciones todavia. Configura Facebook y luego haz clic en "Importar Posts Ahora".</p>';
+  1394→                return;
+  1395→            }
+  1396→
+  1397→            let html = '<div style="margin-bottom:8px;color:#666;">';
+  1398→            html += '<strong>Total procesados:</strong> ' + data.total + ' | ';
+  1399→            html += '<strong>Importados como propiedad:</strong> ' + data.imported + ' | ';
+  1400→            html += '<strong>Omitidos (sin foto):</strong> ' + data.skipped;
+  1401→            html += '</div>';
+  1402→
+  1403→            html += '<div class="admin-table-responsive"><table class="admin-table" style="font-size:13px;">';
+  1404→            html += '<thead><tr><th>Fecha</th><th>Post</th><th>Propiedad</th><th>Estado</th></tr></thead><tbody>';
+  1405→
+  1406→            data.history.forEach(h => {
+  1407→                const statusHTML = h.business_id
+  1408→                    ? '<a href="/negocio/' + (h.business_slug || h.business_id) + '" target="_blank" class="badge badge-success">Ver Propiedad</a>'
+  1409→                    : '<span class="badge badge-warning">Omitido</span>';
+  1410→                const title = h.business_title || (h.post_message ? truncateText(h.post_message, 40) : 'Post sin texto');
+  1411→                html += '<tr>';
+  1412→                html += '<td>' + (h.imported_at ? formatDate(h.imported_at) : '--') + '</td>';
+  1413→                html += '<td>' + title + '</td>';
+  1414→                html += '<td>' + (h.business_id ? '#' + h.business_id : '--') + '</td>';
+  1415→                html += '<td>' + statusHTML + '</td>';
+  1416→                html += '</tr>';
+  1417→            });
+  1418→
+  1419→            html += '</tbody></table></div>';
+  1420→            container.innerHTML = html;
+  1421→        } catch (error) {
+  1422→            container.innerHTML = '<p style="color:#e74c3c;">Error al cargar historial: ' + error.message + '</p>';
+  1423→        }
+  1424→    }
+  1425→
+  1426→    // ─── Productos B2 Modal System ──────────────────────────
+  1427→    let b2Page = 1;
+  1428→
+  1429→    function setupB2Modal() {
+  1430→        const navLink = document.getElementById('adminNavProductsB2');
+  1431→        const modal = document.getElementById('adminProductsB2Modal');
+  1432→        if (navLink && modal) {
+  1433→            navLink.addEventListener('click', (e) => {
+  1434→                e.preventDefault();
+  1435→                modal.classList.remove('hidden');
+  1436→                b2Page = 1;
+  1437→                loadB2Products();
+  1438→            });
+  1439→        }
+  1440→        // Close B2 modal
+  1441→        const b2Close = document.getElementById('adminProductsB2Close');
+  1442→        if (b2Close && modal) b2Close.addEventListener('click', () => modal.classList.add('hidden'));
+  1443→        if (modal) modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+  1444→
+  1445→        // B2 Edit sub-modal
+  1446→        const editModal = document.getElementById('b2EditModal');
+  1447→        const editClose = document.getElementById('b2EditClose');
+  1448→        const editCancel = document.getElementById('b2EditCancel');
+  1449→        const editSave = document.getElementById('b2EditSave');
+  1450→        if (editClose && editModal) editClose.addEventListener('click', () => editModal.classList.add('hidden'));
+  1451→        if (editCancel && editModal) editCancel.addEventListener('click', () => editModal.classList.add('hidden'));
+  1452→        if (editModal) editModal.querySelector('.modal-overlay')?.addEventListener('click', () => editModal.classList.add('hidden'));
+  1453→        if (editSave) editSave.addEventListener('click', saveB2Product);
+  1454→
+  1455→        // B2 toolbar
+  1456→        const createBtn = document.getElementById('b2CreateBtn');
+  1457→        if (createBtn) createBtn.addEventListener('click', () => openB2EditModal(null));
+  1458→
+  1459→        const refreshBtn = document.getElementById('b2RefreshBtn');
+  1460→        if (refreshBtn) refreshBtn.addEventListener('click', loadB2Products);
+  1461→
+  1462→        const statusFilter = document.getElementById('b2StatusFilter');
+  1463→        if (statusFilter) statusFilter.addEventListener('change', () => { b2Page = 1; loadB2Products(); });
+  1464→
+  1465→        const searchInput = document.getElementById('b2SearchInput');
+  1466→        if (searchInput) searchInput.addEventListener('input', debounce(() => { b2Page = 1; loadB2Products(); }, 400));
+  1467→
+  1468→        // B2 Image upload handlers
+  1469→        const b2FileInput = document.getElementById('b2EditImageFile');
+  1470→        const b2CameraInput = document.getElementById('b2EditImageCamera');
+  1471→        if (b2FileInput) b2FileInput.addEventListener('change', (e) => handleB2ImageUpload(e.target.files[0]));
+  1472→        if (b2CameraInput) b2CameraInput.addEventListener('change', (e) => handleB2ImageUpload(e.target.files[0]));
+  1473→
+  1474→        // B2 Image URL handler
+  1475→        const b2URLInput = document.getElementById('b2EditImageURL');
+  1476→        if (b2URLInput) b2URLInput.addEventListener('input', () => {
+  1477→            const url = b2URLInput.value.trim();
+  1478→            const preview = document.getElementById('b2EditImagePreview');
+  1479→            const editModal2 = document.getElementById('b2EditModal');
+  1480→            if (preview && url) {
+  1481→                preview.innerHTML = `<img src="${url}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
+  1482→                if (editModal2) editModal2.dataset.currentImage = url;
+  1483→            }
+  1484→        });
+  1485→    }
+  1486→
+  1487→    async function loadB2Products() {
+  1488→        const tbody = document.getElementById('b2ProductsBody');
+  1489→        if (!tbody) return;
+  1490→        tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p><i class="fas fa-spinner fa-spin"></i> Cargando...</p></div></td></tr>';
+  1491→
+  1492→        try {
+  1493→            const statusVal = document.getElementById('b2StatusFilter')?.value || '';
+  1494→            const searchVal = document.getElementById('b2SearchInput')?.value || '';
+  1495→            let endpoint = `/marketplace?page=${b2Page}&limit=15&all=true`;
+  1496→            if (statusVal) endpoint += `&status=${statusVal}`;
+  1497→            if (searchVal) endpoint += `&search=${encodeURIComponent(searchVal)}`;
+  1498→
+  1499→            const data = await api.get(endpoint);
+  1500→            const products = data.products || [];
+  1501→
+  1502→            if (products.length === 0) {
+  1503→                tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p>No hay productos.</p></div></td></tr>';
+  1504→            } else {
+  1505→                tbody.innerHTML = products.map(p => {
+  1506→                    const imgHTML = p.image ? `<img src="${escapeHtml(p.image)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">` : '<i class="fas fa-box" style="color:#ccc;font-size:1.2rem;"></i>';
+  1507→                    const statusBadge = getStatusBadge(p.status || 'pending');
+  1508→                    return `<tr>
+  1509→                        <td>${p.id}</td>
+  1510→                        <td><div style="display:flex;align-items:center;gap:8px;">${imgHTML}<span style="font-weight:600;">${escapeHtml(p.name || 'Sin nombre')}</span></div></td>
+  1511→                        <td>${escapeHtml(p.business_name || '—')}</td>
+  1512→                        <td><span class="badge badge-default">${escapeHtml(p.category || 'general')}</span></td>
+  1513→                        <td style="font-weight:600;color:#059669;">$${parseFloat(p.price || 0).toFixed(2)}</td>
+  1514→                        <td><div style="font-size:0.8rem;">${escapeHtml(p.owner_name || '—')}<br><span style="color:#999;">${escapeHtml(p.owner_email || '')}</span></div></td>
+  1515→                        <td>${statusBadge}</td>
+  1516→                        <td style="font-size:0.8rem;color:#888;">${formatDate(p.created_at)}</td>
+  1517→                        <td>
+  1518→                            ${p.status === 'pending' ? `<button class="btn btn-xs btn-success" onclick="window._adminB2Approve(${p.id})" title="Aprobar"><i class="fas fa-check"></i></button>` : ''}
+  1519→                            ${p.status !== 'rejected' ? `<button class="btn btn-xs btn-danger" onclick="window._adminB2Reject(${p.id})" title="Rechazar"><i class="fas fa-ban"></i></button>` : ''}
+  1520→                            <button class="btn btn-xs btn-outline" onclick="window._adminB2Edit(${p.id})" title="Editar"><i class="fas fa-edit"></i></button>
+  1521→                            <button class="btn btn-xs btn-danger" onclick="window._adminB2Delete(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+  1522→                        </td>
+  1523→                    </tr>`;
+  1524→                }).join('');
+  1525→            }
+  1526→
+  1527→            const countEl = document.getElementById('b2ResultsCount');
+  1528→            const total = data.pagination?.total || products.length;
+  1529→            if (countEl) countEl.textContent = `${total} productos`;
+  1530→
+  1531→            // Update badge
+  1532→            const badge = document.getElementById('adminProductsBadge');
+  1533→            if (badge) {
+  1534→                const pendingCount = products.filter(p => p.status === 'pending').length;
+  1535→                badge.textContent = pendingCount > 0 ? pendingCount : total;
+  1536→                badge.style.display = (pendingCount > 0 || total > 0) ? '' : 'none';
+  1537→            }
+  1538→
+  1539→            // Pagination
+  1540→            renderAdminPagination('b2Pagination', data.pagination, (page) => { b2Page = page; loadB2Products(); });
+  1541→        } catch (error) {
+  1542→            tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p>Error al cargar productos.</p></div></td></tr>';
+  1543→            showToast(error.message, 'error');
+  1544→        }
+  1545→    }
+  1546→
+  1547→    async function openB2EditModal(productId) {
+  1548→        const editModal = document.getElementById('b2EditModal');
+  1549→        if (!editModal) return;
+  1550→
+  1551→        const title = document.getElementById('b2EditTitle');
+  1552→        if (productId) {
+  1553→            title.innerHTML = '<i class="fas fa-edit"></i> Editar Producto';
+  1554→        } else {
+  1555→            title.innerHTML = '<i class="fas fa-plus-circle"></i> Crear Producto';
+  1556→        }
+  1557→
+  1558→        // Reset image preview
+  1559→        const preview = document.getElementById('b2EditImagePreview');
+  1560→        if (preview) preview.innerHTML = '';
+  1561→        const statusEl = document.getElementById('b2EditImageStatus');
+  1562→        if (statusEl) statusEl.innerHTML = '';
+  1563→        editModal.dataset.currentImage = '';
+  1564→
+  1565→        // Load businesses for selector
+  1566→        try {
+  1567→            const bizData = await api.get('/businesses?status=approved&limit=100');
+  1568→            const bizSelect = document.getElementById('b2EditBusiness');
+  1569→            if (bizSelect) {
+  1570→                bizSelect.innerHTML = '<option value="">Sin negocio asociado</option>';
+  1571→                if (bizData.businesses) {
+  1572→                    bizData.businesses.forEach(b => {
+  1573→                        const opt = document.createElement('option');
+  1574→                        opt.value = b.id;
+  1575→                        opt.textContent = b.title || b.name || 'Negocio #' + b.id;
+  1576→                        bizSelect.appendChild(opt);
+  1577→                    });
+  1578→                }
+  1579→            }
+  1580→        } catch (err) { console.error('Error loading businesses for B2 edit:', err); }
+  1581→
+  1582→        // If editing, load product data
+  1583→        if (productId) {
+  1584→            try {
+  1585→                const product = await api.get(`/marketplace/${productId}`);
+  1586→                document.getElementById('b2EditName').value = product.name || '';
+  1587→                document.getElementById('b2EditPrice').value = product.price || 0;
+  1588→                document.getElementById('b2EditCategory').value = product.category || 'general';
+  1589→                document.getElementById('b2EditStatus').value = product.status || 'pending';
+  1590→                document.getElementById('b2EditDescription').value = product.description || '';
+  1591→                if (product.business_id) document.getElementById('b2EditBusiness').value = product.business_id;
+  1592→
+  1593→                // Handle image
+  1594→                const imageURL = product.image || '';
+  1595→                const urlInput = document.getElementById('b2EditImageURL');
+  1596→                if (urlInput) urlInput.value = imageURL;
+  1597→                editModal.dataset.currentImage = imageURL;
+  1598→                if (preview && imageURL) {
+  1599→                    preview.innerHTML = `<img src="${imageURL}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
+  1600→                }
+  1601→            } catch (err) {
+  1602→                showToast('Error al cargar producto', 'error');
+  1603→                return;
+  1604→            }
+  1605→        } else {
+  1606→            document.getElementById('b2EditForm').reset();
+  1607→            // Clear the URL input specifically (reset may not clear all)
+  1608→            const urlInput = document.getElementById('b2EditImageURL');
+  1609→            if (urlInput) urlInput.value = '';
+  1610→        }
+  1611→
+  1612→        editModal.dataset.productId = productId || '';
+  1613→        editModal.classList.remove('hidden');
+  1614→    }
+  1615→
+  1616→    async function handleB2ImageUpload(file) {
+  1617→        if (!file) return;
+  1618→        const statusEl = document.getElementById('b2EditImageStatus');
+  1619→        const preview = document.getElementById('b2EditImagePreview');
+  1620→        const editModal = document.getElementById('b2EditModal');
+  1621→
+  1622→        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Comprimiendo...';
+  1623→
+  1624→        try {
+  1625→            // Compress image client-side before upload
+  1626→            const compressedFile = await compressImage(file);
+  1627→
+  1628→            if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+  1629→
+  1630→            const formData = new FormData();
+  1631→            formData.append('file', compressedFile);
+  1632→            formData.append('product_type', 'marketplace');
+  1633→
+  1634→            const token = localStorage.getItem(TOKEN_KEY);
+  1635→            const response = await fetch('/api/upload', {
+  1636→                method: 'POST',
+  1637→                headers: { 'Authorization': `Bearer ${token}` },
+  1638→                body: formData
+  1639→            });
+  1640→            const data = await response.json();
+  1641→
+  1642→            if (data.url) {
+  1643→                if (preview) preview.innerHTML = `<img src="${data.url}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;">`;
+  1644→                if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Imagen subida';
+  1645→                if (editModal) editModal.dataset.currentImage = data.url;
+  1646→                // Clear URL input when file is uploaded
+  1647→                const urlInput = document.getElementById('b2EditImageURL');
+  1648→                if (urlInput) urlInput.value = '';
+  1649→            } else {
+  1650→                if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + (data.error || 'Error al subir');
+  1651→            }
+  1652→        } catch (error) {
+  1653→            if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> Error de conexión';
+  1654→        }
+  1655→    }
+  1656→
+  1657→    async function saveB2Product() {
+  1658→        const editModal = document.getElementById('b2EditModal');
+  1659→        const productId = editModal?.dataset?.productId;
+  1660→        const saveBtn = document.getElementById('b2EditSave');
+  1661→
+  1662→        const name = document.getElementById('b2EditName')?.value?.trim();
+  1663→        const price = parseFloat(document.getElementById('b2EditPrice')?.value) || 0;
+  1664→        const category = document.getElementById('b2EditCategory')?.value || 'general';
+  1665→        const status = document.getElementById('b2EditStatus')?.value || 'pending';
+  1666→        const description = document.getElementById('b2EditDescription')?.value?.trim() || '';
+  1667→        const business_id = document.getElementById('b2EditBusiness')?.value || '';
+  1668→
+  1669→        // Get image: prefer uploaded file, fallback to URL input
+  1670→        const uploadedImage = editModal?.dataset?.currentImage || '';
+  1671→        const urlImage = document.getElementById('b2EditImageURL')?.value?.trim() || '';
+  1672→        const image = uploadedImage || urlImage;
+  1673→
+  1674→        if (!name) { showToast('El nombre es requerido', 'error'); return; }
+  1675→
+  1676→        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; }
+  1677→
+  1678→        try {
+  1679→            const body = { name, price, category, image, status, description };
+  1680→            if (business_id) body.business_id = parseInt(business_id);
+  1681→
+  1682→            if (productId) {
+  1683→                await api.put(`/marketplace/${productId}`, body);
+  1684→                showToast('Producto actualizado', 'success');
+  1685→            } else {
+  1686→                await api.post('/marketplace', body);
+  1687→                showToast('Producto creado', 'success');
+  1688→            }
+  1689→            editModal.classList.add('hidden');
+  1690→            loadB2Products();
+  1691→        } catch (error) {
+  1692→            showToast(error.message, 'error');
+  1693→        } finally {
+  1694→            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
+  1695→        }
+  1696→    }
+  1697→
+  1698→    async function adminB2Approve(id) {
+  1699→        try { await api.post(`/marketplace/${id}/approve`); showToast('Producto aprobado', 'success'); loadB2Products(); }
+  1700→        catch(e) { showToast(e.message, 'error'); }
+  1701→    }
+  1702→    async function adminB2Reject(id) {
+  1703→        try { await api.post(`/marketplace/${id}/reject`); showToast('Producto rechazado', 'info'); loadB2Products(); }
+  1704→        catch(e) { showToast(e.message, 'error'); }
+  1705→    }
+  1706→    function adminB2Edit(id) { openB2EditModal(id); }
+  1707→    async function adminB2Delete(id) {
+  1708→        if (!confirm('¿Eliminar este producto? Esta acción no se puede deshacer.')) return;
+  1709→        try { await api.delete(`/marketplace/${id}`); showToast('Producto eliminado', 'success'); loadB2Products(); }
+  1710→        catch(e) { showToast(e.message, 'error'); }
+  1711→    }
+  1712→
+  1713→    // Expose B2 functions for inline onclick handlers
+  1714→    window._adminB2Approve = adminB2Approve;
+  1715→    window._adminB2Reject = adminB2Reject;
+  1716→    window._adminB2Edit = adminB2Edit;
+  1717→    window._adminB2Delete = adminB2Delete;
+  1718→
+  1719→    // ─── Expose functions for inline onclick handlers ───────────
+  1720→    window.admin = {
+  1721→        viewBusiness,
+  1722→        editBusiness,
+  1723→        approveBusiness,
+  1724→        rejectBusiness,
+  1725→        toggleFeatured,
+  1726→        deleteBusiness,
+  1727→        editUser,
+  1728→        deleteUser,
+  1729→        viewMessage,
+  1730→        approveJob,
+  1731→        rejectJob,
+  1732→        deleteJob,
+  1733→    };
+  1734→
+  1735→    // ─── Facebook Event Listeners (set up in init) ─────────────
+  1736→    function setupFacebookListeners() {
+  1737→        const fbSaveConfigBtn = document.getElementById('fbSaveConfig');
+  1738→        const fbTestConnectionBtn = document.getElementById('fbTestConnection');
+  1739→        const fbImportNowBtn = document.getElementById('fbImportNow');
+  1740→
+  1741→        if (fbSaveConfigBtn) fbSaveConfigBtn.addEventListener('click', saveFacebookConfig);
+  1742→        if (fbTestConnectionBtn) fbTestConnectionBtn.addEventListener('click', testFacebookConnection);
+  1743→        if (fbImportNowBtn) fbImportNowBtn.addEventListener('click', importFromFacebook);
+  1744→    }
+  1745→
+  1746→    // ─── JOBS MANAGEMENT ──────────────────────────────────────
+  1747→    async function loadJobs() {
+  1748→        try {
+  1749→            const params = new URLSearchParams({ page: jobsPage, limit: PAGE_LIMIT });
+  1750→            const data = await api.get(`/jobs?${params}`);
+  1751→            const tbody = document.getElementById('adminJobsTableBody');
+  1752→            if (!tbody) return;
+  1753→
+  1754→            if (!data.jobs || data.jobs.length === 0) {
+  1755→                tbody.innerHTML = '<tr class="empty-row"><td colspan="7"><div class="empty-state-sm"><p>No hay ofertas de empleo.</p></div></td></tr>';
+  1756→                return;
+  1757→            }
+  1758→
+  1759→            tbody.innerHTML = data.jobs.map(j => `
+  1760→                <tr>
+  1761→                    <td>${j.id}</td>
+  1762→                    <td><strong>${escHtml(j.title)}</strong></td>
+  1763→                    <td>${escHtml(j.company_name)}</td>
+  1764→                    <td>${j.state || '-'} / ${j.city || '-'}</td>
+  1765→                    <td><span class="badge badge-${j.status === 'approved' ? 'success' : j.status === 'rejected' ? 'danger' : 'warning'}">${j.job_type || '-'}</span></td>
+  1766→                    <td><span class="badge badge-${j.status === 'approved' ? 'success' : j.status === 'rejected' ? 'danger' : 'warning'}">${j.status}</span></td>
+  1767→                    <td>
+  1768→                        ${j.status === 'pending' ? `<button class="btn btn-sm btn-success" onclick="admin.approveJob(${j.id})"><i class="fas fa-check"></i></button>` : ''}
+  1769→                        ${j.status !== 'rejected' ? `<button class="btn btn-sm btn-danger" onclick="admin.rejectJob(${j.id})"><i class="fas fa-ban"></i></button>` : ''}
+  1770→                        <button class="btn btn-sm btn-secondary" onclick="admin.deleteJob(${j.id})"><i class="fas fa-trash"></i></button>
+  1771→                    </td>
+  1772→                </tr>
+  1773→            `).join('');
+  1774→        } catch (err) {
+  1775→            console.error('Error loading jobs:', err);
+  1776→        }
+  1777→    }
+  1778→
+  1779→    async function loadBusinessesForJobSelect() {
+  1780→        const select = document.getElementById('jobCompany');
+  1781→        if (!select) return;
+  1782→        try {
+  1783→            const data = await api.get('/businesses?status=approved&limit=200');
+  1784→            if (data.businesses) {
+  1785→                data.businesses.forEach(b => {
+  1786→                    const opt = document.createElement('option');
+  1787→                    opt.value = b.title;
+  1788→                    opt.textContent = `${b.title} (${b.state || '-'})`;
+  1789→                    select.appendChild(opt);
+  1790→                });
+  1791→            }
+  1792→        } catch (err) {
+  1793→            console.error('Error loading businesses for job select:', err);
+  1794→        }
+  1795→    }
+  1796→
+  1797→    function setupJobListeners() {
+  1798→        const createBtn = document.getElementById('adminCreateJobBtn');
+  1799→        const modal = document.getElementById('adminJobModal');
+  1800→        const closeBtn = document.getElementById('adminJobModalClose');
+  1801→        const cancelBtn = document.getElementById('adminJobCancel');
+  1802→        const submitBtn = document.getElementById('adminJobSubmit');
+  1803→
+  1804→        if (createBtn) createBtn.addEventListener('click', () => { if (modal) modal.classList.remove('hidden'); });
+  1805→        if (closeBtn) closeBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); });
+  1806→        if (cancelBtn) cancelBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); });
+  1807→        if (modal) modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+  1808→
+  1809→        if (submitBtn) submitBtn.addEventListener('click', submitJob);
+  1810→    }
+  1811→
+  1812→    async function submitJob() {
+  1813→        const company = document.getElementById('jobCompany')?.value;
+  1814→        const title = document.getElementById('jobTitle')?.value?.trim();
+  1815→        const job_type = document.getElementById('jobType')?.value;
+  1816→        const salary = document.getElementById('jobSalary')?.value?.trim();
+  1817→        const state = document.getElementById('jobState')?.value?.trim();
+  1818→        const city = document.getElementById('jobCity')?.value?.trim();
+  1819→        const description = document.getElementById('jobDescription')?.value?.trim();
+  1820→        const requirements = document.getElementById('jobRequirements')?.value?.trim();
+  1821→        const benefits = document.getElementById('jobBenefits')?.value?.trim();
+  1822→        const contactEmail = document.getElementById('jobContactEmail')?.value?.trim();
+  1823→        const contactPhone = document.getElementById('jobContactPhone')?.value?.trim();
+  1824→
+  1825→        if (!company || !title) {
+  1826→            showToast('Empresa y título son requeridos', 'error');
+  1827→            return;
+  1828→        }
+  1829→
+  1830→        try {
+  1831→            await api.post('/jobs', {
+  1832→                company_name: company,
+  1833→                title,
+  1834→                job_type: job_type || 'tiempo_completo',
+  1835→                salary: salary || null,
+  1836→                state: state || null,
+  1837→                city: city || null,
+  1838→                description: description || null,
+  1839→                requirements: requirements || null,
+  1840→                benefits: benefits || null,
+  1841→                contact_email: contactEmail || null,
+  1842→                contact_phone: contactPhone || null,
+  1843→            });
+  1844→            showToast('Oferta de empleo publicada', 'success');
+  1845→            document.getElementById('adminJobModal')?.classList.add('hidden');
+  1846→            loadJobs();
+  1847→        } catch (err) {
+  1848→            showToast(err.message || 'Error al publicar empleo', 'error');
+  1849→        }
+  1850→    }
+  1851→
+  1852→    function approveJob(id) {
+  1853→        executeD1Action(`UPDATE job_listings SET status='approved' WHERE id=${id}`, 'Oferta aprobada', loadJobs);
+  1854→    }
+  1855→
+  1856→    function rejectJob(id) {
+  1857→        executeD1Action(`UPDATE job_listings SET status='rejected' WHERE id=${id}`, 'Oferta rechazada', loadJobs);
+  1858→    }
+  1859→
+  1860→    function deleteJob(id) {
+  1861→        if (confirm('¿Eliminar esta oferta de empleo?')) {
+  1862→            executeD1Action(`DELETE FROM job_listings WHERE id=${id}`, 'Oferta eliminada', loadJobs);
+  1863→        }
+  1864→    }
+  1865→
+  1866→    function escHtml(str) {
+  1867→        if (!str) return '';
+  1868→        return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  1869→    }
+  1870→    // Alias used in B2 products section and old products section
+  1871→    const escapeHtml = escHtml;
+  1872→
+  1873→    async function executeD1Action(sql, successMsg, callback) {
+  1874→        try {
+  1875→            // Use the jobs API with direct approach - we need a direct DB endpoint
+  1876→            // For now use the businesses approve pattern
+  1877→            const token = localStorage.getItem(TOKEN_KEY);
+  1878→            // Call a generic admin action via PATCH to jobs
+  1879→            const resp = await fetch(`/api/jobs/${sql.split(' ')[2].split('=')[0]}`, {
+  1880→                method: 'PATCH',
+  1881→                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+  1882→                body: JSON.stringify({ action: sql.includes('DELETE') ? 'delete' : sql.includes('approved') ? 'approve' : 'reject' })
+  1883→            });
+  1884→            if (resp.ok) {
+  1885→                showToast(successMsg, 'success');
+  1886→                if (callback) callback();
+  1887→            } else {
+  1888→                showToast('Error en la acción', 'error');
+  1889→            }
+  1890→        } catch (err) {
+  1891→            showToast(err.message || 'Error', 'error');
+  1892→        }
+  1893→    }
+  1894→
+  1895→    // ─── HTML Escape Helper (aliased above as escapeHtml = escHtml) ──
+  1896→    // Note: escHtml declared above, escapeHtml is an alias. Do NOT re-declare.
+  1897→
+  1898→    // ─── Featured Businesses Selector ──────────────────────────
+  1899→    async function loadFeaturedSelector() {
+  1900→        const container = document.getElementById('featuredBusinessesContainer');
+  1901→        if (!container) return;
+  1902→
+  1903→        try {
+  1904→            // Get all approved businesses
+  1905→            const data = await api.get('/businesses?status=approved&limit=200');
+  1906→            const businesses = data.businesses || [];
+  1907→
+  1908→            if (businesses.length === 0) {
+  1909→                container.innerHTML = '<p style="color:#9ca3af;font-size:0.85rem;">No hay negocios aprobados.</p>';
+  1910→                return;
+  1911→            }
+  1912→
+  1913→            // Get currently featured businesses
+  1914→            const featuredData = await api.get('/businesses?status=approved&limit=3&featured=1');
+  1915→            const featured = featuredData.businesses || [];
+  1916→            const featuredIds = new Set(featured.map(b => b.id));
+  1917→
+  1918→            let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+  1919→
+  1920→            // Show currently featured
+  1921→            html += '<div style="margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Negocios actualmente destacados:</div>';
+  1922→
+  1923→            featured.forEach(b => {
+  1924→                html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #f59e0b;border-radius:10px;background:#fffbeb;cursor:pointer;">
+  1925→                    <input type="checkbox" class="featured-checkbox" value="${b.id}" checked style="width:18px;height:18px;accent-color:#f59e0b;">
+  1926→                    <img src="${b.cover_image || (b.images && b.images[0] && b.images[0].url) || ''}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">
+  1927→                    <div style="flex:1;">
+  1928→                        <div style="font-weight:600;font-size:0.88rem;">${escapeHtml(b.title)}</div>
+  1929→                        <div style="font-size:0.78rem;color:#6b7280;">${escapeHtml(b.category_name || b.city || '')}</div>
+  1930→                    </div>
+  1931→                </label>`;
+  1932→            });
+  1933→
+  1934→            // Show non-featured
+  1935→            const nonFeatured = businesses.filter(b => !featuredIds.has(b.id));
+  1936→            if (nonFeatured.length > 0) {
+  1937→                html += '<div style="margin-top:12px;margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Otros negocios (selecciona para destacar):</div>';
+  1938→
+  1939→                nonFeatured.forEach(b => {
+  1940→                    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;">
+  1941→                        <input type="checkbox" class="featured-checkbox" value="${b.id}" style="width:18px;height:18px;accent-color:#f59e0b;">
+  1942→                        <div style="flex:1;">
+  1943→                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(b.title)}</div>
+  1944→                            <div style="font-size:0.78rem;color:#6b7280;">${escapeHtml(b.category_name || b.city || '')}</div>
+  1945→                        </div>
+  1946→                    </label>`;
+  1947→                });
+  1948→            }
+  1949→
+  1950→            html += '</div>';
+  1951→            html += '<button class="btn btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#f59e0b,#d97706);" onclick="window._adminSaveFeatured()"><i class="fas fa-save"></i> Guardar Destacados</button>';
+  1952→
+  1953→            container.innerHTML = html;
+  1954→
+  1955→            // Limit to 3 checkboxes
+  1956→            const checkboxes = container.querySelectorAll('.featured-checkbox');
+  1957→            checkboxes.forEach(cb => {
+  1958→                cb.addEventListener('change', () => {
+  1959→                    const checked = container.querySelectorAll('.featured-checkbox:checked');
+  1960→                    if (checked.length > 3) {
+  1961→                        cb.checked = false;
+  1962→                        showToast('Máximo 3 negocios destacados', 'warning');
+  1963→                    }
+  1964→                });
+  1965→            });
+  1966→
+  1967→        } catch (err) {
+  1968→            console.error('Error loading featured selector:', err);
+  1969→            container.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al cargar negocios.</p>';
+  1970→        }
+  1971→    }
+  1972→
+  1973→    async function saveFeaturedBusinesses() {
+  1974→        const container = document.getElementById('featuredBusinessesContainer');
+  1975→        if (!container) return;
+  1976→
+  1977→        const checked = container.querySelectorAll('.featured-checkbox:checked');
+  1978→        const selectedIds = Array.from(checked).map(cb => parseInt(cb.value));
+  1979→
+  1980→        try {
+  1981→            // First, remove all featured flags
+  1982→            await api.put('/businesses/featured/clear', {});
+  1983→
+  1984→            // Then, set featured for selected businesses
+  1985→            for (const id of selectedIds) {
+  1986→                await api.put(`/businesses/${id}`, { featured: 1 });
+  1987→            }
+  1988→
+  1989→            showToast(`${selectedIds.length} negocio(s) destacado(s) guardado(s)`, 'success');
+  1990→            loadFeaturedSelector();
+  1991→        } catch (err) {
+  1992→            showToast('Error al guardar destacados: ' + err.message, 'error');
+  1993→        }
+  1994→    }
+  1995→
+  1996→    window._adminSaveFeatured = saveFeaturedBusinesses;
+  1997→
+  1998→    // ─── Settings Functions ───────────────────────────────────
+  1999→    async function loadSettings() {
+  2000→        try {
+
+[showing lines 1-2000 of 2188; use offset=2001 with limit to continue reading]

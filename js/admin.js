@@ -16,6 +16,7 @@
     let usersPage = 1;
     let msgsPage = 1;
     let jobsPage = 1;
+    let inmueblesPage = 1;
     let productsPage = 1;
     const PAGE_LIMIT = 15;
 
@@ -32,6 +33,7 @@
     const tabMessages = document.getElementById('tabMessages');
     const tabFacebook = document.getElementById('tabFacebook');
     const tabJobs = document.getElementById('tabJobs');
+    const tabInmuebles = document.getElementById('tabInmuebles');
     const tabSettings = document.getElementById('tabSettings');
 
     // Stat elements
@@ -110,6 +112,7 @@
         setupJobListeners();
         setupB2Modal();
         setupBusinessEditModal();
+        setupInmueblesListeners();
         loadBusinessesForJobSelect();
 
         // Load initial data
@@ -147,7 +150,7 @@
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, settings: tabSettings };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -155,7 +158,7 @@
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', settings: 'Configuración' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -188,6 +191,10 @@
             case 'jobs':
                 jobsPage = 1;
                 loadJobs();
+                break;
+            case 'inmuebles':
+                inmueblesPage = 1;
+                loadInmueblesTab();
                 break;
             case 'settings':
                 loadSettings();
@@ -1715,6 +1722,196 @@
     window._adminB2Reject = adminB2Reject;
     window._adminB2Edit = adminB2Edit;
     window._adminB2Delete = adminB2Delete;
+
+    // ─── INMUEBLES (Properties) MANAGEMENT ──────────────────────
+    const INMUEBLE_TYPE_LABELS = {
+        casa: 'Casa', apartamento: 'Apartamento', terreno: 'Terreno',
+        local_comercial: 'Local Comercial', oficina: 'Oficina', hotel: 'Hotel',
+        finca: 'Finca', galpon: 'Galpón', estacionamiento: 'Estacionamiento', otro: 'Otro'
+    };
+    const INMUEBLE_OPERATION_LABELS = { venta: 'Venta', alquiler: 'Alquiler', venta_alquiler: 'Venta y Alquiler' };
+    const INMUEBLE_STATUS_COLORS = {
+        pending: 'warning', approved: 'success', rejected: 'danger', sold: 'info', rented: 'purple'
+    };
+
+    function getPropertyTypeLabel(type) {
+        return INMUEBLE_TYPE_LABELS[type] || type || '-';
+    }
+
+    function getOperationLabel(op) {
+        return INMUEBLE_OPERATION_LABELS[op] || op || '-';
+    }
+
+    function getInmuebleStatusBadge(status) {
+        const colorMap = { pending: 'warning', approved: 'success', rejected: 'danger', sold: 'info', rented: 'purple' };
+        const labelMap = { pending: 'Pendiente', approved: 'Aprobado', rejected: 'Rechazado', sold: 'Vendido', rented: 'Alquilado' };
+        const color = colorMap[status] || 'secondary';
+        const label = labelMap[status] || status || '-';
+        return `<span class="badge badge-${color}">${label}</span>`;
+    }
+
+    function formatPrice(price, currency) {
+        if (!price && price !== 0) return '-';
+        const curr = currency || 'USD';
+        const formatted = Number(price).toLocaleString('es-VE');
+        return `${formatted} ${curr}`;
+    }
+
+    async function loadInmueblesTab() {
+        const tbody = document.getElementById('propertiesTableBody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="10"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div></td></tr>';
+
+        try {
+            const statusFilter = document.getElementById('propStatusFilter')?.value || '';
+            const typeFilter = document.getElementById('propTypeFilter')?.value || '';
+            const searchVal = document.getElementById('propSearchInput')?.value || '';
+
+            const params = new URLSearchParams({ page: inmueblesPage, limit: PAGE_LIMIT });
+            if (statusFilter) params.set('status', statusFilter);
+            if (typeFilter) params.set('type', typeFilter);
+            if (searchVal) params.set('search', searchVal);
+
+            const data = await api.get(`/properties?${params}`);
+            const properties = data.properties || data.results || [];
+
+            if (properties.length === 0) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="10"><div class="empty-state-sm"><p>No se encontraron inmuebles.</p></div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = properties.map(p => renderInmuebleRow(p)).join('');
+
+            // Pagination
+            renderAdminPagination('propertiesPagination', data.pagination, (page) => {
+                inmueblesPage = page;
+                loadInmueblesTab();
+            });
+        } catch (error) {
+            console.error('Error loading inmuebles:', error);
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="10"><div class="empty-state-sm"><p>Error al cargar inmuebles.</p></div></td></tr>';
+            showToast(error.message, 'error');
+        }
+    }
+
+    function renderInmuebleRow(p) {
+        const coverImg = p.cover_image || p.images?.[0] || '';
+        const imgHTML = coverImg
+            ? `<img src="${coverImg}" alt="" class="admin-thumb" onerror="this.style.display='none'">`
+            : '<div class="admin-thumb-placeholder"><i class="fas fa-image"></i></div>';
+        const titleLink = `<a href="property-detail.html?id=${p.id}" target="_blank" title="${escHtml(p.title)}">${escHtml(truncateText(p.title, 35))}</a>`;
+        const featuredIcon = p.featured
+            ? '<i class="fas fa-star text-warning"></i>'
+            : '<i class="far fa-star text-muted"></i>';
+
+        return `
+            <tr>
+                <td>${p.id}</td>
+                <td>${imgHTML}</td>
+                <td>${titleLink}</td>
+                <td>${getPropertyTypeLabel(p.property_type || p.type)}</td>
+                <td>${getOperationLabel(p.operation)}</td>
+                <td>${formatPrice(p.price, p.currency)}</td>
+                <td>${escHtml(p.city || '-')}</td>
+                <td>${escHtml(p.owner_name || p.user_name || '-')}</td>
+                <td>${getInmuebleStatusBadge(p.status)}</td>
+                <td class="admin-actions">
+                    <button class="btn btn-xs btn-outline" onclick="window._adminViewInmueble(${p.id})" title="Ver"><i class="fas fa-eye"></i></button>
+                    ${p.status === 'pending' ? `
+                        <button class="btn btn-xs btn-success" onclick="window._adminApproveInmueble(${p.id})" title="Aprobar"><i class="fas fa-check"></i></button>
+                        <button class="btn btn-xs btn-danger" onclick="window._adminRejectInmueble(${p.id})" title="Rechazar"><i class="fas fa-ban"></i></button>
+                    ` : ''}
+                    <button class="btn btn-xs btn-outline" onclick="window._adminToggleInmuebleFeatured(${p.id}, ${p.featured ? 1 : 0})" title="Destacada">${featuredIcon}</button>
+                    <button class="btn btn-xs btn-danger" onclick="window._adminDeleteInmueble(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `;
+    }
+
+    async function approveProperty(id) {
+        try {
+            await api.post(`/properties/${id}/approve`);
+            showToast('Inmueble aprobado exitosamente', 'success');
+            loadInmueblesTab();
+            loadDashboardTab();
+        } catch (error) {
+            console.error('Error approving property:', error);
+            showToast('Error al aprobar inmueble: ' + error.message, 'error');
+        }
+    }
+
+    async function rejectProperty(id) {
+        try {
+            await api.post(`/properties/${id}/reject`);
+            showToast('Inmueble rechazado', 'success');
+            loadInmueblesTab();
+            loadDashboardTab();
+        } catch (error) {
+            console.error('Error rejecting property:', error);
+            showToast('Error al rechazar inmueble: ' + error.message, 'error');
+        }
+    }
+
+    async function deleteProperty(id) {
+        if (!confirm('¿Estás seguro de que deseas eliminar este inmueble? Esta acción no se puede deshacer.')) return;
+        try {
+            await api.delete(`/properties/${id}`);
+            showToast('Inmueble eliminado', 'success');
+            loadInmueblesTab();
+            loadDashboardTab();
+        } catch (error) {
+            console.error('Error deleting property:', error);
+            showToast('Error al eliminar inmueble: ' + error.message, 'error');
+        }
+    }
+
+    async function togglePropertyFeatured(id, featured) {
+        try {
+            await api.put(`/properties/${id}`, { featured: !featured });
+            showToast('Inmueble actualizado', 'success');
+            loadInmueblesTab();
+        } catch (error) {
+            console.error('Error toggling featured:', error);
+            showToast('Error al actualizar inmueble: ' + error.message, 'error');
+        }
+    }
+
+    function viewInmueble(id) {
+        window.open(`property-detail.html?id=${id}`, '_blank');
+    }
+
+    function setupInmueblesListeners() {
+        const statusFilter = document.getElementById('propStatusFilter');
+        const typeFilter = document.getElementById('propTypeFilter');
+        const searchInput = document.getElementById('propSearchInput');
+
+        const triggerReload = () => {
+            inmueblesPage = 1;
+            loadInmueblesTab();
+        };
+
+        if (statusFilter) statusFilter.addEventListener('change', triggerReload);
+        if (typeFilter) typeFilter.addEventListener('change', triggerReload);
+        if (searchInput) {
+            let debounceTimer;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(triggerReload, 400);
+            });
+        }
+    }
+
+    // Expose inmuebles functions for inline onclick handlers
+    window._adminApproveInmueble = approveProperty;
+    window._adminRejectInmueble = rejectProperty;
+    window._adminDeleteInmueble = deleteProperty;
+    window._adminToggleInmuebleFeatured = togglePropertyFeatured;
+    window._adminViewInmueble = viewInmueble;
+    window._adminInmueblesPage = function(page) {
+        inmueblesPage = page;
+        loadInmueblesTab();
+    };
 
     // ─── Expose functions for inline onclick handlers ───────────
     window.admin = {

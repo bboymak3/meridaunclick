@@ -1,0 +1,437 @@
+   100→   100→                        <div class="pf-step-circle"><i class="fas fa-map-marker-alt"></i></div>
+   101→   101→                        <span>Ubicación</span>
+   102→   102→                    </div>
+   103→   103→                    <div class="pf-step-line"></div>
+   104→   104→                    <div class="pf-step" data-step="4">
+   105→   105→                        <div class="pf-step-circle"><i class="fas fa-clipboard-list"></i></div>
+   106→   106→                        <span>Detalles</span>
+   107→   107→                    </div>
+   108→   108→                    <div class="pf-step-line"></div>
+   109→   109→                    <div class="pf-step" data-step="5">
+   110→   110→                        <div class="pf-step-circle"><i class="fas fa-camera"></i></div>
+   111→   111→                        <span>Fotos</span>
+   112→   112→                    </div>
+   113→   113→                </div>
+   114→   114→            </div>
+   115→   115→        </div>
+   116→   116→
+   117→   117→        <div class="container">
+   118→   118→            <form class="business-form" id="businessForm" enctype="multipart/form-data">
+   119→   119→
+   120→   120→                <!-- Section 1: Basic Info -->
+   121→   121→                <div class="pf-section" data-section="1">
+   122→   122→                    <div class="pf-section-header">
+   123→   123→                        <div class="pf-section-icon" style="background: linear-gradient(135deg, #1a73e8, #4a90e8);">
+   124→   124→                            <i class="fas fa-info-circle"></i>
+   125→   125→                        </div>
+   126→   126→                        <div class="pf-section-text">
+   127→   127→                            <h2>Información Básica</h2>
+   128→   128→                            <p>Describe tu negocio con un título atractivo</p>
+   129→   129→                        </div>
+   130→   130→                        <span class="pf-section-badge">Paso 1</span>
+   131→   131→                    </div>
+   132→   132→                    <div class="pf-section-body">
+   133→   133→                        <div class="pf-field">
+   134→   134→                            <label for="propTitle" class="pf-label">
+   135→   135→                                <i class="fas fa-heading"></i> Nombre del Negocio <span class="pf-required">*</span>
+   136→   136→                            </label>
+   137→   137→                            <input type="text" id="propTitle" name="titulo" placeholder="Ej: Restaurante El Buen Sabor de Mérida" required maxlength="150">
+   138→   138→                            <div class="pf-field-footer">
+   139→   139→                                <small class="form-hint"><i class="fas fa-lightbulb"></i> Usa un nombre descriptivo que atraiga clientes</small>
+   140→   140→                                <span class="pf-char-count" id="titleCharCount">0/150</span>
+   141→   141→                            </div>
+   142→   142→                        </div>
+   143→   143→
+   144→   144→                        <div class="pf-field">
+   145→   145→                            <label for="propDescription" class="pf-label">
+   146→   146→                                <i class="fas fa-align-left"></i> Descripción <span class="pf-required">*</span>
+   147→   147→                            </label>
+   148→   148→                            <textarea id="propDescription" name="descripcion" rows="5" placeholder="Describe tu negocio en detalle: qué ofreces, qué te hace especial, horarios, productos o servicios destacados..." required></textarea>
+   149→   149→                            <div class="pf-field-footer">
+   150→   150→                                <small class="form-hint"><i class="fas fa-lightbulb"></i> Mientras más detallada sea la descripción, más interés generarás</small>
+   151→   151→                                <span class="pf-char-count" id="descCharCount">0/2000</span>
+   152→   152→                            </div>
+   153→   153→                        </div>
+   154→   154→
+   155→   155→                        <div class="pf-grid-2">
+   156→   156→                            <div class="pf-field">
+   157→   157→                                <label for="propCategoria" class="pf-label">
+   158→   158→                                    <i class="fas fa-th-large"></i> Categoría <span class="pf-required">*</span>
+   159→   159→                                </label>
+   160→   160→                                <div class="pf-select-wrapper">
+   161→   161→                                    <select id="propCategoria" name="categoria" required>
+   162→   162→                                        <option value="">Selecciona una categoría</option>
+   163→   163→                                        <option value="restaurantes">Restaurantes</option>
+   164→   164→                                        <option value="farmacias">Farmacias</option>
+   165→   165→                                        <option value="clinicas-hospitales">Clínicas y Hospitales</option>
+   166→   166→                                        <option value="supermercados">Supermercados</option>
+   167→   167→                                        <option value="ropas">Ropas</option>
+   168→   168→                                        <option value="barberias">Barberías y Salones</option>
+   169→   169→                                        <option value="auto-talleres">Auto Talleres</option>
+   170→   170→                                        <option value="cafeterias">Cafeterías</option>
+   171→   171→                                        <option value="bares-discotecas">Bares y Discotecas</option>
+   172→   172→                                        <option value="ferreterias">Ferreterías</option>
+   173→   173→                                        <option value="tecnologia">Tecnología</option>
+   174→   174→                                        <option value="hoteles-posadas">Hoteles y Posadas</option>
+   175→   175→                                        <option value="gimnasios">Gimnasios</option>
+   176→   176→                                        <option value="dentistas">Dentistas</option>
+   177→   177→                                        <option value="celulares">Celulares</option>
+   178→   178→                                        <option value="mueblerias">Mueblerías</option>
+   179→   179→                                        <option value="juridicos">Jurídicos</option>
+   180→   180→                                        <option value="academias">Academias</option>
+   181→   181→                                        <option value="veterinarias">Veterinarias</option>
+   182→   182→                                        <option value="electricos">Eléctricos</option>
+   183→   183→                                        <option value="perfumerias">Perfumerías</option>
+   184→   184→                                        <option value="joyerias">Joyerías</option>
+   185→   185→                                        <option value="zapaterias">Zapaterías</option>
+   186→   186→                                        <option value="panaderias">Panaderías</option>
+   187→   187→                                        <option value="heladerias">Heladerías</option>
+   188→   188→                                        <option value="pizzerias">Pizzerías</option>
+   189→   189→                                        <option value="bicicletas">Bicicletas</option>
+   190→   190→                                        <option value="encomiendas">Encomiendas</option>
+   191→   191→                                        <option value="lavanderias">Lavanderías</option>
+   192→   192→                                        <option value="otro">Otro</option>
+   193→   193→                                    </select>
+   194→   194→                                    <i class="fas fa-chevron-down pf-select-arrow"></i>
+   195→   195→                                </div>
+   196→   196→                            </div>
+   197→   197→                            <div class="pf-field">
+   198→   198→                                <label for="propTipoNegocio" class="pf-label">
+   199→   199→                                    <i class="fas fa-store"></i> Tipo de Negocio <span class="pf-required">*</span>
+   200→   200→                                </label>
+   201→   201→                                <div class="pf-select-wrapper">
+   202→   202→                                    <select id="propTipoNegocio" name="tipo_negocio" required>
+   203→   203→                                        <option value="">Selecciona el tipo</option>
+   204→   204→                                        <option value="negocio">Negocio</option>
+   205→   205→                                        <option value="profesional">Profesional</option>
+   206→   206→                                        <option value="servicio">Servicio</option>
+   207→   207→                                        <option value="restaurante">Restaurante</option>
+   208→   208→                                        <option value="tienda">Tienda</option>
+   209→   209→                                        <option value="otro">Otro</option>
+   210→   210→                                    </select>
+   211→   211→                                    <i class="fas fa-chevron-down pf-select-arrow"></i>
+   212→   212→                                </div>
+   213→   213→                            </div>
+   214→   214→                        </div>
+   215→   215→                    </div>
+   216→   216→                </div>
+   217→   217→
+   218→   218→                <!-- Section 2: Contact -->
+   219→   219→                <div class="pf-section" data-section="2">
+   220→   220→                    <div class="pf-section-header">
+   221→   221→                        <div class="pf-section-icon" style="background: linear-gradient(135deg, #28a745, #5cb85c);">
+   222→   222→                            <i class="fas fa-phone"></i>
+   223→   223→                        </div>
+   224→   224→                        <div class="pf-section-text">
+   225→   225→                            <h2>Contacto</h2>
+   226→   226→                            <p>Datos de contacto del negocio</p>
+   227→   227→                        </div>
+   228→   228→                        <span class="pf-section-badge" style="background: #e8f5e9; color: #28a745;">Paso 2</span>
+   229→   229→                    </div>
+   230→   230→                    <div class="pf-section-body">
+   231→   231→                        <div class="pf-grid-2">
+   232→   232→                            <div class="pf-field">
+   233→   233→                                <label for="propTelefono" class="pf-label">
+   234→   234→                                    <i class="fas fa-phone"></i> Teléfono <span class="pf-required">*</span>
+   235→   235→                                </label>
+   236→   236→                                <input type="tel" id="propPhone" name="telefono" placeholder="+58 414 000-0000" required>
+   237→   237→                            </div>
+   238→   238→                            <div class="pf-field">
+   239→   239→                                <label for="propWhatsApp" class="pf-label">
+   240→   240→                                    <i class="fab fa-whatsapp" style="color:#25d366"></i> WhatsApp
+   241→   241→                                </label>
+   242→   242→                                <input type="tel" id="propWhatsapp" name="whatsapp" placeholder="+58 414 000-0000">
+   243→   243→                            </div>
+   244→   244→                        </div>
+   245→   245→                        <div class="pf-field">
+   246→   246→                            <label for="propEmail" class="pf-label">
+   247→   247→                                <i class="fas fa-envelope"></i> Email de contacto
+   248→   248→                            </label>
+   249→   249→                            <input type="email" id="propEmail" name="email_contacto" placeholder="contacto@negocio.com">
+   250→   250→                        </div>
+   251→   251→                        <div class="pf-grid-3">
+   252→   252→                            <div class="pf-field">
+   253→   253→                                <label for="propWebsite" class="pf-label">
+   254→   254→                                    <i class="fas fa-globe"></i> Website
+   255→   255→                                </label>
+   256→   256→                                <input type="url" id="propWebsite" name="website" placeholder="www.tunegocio.com">
+   257→   257→                            </div>
+   258→   258→                            <div class="pf-field">
+   259→   259→                                <label for="propInstagram" class="pf-label">
+   260→   260→                                    <i class="fab fa-instagram" style="color:#e4405f"></i> Instagram
+   261→   261→                                </label>
+   262→   262→                                <input type="text" id="propInstagram" name="instagram" placeholder="@tunegocio">
+   263→   263→                            </div>
+   264→   264→                            <div class="pf-field">
+   265→   265→                                <label for="propFacebook" class="pf-label">
+   266→   266→                                    <i class="fab fa-facebook" style="color:#1877f2"></i> Facebook
+   267→   267→                                </label>
+   268→   268→                                <input type="text" id="propFacebook" name="facebook" placeholder="facebook.com/tunegocio">
+   269→   269→                            </div>
+   270→   270→                        </div>
+   271→   271→                        <div class="pf-grid-3">
+   272→   272→                            <div class="pf-field">
+   273→   273→                                <label for="propTwitter" class="pf-label">
+   274→   274→                                    <i class="fab fa-x-twitter"></i> Twitter/X
+   275→   275→                                </label>
+   276→   276→                                <input type="text" id="propTwitter" name="twitter" placeholder="https://x.com/tu-negocio">
+   277→   277→                            </div>
+   278→   278→                            <div class="pf-field">
+   279→   279→                                <label for="propTiktok" class="pf-label">
+   280→   280→                                    <i class="fab fa-tiktok"></i> TikTok
+   281→   281→                                </label>
+   282→   282→                                <input type="text" id="propTiktok" name="tiktok" placeholder="https://tiktok.com/@tunegocio">
+   283→   283→                            </div>
+   284→   284→                            <div class="pf-field">
+   285→   285→                                <label for="propYoutube" class="pf-label">
+   286→   286→                                    <i class="fab fa-youtube" style="color:#ff0000"></i> YouTube
+   287→   287→                                </label>
+   288→   288→                                <input type="text" id="propYoutube" name="youtube" placeholder="https://youtube.com/@tunegocio">
+   289→   289→                            </div>
+   290→   290→                        </div>
+   291→   291→                        <div class="pf-grid-3">
+   292→   292→                            <div class="pf-field" style="grid-column: 1 / -1;">
+   293→   293→                                <label for="propVideo" class="pf-label">
+   294→   294→                                    <i class="fas fa-video" style="color:#6366f1"></i> Video (YouTube/TikTok URL)
+   295→   295→                                </label>
+   296→   296→                                <input type="url" id="propVideo" name="video_url" placeholder="https://youtube.com/watch?v=... o https://tiktok.com/...">
+   297→   297→                            </div>
+   298→   298→                        </div>
+   299→   299→                    </div>
+   300→   300→                </div>
+   301→   301→
+   302→   302→                <!-- Section 3: Location -->
+   303→   303→                <div class="pf-section" data-section="3">
+   304→   304→                    <div class="pf-section-header">
+   305→   305→                        <div class="pf-section-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8c5a);">
+   306→   306→                            <i class="fas fa-map-marker-alt"></i>
+   307→   307→                        </div>
+   308→   308→                        <div class="pf-section-text">
+   309→   309→                            <h2>Ubicación</h2>
+   310→   310→                            <p>Indica dónde se encuentra tu negocio</p>
+   311→   311→                        </div>
+   312→   312→                        <span class="pf-section-badge" style="background: #fff3e0; color: #ff6b35;">Paso 3</span>
+   313→   313→                    </div>
+   314→   314→                    <div class="pf-section-body">
+   315→   315→                        <div class="pf-field">
+   316→   316→                            <label for="propDireccion" class="pf-label">
+   317→   317→                                <i class="fas fa-map-pin"></i> Dirección <span class="pf-required">*</span>
+   318→   318→                            </label>
+   319→   319→                            <input type="text" id="propDireccion" name="direccion" placeholder="Ej: Av. 3 Milagros, Centro, Mérida" required>
+   320→   320→                        </div>
+   321→   321→
+   322→   322→                        <div class="pf-grid-2">
+   323→   323→                            <div class="pf-field">
+   324→   324→                                <label for="propCiudad" class="pf-label">
+   325→   325→                                    <i class="fas fa-city"></i> Ciudad <span class="pf-required">*</span>
+   326→   326→                                </label>
+   327→   327→                                <input type="text" id="propCiudad" name="ciudad" placeholder="Ej: Mérida" required>
+   328→   328→                            </div>
+   329→   329→                            <div class="pf-field">
+   330→   330→                                <label for="propEstado" class="pf-label">
+   331→   331→                                    <i class="fas fa-map"></i> Estado <span class="pf-required">*</span>
+   332→   332→                                </label>
+   333→   333→                                <div class="pf-select-wrapper">
+   334→   334→                                    <select id="propEstado" name="estado" required>
+   335→   335→                                        <option value="">Selecciona un estado</option>
+   336→   336→                                        <option value="Amazonas">Amazonas</option>
+   337→   337→                                        <option value="Anzoátegui">Anzoátegui</option>
+   338→   338→                                        <option value="Apure">Apure</option>
+   339→   339→                                        <option value="Aragua">Aragua</option>
+   340→   340→                                        <option value="Barinas">Barinas</option>
+   341→   341→                                        <option value="Bolívar">Bolívar</option>
+   342→   342→                                        <option value="Carabobo">Carabobo</option>
+   343→   343→                                        <option value="Cojedes">Cojedes</option>
+   344→   344→                                        <option value="Delta Amacuro">Delta Amacuro</option>
+   345→   345→                                        <option value="Distrito Capital">Distrito Capital</option>
+   346→   346→                                        <option value="Falcón">Falcón</option>
+   347→   347→                                        <option value="Guárico">Guárico</option>
+   348→   348→                                        <option value="Lara">Lara</option>
+   349→   349→                                        <option value="Mérida" selected>Mérida</option>
+   350→   350→                                        <option value="Miranda">Miranda</option>
+   351→   351→                                        <option value="Monagas">Monagas</option>
+   352→   352→                                        <option value="Nueva Esparta">Nueva Esparta</option>
+   353→   353→                                        <option value="Portuguesa">Portuguesa</option>
+   354→   354→                                        <option value="Sucre">Sucre</option>
+   355→   355→                                        <option value="Táchira">Táchira</option>
+   356→   356→                                        <option value="Trujillo">Trujillo</option>
+   357→   357→                                        <option value="Vargas">Vargas</option>
+   358→   358→                                        <option value="Yaracuy">Yaracuy</option>
+   359→   359→                                        <option value="Zulia">Zulia</option>
+   360→   360→                                    </select>
+   361→   361→                                    <i class="fas fa-chevron-down pf-select-arrow"></i>
+   362→   362→                                </div>
+   363→   363→                            </div>
+   364→   364→                        </div>
+   365→   365→
+   366→   366→                        <!-- Interactive Map -->
+   367→   367→                        <div class="pf-map-container">
+   368→   368→                            <div class="pf-map-header">
+   369→   369→                                <i class="fas fa-map-marked-alt"></i>
+   370→   370→                                <span>Selecciona la ubicación en el mapa</span>
+   371→   371→                            </div>
+   372→   372→                            <p class="pf-map-hint">Haz clic en el mapa o busca una dirección para marcar la ubicación exacta.</p>
+   373→   373→                            <div class="location-map-search">
+   374→   374→                                <input type="text" id="locationSearchInput" placeholder="Buscar dirección o lugar..." autocomplete="off">
+   375→   375→                                <button type="button" class="btn btn-primary btn-sm" id="locationSearchBtn">
+   376→   376→                                    <i class="fas fa-search"></i>
+   377→   377→                                </button>
+   378→   378→                            </div>
+   379→   379→                            <div id="locationMap" class="location-picker-map"></div>
+   380→   380→                            <div id="locationMapCoords" class="pf-coords-display">
+   381→   381→                                <span><i class="fas fa-crosshairs"></i> Lat: <strong id="coordLatDisplay">8.63</strong></span>
+   382→   382→                                <span><i class="fas fa-crosshairs"></i> Lng: <strong id="coordLngDisplay">-66.59</strong></span>
+   383→   383→                            </div>
+   384→   384→                            <div class="pf-grid-2 pf-grid-collapse">
+   385→   385→                                <div class="pf-field">
+   386→   386→                                    <label for="propLat" class="pf-label"><i class="fas fa-globe"></i> Latitud</label>
+   387→   387→                                    <input type="number" id="propLat" name="latitud" placeholder="8.63" step="any">
+   388→   388→                                </div>
+   389→   389→                                <div class="pf-field">
+   390→   390→                                    <label for="propLng" class="pf-label"><i class="fas fa-globe-americas"></i> Longitud</label>
+   391→   391→                                    <input type="number" id="propLng" name="longitud" placeholder="-66.59" step="any">
+   392→   392→                                </div>
+   393→   393→                            </div>
+   394→   394→                        </div>
+   395→   395→                    </div>
+   396→   396→                </div>
+   397→   397→
+   398→   398→                <!-- Section 4: Business Details -->
+   399→   399→                <div class="pf-section" data-section="4">
+   400→   400→                    <div class="pf-section-header">
+   401→   401→                        <div class="pf-section-icon" style="background: linear-gradient(135deg, #6f42c1, #8b5cf6);">
+   402→   402→                            <i class="fas fa-clipboard-list"></i>
+   403→   403→                        </div>
+   404→   404→                        <div class="pf-section-text">
+   405→   405→                            <h2>Detalles del Negocio</h2>
+   406→   406→                            <p>Horarios, servicios y características</p>
+   407→   407→                        </div>
+   408→   408→                        <span class="pf-section-badge" style="background: #f3e8ff; color: #6f42c1;">Paso 4</span>
+   409→   409→                    </div>
+   410→   410→                    <div class="pf-section-body">
+   411→   411→                        <!-- Schedule -->
+   412→   412→                        <div class="pf-field">
+   413→   413→                            <label for="propHorario" class="pf-label">
+   414→   414→                                <i class="fas fa-clock"></i> Horario de Atención
+   415→   415→                            </label>
+   416→   416→                            <textarea id="propSchedule" name="horario" rows="3" placeholder="Lun-Vie 8:00-17:00, Sáb 8:00-12:00"></textarea>
+   417→   417→                        </div>
+   418→   418→
+   419→   419→                        <!-- Feature Chips -->
+   420→   420→                        <div class="pf-features-section">
+   421→   421→                            <label class="pf-label"><i class="fas fa-star"></i> Características del Negocio</label>
+   422→   422→                            <div class="pf-features-grid">
+   423→   423→                                <label class="pf-feature-chip">
+   424→   424→                                    <input type="checkbox" name="caracteristicas" value="Estacionamiento">
+   425→   425→                                    <span class="pf-feature-chip-icon"><i class="fas fa-parking"></i></span>
+   426→   426→                                    <span class="pf-feature-chip-text">Estacionamiento</span>
+   427→   427→                                    <span class="pf-feature-check"><i class="fas fa-check"></i></span>
+   428→   428→                                </label>
+   429→   429→                                <label class="pf-feature-chip">
+   430→   430→                                    <input type="checkbox" name="caracteristicas" value="Wi-Fi">
+   431→   431→                                    <span class="pf-feature-chip-icon"><i class="fas fa-wifi"></i></span>
+   432→   432→                                    <span class="pf-feature-chip-text">WiFi</span>
+   433→   433→                                    <span class="pf-feature-check"><i class="fas fa-check"></i></span>
+   434→   434→                                </label>
+   435→   435→                                <label class="pf-feature-chip">
+   436→   436→                                    <input type="checkbox" name="caracteristicas" value="Tarjeta">
+   437→   437→                                    <span class="pf-feature-chip-icon"><i class="fas fa-credit-card"></i></span>
+   438→   438→                                    <span class="pf-feature-chip-text">Acepta tarjetas</span>
+   439→   439→                                    <span class="pf-feature-check"><i class="fas fa-check"></i></span>
+   440→   440→                                </label>
+   441→   441→                                <label class="pf-feature-chip">
+   442→   442→                                    <input type="checkbox" name="caracteristicas" value="Delivery">
+   443→   443→                                    <span class="pf-feature-chip-icon"><i class="fas fa-motorcycle"></i></span>
+   444→   444→                                    <span class="pf-feature-chip-text">Delivery</span>
+   445→   445→                                    <span class="pf-feature-check"><i class="fas fa-check"></i></span>
+   446→   446→                                </label>
+   447→   447→                                <label class="pf-feature-chip">
+   448→   448→                                    <input type="checkbox" name="caracteristicas" value="Terraza">
+   449→   449→                                    <span class="pf-feature-chip-icon"><i class="fas fa-umbrella-beach"></i></span>
+   450→   450→                                    <span class="pf-feature-chip-text">Área al aire libre</span>
+   451→   451→                                    <span class="pf-feature-check"><i class="fas fa-check"></i></span>
+   452→   452→                                </label>
+   453→   453→                            </div>
+   454→   454→                        </div>
+   455→   455→                    </div>
+   456→   456→                </div>
+   457→   457→
+   458→   458→                <!-- Section 5: Photos -->
+   459→   459→                <div class="pf-section" data-section="5">
+   460→   460→                    <div class="pf-section-header">
+   461→   461→                        <div class="pf-section-icon" style="background: linear-gradient(135deg, #e91e63, #f06292);">
+   462→   462→                            <i class="fas fa-camera"></i>
+   463→   463→                        </div>
+   464→   464→                        <div class="pf-section-text">
+   465→   465→                            <h2>Fotografías</h2>
+   466→   466→                            <p>Sube imágenes para mostrar tu negocio</p>
+   467→   467→                        </div>
+   468→   468→                        <span class="pf-section-badge" style="background: #fce4ec; color: #e91e63;">Paso 5</span>
+   469→   469→                    </div>
+   470→   470→                    <div class="pf-section-body">
+   471→   471→                        <div class="pf-upload-zone" id="uploadArea">
+   472→   472→                            <div class="pf-upload-glow"></div>
+   473→   473→                            <div class="pf-upload-content" id="uploadPlaceholder">
+   474→   474→                                <div class="pf-upload-icon-ring">
+   475→   475→                                    <i class="fas fa-cloud-upload-alt"></i>
+   476→   476→                                </div>
+   477→   477→                                <h3>Arrastra y suelta tus imágenes aquí</h3>
+   478→   478→                                <p>o haz clic para seleccionar archivos</p>
+   479→   479→                                <div class="pf-upload-meta">
+   480→   480→                                    <span><i class="fas fa-image"></i> JPG, PNG, WebP</span>
+   481→   481→                                    <span><i class="fas fa-weight-hanging"></i> Máx 5MB</span>
+   482→   482→                                    <span><i class="fas fa-images"></i> Máx 10 fotos</span>
+   483→   483→                                </div>
+   484→   484→                            </div>
+   485→   485→                            <input type="file" id="photoInput" name="fotos" accept="image/*" multiple hidden>
+   486→   486→                        </div>
+   487→   487→
+   488→   488→                        <div class="pf-upload-buttons">
+   489→   489→                            <button type="button" class="pf-upload-btn pf-upload-btn-gallery" id="galleryBtn">
+   490→   490→                                <i class="fas fa-images"></i>
+   491→   491→                                <span>Galería</span>
+   492→   492→                            </button>
+   493→   493→                            <button type="button" class="pf-upload-btn pf-upload-btn-camera" id="cameraBtn">
+   494→   494→                                <i class="fas fa-camera"></i>
+   495→   495→                                <span>Cámara</span>
+   496→   496→                            </button>
+   497→   497→                            <input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+   498→   498→                        </div>
+   499→   499→
+   500→   500→                        <div class="photos-preview" id="photosPreview">
+   501→   501→                            <!-- Preview thumbnails added dynamically -->
+   502→   502→                        </div>
+   503→   503→                        <div class="pf-upload-hint">
+   504→   504→                            <i class="fas fa-star"></i> La primera imagen será la foto principal. Arrastra para reordenar.
+   505→   505→                        </div>
+   506→   506→                    </div>
+   507→   507→                </div>
+   508→   508→
+   509→   509→                <!-- Form Actions -->
+   510→   510→                <div class="pf-actions">
+   511→   511→                    <a href="dashboard.html" class="pf-btn pf-btn-cancel">
+   512→   512→                        <i class="fas fa-arrow-left"></i> Cancelar
+   513→   513→                    </a>
+   514→   514→                    <button type="submit" class="pf-btn pf-btn-publish" id="submitBusinessBtn">
+   515→   515→                        <span class="pf-btn-publish-bg"></span>
+   516→   516→                        <i class="fas fa-paper-plane"></i> <span id="submitBtnText">Registrar Negocio</span>
+   517→   517→                    </button>
+   518→   518→                </div>
+   519→   519→            </form>
+   520→   520→        </div>
+   521→   521→    </main>
+   522→   522→
+   523→   523→    <!-- Toast Notification -->
+   524→   524→    <div class="toast-container" id="toastContainer"></div>
+   525→   525→
+   526→   526→    <!-- Leaflet CSS & JS for location picker map -->
+   527→   527→    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+   528→   528→    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+   529→   529→    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.css">
+   530→   530→    <script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
+   531→   531→
+   532→   532→    <script src="js/app.js"></script>
+   533→   533→    <script src="js/business-form.js"></script>
+   534→   534→</body>
+   535→   535→</html>
+   536→   536→

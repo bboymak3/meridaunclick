@@ -1,0 +1,1756 @@
+     1→/**
+     2→ * Un Click - Dashboard Module
+     3→ * Handles user dashboard and admin panel functionality
+     4→ */
+     5→
+     6→(function () {
+     7→    'use strict';
+     8→
+     9→    // ─── State ──────────────────────────────────────────────────
+    10→    let currentUser = null;
+    11→    let userProperties = [];
+    12→    let pendingProperties = []; // For admin view
+    13→    let deleteTargetId = null;
+    14→
+    15→    // ─── DOM Elements ───────────────────────────────────────────
+    16→    const sidebar = document.getElementById('dashboardSidebar');
+    17→    const sidebarToggle = document.getElementById('sidebarToggle');
+    18→    const sectionTitle = document.getElementById('sectionTitle');
+    19→    const sidebarLinks = document.querySelectorAll('.sidebar-link[data-section]');
+    20→
+    21→    // Dashboard stats
+    22→    const dashTotalProps = document.getElementById('dashTotalProps');
+    23→    const dashPublishedProps = document.getElementById('dashPublishedProps');
+    24→    const dashPendingProps = document.getElementById('dashPendingProps');
+    25→    const dashTotalViews = document.getElementById('dashTotalViews');
+    26→
+    27→    // User info
+    28→    const dashUserName = document.getElementById('dashUserName');
+    29→    const dashUserEmail = document.getElementById('dashUserEmail');
+    30→    const userAvatar = document.getElementById('userAvatar');
+    31→
+    32→    // Tables
+    33→    const recentPropsBody = document.getElementById('recentPropsBody');
+    34→    const allPropsBody = document.getElementById('allPropsBody');
+    35→    const dashPropFilter = document.getElementById('dashPropFilter');
+    36→
+    37→    // Messages
+    38→    const messagesList = document.getElementById('messagesList');
+    39→    const msgBadge = document.getElementById('msgBadge');
+    40→
+    41→    // Favorites
+    42→    const favoritesGrid = document.getElementById('favoritesGrid');
+    43→
+    44→    // Profile
+    45→    const profileForm = document.getElementById('profileForm');
+    46→
+    47→    // Delete modal
+    48→    const deleteModal = document.getElementById('deleteModal');
+    49→    const deleteModalClose = document.getElementById('deleteModalClose');
+    50→    const deleteModalCancel = document.getElementById('deleteModalCancel');
+    51→    const deleteModalConfirm = document.getElementById('deleteModalConfirm');
+    52→
+    53→    // Admin section
+    54→    const adminSection = document.getElementById('sectionAdmin');
+    55→    const adminPendingBody = document.getElementById('adminPendingBody');
+    56→    const adminAllPropsBody = document.getElementById('adminAllPropsBody');
+    57→    const adminTabPending = document.getElementById('adminTabPending');
+    58→    const adminTabAll = document.getElementById('adminTabAll');
+    59→    const adminTabUsers = document.getElementById('adminTabUsers');
+    60→    const adminUsersBody = document.getElementById('adminUsersBody');
+    61→    const adminUsersSearchInput = document.getElementById('adminUsersSearchInput');
+    62→
+    63→    // ─── Initialize ─────────────────────────────────────────────
+    64→    async function initDashboard() {
+    65→        if (!requireAuth()) return;
+    66→
+    67→        // Load current user
+    68→        currentUser = await getCurrentUser();
+    69→        if (!currentUser) {
+    70→            removeToken();
+    71→            window.location.href = 'login.html';
+    72→            return;
+    73→        }
+    74→
+    75→        // Auto-promote first user to admin if no admin exists
+    76→        if (currentUser.role !== 'admin') {
+    77→            try {
+    78→                const promoteResult = await api.post('/auth/promote-me', {});
+    79→                if (promoteResult.role === 'admin') {
+    80→                    // Update cached user and token
+    81→                    currentUser.role = 'admin';
+    82→                    setCachedUser(currentUser);
+    83→                    if (promoteResult.token) setToken(promoteResult.token);
+    84→                    showToast('Has sido promovido a Administrador.', 'success');
+    85→                }
+    86→            } catch (promoteErr) {
+    87→                // Silently ignore - not first user or already admin
+    88→            }
+    89→        }
+    90→
+    91→        // Update user info
+    92→        updateUserDisplay();
+    93→
+    94→        // Show admin section if user is admin
+    95→        if (currentUser.role === 'admin') {
+    96→            setupAdminSection();
+    97→        }
+    98→
+    99→        // Setup sidebar navigation
+   100→        setupSidebar();
+   101→
+   102→        // Setup sidebar toggle (mobile)
+   103→        setupSidebarToggle();
+   104→
+   105→        // Setup delete modal
+   106→        setupDeleteModal();
+   107→
+   108→        // Setup product modal
+   109→        setupProductModal();
+   110→
+   111→        // Setup profile form
+   112→        setupProfileForm();
+   113→
+   114→        // Load data for overview section
+   115→        await loadOverviewData();
+   116→    }
+   117→
+   118→    // ─── User Display ──────────────────────────────────────────
+   119→    function updateUserDisplay() {
+   120→        if (!currentUser) return;
+   121→
+   122→        if (dashUserName) dashUserName.textContent = currentUser.name || 'Usuario';
+   123→        if (dashUserEmail) dashUserEmail.textContent = currentUser.email || '';
+   124→        if (userAvatar) {
+   125→            if (currentUser.avatar) {
+   126→                userAvatar.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.name}">`;
+   127→            } else {
+   128→                const initials = (currentUser.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+   129→                userAvatar.innerHTML = `<span class="avatar-initials">${initials}</span>`;
+   130→            }
+   131→        }
+   132→    }
+   133→
+   134→    // ─── Sidebar Navigation ────────────────────────────────────
+   135→    function setupSidebar() {
+   136→        sidebarLinks.forEach(link => {
+   137→            link.addEventListener('click', (e) => {
+   138→                e.preventDefault();
+   139→                const section = link.dataset.section;
+   140→                switchSection(section);
+   141→
+   142→                // Update active state
+   143→                sidebarLinks.forEach(l => l.classList.remove('active'));
+   144→                link.classList.add('active');
+   145→            });
+   146→        });
+   147→    }
+   148→
+   149→    function setupSidebarToggle() {
+   150→        if (!sidebarToggle || !sidebar) return;
+   151→
+   152→        sidebarToggle.addEventListener('click', () => {
+   153→            sidebar.classList.toggle('open');
+   154→            sidebarToggle.classList.toggle('active');
+   155→        });
+   156→    }
+   157→
+   158→    function switchSection(sectionId) {
+   159→        // Hide all sections
+   160→        document.querySelectorAll('.dashboard-section').forEach(s => s.classList.add('hidden'));
+   161→
+   162→        // Show target section
+   163→        const target = document.getElementById(`section${capitalize(sectionId)}`);
+   164→        if (target) target.classList.remove('hidden');
+   165→
+   166→        // Update title
+   167→        const titles = {
+   168→            overview: 'Resumen',
+   169→            businesses: 'Mis Negocios',
+   170→            messages: 'Mensajes',
+   171→            favorites: 'Favoritos',
+   172→            products: 'Mis Productos',
+   173→            profile: 'Mi Perfil',
+   174→            stats: 'Estadísticas',
+   175→            admin: 'Panel de Administracion',
+   176→        };
+   177→        if (sectionTitle) sectionTitle.textContent = titles[sectionId] || 'Resumen';
+   178→
+   179→        // Load section data
+   180→        switch (sectionId) {
+   181→            case 'overview':
+   182→                loadOverviewData();
+   183→                break;
+   184→            case 'businesses':
+   185→                loadMyProperties();
+   186→                break;
+   187→            case 'messages':
+   188→                loadMessages();
+   189→                break;
+   190→            case 'favorites':
+   191→                loadFavorites();
+   192→                break;
+   193→            case 'products':
+   194→                loadMyProducts();
+   195→                break;
+   196→            case 'stats':
+   197→                loadBusinessStats();
+   198→                break;
+   199→            case 'admin':
+   200→                loadAdminData();
+   201→                break;
+   202→        }
+   203→    }
+   204→
+   205→    function capitalize(str) {
+   206→        return str.charAt(0).toUpperCase() + str.slice(1);
+   207→    }
+   208→
+   209→    // ─── Overview Data ─────────────────────────────────────────
+   210→    async function loadOverviewData() {
+   211→        try {
+   212→            const userId = currentUser?.id;
+   213→
+   214→            // Get user's approved businesses
+   215→            const approvedData = await api.get(`/businesses?limit=100&user_id=${userId}&status=approved`);
+   216→            const approvedProps = approvedData.businesses || [];
+   217→
+   218→            // Get user's pending businesses
+   219→            const pendingData = await api.get(`/businesses?limit=100&user_id=${userId}&status=pending`);
+   220→            const pendingProps = pendingData.businesses || [];
+   221→
+   222→            // Get user's rejected businesses
+   223→            const rejectedData = await api.get(`/businesses?limit=100&user_id=${userId}&status=rejected`);
+   224→            const rejectedProps = rejectedData.businesses || [];
+   225→
+   226→            userProperties = [...approvedProps, ...pendingProps, ...rejectedProps];
+   227→
+   228→            // Stats
+   229→            const total = userProperties.length;
+   230→            const published = userProperties.filter(p => p.status === 'approved').length;
+   231→            const pending = userProperties.filter(p => p.status === 'pending').length;
+   232→            const views = userProperties.reduce((sum, p) => sum + (p.views || 0), 0);
+   233→
+   234→            if (dashTotalProps) dashTotalProps.textContent = total;
+   235→            if (dashPublishedProps) dashPublishedProps.textContent = published;
+   236→            if (dashPendingProps) dashPendingProps.textContent = pending;
+   237→            if (dashTotalViews) dashTotalViews.textContent = views;
+   238→
+   239→            // Recent businesses table (last 5)
+   240→            if (recentPropsBody) {
+   241→                const recent = userProperties.slice(0, 5);
+   242→                if (recent.length === 0) {
+   243→                    recentPropsBody.innerHTML = `
+   244→                        <tr class="empty-row">
+   245→                            <td colspan="6">
+   246→                                <div class="empty-state">
+   247→                                    <i class="fas fa-inbox"></i>
+   248→                                    <p>No tienes negocios aun.</p>
+   249→                                    <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
+   250→                                </div>
+   251→                            </td>
+   252→                        </tr>
+   253→                    `;
+   254→                } else {
+   255→                    recentPropsBody.innerHTML = recent.map(p => `
+   256→                        <tr>
+   257→                            <td>
+   258→                                <div class="dash-prop-name">
+   259→                                    ${(p.cover_image || p.image_count > 0) ? `<img src="${p.cover_image || ''}" alt="" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}
+   260→                                    <span>${truncateText(p.title, 35)}</span>
+   261→                                </div>
+   262→                            </td>
+   263→                            <td>${getBusinessTypeLabel(p.business_type)}</td>
+   264→                            <td class="dash-price">${formatPrice(p.price, p.currency)}</td>
+   265→                            <td>${getStatusBadge(p.status)}</td>
+   266→                            <td>${p.views || 0}</td>
+   267→                            <td class="dash-actions">
+   268→                                <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
+   269→                                <a onclick="openEditBusinessModal(${p.id})" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
+   270→                                <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+   271→                            </td>
+   272→                        </tr>
+   273→                    `).join('');
+   274→                }
+   275→            }
+   276→        } catch (error) {
+   277→            console.error('Error loading overview:', error);
+   278→        }
+   279→    }
+   280→
+   281→    // ─── My Properties ─────────────────────────────────────────
+   282→    async function loadMyProperties(filter) {
+   283→        try {
+   284→            const userId = currentUser?.id;
+   285→
+   286→            let userPropertiesList;
+   287→
+   288→            if (filter) {
+   289→                // Filter by specific status
+   290→                const statusMap = { 'publicada': 'approved', 'pendiente': 'pending', 'rechazada': 'rejected' };
+   291→                const status = statusMap[filter] || filter;
+   292→                const data = await api.get(`/businesses?limit=100&user_id=${userId}&status=${status}`);
+   293→                userPropertiesList = data.businesses || [];
+   294→            } else {
+   295→                // No filter: fetch ALL user businesses (all statuses)
+   296→                const [approvedData, pendingData, rejectedData] = await Promise.all([
+   297→                    api.get(`/businesses?limit=100&user_id=${userId}&status=approved`),
+   298→                    api.get(`/businesses?limit=100&user_id=${userId}&status=pending`),
+   299→                    api.get(`/businesses?limit=100&user_id=${userId}&status=rejected`),
+   300→                ]);
+   301→                userPropertiesList = [
+   302→                    ...(approvedData.businesses || []),
+   303→                    ...(pendingData.businesses || []),
+   304→                    ...(rejectedData.businesses || []),
+   305→                ];
+   306→            }
+   307→
+   308→            userProperties = userPropertiesList;
+   309→
+   310→            if (allPropsBody) {
+   311→                if (userProperties.length === 0) {
+   312→                    allPropsBody.innerHTML = `
+   313→                        <tr class="empty-row">
+   314→                            <td colspan="8">
+   315→                                <div class="empty-state">
+   316→                                    <i class="fas fa-inbox"></i>
+   317→                                    <p>${filter ? 'No hay negocios con ese filtro.' : 'No tienes negocios.'}</p>
+   318→                                    <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
+   319→                                </div>
+   320→                            </td>
+   321→                        </tr>
+   322→                    `;
+   323→                } else {
+   324→                    allPropsBody.innerHTML = userProperties.map(p => `
+   325→                        <tr>
+   326→                            <td>
+   327→                                ${(p.cover_image || p.image_count > 0) ? `<img src="${p.cover_image || ''}" alt="" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}
+   328→                            </td>
+   329→                            <td>${truncateText(p.title, 30)}</td>
+   330→                            <td>${getBusinessTypeLabel(p.business_type)}</td>
+   331→                            <td>${p.city || '--'}, ${p.state || '--'}</td>
+   332→                            <td>${getStatusBadge(p.status)}</td>
+   333→                            <td>${p.views || 0}</td>
+   334→                            <td class="dash-actions">
+   335→                                <button class="btn-icon" onclick="openServicesManager(${p.id}, '${escapeAttr(p.title)}')" title="Servicios"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i></button>
+   336→                                <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
+   337→                                <a onclick="openEditBusinessModal(${p.id})" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
+   338→                                <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+   339→                            </td>
+   340→                        </tr>
+   341→                    `).join('');
+   342→                }
+   343→            }
+   344→        } catch (error) {
+   345→            console.error('Error loading businesses:', error);
+   346→        }
+   347→    }
+   348→
+   349→    // Setup business filter
+   350→    if (dashPropFilter) {
+   351→        dashPropFilter.addEventListener('change', () => {
+   352→            loadMyProperties(dashPropFilter.value);
+   353→        });
+   354→    }
+   355→
+   356→    // ─── Messages ──────────────────────────────────────────────
+   357→    async function loadMessages() {
+   358→        if (!messagesList) return;
+   359→
+   360→        try {
+   361→            const data = await api.get('/contacts');
+   362→            const messages = data.contacts || data.messages || [];
+   363→
+   364→            const unreadCount = messages.filter(m => !m.is_read).length;
+   365→            if (msgBadge) {
+   366→                msgBadge.textContent = unreadCount;
+   367→                msgBadge.style.display = unreadCount > 0 ? '' : 'none';
+   368→            }
+   369→
+   370→            if (messages.length === 0) {
+   371→                messagesList.innerHTML = `
+   372→                    <div class="empty-state">
+   373→                        <i class="fas fa-envelope-open"></i>
+   374→                        <p>No tienes mensajes nuevos.</p>
+   375→                    </div>
+   376→                `;
+   377→            } else {
+   378→                messagesList.innerHTML = messages.map(m => `
+   379→                    <div class="message-item ${m.is_read ? '' : 'unread'}">
+   380→                        <div class="message-header">
+   381→                            <div class="message-sender">
+   382→                                <i class="fas fa-user-circle"></i>
+   383→                                <strong>${m.sender_name}</strong>
+   384→                                <span class="message-date">${formatDateTime(m.created_at)}</span>
+   385→                            </div>
+   386→                            <span class="message-business">${m.business_title || `Propiedad #${m.business_id}`}</span>
+   387→                        </div>
+   388→                        <p class="message-text">${truncateText(m.message, 200)}</p>
+   389→                        <div class="message-actions">
+   390→                            <a href="mailto:${m.sender_email}" class="btn btn-sm btn-secondary">
+   391→                                <i class="fas fa-reply"></i> Responder
+   392→                            </a>
+   393→                            ${m.sender_phone ? `<a href="tel:${m.sender_phone}" class="btn btn-sm btn-secondary"><i class="fas fa-phone"></i> Llamar</a>` : ''}
+   394→                        </div>
+   395→                    </div>
+   396→                `).join('');
+   397→            }
+   398→        } catch (error) {
+   399→            console.error('Error loading messages:', error);
+   400→            messagesList.innerHTML = `
+   401→                <div class="empty-state">
+   402→                    <i class="fas fa-exclamation-circle"></i>
+   403→                    <p>Error al cargar mensajes.</p>
+   404→                </div>
+   405→            `;
+   406→        }
+   407→    }
+   408→
+   409→    // ─── Favorites ─────────────────────────────────────────────
+   410→    async function loadFavorites() {
+   411→        if (!favoritesGrid) return;
+   412→
+   413→        try {
+   414→            const data = await api.get('/favorites');
+   415→            const favorites = data.favorites || [];
+   416→
+   417→            if (favorites.length === 0) {
+   418→                favoritesGrid.innerHTML = `
+   419→                    <div class="empty-state">
+   420→                        <i class="fas fa-heart"></i>
+   421→                        <p>No tienes negocios favoritos.</p>
+   422→                        <a href="search.html" class="btn btn-primary btn-sm">Explorar Negocios</a>
+   423→                    </div>
+   424→                `;
+   425→            } else {
+   426→                favoritesGrid.innerHTML = favorites.map(f => {
+   427→                    const prop = f.business || f;
+   428→                    return createBusinessCard(prop);
+   429→                }).join('');
+   430→            }
+   431→        } catch (error) {
+   432→            console.error('Error loading favorites:', error);
+   433→            favoritesGrid.innerHTML = `
+   434→                <div class="empty-state">
+   435→                    <i class="fas fa-exclamation-circle"></i>
+   436→                    <p>Error al cargar favoritos.</p>
+   437→                </div>
+   438→            `;
+   439→        }
+   440→    }
+   441→
+   442→    // ─── Profile ───────────────────────────────────────────────
+   443→    function setupProfileForm() {
+   444→        if (!profileForm || !currentUser) return;
+   445→
+   446→        // Update profile header display
+   447→        updateProfileHeader();
+   448→
+   449→        // Populate form fields
+   450→        const nameField = document.getElementById('profileName');
+   451→        const emailField = document.getElementById('profileEmail');
+   452→        const phoneField = document.getElementById('profilePhone');
+   453→        const whatsappField = document.getElementById('profileWhatsApp');
+   454→        const bioField = document.getElementById('profileBio');
+   455→        const bioCharCount = document.getElementById('bioCharCount');
+   456→
+   457→        if (nameField) nameField.value = currentUser.name || '';
+   458→        if (emailField) emailField.value = currentUser.email || '';
+   459→        if (phoneField) phoneField.value = currentUser.phone || '';
+   460→        if (whatsappField) whatsappField.value = currentUser.whatsapp || '';
+   461→        if (bioField) {
+   462→            bioField.value = currentUser.bio || '';
+   463→            updateBioCharCount();
+   464→        }
+   465→
+   466→        // Bio character counter
+   467→        if (bioField && bioCharCount) {
+   468→            bioField.addEventListener('input', updateBioCharCount);
+   469→        }
+   470→
+   471→        // Cancel button
+   472→        const cancelBtn = document.getElementById('profileCancelBtn');
+   473→        if (cancelBtn) {
+   474→            cancelBtn.addEventListener('click', () => {
+   475→                // Reset form to current values
+   476→                if (nameField) nameField.value = currentUser.name || '';
+   477→                if (emailField) emailField.value = currentUser.email || '';
+   478→                if (phoneField) phoneField.value = currentUser.phone || '';
+   479→                if (whatsappField) whatsappField.value = currentUser.whatsapp || '';
+   480→                if (bioField) {
+   481→                    bioField.value = currentUser.bio || '';
+   482→                    updateBioCharCount();
+   483→                }
+   484→                showToast('Cambios descartados', 'info');
+   485→            });
+   486→        }
+   487→
+   488→        // Submit handler
+   489→        profileForm.addEventListener('submit', async (e) => {
+   490→            e.preventDefault();
+   491→
+   492→            const saveBtn = document.getElementById('profileSaveBtn');
+   493→            if (saveBtn) {
+   494→                saveBtn.classList.add('saving');
+   495→                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+   496→            }
+   497→
+   498→            try {
+   499→                const formData = new FormData(profileForm);
+   500→                const data = {
+   501→                    name: formData.get('name'),
+   502→                    email: formData.get('email'),
+   503→                    phone: formData.get('phone'),
+   504→                    whatsapp: formData.get('whatsapp'),
+   505→                    bio: formData.get('bio'),
+   506→                };
+   507→
+   508→                await api.put('/users/me', data);
+   509→                showToast('Perfil actualizado exitosamente', 'success');
+   510→
+   511→                // Update cache
+   512→                currentUser = { ...currentUser, ...data };
+   513→                setCachedUser(currentUser);
+   514→                updateUserDisplay();
+   515→                updateProfileHeader();
+   516→            } catch (error) {
+   517→                showToast(error.message || 'Error al actualizar perfil', 'error');
+   518→            } finally {
+   519→                if (saveBtn) {
+   520→                    saveBtn.classList.remove('saving');
+   521→                    saveBtn.innerHTML = '<i class="fas fa-check-circle"></i> Guardar Cambios';
+   522→                }
+   523→            }
+   524→        });
+   525→    }
+   526→
+   527→    function updateProfileHeader() {
+   528→        if (!currentUser) return;
+   529→
+   530→        const displayName = document.getElementById('profileDisplayName');
+   531→        const displayEmail = document.getElementById('profileDisplayEmail');
+   532→        const roleBadge = document.getElementById('profileRoleBadge');
+   533→        const avatarLarge = document.getElementById('profileAvatarLarge');
+   534→
+   535→        if (displayName) displayName.textContent = currentUser.name || 'Usuario';
+   536→        if (displayEmail) displayEmail.textContent = currentUser.email || '';
+   537→
+   538→        if (roleBadge) {
+   539→            const role = currentUser.role || 'user';
+   540→            const roleLabels = { admin: 'Administrador', agent: 'Agente', user: 'Usuario' };
+   541→            roleBadge.textContent = roleLabels[role] || 'Usuario';
+   542→            roleBadge.className = 'profile-role-badge';
+   543→            if (role === 'admin') roleBadge.classList.add('role-admin');
+   544→            else if (role === 'agent') roleBadge.classList.add('role-agent');
+   545→        }
+   546→
+   547→        if (avatarLarge) {
+   548→            if (currentUser.avatar) {
+   549→                avatarLarge.innerHTML = `<img src="${currentUser.avatar}" alt="${currentUser.name || 'Avatar'}">`;
+   550→            } else {
+   551→                // Show initials
+   552→                const initials = (currentUser.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+   553→                avatarLarge.innerHTML = `<span style="font-weight:700; font-size:28px;">${initials}</span>`;
+   554→            }
+   555→        }
+   556→    }
+   557→
+   558→    function updateBioCharCount() {
+   559→        const bioField = document.getElementById('profileBio');
+   560→        const bioCharCount = document.getElementById('bioCharCount');
+   561→        if (bioField && bioCharCount) {
+   562→            const len = bioField.value.length;
+   563→            bioCharCount.textContent = `${len}/500`;
+   564→            bioCharCount.style.color = len > 450 ? '#e74c3c' : len > 350 ? '#f39c12' : '#bbb';
+   565→        }
+   566→    }
+   567→
+   568→    // ─── Delete Modal ──────────────────────────────────────────
+   569→    function setupDeleteModal() {
+   570→        if (!deleteModal) return;
+   571→
+   572→        if (deleteModalClose) {
+   573→            deleteModalClose.addEventListener('click', () => closeModal());
+   574→        }
+   575→        if (deleteModalCancel) {
+   576→            deleteModalCancel.addEventListener('click', () => closeModal());
+   577→        }
+   578→        if (deleteModalConfirm) {
+   579→            deleteModalConfirm.addEventListener('click', async () => {
+   580→                if (deleteTargetId) {
+   581→                    await deleteBusiness(deleteTargetId);
+   582→                    closeModal();
+   583→                }
+   584→            });
+   585→        }
+   586→
+   587→        // Close on overlay click
+   588→        const overlay = deleteModal.querySelector('.modal-overlay');
+   589→        if (overlay) {
+   590→            overlay.addEventListener('click', () => closeModal());
+   591→        }
+   592→    }
+   593→
+   594→    window.confirmDeleteBusiness = function (id) {
+   595→        deleteTargetId = id;
+   596→        if (deleteModal) deleteModal.classList.remove('hidden');
+   597→    };
+   598→
+   599→    function closeModal() {
+   600→        deleteTargetId = null;
+   601→        if (deleteModal) deleteModal.classList.add('hidden');
+   602→    }
+   603→
+   604→    async function deleteBusiness(id) {
+   605→        try {
+   606→            await api.delete(`/businesses/${id}`);
+   607→            showToast('Negocio eliminado exitosamente', 'success');
+   608→
+   609→            // Reload current section
+   610→            const activeSection = document.querySelector('.sidebar-link.active');
+   611→            if (activeSection) {
+   612→                switchSection(activeSection.dataset.section);
+   613→            } else {
+   614→                loadOverviewData();
+   615→            }
+   616→        } catch (error) {
+   617→            showToast(error.message || 'Error al eliminar el negocio', 'error');
+   618→        }
+   619→    }
+   620→
+   621→    // ─── My Products (Marketplace) ──────────────────────────────
+   622→    async function loadMyProducts() {
+   623→        const container = document.getElementById('myProductsByStore');
+   624→        if (!container) return;
+   625→
+   626→        try {
+   627→            // 1. Get user's businesses
+   628→            const myBiz = await api.get('/user/my-businesses');
+   629→            const businesses = myBiz.data || [];
+   630→
+   631→            if (businesses.length === 0) {
+   632→                container.innerHTML = `
+   633→                    <div class="dash-card">
+   634→                        <div style="text-align:center;padding:32px 0;color:#94a3b8;">
+   635→                            <i class="fas fa-store" style="font-size:2.5rem;color:#cbd5e1;"></i>
+   636→                            <p style="margin-top:12px;">Necesitas tener al menos un negocio registrado para ver productos.</p>
+   637→                            <a href="new-business.html" class="btn btn-primary btn-sm" style="display:inline-block;margin-top:12px;"><i class="fas fa-plus"></i> Registrar Negocio</a>
+   638→                        </div>
+   639→                    </div>`;
+   640→                return;
+   641→            }
+   642→
+   643→            // 2. Fetch products for each business
+   644→            let totalProducts = 0;
+   645→            let html = '';
+   646→
+   647→            for (const biz of businesses) {
+   648→                try {
+   649→                    const data = await api.get(`/marketplace?limit=100&all=true&business_id=${biz.id}`);
+   650→                    const products = data.products || [];
+   651→
+   652→                    if (products.length === 0) continue;
+   653→                    totalProducts += products.length;
+   654→
+   655→                    html += `
+   656→                        <div class="dash-card" style="margin-bottom:16px;">
+   657→                            <div class="dash-card-header">
+   658→                                <h3 style="display:flex;align-items:center;gap:8px;">
+   659→                                    <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;">
+   660→                                        <i class="fas fa-store" style="color:#fff;font-size:0.8rem;"></i>
+   661→                                    </div>
+   662→                                    <a href="/negocio/${biz.slug || biz.id}" style="color:#059669;text-decoration:none;font-weight:700;">${biz.title || 'Sin nombre'}</a>
+   663→                                </h3>
+   664→                                <span style="font-size:0.75rem;color:#94a3b8;background:#f1f5f9;padding:4px 10px;border-radius:12px;">${products.length} producto${products.length > 1 ? 's' : ''}</span>
+   665→                            </div>
+   666→                            <div class="dash-table-responsive">
+   667→                                <table class="dash-table">
+   668→                                    <thead>
+   669→                                        <tr>
+   670→                                            <th>Producto</th>
+   671→                                            <th>Categoría</th>
+   672→                                            <th>Precio</th>
+   673→                                            <th>Estatus</th>
+   674→                                            <th>Fecha</th>
+   675→                                            <th>Acciones</th>
+   676→                                        </tr>
+   677→                                    </thead>
+   678→                                    <tbody>`;
+   679→
+   680→                    products.forEach(p => {
+   681→                        const statusLabel = p.status === 'approved' ? '<span class="status-badge status-approved">Activo</span>' : p.status === 'pending' ? '<span class="status-badge status-pending">Pendiente</span>' : p.status === 'rejected' ? '<span class="status-badge status-rejected">Rechazado</span>' : '<span class="status-badge">' + (p.status || '-') + '</span>';
+   682→                        html += `
+   683→                                        <tr>
+   684→                                            <td><div class="dash-prop-name">${p.image ? `<img src="${p.image}" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}<span>${p.name || 'Sin nombre'}</span></div></td>
+   685→                                            <td>${p.category || 'General'}</td>
+   686→                                            <td class="dash-price">$${Number(p.price || 0).toLocaleString('es-VE')}</td>
+   687→                                            <td>${statusLabel}</td>
+   688→                                            <td>${formatDate(p.created_at)}</td>
+   689→                                            <td class="dash-actions">
+   690→                                                <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+   691→                                            </td>
+   692→                                        </tr>`;
+   693→                    });
+   694→
+   695→                    html += `
+   696→                                    </tbody>
+   697→                                </table>
+   698→                            </div>
+   699→                        </div>`;
+   700→                } catch(e) {
+   701→                    console.error('Error loading products for business', biz.id, e);
+   702→                }
+   703→            }
+   704→
+   705→            if (totalProducts === 0) {
+   706→                container.innerHTML = `
+   707→                    <div class="dash-card">
+   708→                        <div style="text-align:center;padding:32px 0;color:#94a3b8;">
+   709→                            <i class="fas fa-box-open" style="font-size:2.5rem;color:#cbd5e1;"></i>
+   710→                            <p style="margin-top:12px;">No tienes productos publicados en tus negocios.</p>
+   711→                            <button class="btn btn-primary btn-sm" onclick="openProductModal()" style="display:inline-block;margin-top:12px;"><i class="fas fa-plus"></i> Publicar Producto</button>
+   712→                        </div>
+   713→                    </div>`;
+   714→            } else {
+   715→                container.innerHTML = html;
+   716→            }
+   717→        } catch (error) {
+   718→            console.error('Error loading products:', error);
+   719→            container.innerHTML = `
+   720→                <div class="dash-card">
+   721→                    <div style="text-align:center;padding:32px 0;color:#ef4444;">
+   722→                        <i class="fas fa-exclamation-circle" style="font-size:2.5rem;"></i>
+   723→                        <p style="margin-top:12px;">Error al cargar productos.</p>
+   724→                    </div>
+   725→                </div>`;
+   726→        }
+   727→    }
+   728→
+   729→    // Product Modal
+   730→    function setupProductModal() {
+   731→        const modal = document.getElementById('productModal');
+   732→        if (!modal) return;
+   733→
+   734→        const close = document.getElementById('productModalClose');
+   735→        const cancel = document.getElementById('productModalCancel');
+   736→        const save = document.getElementById('productModalSave');
+   737→        const overlay = modal.querySelector('.modal-overlay');
+   738→        const form = document.getElementById('productForm');
+   739→
+   740→        if (close) close.addEventListener('click', () => modal.classList.add('hidden'));
+   741→        if (cancel) cancel.addEventListener('click', () => modal.classList.add('hidden'));
+   742→        if (overlay) overlay.addEventListener('click', () => modal.classList.add('hidden'));
+   743→
+   744→        if (save) save.addEventListener('click', async () => {
+   745→            if (!form.checkValidity()) { form.reportValidity(); return; }
+   746→
+   747→            // Validate business selection
+   748→            const businessSelect = document.getElementById('prodBusiness');
+   749→            const businessId = businessSelect ? businessSelect.value : '';
+   750→            if (!businessId) {
+   751→                showToast('Debes seleccionar un negocio. Si no tienes uno, regístralo primero desde "Nuevo Negocio".', 'error');
+   752→                return;
+   753→            }
+   754→
+   755→            try {
+   756→                const fd = new FormData(form);
+   757→                const body = {
+   758→                    name: fd.get('name'),
+   759→                    price: parseFloat(fd.get('price')) || 0,
+   760→                    category: fd.get('category') || 'general',
+   761→                    image: fd.get('image') || '',
+   762→                    description: fd.get('description') || '',
+   763→                    video_url: fd.get('video_url') || '',
+   764→                    business_id: parseInt(businessId),
+   765→                };
+   766→                await api.post('/marketplace', body);
+   767→                showToast('Producto enviado para aprobación. Será visible una vez aprobado por un administrador.', 'success');
+   768→                modal.classList.add('hidden');
+   769→                form.reset();
+   770→                uploadedImageUrl = '';
+   771→                if (uploadPreview) uploadPreview.innerHTML = '';
+   772→                loadMyProducts();
+   773→            } catch (error) {
+   774→                showToast(error.message || 'Error al publicar producto', 'error');
+   775→            }
+   776→        });
+   777→
+   778→        // ─── Image Upload Handler ─────────────────────────
+   779→        const imageFileInput = document.getElementById('prodImageFile');
+   780→        const attachFileInput = document.getElementById('prodAttachFile');
+   781→        const uploadPreview = document.getElementById('prodUploadPreview');
+   782→        const uploadProgress = document.getElementById('prodUploadProgress');
+   783→        const prodImageInput = document.getElementById('prodImage');
+   784→        let uploadedImageUrl = '';
+   785→
+   786→        function handleImageUpload(file) {
+   787→            if (!file) return;
+   788→            
+   789→            // Validate it's an image
+   790→            if (!file.type.startsWith('image/')) {
+   791→                showToast('Solo se permiten imágenes', 'error');
+   792→                return;
+   793→            }
+   794→            
+   795→            // Show preview immediately
+   796→            const reader = new FileReader();
+   797→            reader.onload = function(e) {
+   798→                if (uploadPreview) {
+   799→                    uploadPreview.innerHTML = `
+   800→                        <img src="${e.target.result}" alt="Preview">
+   801→                        <div class="prod-upload-filename">
+   802→                            <i class="fas fa-check-circle" style="color:#059669;"></i> ${file.name}
+   803→                            <button class="prod-upload-remove" type="button" onclick="this.closest('.prod-upload-preview').innerHTML='';uploadedImageUrl='';document.getElementById('prodImage').value='';">&times;</button>
+   804→                        </div>`;
+   805→                }
+   806→            };
+   807→            reader.readAsDataURL(file);
+   808→            
+   809→            // Upload to server
+   810→            if (uploadProgress) uploadProgress.classList.remove('hidden');
+   811→            
+   812→            const formData = new FormData();
+   813→            formData.append('file', file);
+   814→            formData.append('product_type', 'marketplace');
+   815→            
+   816→            const token = getToken();
+   817→            
+   818→            fetch('/api/upload', {
+   819→                method: 'POST',
+   820→                headers: { 'Authorization': 'Bearer ' + token },
+   821→                body: formData,
+   822→            })
+   823→            .then(res => res.json())
+   824→            .then(data => {
+   825→                if (uploadProgress) uploadProgress.classList.add('hidden');
+   826→                if (data.url) {
+   827→                    uploadedImageUrl = data.url;
+   828→                    if (prodImageInput) prodImageInput.value = data.url;
+   829→                    showToast('Imagen subida correctamente', 'success');
+   830→                } else {
+   831→                    showToast(data.error || 'Error al subir imagen', 'error');
+   832→                }
+   833→            })
+   834→            .catch(err => {
+   835→                if (uploadProgress) uploadProgress.classList.add('hidden');
+   836→                showToast('Error de conexión al subir imagen', 'error');
+   837→            });
+   838→        }
+   839→        
+   840→        if (imageFileInput) {
+   841→            imageFileInput.addEventListener('change', (e) => {
+   842→                handleImageUpload(e.target.files[0]);
+   843→            });
+   844→        }
+   845→        
+   846→        if (attachFileInput) {
+   847→            attachFileInput.addEventListener('change', (e) => {
+   848→                handleImageUpload(e.target.files[0]);
+   849→            });
+   850→        }
+   851→    }
+   852→
+   853→    // Wire up header button
+   854→    const btnNewProduct = document.getElementById('btnNewProduct');
+   855→
+   856→    window.openProductModal = async function () {
+   857→        const modal = document.getElementById('productModal');
+   858→        if (modal) modal.classList.remove('hidden');
+   859→        
+   860→        // Load user's businesses into selector
+   861→        try {
+   862→            const user = getCachedUser();
+   863→            const businessesData = await api.get(`/businesses?user_id=${user.id}&limit=50`);
+   864→            const businesses = businessesData.businesses || businessesData.results || businessesData || [];
+   865→            const select = document.getElementById('prodBusiness');
+   866→            if (select) {
+   867→                if (businesses.length === 0) {
+   868→                    select.innerHTML = '<option value="">-- Debe registrar un negocio primero --</option>';
+   869→                    select.disabled = true;
+   870→                } else {
+   871→                    select.innerHTML = '<option value="" disabled selected>Selecciona un negocio para publicar</option>';
+   872→                    businesses.forEach(b => {
+   873→                        const opt = document.createElement('option');
+   874→                        opt.value = b.id;
+   875→                        opt.textContent = b.title || b.name || `Negocio #${b.id}`;
+   876→                        select.appendChild(opt);
+   877→                    });
+   878→                    select.disabled = false;
+   879→                }
+   880→            }
+   881→        } catch (e) {
+   882→            console.log('Could not load businesses for selector:', e);
+   883→        }
+   884→    };
+   885→
+   886→    if (btnNewProduct) btnNewProduct.addEventListener('click', window.openProductModal);
+   887→
+   888→    // Wire up header button
+   889→    const headerBtnNewProduct = document.getElementById('headerBtnNewProduct');
+   890→    if (headerBtnNewProduct) headerBtnNewProduct.addEventListener('click', window.openProductModal);
+   891→
+   892→    window.deleteProduct = async function (id) {
+   893→        if (!confirm('¿Eliminar este producto?')) return;
+   894→        try {
+   895→            await api.delete(`/marketplace/${id}`);
+   896→            showToast('Producto eliminado', 'success');
+   897→            loadMyProducts();
+   898→        } catch (error) {
+   899→            showToast(error.message || 'Error al eliminar', 'error');
+   900→        }
+   901→    };
+   902→
+   903→    // ─── Utility: escape HTML attributes ──────────────────────────
+   904→    function escapeAttr(str) {
+   905→        if (!str) return '';
+   906→        return str.replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+   907→    }
+   908→
+   909→    // ═══════════════════════════════════════════════════════════════
+   910→    // SERVICES MANAGEMENT
+   911→    // ═══════════════════════════════════════════════════════════════
+   912→
+   913→    let currentServicesBusinessId = null;
+   914→
+   915→    // Open services manager for a business
+   916→    window.openServicesManager = async function(businessId, businessTitle) {
+   917→        currentServicesBusinessId = businessId;
+   918→        const panel = document.getElementById('servicesManagerPanel');
+   919→        const nameEl = document.getElementById('servicesBusinessName');
+   920→        if (panel) panel.style.display = '';
+   921→        if (nameEl) nameEl.textContent = businessTitle || `Negocio #${businessId}`;
+   922→
+   923→        // Reset form
+   924→        resetServiceForm();
+   925→
+   926→        // Load services
+   927→        await loadBusinessServicesManager(businessId);
+   928→    };
+   929→
+   930→    // Setup services panel close button
+   931→    const closeServicesPanel = document.getElementById('closeServicesPanel');
+   932→    if (closeServicesPanel) {
+   933→        closeServicesPanel.addEventListener('click', () => {
+   934→            const panel = document.getElementById('servicesManagerPanel');
+   935→            if (panel) panel.style.display = 'none';
+   936→            currentServicesBusinessId = null;
+   937→            resetServiceForm();
+   938→        });
+   939→    }
+   940→
+   941→    // Setup cancel edit button
+   942→    const cancelServiceBtn = document.getElementById('cancelServiceBtn');
+   943→    if (cancelServiceBtn) {
+   944→        cancelServiceBtn.addEventListener('click', () => {
+   945→            resetServiceForm();
+   946→        });
+   947→    }
+   948→
+   949→    function resetServiceForm() {
+   950→        const editId = document.getElementById('editServiceId');
+   951→        const titleInput = document.getElementById('serviceTitleInput');
+   952→        const descInput = document.getElementById('serviceDescInput');
+   953→        const formTitle = document.getElementById('serviceFormTitle');
+   954→        const saveBtn = document.getElementById('saveServiceBtn');
+   955→        const cancelBtn = document.getElementById('cancelServiceBtn');
+   956→
+   957→        if (editId) editId.value = '';
+   958→        if (titleInput) titleInput.value = '';
+   959→        if (descInput) descInput.value = '';
+   960→        if (formTitle) formTitle.textContent = 'Agregar Servicio';
+   961→        if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+   962→        if (cancelBtn) cancelBtn.style.display = 'none';
+   963→    }
+   964→
+   965→    // Load services for a business into the manager
+   966→    async function loadBusinessServicesManager(businessId) {
+   967→        const container = document.getElementById('businessServicesManager');
+   968→        if (!container) return;
+   969→
+   970→        try {
+   971→            const data = await api.get(`/businesses/${businessId}/services`);
+   972→            const services = data.services || [];
+   973→
+   974→            if (services.length === 0) {
+   975→                container.innerHTML = `
+   976→                    <div class="empty-state" style="padding:30px;">
+   977→                        <i class="fas fa-concierge-bell" style="font-size:2rem;color:#ccc;"></i>
+   978→                        <p style="margin-top:8px;">Este negocio aún no tiene servicios registrados.</p>
+   979→                    </div>`;
+   980→                return;
+   981→            }
+   982→
+   983→            container.innerHTML = services.map(s => `
+   984→                <div class="service-manager-item" style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#fff;border:1px solid #e8e8e8;border-radius:10px;margin-bottom:10px;">
+   985→                    <div style="flex:1;">
+   986→                        <div style="font-weight:600;font-size:0.95rem;color:#333;">${escapeHtml_service(s.title)}</div>
+   987→                        <div style="font-size:0.85rem;color:#666;margin-top:3px;">${escapeHtml_service(s.description || 'Sin descripción')}</div>
+   988→                    </div>
+   989→                    <div style="display:flex;gap:6px;">
+   990→                        <button class="btn-icon" onclick="editService(${s.id}, '${escapeAttr(s.title)}', '${escapeAttr(s.description || '')}')" title="Editar"><i class="fas fa-edit" style="color:#3b82f6;"></i></button>
+   991→                        <button class="btn-icon" onclick="deleteService(${s.id})" title="Eliminar"><i class="fas fa-trash" style="color:#e74c3c;"></i></button>
+   992→                    </div>
+   993→                </div>
+   994→            `).join('');
+   995→        } catch (error) {
+   996→            console.error('Error loading services:', error);
+   997→            container.innerHTML = `
+   998→                <div class="empty-state" style="padding:30px;">
+   999→                    <i class="fas fa-exclamation-circle" style="color:#e74c3c;"></i>
+  1000→                    <p style="margin-top:8px;">Error al cargar servicios.</p>
+  1001→                </div>`;
+  1002→        }
+  1003→    }
+  1004→
+  1005→    // Escape HTML helper (not to conflict with any other)
+  1006→    function escapeHtml_service(str) {
+  1007→        if (!str) return '';
+  1008→        const div = document.createElement('div');
+  1009→        div.textContent = str;
+  1010→        return div.innerHTML;
+  1011→    }
+  1012→
+  1013→    // Save (create or update) a service
+  1014→    const saveServiceBtn = document.getElementById('saveServiceBtn');
+  1015→    if (saveServiceBtn) {
+  1016→        saveServiceBtn.addEventListener('click', async () => {
+  1017→            const titleInput = document.getElementById('serviceTitleInput');
+  1018→            const descInput = document.getElementById('serviceDescInput');
+  1019→            const editId = document.getElementById('editServiceId');
+  1020→
+  1021→            const title = titleInput ? titleInput.value.trim() : '';
+  1022→            const description = descInput ? descInput.value.trim() : '';
+  1023→
+  1024→            if (!title) {
+  1025→                showToast('El nombre del servicio es requerido', 'error');
+  1026→                return;
+  1027→            }
+  1028→
+  1029→            if (!currentServicesBusinessId) {
+  1030→                showToast('No se ha seleccionado un negocio', 'error');
+  1031→                return;
+  1032→            }
+  1033→
+  1034→            try {
+  1035→                const body = { title, description };
+  1036→
+  1037→                if (editId && editId.value) {
+  1038→                    // Update existing service
+  1039→                    const serviceId = editId.value;
+  1040→                    await api.put(`/businesses/${currentServicesBusinessId}/services/${serviceId}`, body);
+  1041→                    showToast('Servicio actualizado correctamente', 'success');
+  1042→                } else {
+  1043→                    // Create new service
+  1044→                    await api.post(`/businesses/${currentServicesBusinessId}/services`, body);
+  1045→                    showToast('Servicio agregado correctamente', 'success');
+  1046→                }
+  1047→
+  1048→                resetServiceForm();
+  1049→                await loadBusinessServicesManager(currentServicesBusinessId);
+  1050→            } catch (error) {
+  1051→                showToast(error.message || 'Error al guardar servicio', 'error');
+  1052→            }
+  1053→        });
+  1054→    }
+  1055→
+  1056→    // Edit service - populate form with existing data
+  1057→    window.editService = function(serviceId, title, description) {
+  1058→        const editIdEl = document.getElementById('editServiceId');
+  1059→        const titleInput = document.getElementById('serviceTitleInput');
+  1060→        const descInput = document.getElementById('serviceDescInput');
+  1061→        const formTitle = document.getElementById('serviceFormTitle');
+  1062→        const saveBtn = document.getElementById('saveServiceBtn');
+  1063→        const cancelBtn = document.getElementById('cancelServiceBtn');
+  1064→
+  1065→        if (editIdEl) editIdEl.value = serviceId;
+  1066→        if (titleInput) titleInput.value = title;
+  1067→        if (descInput) descInput.value = description;
+  1068→        if (formTitle) formTitle.textContent = 'Editar Servicio';
+  1069→        if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-check"></i> Actualizar';
+  1070→        if (cancelBtn) cancelBtn.style.display = '';
+  1071→
+  1072→        // Scroll to form
+  1073→        const formArea = document.getElementById('serviceFormArea');
+  1074→        if (formArea) formArea.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  1075→    };
+  1076→
+  1077→    // Delete service
+  1078→    window.deleteService = async function(serviceId) {
+  1079→        if (!confirm('¿Eliminar este servicio?')) return;
+  1080→        if (!currentServicesBusinessId) return;
+  1081→
+  1082→        try {
+  1083→            await api.delete(`/businesses/${currentServicesBusinessId}/services/${serviceId}`);
+  1084→            showToast('Servicio eliminado', 'success');
+  1085→            await loadBusinessServicesManager(currentServicesBusinessId);
+  1086→        } catch (error) {
+  1087→            showToast(error.message || 'Error al eliminar servicio', 'error');
+  1088→        }
+  1089→    };
+  1090→
+  1091→    // ═══════════════════════════════════════════════════════════════
+  1092→    // ADMIN SECTION - Approve/Reject Properties
+  1093→    // ═══════════════════════════════════════════════════════════════
+  1094→
+  1095→    function setupAdminSection() {
+  1096→        // Add admin link to sidebar
+  1097→        const sidebarNav = document.querySelector('.sidebar-nav');
+  1098→        if (sidebarNav && !document.querySelector('.sidebar-link[data-section="admin"]')) {
+  1099→            const adminLink = document.createElement('a');
+  1100→            adminLink.href = '#';
+  1101→            adminLink.className = 'sidebar-link';
+  1102→            adminLink.dataset.section = 'admin';
+  1103→            adminLink.innerHTML = '<i class="fas fa-shield-alt"></i> Administrar <span class="badge badge-warning" id="adminPendingBadge">0</span>';
+  1104→            sidebarNav.appendChild(adminLink);
+  1105→
+  1106→            // Add event listener
+  1107→            adminLink.addEventListener('click', (e) => {
+  1108→                e.preventDefault();
+  1109→                switchSection('admin');
+  1110→                sidebarLinks.forEach(l => l.classList.remove('active'));
+  1111→                adminLink.classList.add('active');
+  1112→            });
+  1113→        }
+  1114→
+  1115→        // Setup admin tabs
+  1116→        if (adminTabPending) {
+  1117→            adminTabPending.addEventListener('click', () => {
+  1118→                activateAdminTab('Pending');
+  1119→            });
+  1120→        }
+  1121→
+  1122→        if (adminTabAll) {
+  1123→            adminTabAll.addEventListener('click', () => {
+  1124→                activateAdminTab('All');
+  1125→                loadAdminAllProperties();
+  1126→            });
+  1127→        }
+  1128→
+  1129→        if (adminTabUsers) {
+  1130→            adminTabUsers.addEventListener('click', () => {
+  1131→                activateAdminTab('Users');
+  1132→                loadAdminUsers();
+  1133→            });
+  1134→        }
+  1135→
+  1136→        // Search users
+  1137→        if (adminUsersSearchInput) {
+  1138→            let searchTimeout;
+  1139→            adminUsersSearchInput.addEventListener('input', () => {
+  1140→                clearTimeout(searchTimeout);
+  1141→                searchTimeout = setTimeout(() => {
+  1142→                    loadAdminUsers(adminUsersSearchInput.value.trim());
+  1143→                }, 350);
+  1144→            });
+  1145→        }
+  1146→    }
+  1147→
+  1148→    function activateAdminTab(name) {
+  1149→        [adminTabPending, adminTabAll, adminTabUsers].forEach(t => {
+  1150→            if (t) t.classList.remove('active');
+  1151→        });
+  1152→        const activeTab = document.getElementById('adminTab' + name);
+  1153→        if (activeTab) activeTab.classList.add('active');
+  1154→
+  1155→        const panels = ['Pending', 'All', 'Users'];
+  1156→        panels.forEach(p => {
+  1157→            const panel = document.getElementById('adminPanel' + p);
+  1158→            if (panel) {
+  1159→                if (p === name) panel.classList.remove('hidden');
+  1160→                else panel.classList.add('hidden');
+  1161→            }
+  1162→        });
+  1163→    }
+  1164→
+  1165→    // ─── Admin Users Management ─────────────────────────────────
+  1166→    async function loadAdminUsers(search) {
+  1167→        if (!adminUsersBody) return;
+  1168→
+  1169→        try {
+  1170→            let url = '/users?limit=50';
+  1171→            if (search) url += `&search=${encodeURIComponent(search)}`;
+  1172→
+  1173→            const data = await api.get(url);
+  1174→            const users = data.users || [];
+  1175→
+  1176→            // Update stats
+  1177→            const statTotal = document.getElementById('statTotalUsers');
+  1178→            const statAdmin = document.getElementById('statAdminUsers');
+  1179→            const statNormal = document.getElementById('statNormalUsers');
+  1180→            if (statTotal) statTotal.textContent = users.length;
+  1181→            if (statAdmin) statAdmin.textContent = users.filter(u => u.role === 'admin').length;
+  1182→            if (statNormal) statNormal.textContent = users.filter(u => u.role !== 'admin').length;
+  1183→
+  1184→            if (users.length === 0) {
+  1185→                adminUsersBody.innerHTML = `
+  1186→                    <tr class="empty-row">
+  1187→                        <td colspan="7">
+  1188→                            <div class="empty-state">
+  1189→                                <i class="fas fa-users"></i>
+  1190→                                <p>${search ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}</p>
+  1191→                            </div>
+  1192→                        </td>
+  1193→                    </tr>
+  1194→                `;
+  1195→                return;
+  1196→            }
+  1197→
+  1198→            const myId = currentUser ? currentUser.id : null;
+  1199→
+  1200→            adminUsersBody.innerHTML = users.map(user => {
+  1201→                const initials = (user.name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().substring(0, 2);
+  1202→                const avatarHTML = user.avatar
+  1203→                    ? `<div class="admin-user-avatar"><img src="${user.avatar}" alt=""></div>`
+  1204→                    : `<div class="admin-user-avatar">${initials}</div>`;
+  1205→                const isSelf = myId && (user.id === myId || parseInt(user.id) === parseInt(myId));
+  1206→                const date = user.created_at ? new Date(user.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+  1207→                const phone = user.phone || '<span style="color:#ccc">—</span>';
+  1208→
+  1209→                // Role toggle
+  1210→                const roleLabels = { admin: 'Admin', user: 'Usuario', agent: 'Agente' };
+  1211→                const currentRole = user.role || 'user';
+  1212→                let toggleHTML = `<div class="role-toggle" data-user-id="${user.id}" data-current-role="${currentRole}">`;
+  1213→                toggleHTML += `<button class="role-toggle-btn ${currentRole === 'admin' ? 'active-admin' : ''} ${isSelf ? 'self-badge' : ''}" data-role="admin" ${isSelf ? 'disabled' : ''}><i class="fas fa-shield-alt"></i> Admin</button>`;
+  1214→                toggleHTML += `<button class="role-toggle-btn ${currentRole === 'user' ? 'active-user' : ''} ${isSelf ? 'self-badge' : ''}" data-role="user" ${isSelf ? 'disabled' : ''}><i class="fas fa-user"></i> User</button>`;
+  1215→                toggleHTML += `</div>`;
+  1216→
+  1217→                const selfLabel = isSelf ? ' <span style="color:#aaa;font-size:0.7rem">(Tú)</span>' : '';
+  1218→
+  1219→                return `
+  1220→                    <tr>
+  1221→                        <td>
+  1222→                            <div class="admin-user-cell">
+  1223→                                ${avatarHTML}
+  1224→                                <div>
+  1225→                                    <div class="admin-user-name">${user.name || 'Sin nombre'}${selfLabel}</div>
+  1226→                                </div>
+  1227→                            </div>
+  1228→                        </td>
+  1229→                        <td style="font-size:0.83rem; color:#666;">${user.email || '—'}</td>
+  1230→                        <td style="font-size:0.83rem;">${phone}</td>
+  1231→                        <td>
+  1232→                            <span class="admin-role-badge-inline role-${currentRole}">
+  1233→                                <i class="fas ${currentRole === 'admin' ? 'fa-shield-alt' : currentRole === 'agent' ? 'fa-id-badge' : 'fa-user'}"></i>
+  1234→                                ${roleLabels[currentRole] || 'Usuario'}
+  1235→                            </span>
+  1236→                        </td>
+  1237→                        <td style="text-align:center; font-weight:600;">${user.business_count || 0}</td>
+  1238→                        <td><span class="admin-user-date">${date}</span></td>
+  1239→                        <td>${toggleHTML}</td>
+  1240→                    </tr>
+  1241→                `;
+  1242→            }).join('');
+  1243→
+  1244→            // Attach click handlers for role toggle buttons
+  1245→            adminUsersBody.querySelectorAll('.role-toggle-btn:not([disabled])').forEach(btn => {
+  1246→                btn.addEventListener('click', (e) => {
+  1247→                    e.stopPropagation();
+  1248→                    const toggle = btn.closest('.role-toggle');
+  1249→                    const userId = toggle.dataset.userId;
+  1250→                    const currentRole = toggle.dataset.currentRole;
+  1251→                    const newRole = btn.dataset.role;
+  1252→                    if (newRole !== currentRole) {
+  1253→                        toggleUserRole(userId, newRole, toggle);
+  1254→                    }
+  1255→                });
+  1256→            });
+  1257→        } catch (error) {
+  1258→            adminUsersBody.innerHTML = `
+  1259→                <tr class="empty-row">
+  1260→                    <td colspan="7">
+  1261→                        <div class="empty-state">
+  1262→                            <i class="fas fa-exclamation-circle"></i>
+  1263→                            <p>Error al cargar usuarios</p>
+  1264→                        </div>
+  1265→                    </td>
+  1266→                </tr>
+  1267→            `;
+  1268→        }
+  1269→    }
+  1270→
+  1271→    async function toggleUserRole(userId, newRole, toggleEl) {
+  1272→        // Add saving state
+  1273→        const buttons = toggleEl.querySelectorAll('.role-toggle-btn');
+  1274→        buttons.forEach(b => b.classList.add('saving-role'));
+  1275→
+  1276→        try {
+  1277→            await api.put(`/users/${userId}`, { role: newRole });
+  1278→            showToast(`Rol cambiado a ${newRole === 'admin' ? 'Administrador' : 'Usuario'} exitosamente`, 'success');
+  1279→
+  1280→            // Update toggle UI
+  1281→            toggleEl.dataset.currentRole = newRole;
+  1282→            buttons.forEach(b => {
+  1283→                b.classList.remove('active-admin', 'active-user', 'active-agent', 'saving-role');
+  1284→                if (b.dataset.role === newRole) {
+  1285→                    b.classList.add(newRole === 'admin' ? 'active-admin' : newRole === 'agent' ? 'active-agent' : 'active-user');
+  1286→                }
+  1287→            });
+  1288→
+  1289→            // Update the role badge inline
+  1290→            const row = toggleEl.closest('tr');
+  1291→            if (row) {
+  1292→                const badgeCell = row.querySelectorAll('td')[3];
+  1293→                if (badgeCell) {
+  1294→                    const roleLabels = { admin: 'Admin', user: 'Usuario', agent: 'Agente' };
+  1295→                    badgeCell.innerHTML = `
+  1296→                        <span class="admin-role-badge-inline role-${newRole}">
+  1297→                            <i class="fas ${newRole === 'admin' ? 'fa-shield-alt' : newRole === 'agent' ? 'fa-id-badge' : 'fa-user'}"></i>
+  1298→                            ${roleLabels[newRole] || 'Usuario'}
+  1299→                        </span>
+  1300→                    `;
+  1301→                }
+  1302→            }
+  1303→
+  1304→            // Update stats
+  1305→            loadAdminUsers(adminUsersSearchInput ? adminUsersSearchInput.value.trim() : undefined);
+  1306→        } catch (error) {
+  1307→            showToast(error.message || 'Error al cambiar rol', 'error');
+  1308→            buttons.forEach(b => b.classList.remove('saving-role'));
+  1309→        }
+  1310→    }
+  1311→
+  1312→    async function loadAdminData() {
+  1313→        await loadAdminPendingProperties();
+  1314→        loadAdminAllProperties();
+  1315→    }
+  1316→
+  1317→    async function loadAdminPendingProperties() {
+  1318→        if (!adminPendingBody) return;
+  1319→
+  1320→        try {
+  1321→            const data = await api.get('/businesses?status=pending&limit=100');
+  1322→            pendingProperties = data.businesses || [];
+  1323→
+  1324→            // Update badge
+  1325→            const badge = document.getElementById('adminPendingBadge');
+  1326→            if (badge) {
+  1327→                badge.textContent = pendingProperties.length;
+  1328→                badge.style.display = pendingProperties.length > 0 ? '' : 'none';
+  1329→            }
+  1330→
+  1331→            if (pendingProperties.length === 0) {
+  1332→                adminPendingBody.innerHTML = `
+  1333→                    <tr class="empty-row">
+  1334→                        <td colspan="7">
+  1335→                            <div class="empty-state">
+  1336→                                <i class="fas fa-check-circle" style="color: #28a745;"></i>
+  1337→                                <p>No hay propiedades pendientes de aprobacion.</p>
+  1338→                            </div>
+  1339→                        </td>
+  1340→                    </tr>
+  1341→                `;
+  1342→            } else {
+  1343→                adminPendingBody.innerHTML = pendingProperties.map(p => `
+  1344→                    <tr class="admin-pending-row">
+  1345→                        <td>
+  1346→                            <div class="dash-prop-name">
+  1347→                                ${(p.cover_image || p.image_count > 0) ? `<img src="${p.cover_image || ''}" alt="" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}
+  1348→                                <span>${truncateText(p.title, 30)}</span>
+  1349→                            </div>
+  1350→                        </td>
+  1351→                        <td>${getBusinessTypeLabel(p.business_type)}</td>
+  1352→                        <td class="dash-price">${formatPrice(p.price, p.currency)}</td>
+  1353→                        <td><i class="fas fa-map-marker-alt"></i> ${p.city || 'Mérida'}</td>
+  1354→                        <td>${formatDate(p.created_at)}</td>
+  1355→                        <td>${p.owner_name || 'Usuario'}</td>
+  1356→                        <td class="dash-actions">
+  1357→                            <button class="btn btn-sm btn-success" onclick="adminApproveBusiness(${p.id})" title="Aprobar">
+  1358→                                <i class="fas fa-check"></i> Aprobar
+  1359→                            </button>
+  1360→                            <button class="btn btn-sm btn-danger" onclick="adminRejectBusiness(${p.id})" title="Rechazar">
+  1361→                                <i class="fas fa-times"></i> Rechazar
+  1362→                            </button>
+  1363→                            <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver detalle"><i class="fas fa-eye"></i></a>
+  1364→                        </td>
+  1365→                    </tr>
+  1366→                `).join('');
+  1367→            }
+  1368→        } catch (error) {
+  1369→            console.error('Error loading admin pending:', error);
+  1370→            adminPendingBody.innerHTML = `
+  1371→                <tr class="empty-row">
+  1372→                    <td colspan="7">
+  1373→                        <div class="empty-state">
+  1374→                            <i class="fas fa-exclamation-circle"></i>
+  1375→                            <p>Error al cargar propiedades pendientes.</p>
+  1376→                        </div>
+  1377→                    </td>
+  1378→                </tr>
+  1379→            `;
+  1380→        }
+  1381→    }
+  1382→
+  1383→    async function loadAdminAllProperties() {
+  1384→        if (!adminAllPropsBody) return;
+  1385→
+  1386→        try {
+  1387→            // Admin sees ALL businesses regardless of status
+  1388→            const data = await api.get('/businesses?status=approved&limit=100');
+  1389→            const approvedProps = data.businesses || [];
+  1390→            // Also fetch pending and rejected
+  1391→            const pendingData = await api.get('/businesses?status=pending&limit=100');
+  1392→            const rejectedData = await api.get('/businesses?status=rejected&limit=100');
+  1393→            const allProps = [...approvedProps, ...(pendingData.businesses || []), ...(rejectedData.businesses || [])];
+  1394→
+  1395→            if (allProps.length === 0) {
+  1396→                adminAllPropsBody.innerHTML = `
+  1397→                    <tr class="empty-row">
+  1398→                        <td colspan="8">
+  1399→                            <div class="empty-state">
+  1400→                                <i class="fas fa-inbox"></i>
+  1401→                                <p>No hay propiedades registradas.</p>
+  1402→                            </div>
+  1403→                        </td>
+  1404→                    </tr>
+  1405→                `;
+  1406→            } else {
+  1407→                adminAllPropsBody.innerHTML = allProps.map(p => `
+  1408→                    <tr>
+  1409→                        <td>
+  1410→                            <div class="dash-prop-name">
+  1411→                                ${(p.cover_image || p.image_count > 0) ? `<img src="${p.cover_image || ''}" alt="" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}
+  1412→                                <span>${truncateText(p.title, 30)}</span>
+  1413→                            </div>
+  1414→                        </td>
+  1415→                        <td>${getBusinessTypeLabel(p.business_type)}</td>
+  1416→                        <td>${p.city || '--'}, ${p.state || '--'}</td>
+  1417→                        <td>${getStatusBadge(p.status)}</td>
+  1418→                        <td>${p.owner_name || 'Usuario'}</td>
+  1419→                        <td>${formatDate(p.created_at)}</td>
+  1420→                        <td class="dash-actions">
+  1421→                            ${p.status === 'pending' ? `
+  1422→                                <button class="btn btn-sm btn-success" onclick="adminApproveBusiness(${p.id})"><i class="fas fa-check"></i></button>
+  1423→                                <button class="btn btn-sm btn-danger" onclick="adminRejectBusiness(${p.id})"><i class="fas fa-times"></i></button>
+  1424→                            ` : ''}
+  1425→                            <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
+  1426→                            <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+  1427→                        </td>
+  1428→                    </tr>
+  1429→                `).join('');
+  1430→            }
+  1431→        } catch (error) {
+  1432→            console.error('Error loading admin all businesses:', error);
+  1433→        }
+  1434→    }
+  1435→
+  1436→    // Admin approve business
+  1437→    window.adminApproveBusiness = async function (id) {
+  1438→        try {
+  1439→            await api.post(`/businesses/${id}/approve`, {});
+  1440→            showToast('Propiedad aprobada exitosamente', 'success');
+  1441→
+  1442→            // Reload admin data
+  1443→            loadAdminData();
+  1444→
+  1445→            // Also update user pending count if visible
+  1446→            if (dashPendingProps) {
+  1447→                const pending = pendingProperties.length - 1;
+  1448→                dashPendingProps.textContent = Math.max(0, pending);
+  1449→            }
+  1450→        } catch (error) {
+  1451→            showToast(error.message || 'Error al aprobar propiedad', 'error');
+  1452→        }
+  1453→    };
+  1454→
+  1455→    // Admin reject business
+  1456→    window.adminRejectBusiness = async function (id) {
+  1457→        if (!confirm('¿Estas seguro de que deseas rechazar esta propiedad?')) return;
+  1458→
+  1459→        try {
+  1460→            await api.post(`/businesses/${id}/reject`, {});
+  1461→            showToast('Propiedad rechazada', 'info');
+  1462→
+  1463→            // Reload admin data
+  1464→            loadAdminData();
+  1465→        } catch (error) {
+  1466→            showToast(error.message || 'Error al rechazar propiedad', 'error');
+  1467→        }
+  1468→    };
+  1469→
+  1470→    // ─── Business Stats ───────────────────────────────────────
+  1471→    let currentStatsPeriod = '7d';
+  1472→
+  1473→    async function loadBusinessStats(businessId) {
+  1474→        try {
+  1475→            // Get user's businesses first
+  1476→            const myBiz = await api.get('/user/my-businesses');
+  1477→            const businesses = myBiz.data || [];
+  1478→
+  1479→            if (businesses.length === 0) {
+  1480→                const body = document.getElementById('statsPerBusinessBody');
+  1481→                if (body) body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">No tienes negocios registrados.</td></tr>';
+  1482→                return;
+  1483→            }
+  1484→
+  1485→            // If no specific business, aggregate all
+  1486→            let allStats = { total_views: 0, total_whatsapp_clicks: 0, total_website_clicks: 0, total_shares: 0 };
+  1487→            let rows = [];
+  1488→
+  1489→            for (const biz of businesses) {
+  1490→                try {
+  1491→                    const stats = await api.get(`/business-stats/${biz.id}?period=${currentStatsPeriod}`);
+  1492→                    allStats.total_views += stats.total_views || 0;
+  1493→                    allStats.total_whatsapp_clicks += stats.total_whatsapp_clicks || 0;
+  1494→                    allStats.total_website_clicks += stats.total_website_clicks || 0;
+  1495→                    allStats.total_shares += stats.total_shares || 0;
+  1496→
+  1497→                    rows.push(`
+  1498→                        <tr>
+  1499→                            <td><a href="/negocio/${biz.slug || biz.id}" style="color:#059669;font-weight:600;text-decoration:none;">${biz.title || 'Sin título'}</a></td>
+  1500→                            <td><span style="font-weight:700;color:#1e293b;">${(stats.total_views || 0).toLocaleString()}</span></td>
+  1501→                            <td><span style="font-weight:700;color:#25d366;">${(stats.total_whatsapp_clicks || 0).toLocaleString()}</span></td>
+  1502→                            <td><span style="font-weight:700;color:#0ea5e9;">${(stats.total_website_clicks || 0).toLocaleString()}</span></td>
+  1503→                            <td><span style="font-weight:700;color:#8b5cf6;">${(stats.total_shares || 0).toLocaleString()}</span></td>
+  1504→                        </tr>
+  1505→                    `);
+  1506→                } catch(e) {
+  1507→                    rows.push(`
+  1508→                        <tr>
+  1509→                            <td>${biz.title || 'Sin título'}</td>
+  1510→                            <td colspan="4" style="color:#94a3b8;">Sin datos</td>
+  1511→                        </tr>
+  1512→                    `);
+  1513→                }
+  1514→            }
+  1515→
+  1516→            // Update summary cards
+  1517→            const elViews = document.getElementById('statTotalViews');
+  1518→            const elWA = document.getElementById('statTotalWA');
+  1519→            const elWeb = document.getElementById('statTotalWeb');
+  1520→            const elShares = document.getElementById('statTotalShares');
+  1521→            if (elViews) elViews.textContent = allStats.total_views.toLocaleString();
+  1522→            if (elWA) elWA.textContent = allStats.total_whatsapp_clicks.toLocaleString();
+  1523→            if (elWeb) elWeb.textContent = allStats.total_website_clicks.toLocaleString();
+  1524→            if (elShares) elShares.textContent = allStats.total_shares.toLocaleString();
+  1525→
+  1526→            // Update table
+  1527→            const body = document.getElementById('statsPerBusinessBody');
+  1528→            if (body) body.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">Sin datos para este período.</td></tr>';
+  1529→
+  1530→        } catch (error) {
+  1531→            console.error('Stats error:', error);
+  1532→            showToast('Error al cargar estadísticas', 'error');
+  1533→        }
+  1534→    }
+  1535→
+  1536→    // Period button handlers
+  1537→    document.addEventListener('click', function(e) {
+  1538→        if (e.target.classList.contains('period-btn')) {
+  1539→            currentStatsPeriod = e.target.dataset.period;
+  1540→            document.querySelectorAll('.period-btn').forEach(b => {
+  1541→                b.style.background = '#fff';
+  1542→                b.classList.remove('active');
+  1543→            });
+  1544→            e.target.style.background = '#f1f5f9';
+  1545→            e.target.classList.add('active');
+  1546→            loadBusinessStats();
+  1547→        }
+  1548→    });
+  1549→
+  1550→    // ─── Initialize on DOM Ready ────────────────────────────────
+  1551→    if (document.readyState === 'loading') {
+  1552→        document.addEventListener('DOMContentLoaded', initDashboard);
+  1553→    } else {
+  1554→        initDashboard();
+  1555→    }
+  1556→
+  1557→
+  1558→    // ─── Edit Business Modal ─────────────────────────────
+  1559→    let editBizVideoMode = 'file';
+  1560→
+  1561→    window.openEditBusinessModal = async function(id) {
+  1562→        const modal = document.getElementById('editBusinessModal');
+  1563→        const loading = document.getElementById('editBizLoading');
+  1564→        const form = document.getElementById('editBizForm');
+  1565→        if (!modal) return;
+  1566→        modal.classList.remove('hidden');
+  1567→        loading.style.display = '';
+  1568→        form.style.display = 'none';
+  1569→
+  1570→        // Reset features
+  1571→        document.querySelectorAll('#editBizFeatures .eb-feature').forEach(f => f.classList.remove('checked'));
+  1572→        document.getElementById('ebVideoPreview').style.display = 'none';
+  1573→        document.getElementById('ebVideoFileInfo').innerHTML = '';
+  1574→        document.getElementById('editBizVideoUrlHidden').value = '';
+  1575→        document.getElementById('editBizVideoUrl').value = '';
+  1576→        document.getElementById('editBizVideoFileInput').value = '';
+  1577→
+  1578→        try {
+  1579→            const data = await api.get('/businesses/' + id);
+  1580→            const biz = data.business || data;
+  1581→            document.getElementById('editBizId').value = biz.id;
+  1582→            populateEditBizForm(biz);
+  1583→            loading.style.display = 'none';
+  1584→            form.style.display = '';
+  1585→        } catch(e) {
+  1586→            loading.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><p>Error al cargar datos del negocio</p>';
+  1587→        }
+  1588→    };
+  1589→
+  1590→    window.closeEditBusinessModal = function() {
+  1591→        const modal = document.getElementById('editBusinessModal');
+  1592→        if (modal) modal.classList.add('hidden');
+  1593→    };
+  1594→
+  1595→    function populateEditBizForm(biz) {
+  1596→        const el = (id, val) => { const e = document.getElementById(id); if (e && val) e.value = val; };
+  1597→        el('editBizTitle', biz.title);
+  1598→        el('editBizDesc', biz.description);
+  1599→        el('editBizCat', biz.category || biz.category_id);
+  1600→        el('editBizType', biz.business_type);
+  1601→        el('editBizPhone', biz.phone);
+  1602→        el('editBizWhatsapp', biz.whatsapp);
+  1603→        el('editBizEmail', biz.email_contact || biz.email);
+  1604→        el('editBizWebsite', biz.website);
+  1605→        el('editBizInstagram', biz.instagram);
+  1606→        el('editBizFacebook', biz.facebook);
+  1607→        el('editBizTwitter', biz.twitter);
+  1608→        el('editBizTiktok', biz.tiktok);
+  1609→        el('editBizYoutube', biz.youtube);
+  1610→        el('editBizAddress', biz.address);
+  1611→        el('editBizCity', biz.city);
+  1612→        el('editBizState', biz.state);
+  1613→        el('editBizLat', biz.lat || biz.latitude);
+  1614→        el('editBizLng', biz.lng || biz.longitude);
+  1615→        el('editBizSchedule', biz.schedule);
+  1616→
+  1617→        // Features
+  1618→        const features = biz.features || biz.caracteristicas || '';
+  1619→        const featList = typeof features === 'string' ? features.split(',') : features;
+  1620→        document.querySelectorAll('#editBizFeatures .eb-feature').forEach(f => {
+  1621→            if (featList.includes(f.dataset.feature)) f.classList.add('checked');
+  1622→        });
+  1623→
+  1624→        // Video
+  1625→        if (biz.video_url) {
+  1626→            document.getElementById('editBizVideoUrlHidden').value = biz.video_url;
+  1627→            showEditBizVideoPreview(biz.video_url);
+  1628→            setEditBizVideoMode('url');
+  1629→            document.getElementById('editBizVideoUrl').value = biz.video_url;
+  1630→        } else {
+  1631→            setEditBizVideoMode('file');
+  1632→        }
+  1633→    }
+  1634→
+  1635→    window.setEditBizVideoMode = function(mode) {
+  1636→        editBizVideoMode = mode;
+  1637→        document.getElementById('ebVideoTabFile').classList.toggle('active', mode === 'file');
+  1638→        document.getElementById('ebVideoTabUrl').classList.toggle('active', mode === 'url');
+  1639→        document.getElementById('ebVideoFileContent').classList.toggle('active', mode === 'file');
+  1640→        document.getElementById('ebVideoUrlContent').classList.toggle('active', mode === 'url');
+  1641→    };
+  1642→
+  1643→    window.handleEditBizVideoFile = function(input) {
+  1644→        const file = input.files[0];
+  1645→        if (!file) return;
+  1646→        if (!file.type.startsWith('video/')) {
+  1647→            showToast('Solo se permiten archivos de video', 'error');
+  1648→            return;
+  1649→        }
+  1650→        if (file.size > 50 * 1024 * 1024) {
+  1651→            showToast('El video no puede superar 50MB', 'error');
+  1652→            return;
+  1653→        }
+  1654→
+  1655→        // Show local preview
+  1656→        const preview = document.getElementById('ebVideoPreview');
+  1657→        preview.style.display = 'block';
+  1658→        preview.innerHTML = '<video src="' + URL.createObjectURL(file) + '" controls></video>';
+  1659→
+  1660→        document.getElementById('ebVideoFileInfo').innerHTML =
+  1661→            '<div class="eb-video-file-info"><i class="fas fa-check-circle"></i> ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + 'MB)</div>';
+  1662→
+  1663→        // Upload
+  1664→        const token = getToken();
+  1665→        const formData = new FormData();
+  1666→        formData.append('file', file);
+  1667→        formData.append('product_type', 'video');
+  1668→
+  1669→        fetch('/api/upload', {
+  1670→            method: 'POST',
+  1671→            headers: { 'Authorization': 'Bearer ' + token },
+  1672→            body: formData,
+  1673→        })
+  1674→        .then(r => r.json())
+  1675→        .then(data => {
+  1676→            if (data.url) {
+  1677→                document.getElementById('editBizVideoUrlHidden').value = data.url;
+  1678→                showToast('Video subido correctamente', 'success');
+  1679→            } else {
+  1680→                showToast(data.error || 'Error al subir video', 'error');
+  1681→            }
+  1682→        })
+  1683→        .catch(() => showToast('Error de conexion al subir video', 'error'));
+  1684→    };
+  1685→
+  1686→    function showEditBizVideoPreview(url) {
+  1687→        if (!url) return;
+  1688→        const preview = document.getElementById('ebVideoPreview');
+  1689→        preview.style.display = 'block';
+  1690→        const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  1691→        if (ytMatch) {
+  1692→            preview.innerHTML = '<iframe src="https://www.youtube.com/embed/' + ytMatch[1] + '" allowfullscreen></iframe>';
+  1693→            return;
+  1694→        }
+  1695→        const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  1696→        if (ttMatch) {
+  1697→            preview.innerHTML = '<iframe src="https://www.tiktok.com/embed/v2/' + ttMatch[1] + '" allowfullscreen></iframe>';
+  1698→            return;
+  1699→        }
+  1700→        preview.innerHTML = '<video src="' + url + '" controls></video>';
+  1701→    }
+  1702→
+  1703→    window.saveEditBusiness = async function() {
+  1704→        const id = document.getElementById('editBizId').value;
+  1705→        if (!id) return;
+  1706→
+  1707→        const btn = document.getElementById('editBizSaveBtn');
+  1708→        btn.disabled = true;
+  1709→        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+  1710→
+  1711→        try {
+  1712→            const features = [];
+  1713→            document.querySelectorAll('#editBizFeatures .eb-feature.checked').forEach(f => features.push(f.dataset.feature));
+  1714→
+  1715→            const payload = {
+  1716→                title: document.getElementById('editBizTitle').value,
+  1717→                description: document.getElementById('editBizDesc').value,
+  1718→                category: document.getElementById('editBizCat').value,
+  1719→                business_type: document.getElementById('editBizType').value,
+  1720→                phone: document.getElementById('editBizPhone').value,
+  1721→                whatsapp: document.getElementById('editBizWhatsapp').value,
+  1722→                email_contact: document.getElementById('editBizEmail').value,
+  1723→                website: document.getElementById('editBizWebsite').value,
+  1724→                instagram: document.getElementById('editBizInstagram').value,
+  1725→                facebook: document.getElementById('editBizFacebook').value,
+  1726→                twitter: document.getElementById('editBizTwitter').value,
+  1727→                tiktok: document.getElementById('editBizTiktok').value,
+  1728→                youtube: document.getElementById('editBizYoutube').value,
+  1729→                address: document.getElementById('editBizAddress').value,
+  1730→                city: document.getElementById('editBizCity').value,
+  1731→                state: document.getElementById('editBizState').value,
+  1732→                lat: parseFloat(document.getElementById('editBizLat').value) || null,
+  1733→                lng: parseFloat(document.getElementById('editBizLng').value) || null,
+  1734→                schedule: document.getElementById('editBizSchedule').value,
+  1735→                features: features.join(','),
+  1736→                video_url: document.getElementById('editBizVideoUrlHidden').value || document.getElementById('editBizVideoUrl').value || '',
+  1737→            };
+  1738→
+  1739→            await api.put('/businesses/' + id, payload);
+  1740→            showToast('Negocio actualizado exitosamente', 'success');
+  1741→            closeEditBusinessModal();
+  1742→            // Reload current section
+  1743→            const activeSection = document.querySelector('.sidebar-link.active');
+  1744→            if (activeSection) switchSection(activeSection.dataset.section);
+  1745→            else loadOverviewData();
+  1746→        } catch(e) {
+  1747→            showToast(e.message || 'Error al guardar', 'error');
+  1748→        } finally {
+  1749→            btn.disabled = false;
+  1750→            btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+  1751→        }
+  1752→    };
+  1753→
+  1754→
+  1755→})();
+  1756→

@@ -1,0 +1,1386 @@
+     1→<!DOCTYPE html>
+     2→<html lang="es">
+     3→<head>
+     4→    <meta charset="UTF-8">
+     5→    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→    <meta name="description" content="Panel de usuario de Un Click - Gestiona tus negocios y mensajes.">
+     7→    <title>Mi Panel - Un Click</title>
+     8→    <link rel="stylesheet" href="css/styles.css">
+     9→    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    10→
+    11→    <style>
+    12→    /* === Edit Business Modal === */
+    13→    #editBusinessModal .modal-content { max-width:680px; }
+    14→    .eb-loading { text-align:center; padding:40px; }
+    15→    .eb-loading i { font-size:2.5rem; color:#059669; }
+    16→    .eb-loading p { margin-top:10px; color:#64748b; }
+    17→    .eb-section { margin-bottom:18px; }
+    18→    .eb-section-title {
+    19→        display:flex; align-items:center; gap:8px;
+    20→        font-size:0.85rem; font-weight:700; color:#059669;
+    21→        text-transform:uppercase; letter-spacing:0.5px;
+    22→        margin-bottom:12px; padding-bottom:6px;
+    23→        border-bottom:2px solid #ecfdf5;
+    24→    }
+    25→    .eb-section-title i { font-size:0.9rem; }
+    26→    .eb-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    27→    .eb-grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+    28→    .eb-field { margin-bottom:10px; }
+    29→    .eb-field label {
+    30→        display:block; font-size:0.8rem; font-weight:600; color:#374151;
+    31→        margin-bottom:4px;
+    32→    }
+    33→    .eb-input {
+    34→        width:100%; padding:9px 12px; border:1px solid #d1d5db; border-radius:8px;
+    35→        font-size:0.9rem; transition:border-color 0.2s, box-shadow 0.2s;
+    36→        background:#fff; font-family:inherit;
+    37→    }
+    38→    .eb-input:focus {
+    39→        outline:none; border-color:#059669;
+    40→        box-shadow:0 0 0 3px rgba(5,150,105,0.12);
+    41→    }
+    42→    .eb-textarea { resize:vertical; min-height:60px; }
+    43→    .eb-select { appearance:none; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M6 8L1 3h10z' fill='%236b7280'/%3E%3C/svg%3E") no-repeat right 12px center #fff; padding-right:32px; }
+    44→    /* Video section */
+    45→    .eb-video-tabs { display:flex; gap:0; margin-bottom:12px; }
+    46→    .eb-video-tab {
+    47→        flex:1; padding:8px 12px; border:1px solid #d1d5db;
+    48→        background:#f9fafb; font-size:0.82rem; font-weight:600;
+    49→        cursor:pointer; text-align:center; transition:all 0.2s;
+    50→        font-family:inherit; color:#475569;
+    51→    }
+    52→    .eb-video-tab:first-child { border-radius:8px 0 0 8px; }
+    53→    .eb-video-tab:last-child { border-radius:0 8px 8px 0; }
+    54→    .eb-video-tab.active {
+    55→        background:#059669; color:#fff; border-color:#059669;
+    56→    }
+    57→    .eb-video-content { display:none; }
+    58→    .eb-video-content.active { display:block; }
+    59→    .eb-video-drop {
+    60→        border:2px dashed #d1d5db; border-radius:12px; padding:20px;
+    61→        text-align:center; cursor:pointer; transition:border-color 0.2s;
+    62→    }
+    63→    .eb-video-drop:hover { border-color:#059669; }
+    64→    .eb-video-drop i { font-size:1.8rem; color:#94a3b8; }
+    65→    .eb-video-drop p { font-size:0.82rem; color:#64748b; margin-top:6px; }
+    66→    .eb-video-preview {
+    67→        border-radius:12px; overflow:hidden; margin-top:12px;
+    68→        background:#000; max-height:300px;
+    69→    }
+    70→    .eb-video-preview video, .eb-video-preview iframe {
+    71→        width:100%; display:block; border:none; max-height:300px;
+    72→    }
+    73→    .eb-video-remove {
+    74→        display:inline-flex; align-items:center; gap:4px; margin-top:6px;
+    75→        padding:4px 10px; border-radius:6px; border:1px solid #fecaca;
+    76→        background:#fef2f2; color:#dc2626; font-size:0.78rem; cursor:pointer;
+    77→        font-family:inherit;
+    78→    }
+    79→    .eb-video-file-info {
+    80→        display:flex; align-items:center; gap:8px; margin-top:8px;
+    81→        padding:8px 12px; background:#ecfdf5; border-radius:8px;
+    82→        font-size:0.82rem; color:#065f46;
+    83→    }
+    84→    /* Feature chips */
+    85→    .eb-features { display:flex; flex-wrap:wrap; gap:8px; }
+    86→    .eb-feature {
+    87→        display:inline-flex; align-items:center; gap:6px;
+    88→        padding:8px 14px; border-radius:20px; border:1.5px solid #e5e7eb;
+    89→        background:#f9fafb; font-size:0.82rem; font-weight:500;
+    90→        cursor:pointer; transition:all 0.2s; user-select:none; color:#475569;
+    91→    }
+    92→    .eb-feature:hover { border-color:#059669; }
+    93→    .eb-feature.checked {
+    94→        background:#ecfdf5; border-color:#059669; color:#065f46;
+    95→    }
+    96→    .eb-feature i { font-size:0.85rem; }
+    97→    /* Modal body scroll */
+    98→    #editBusinessModal .modal-body { max-height:65vh; overflow-y:auto; padding:16px 20px; }
+    99→    @media (max-width:640px) {
+   100→        .eb-grid-2, .eb-grid-3 { grid-template-columns:1fr; }
+   101→        #editBusinessModal .modal-content { margin:8px; max-height:95vh; }
+   102→        #editBusinessModal .modal-body { max-height:70vh; }
+   103→    }
+   104→    </style>
+   105→
+   106→</head>
+   107→<body>
+   108→    <!-- Navigation -->
+   109→    <nav class="navbar" id="navbar">
+   110→        <div class="nav-container">
+   111→            <a href="index.html" class="nav-logo">
+   112→                <i class="fas fa-store"></i>
+   113→                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> Un Click</span>
+   114→            </a>
+   115→            <div class="location-selector" id="locationSelector">
+   116→                <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
+   117→                    <i class="fas fa-map-marker-alt"></i>
+   118→                    <span class="location-label" id="locationLabel">Todo Venezuela</span>
+   119→                    <i class="fas fa-chevron-down"></i>
+   120→                </button>
+   121→                <div class="location-dropdown hidden" id="locationDropdown">
+   122→                    <div class="location-search">
+   123→                        <input type="text" id="locationSearchInput" placeholder="Buscar estado..." autocomplete="off">
+   124→                    </div>
+   125→                    <div class="location-option" data-state="" data-city="">
+   126→                        <i class="fas fa-globe-americas"></i>
+   127→                        <span>Todo Venezuela</span>
+   128→                    </div>
+   129→                    <div class="location-divider"></div>
+   130→                    <div class="location-list" id="locationList">
+   131→                        <!-- States loaded dynamically -->
+   132→                    </div>
+   133→                </div>
+   134→            </div>
+   135→            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+   136→                <i class="fas fa-bars"></i>
+   137→            </button>
+   138→            <ul class="nav-menu" id="navMenu">
+   139→                <li><a href="index.html" class="nav-link">Inicio</a></li>
+   140→                <li><a href="search.html" class="nav-link">Negocios</a></li>
+   141→                <li><a href="map.html" class="nav-link">Mapa</a></li>
+   142→                <li><a href="entretenimiento.html" class="nav-link">Entretenimiento</a></li>
+   143→                <li><a href="empleo.html" class="nav-link">Empleo</a></li>
+   144→                <li class="nav-dropdown">
+   145→                    <button class="nav-dropdown-toggle" aria-label="Más opciones">
+   146→                        Más <i class="fas fa-chevron-down"></i>
+   147→                    </button>
+   148→                    <ul class="nav-dropdown-menu">
+   149→                        <li><a href="marketplace.html" class="nav-link"><i class="fas fa-shopping-bag"></i> Marketplace</a></li>
+   150→                        <li class="nav-dropdown-divider"></li>
+   151→                        <li><a href="emergencia.html" class="nav-link" style="color:#dc3545;"><i class="fas fa-exclamation-triangle"></i> Emergencias</a></li>
+   152→                    </ul>
+   153→                </li>
+   154→                <li id="navLoginItem"><a href="login.html" class="nav-link nav-btn">Login</a></li>
+   155→                <li id="navUserItem" class="nav-user">
+   156→                    <a href="dashboard.html" class="nav-link active" id="navUserName">
+   157→                        <i class="fas fa-user-circle"></i> Mi Cuenta
+   158→                    </a>
+   159→                    <button class="nav-link btn-logout" id="navLogout">
+   160→                        <i class="fas fa-sign-out-alt"></i> Salir
+   161→                    </button>
+   162→                </li>
+   163→                <li class="nav-mobile-cta">
+   164→                    <a href="marketplace.html" class="nav-mobile-cta-marketplace">
+   165→                        <i class="fas fa-shopping-bag"></i> Marketplace
+   166→                    </a>
+   167→                </li>
+   168→            </ul>
+   169→        </div>
+   170→    </nav>
+   171→
+   172→    <!-- Dashboard -->
+   173→    <main class="dashboard">
+   174→        <div class="container dashboard-container">
+   175→            <!-- Sidebar -->
+   176→            <aside class="dashboard-sidebar" id="dashboardSidebar">
+   177→                <div class="sidebar-user">
+   178→                    <div class="user-avatar" id="userAvatar">
+   179→                        <i class="fas fa-user-circle"></i>
+   180→                    </div>
+   181→                    <div class="user-info">
+   182→                        <h3 id="dashUserName">Usuario</h3>
+   183→                        <p id="dashUserEmail">usuario@email.com</p>
+   184→                    </div>
+   185→                </div>
+   186→                <nav class="sidebar-nav">
+   187→                    <a href="#" class="sidebar-link active" data-section="overview">
+   188→                        <i class="fas fa-th-large"></i> Resumen
+   189→                    </a>
+   190→                    <a href="#" class="sidebar-link" data-section="businesses">
+   191→                        <i class="fas fa-building"></i> Mis Negocios
+   192→                    </a>
+   193→                    <a href="#" class="sidebar-link" data-section="messages">
+   194→                        <i class="fas fa-envelope"></i> Mensajes
+   195→                        <span class="badge" id="msgBadge">0</span>
+   196→                    </a>
+   197→                    <a href="#" class="sidebar-link" data-section="favorites">
+   198→                        <i class="fas fa-heart"></i> Favoritos
+   199→                    </a>
+   200→                    <a href="#" class="sidebar-link" data-section="products">
+   201→                        <i class="fas fa-shopping-bag"></i> Mis Productos
+   202→                    </a>
+   203→                    <a href="#" class="sidebar-link" data-section="stats">
+   204→                        <i class="fas fa-chart-line"></i> Estadísticas
+   205→                    </a>
+   206→                    <a href="#" class="sidebar-link" data-section="profile">
+   207→                        <i class="fas fa-user-edit"></i> Mi Perfil
+   208→                    </a>
+   209→                    <!-- Admin link added dynamically in dashboard.js if user is admin -->
+   210→                </nav>
+   211→            </aside>
+   212→
+   213→            <!-- Main Content -->
+   214→            <div class="dashboard-main">
+   215→                <!-- Header -->
+   216→                <div class="dashboard-header">
+   217→                    <button class="sidebar-toggle" id="sidebarToggle">
+   218→                        <i class="fas fa-bars"></i>
+   219→                    </button>
+   220→                    <h1 class="dashboard-title" id="sectionTitle">Resumen</h1>
+   221→                    <div class="dashboard-header-actions">
+   222→                        <button class="btn btn-primary" id="headerBtnNewProduct" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.2);box-shadow:0 4px 14px rgba(217,119,6,0.35);">
+   223→                            <i class="fas fa-shopping-bag"></i> Publicar Producto
+   224→                        </button>
+   225→                        <a href="new-business.html" class="btn btn-primary">
+   226→                            <i class="fas fa-plus"></i> Nuevo Negocio
+   227→                        </a>
+   228→                    </div>
+   229→                </div>
+   230→
+   231→                <!-- Overview Section -->
+   232→                <section class="dashboard-section" id="sectionOverview">
+   233→                    <!-- Stats Cards -->
+   234→                    <div class="dash-stats-grid">
+   235→                        <div class="dash-stat-card">
+   236→                            <div class="dash-stat-icon stat-icon-blue">
+   237→                                <i class="fas fa-building"></i>
+   238→                            </div>
+   239→                            <div class="dash-stat-info">
+   240→                                <div class="dash-stat-number" id="dashTotalProps">0</div>
+   241→                                <div class="dash-stat-label">Total Negocios</div>
+   242→                            </div>
+   243→                        </div>
+   244→                        <div class="dash-stat-card">
+   245→                            <div class="dash-stat-icon stat-icon-green">
+   246→                                <i class="fas fa-check-circle"></i>
+   247→                            </div>
+   248→                            <div class="dash-stat-info">
+   249→                                <div class="dash-stat-number" id="dashPublishedProps">0</div>
+   250→                                <div class="dash-stat-label">Registrados</div>
+   251→                            </div>
+   252→                        </div>
+   253→                        <div class="dash-stat-card">
+   254→                            <div class="dash-stat-icon stat-icon-orange">
+   255→                                <i class="fas fa-clock"></i>
+   256→                            </div>
+   257→                            <div class="dash-stat-info">
+   258→                                <div class="dash-stat-number" id="dashPendingProps">0</div>
+   259→                                <div class="dash-stat-label">Pendientes</div>
+   260→                            </div>
+   261→                        </div>
+   262→                        <div class="dash-stat-card">
+   263→                            <div class="dash-stat-icon stat-icon-purple">
+   264→                                <i class="fas fa-eye"></i>
+   265→                            </div>
+   266→                            <div class="dash-stat-info">
+   267→                                <div class="dash-stat-number" id="dashTotalViews">0</div>
+   268→                                <div class="dash-stat-label">Vistas Totales</div>
+   269→                            </div>
+   270→                        </div>
+   271→                    </div>
+   272→
+   273→                    <!-- Recent Businesses -->
+   274→                    <div class="dash-card">
+   275→                        <div class="dash-card-header">
+   276→                            <h3>Negocios Recientes</h3>
+   277→                            <a href="#" class="dash-link" data-section="businesses">Ver todas</a>
+   278→                        </div>
+   279→                        <div class="dash-table-responsive">
+   280→                            <table class="dash-table" id="recentPropsTable">
+   281→                                <thead>
+   282→                                    <tr>
+   283→                                        <th>Negocio</th>
+   284→                                        <th>Categoría</th>
+   285→                                        <th>Estado</th>
+   286→                                        <th>Estatus</th>
+   287→                                        <th>Vistas</th>
+   288→                                        <th>Acciones</th>
+   289→                                    </tr>
+   290→                                </thead>
+   291→                                <tbody id="recentPropsBody">
+   292→                                    <tr class="empty-row">
+   293→                                        <td colspan="6">
+   294→                                            <div class="empty-state">
+   295→                                                <i class="fas fa-inbox"></i>
+   296→                                                <p>No tienes negocios aún.</p>
+   297→                                                <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
+   298→                                            </div>
+   299→                                        </td>
+   300→                                    </tr>
+   301→                                </tbody>
+   302→                            </table>
+   303→                        </div>
+   304→                    </div>
+   305→                </section>
+   306→
+   307→                <!-- Businesses Section -->
+   308→                <section class="dashboard-section hidden" id="sectionBusinesses">
+   309→                    <div class="dash-card">
+   310→                        <div class="dash-card-header">
+   311→                            <h3>Mis Negocios</h3>
+   312→                            <a href="new-business.html" class="btn btn-primary btn-sm">
+   313→                                <i class="fas fa-plus"></i> Nuevo
+   314→                            </a>
+   315→                        </div>
+   316→                        <div class="dash-filters">
+   317→                            <select id="dashPropFilter" class="form-select">
+   318→                                <option value="">Todas</option>
+   319→                                <option value="publicada">Registrados</option>
+   320→                                <option value="pendiente">Pendientes</option>
+   321→                                <option value="rechazada">Rechazados</option>
+   322→                            </select>
+   323→                        </div>
+   324→                        <div class="dash-table-responsive">
+   325→                            <table class="dash-table" id="allPropsTable">
+   326→                                <thead>
+   327→                                    <tr>
+   328→                                        <th></th>
+   329→                                        <th>Título</th>
+   330→                                        <th>Categoría</th>
+   331→                                        <th>Estado</th>
+   332→                                        <th>Estatus</th>
+   333→                                        <th>Vistas</th>
+   334→                                        <th>Acciones</th>
+   335→                                    </tr>
+   336→                                </thead>
+   337→                                <tbody id="allPropsBody">
+   338→                                    <tr class="empty-row">
+   339→                                        <td colspan="7">
+   340→                                            <div class="empty-state">
+   341→                                                <i class="fas fa-inbox"></i>
+   342→                                                <p>No tienes negocios.</p>
+   343→                                                <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
+   344→                                            </div>
+   345→                                        </td>
+   346→                                    </tr>
+   347→                                </tbody>
+   348→                            </table>
+   349→                        </div>
+   350→                    </div>
+   351→
+   352→                    <!-- Services Management Panel (shown when a business is selected) -->
+   353→                    <div class="dash-card" id="servicesManagerPanel" style="display:none;margin-top:20px;">
+   354→                        <div class="dash-card-header">
+   355→                            <h3><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i> Servicios de: <span id="servicesBusinessName">—</span></h3>
+   356→                            <button class="btn btn-secondary btn-sm" id="closeServicesPanel">
+   357→                                <i class="fas fa-times"></i> Cerrar
+   358→                            </button>
+   359→                        </div>
+   360→                        <div class="dash-info-banner" style="margin-bottom:16px;">
+   361→                            <i class="fas fa-info-circle"></i>
+   362→                            <p>Agrega los servicios que ofrece este negocio. Se mostrarán en la ficha pública del negocio.</p>
+   363→                        </div>
+   364→
+   365→                        <!-- Add service form -->
+   366→                        <div class="dash-service-form" id="serviceFormArea" style="margin-bottom:20px;padding:16px;background:#f8f9fa;border-radius:12px;">
+   367→                            <h4 style="margin:0 0 12px 0;font-size:0.95rem;"><i class="fas fa-plus-circle" style="color:#059669;"></i> <span id="serviceFormTitle">Agregar Servicio</span></h4>
+   368→                            <input type="hidden" id="editServiceId" value="">
+   369→                            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+   370→                                <div style="flex:1;min-width:200px;">
+   371→                                    <label style="font-size:0.8rem;font-weight:600;color:#555;display:block;margin-bottom:4px;">Nombre del servicio *</label>
+   372→                                    <input type="text" id="serviceTitleInput" placeholder="Ej: Corte de cabello" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;">
+   373→                                </div>
+   374→                                <div style="flex:2;min-width:200px;">
+   375→                                    <label style="font-size:0.8rem;font-weight:600;color:#555;display:block;margin-bottom:4px;">Descripción</label>
+   376→                                    <input type="text" id="serviceDescInput" placeholder="Breve descripción del servicio" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;">
+   377→                                </div>
+   378→                                <div style="display:flex;gap:8px;">
+   379→                                    <button class="btn btn-primary btn-sm" id="saveServiceBtn">
+   380→                                        <i class="fas fa-save"></i> Guardar
+   381→                                    </button>
+   382→                                    <button class="btn btn-secondary btn-sm" id="cancelServiceBtn" style="display:none;">
+   383→                                        Cancelar
+   384→                                    </button>
+   385→                                </div>
+   386→                            </div>
+   387→                        </div>
+   388→
+   389→                        <!-- Services list -->
+   390→                        <div id="businessServicesManager" class="services-manager-list">
+   391→                            <div class="empty-state" style="padding:30px;">
+   392→                                <i class="fas fa-concierge-bell" style="font-size:2rem;color:#ccc;"></i>
+   393→                                <p style="margin-top:8px;">Este negocio aún no tiene servicios registrados.</p>
+   394→                            </div>
+   395→                        </div>
+   396→                    </div>
+   397→                </section>
+   398→
+   399→                <!-- Messages Section -->
+   400→                <section class="dashboard-section hidden" id="sectionMessages">
+   401→                    <div class="dash-card">
+   402→                        <div class="dash-card-header">
+   403→                            <h3>Mensajes Recibidos</h3>
+   404→                        </div>
+   405→                        <div class="messages-list" id="messagesList">
+   406→                            <div class="empty-state">
+   407→                                <i class="fas fa-envelope-open"></i>
+   408→                                <p>No tienes mensajes nuevos.</p>
+   409→                            </div>
+   410→                        </div>
+   411→                    </div>
+   412→                </section>
+   413→
+   414→                <!-- Favorites Section -->
+   415→                <section class="dashboard-section hidden" id="sectionFavorites">
+   416→                    <div class="dash-card">
+   417→                        <div class="dash-card-header">
+   418→                            <h3>Mis Favoritos</h3>
+   419→                        </div>
+   420→                        <div class="business-grid" id="favoritesGrid">
+   421→                            <div class="empty-state">
+   422→                                <i class="fas fa-heart"></i>
+   423→                                <p>No tienes negocios favoritos.</p>
+   424→                                <a href="search.html" class="btn btn-primary btn-sm">Explorar Negocios</a>
+   425→                            </div>
+   426→                        </div>
+   427→                    </div>
+   428→                </section>
+   429→
+   430→                <!-- My Products Section -->
+   431→                <section class="dashboard-section hidden" id="sectionProducts">
+   432→                    <div class="dash-card" style="margin-bottom:20px;">
+   433→                        <div class="dash-card-header">
+   434→                            <h3><i class="fas fa-shopping-bag"></i> Mis Productos (Marketplace)</h3>
+   435→                            <button class="btn btn-primary btn-sm" id="btnNewProduct">
+   436→                                <i class="fas fa-plus"></i> Publicar Producto
+   437→                            </button>
+   438→                        </div>
+   439→                        <div class="dash-info-banner" style="margin-bottom:16px;">
+   440→                            <i class="fas fa-info-circle"></i>
+   441→                            <p>Publica productos en el marketplace para que los compradores te contacten por WhatsApp.</p>
+   442→                        </div>
+   443→                    </div>
+   444→                    <div id="myProductsByStore">
+   445→                        <div style="text-align:center;color:#94a3b8;padding:24px;">
+   446→                            <i class="fas fa-spinner fa-spin" style="font-size:24px;color:#f59e0b;"></i>
+   447→                            <p style="margin-top:8px;">Cargando productos...</p>
+   448→                        </div>
+   449→                    </div>
+   450→                </section>
+   451→
+   452→                <!-- Stats Section -->
+   453→                <section class="dashboard-section hidden" id="sectionStats">
+   454→                    <div class="dash-stats-grid" style="margin-bottom:24px;">
+   455→                        <div class="dash-stat-card">
+   456→                            <div class="dash-stat-icon stat-icon-blue"><i class="fas fa-eye"></i></div>
+   457→                            <div class="dash-stat-info">
+   458→                                <div class="dash-stat-number" id="statTotalViews">0</div>
+   459→                                <div class="dash-stat-label">Vistas Totales</div>
+   460→                            </div>
+   461→                        </div>
+   462→                        <div class="dash-stat-card">
+   463→                            <div class="dash-stat-icon stat-icon-green"><i class="fab fa-whatsapp"></i></div>
+   464→                            <div class="dash-stat-info">
+   465→                                <div class="dash-stat-number" id="statTotalWA">0</div>
+   466→                                <div class="dash-stat-label">Clics WhatsApp</div>
+   467→                            </div>
+   468→                        </div>
+   469→                        <div class="dash-stat-card">
+   470→                            <div class="dash-stat-icon stat-icon-orange"><i class="fas fa-globe"></i></div>
+   471→                            <div class="dash-stat-info">
+   472→                                <div class="dash-stat-number" id="statTotalWeb">0</div>
+   473→                                <div class="dash-stat-label">Clics Web</div>
+   474→                            </div>
+   475→                        </div>
+   476→                        <div class="dash-stat-card">
+   477→                            <div class="dash-stat-icon stat-icon-purple"><i class="fas fa-share-alt"></i></div>
+   478→                            <div class="dash-stat-info">
+   479→                                <div class="dash-stat-number" id="statTotalShares">0</div>
+   480→                                <div class="dash-stat-label">Compartidos</div>
+   481→                            </div>
+   482→                        </div>
+   483→                    </div>
+   484→
+   485→                    <!-- Period selector -->
+   486→                    <div class="dash-card" style="margin-bottom:20px;">
+   487→                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+   488→                            <span style="font-weight:600;color:#475569;"><i class="fas fa-calendar"></i> Período:</span>
+   489→                            <button class="btn period-btn active" data-period="7d" style="padding:8px 16px;border-radius:8px;border:1px solid #e2e8f0;background:#f1f5f9;cursor:pointer;font-size:0.85rem;font-weight:600;">7 días</button>
+   490→                            <button class="btn period-btn" data-period="30d" style="padding:8px 16px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:0.85rem;font-weight:600;">30 días</button>
+   491→                            <button class="btn period-btn" data-period="90d" style="padding:8px 16px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;cursor:pointer;font-size:0.85rem;font-weight:600;">90 días</button>
+   492→                            <span id="statsBusinessSelector" style="margin-left:auto;"></span>
+   493→                        </div>
+   494→                    </div>
+   495→
+   496→                    <!-- Stats per business -->
+   497→                    <div class="dash-card" id="statsPerBusinessCard">
+   498→                        <div class="dash-card-header">
+   499→                            <h3><i class="fas fa-chart-bar"></i> Estadísticas por Negocio</h3>
+   500→                        </div>
+   501→                        <div class="dash-table-responsive">
+   502→                            <table class="dash-table">
+   503→                                <thead>
+   504→                                    <tr>
+   505→                                        <th>Negocio</th>
+   506→                                        <th>Vistas</th>
+   507→                                        <th>WhatsApp</th>
+   508→                                        <th>Web</th>
+   509→                                        <th>Compartidos</th>
+   510→                                    </tr>
+   511→                                </thead>
+   512→                                <tbody id="statsPerBusinessBody">
+   513→                                    <tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">Cargando estadísticas...</td></tr>
+   514→                                </tbody>
+   515→                            </table>
+   516→                        </div>
+   517→                    </div>
+   518→                </section>
+   519→
+   520→                <!-- Admin Section (only visible for admin users) -->
+   521→                <section class="dashboard-section hidden" id="sectionAdmin">
+   522→                    <div class="dash-card">
+   523→                        <div class="dash-card-header">
+   524→                            <h3><i class="fas fa-shield-alt"></i> Panel de Administración</h3>
+   525→                        </div>
+   526→
+   527→                        <!-- Admin Tabs -->
+   528→                        <div class="admin-tabs">
+   529→                            <button class="admin-tab active" id="adminTabPending">
+   530→                                <i class="fas fa-clock"></i> Pendientes <span class="badge badge-warning" id="adminPendingBadgeTop">0</span>
+   531→                            </button>
+   532→                            <button class="admin-tab" id="adminTabAll">
+   533→                                <i class="fas fa-list"></i> Negocios
+   534→                            </button>
+   535→                            <button class="admin-tab" id="adminTabUsers">
+   536→                                <i class="fas fa-users-cog"></i> Usuarios
+   537→                            </button>
+   538→                        </div>
+   539→
+   540→                        <!-- Pending Businesses Panel -->
+   541→                        <div id="adminPanelPending">
+   542→                            <div class="dash-info-banner">
+   543→                                <i class="fas fa-info-circle"></i>
+   544→                                <p>Los negocios nuevos aparecen aquí con estado <strong>Pendiente</strong>. Debes aprobarlos para que sean visibles públicamente en la plataforma.</p>
+   545→                            </div>
+   546→                            <div class="dash-table-responsive">
+   547→                                <table class="dash-table">
+   548→                                    <thead>
+   549→                                        <tr>
+   550→                                            <th>Negocio</th>
+   551→                                            <th>Categoría</th>
+   552→                                            <th>Ubicación</th>
+   553→                                            <th>Fecha</th>
+   554→                                            <th>Propietario</th>
+   555→                                            <th>Acciones</th>
+   556→                                        </tr>
+   557→                                    </thead>
+   558→                                    <tbody id="adminPendingBody">
+   559→                                        <tr class="empty-row">
+   560→                                            <td colspan="6">
+   561→                                                <div class="empty-state">
+   562→                                                    <i class="fas fa-spinner fa-spin"></i>
+   563→                                                    <p>Cargando negocios pendientes...</p>
+   564→                                                </div>
+   565→                                            </td>
+   566→                                        </tr>
+   567→                                    </tbody>
+   568→                                </table>
+   569→                            </div>
+   570→                        </div>
+   571→
+   572→                        <!-- All Businesses Panel -->
+   573→                        <div id="adminPanelAll" class="hidden">
+   574→                            <div class="dash-table-responsive">
+   575→                                <table class="dash-table">
+   576→                                    <thead>
+   577→                                        <tr>
+   578→                                            <th>Negocio</th>
+   579→                                            <th>Categoría</th>
+   580→                                            <th>Estado</th>
+   581→                                            <th>Estatus</th>
+   582→                                            <th>Propietario</th>
+   583→                                            <th>Fecha</th>
+   584→                                            <th>Acciones</th>
+   585→                                        </tr>
+   586→                                    </thead>
+   587→                                    <tbody id="adminAllPropsBody">
+   588→                                        <tr class="empty-row">
+   589→                                            <td colspan="7">
+   590→                                                <div class="empty-state">
+   591→                                                    <i class="fas fa-spinner fa-spin"></i>
+   592→                                                    <p>Cargando...</p>
+   593→                                                </div>
+   594→                                            </td>
+   595→                                        </tr>
+   596→                                    </tbody>
+   597→                                </table>
+   598→                            </div>
+   599→                        </div>
+   600→
+   601→                        <!-- Users Panel -->
+   602→                        <div id="adminPanelUsers" class="hidden">
+   603→                            <div class="admin-users-header">
+   604→                                <div class="admin-users-stats" id="adminUsersStats">
+   605→                                    <div class="admin-stat-chip admin-stat-chip-blue">
+   606→                                        <i class="fas fa-users"></i> <span id="statTotalUsers">0</span> Usuarios
+   607→                                    </div>
+   608→                                    <div class="admin-stat-chip admin-stat-chip-red">
+   609→                                        <i class="fas fa-shield-alt"></i> <span id="statAdminUsers">0</span> Admins
+   610→                                    </div>
+   611→                                    <div class="admin-stat-chip admin-stat-chip-green">
+   612→                                        <i class="fas fa-user"></i> <span id="statNormalUsers">0</span> Normales
+   613→                                    </div>
+   614→                                </div>
+   615→                                <div class="admin-users-search">
+   616→                                    <div class="admin-search-wrapper">
+   617→                                        <i class="fas fa-search"></i>
+   618→                                        <input type="text" id="adminUsersSearchInput" placeholder="Buscar por nombre o email...">
+   619→                                    </div>
+   620→                                </div>
+   621→                            </div>
+   622→                            <div class="dash-table-responsive">
+   623→                                <table class="dash-table">
+   624→                                    <thead>
+   625→                                        <tr>
+   626→                                            <th>Usuario</th>
+   627→                                            <th>Email</th>
+   628→                                            <th>Teléfono</th>
+   629→                                            <th>Rol</th>
+   630→                                            <th>Negocios</th>
+   631→                                            <th>Registro</th>
+   632→                                            <th>Acciones</th>
+   633→                                        </tr>
+   634→                                    </thead>
+   635→                                    <tbody id="adminUsersBody">
+   636→                                        <tr class="empty-row">
+   637→                                            <td colspan="7">
+   638→                                                <div class="empty-state">
+   639→                                                    <i class="fas fa-spinner fa-spin"></i>
+   640→                                                    <p>Cargando usuarios...</p>
+   641→                                                </div>
+   642→                                            </td>
+   643→                                        </tr>
+   644→                                    </tbody>
+   645→                                </table>
+   646→                            </div>
+   647→                        </div>
+   648→                    </div>
+   649→                </section>
+   650→
+   651→                <!-- Profile Section -->
+   652→                <section class="dashboard-section hidden" id="sectionProfile">
+   653→                    <!-- Profile Header Card -->
+   654→                    <div class="profile-header-card">
+   655→                        <div class="profile-cover"></div>
+   656→                        <div class="profile-header-body">
+   657→                            <div class="profile-avatar-large" id="profileAvatarLarge">
+   658→                                <i class="fas fa-user"></i>
+   659→                            </div>
+   660→                            <div class="profile-header-info">
+   661→                                <h2 id="profileDisplayName">Usuario</h2>
+   662→                                <span class="profile-role-badge" id="profileRoleBadge">Usuario</span>
+   663→                                <p class="profile-email-display" id="profileDisplayEmail">usuario@email.com</p>
+   664→                            </div>
+   665→                        </div>
+   666→                    </div>
+   667→
+   668→                    <!-- Profile Form Card -->
+   669→                    <div class="profile-form-card">
+   670→                        <div class="profile-form-card-header">
+   671→                            <div class="profile-section-icon">
+   672→                                <i class="fas fa-user-edit"></i>
+   673→                            </div>
+   674→                            <div>
+   675→                                <h3>Información Personal</h3>
+   676→                                <p>Actualiza tus datos y se reflejarán en todas tus publicaciones</p>
+   677→                            </div>
+   678→                        </div>
+   679→
+   680→                        <form class="profile-form" id="profileForm">
+   681→                            <!-- Contact Info Section -->
+   682→                            <div class="profile-form-section">
+   683→                                <div class="profile-form-section-title">
+   684→                                    <i class="fas fa-id-card"></i>
+   685→                                    <span>Datos Básicos</span>
+   686→                                </div>
+   687→                                <div class="form-row">
+   688→                                    <div class="profile-input-group">
+   689→                                        <label for="profileName">Nombre Completo</label>
+   690→                                        <div class="profile-input-wrapper">
+   691→                                            <i class="fas fa-user"></i>
+   692→                                            <input type="text" id="profileName" name="name" required placeholder="Ej: Juan Pérez">
+   693→                                        </div>
+   694→                                    </div>
+   695→                                    <div class="profile-input-group">
+   696→                                        <label for="profileEmail">Correo Electrónico</label>
+   697→                                        <div class="profile-input-wrapper">
+   698→                                            <i class="fas fa-envelope"></i>
+   699→                                            <input type="email" id="profileEmail" name="email" required placeholder="correo@ejemplo.com">
+   700→                                        </div>
+   701→                                    </div>
+   702→                                </div>
+   703→                            </div>
+   704→
+   705→                            <!-- Phone Section -->
+   706→                            <div class="profile-form-section">
+   707→                                <div class="profile-form-section-title">
+   708→                                    <i class="fas fa-phone-alt"></i>
+   709→                                    <span>Teléfonos de Contacto</span>
+   710→                                </div>
+   711→                                <div class="form-row">
+   712→                                    <div class="profile-input-group">
+   713→                                        <label for="profilePhone">Teléfono Principal</label>
+   714→                                        <div class="profile-input-wrapper">
+   715→                                            <i class="fas fa-phone"></i>
+   716→                                            <input type="tel" id="profilePhone" name="phone" placeholder="+58 414 0000000">
+   717→                                        </div>
+   718→                                    </div>
+   719→                                    <div class="profile-input-group">
+   720→                                        <label for="profileWhatsApp">
+   721→                                            <i class="fab fa-whatsapp" style="color:#25d366"></i> WhatsApp
+   722→                                        </label>
+   723→                                        <div class="profile-input-wrapper">
+   724→                                            <i class="fab fa-whatsapp" style="color:#25d366"></i>
+   725→                                            <input type="tel" id="profileWhatsApp" name="whatsapp" placeholder="+58 414 0000000">
+   726→                                        </div>
+   727→                                        <small class="profile-input-hint">Los clientes podrán contactarte directamente por WhatsApp desde tus negocios</small>
+   728→                                    </div>
+   729→                                </div>
+   730→                            </div>
+   731→
+   732→                            <!-- Bio Section -->
+   733→                            <div class="profile-form-section">
+   734→                                <div class="profile-form-section-title">
+   735→                                    <i class="fas fa-align-left"></i>
+   736→                                    <span>Sobre Mí</span>
+   737→                                </div>
+   738→                                <div class="profile-input-group">
+   739→                                    <label for="profileBio">Biografía / Descripción</label>
+   740→                                    <div class="profile-textarea-wrapper">
+   741→                                        <textarea id="profileBio" name="bio" rows="4" placeholder="Cuéntanos sobre ti, tu experiencia, las zonas donde trabajas..." maxlength="500"></textarea>
+   742→                                        <span class="profile-char-count" id="bioCharCount">0/500</span>
+   743→                                    </div>
+   744→                                </div>
+   745→                            </div>
+   746→
+   747→                            <!-- Sync Info Banner -->
+   748→                            <div class="profile-sync-banner">
+   749→                                <div class="profile-sync-icon">
+   750→                                    <i class="fas fa-sync-alt"></i>
+   751→                                </div>
+   752→                                <div class="profile-sync-text">
+   753→                                    <strong>Sincronización automática</strong>
+   754→                                    <p>Al guardar, tu información se actualizará en todos tus negocios publicados. Los clientes verán tu teléfono y WhatsApp actualizados al contactarte.</p>
+   755→                                </div>
+   756→                            </div>
+   757→
+   758→                            <!-- Actions -->
+   759→                            <div class="profile-form-actions">
+   760→                                <button type="submit" class="btn btn-primary profile-save-btn" id="profileSaveBtn">
+   761→                                    <i class="fas fa-check-circle"></i> Guardar Cambios
+   762→                                </button>
+   763→                                <button type="button" class="btn btn-secondary profile-cancel-btn" id="profileCancelBtn">
+   764→                                    Cancelar
+   765→                                </button>
+   766→                            </div>
+   767→                        </form>
+   768→                    </div>
+   769→                </section>
+   770→            </div>
+   771→        </div>
+   772→    </main>
+   773→
+   774→    <!-- Product Modal -->
+   775→    <div class="modal hidden" id="productModal">
+   776→        <div class="modal-overlay"></div>
+   777→        <div class="modal-content" style="max-width:560px;">
+   778→            <div class="modal-header">
+   779→                <h3 id="productModalTitle"><i class="fas fa-plus-circle"></i> Publicar Producto</h3>
+   780→                <button class="modal-close" id="productModalClose">&times;</button>
+   781→            </div>
+   782→            <div class="modal-body">
+   783→                <form id="productForm" class="profile-form">
+   784→                    <div class="profile-form-section">
+   785→                        <div class="profile-form-section-title"><i class="fas fa-store"></i> <span>Publicar desde tu Negocio</span></div>
+   786→                        <div class="profile-input-group">
+   787→                            <label for="prodBusiness">Negocio / Comercio (opcional)</label>
+   788→                            <div class="profile-input-wrapper"><i class="fas fa-store"></i>
+   789→                            <select id="prodBusiness" name="business_id">
+   790→                                <option value="">Publicar como usuario independiente</option>
+   791→                            </select>
+   792→                            </div>
+   793→                            <small class="profile-input-hint">Selecciona desde cuál negocio quieres publicar este producto. Si no tienes negocios registrados, <a href="new-business.html" style="color:#059669;font-weight:600;">registra uno aquí</a>.</small>
+   794→                        </div>
+   795→                    </div>
+   796→                    <div class="profile-form-section">
+   797→                        <div class="profile-form-section-title"><i class="fas fa-tag"></i> <span>Información del Producto</span></div>
+   798→                        <div class="profile-input-group">
+   799→                            <label for="prodName">Nombre del producto *</label>
+   800→                            <div class="profile-input-wrapper"><i class="fas fa-box"></i>
+   801→                            <input type="text" id="prodName" name="name" required placeholder="Ej: iPhone 14 Pro">
+   802→                            </div>
+   803→                        </div>
+   804→                        <div class="form-row">
+   805→                            <div class="profile-input-group">
+   806→                                <label for="prodPrice">Precio ($)</label>
+   807→                                <div class="profile-input-wrapper"><i class="fas fa-dollar-sign"></i>
+   808→                                <input type="number" id="prodPrice" name="price" required min="0" step="0.01" placeholder="0.00">
+   809→                                </div>
+   810→                            </div>
+   811→                            <div class="profile-input-group">
+   812→                                <label for="prodCategory">Categoría</label>
+   813→                                <div class="profile-input-wrapper"><i class="fas fa-tag"></i>
+   814→                                <select id="prodCategory" name="category">
+   815→                                    <option value="general">General</option>
+   816→                                    <option value="vehiculos">Vehículos</option>
+   817→                                    <option value="inmuebles">Inmuebles</option>
+   818→                                    <option value="electronica">Electrónica</option>
+   819→                                    <option value="servicios">Servicios</option>
+   820→                                    <option value="ropa">Ropa</option>
+   821→                                    <option value="hogar">Hogar</option>
+   822→                                </select>
+   823→                                </div>
+   824→                            </div>
+   825→                        </div>
+   826→                    </div>
+   827→                    <div class="profile-form-section">
+   828→                        <div class="profile-form-section-title"><i class="fas fa-camera"></i> <span>Imagen del Producto</span></div>
+   829→                        <div class="profile-input-group">
+   830→                            <div class="profile-input-wrapper"><i class="fas fa-link"></i>
+   831→                            <input type="url" id="prodImage" name="image" placeholder="O pega una URL de imagen aquí">
+   832→                            </div>
+   833→                            <small class="profile-input-hint">O sube una imagen desde tu dispositivo</small>
+   834→                        </div>
+   835→                        <div class="prod-upload-area" id="prodUploadArea">
+   836→                            <div class="prod-upload-btns">
+   837→                                <label class="btn btn-primary btn-sm prod-upload-label" for="prodImageFile">
+   838→                                    <i class="fas fa-camera"></i> Tomar Foto / Galería
+   839→                                </label>
+   840→                                <input type="file" id="prodImageFile" name="image_file" accept="image/*" capture="environment" style="display:none;">
+   841→                                <label class="btn btn-secondary btn-sm prod-upload-label" for="prodAttachFile">
+   842→                                    <i class="fas fa-paperclip"></i> Adjuntar Archivo
+   843→                                </label>
+   844→                                <input type="file" id="prodAttachFile" name="attach_file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none;">
+   845→                            </div>
+   846→                            <div class="prod-upload-preview" id="prodUploadPreview"></div>
+   847→                            <div class="prod-upload-progress hidden" id="prodUploadProgress">
+   848→                                <i class="fas fa-spinner fa-spin"></i> Subiendo imagen...
+   849→                            </div>
+   850→                        </div>
+   851→                    </div>
+   852→                    <div class="profile-form-section">
+   853→                        <div class="profile-form-section-title"><i class="fas fa-align-left"></i> <span>Descripción</span></div>
+   854→                        <div class="profile-textarea-wrapper">
+   855→                            <textarea id="prodDescription" name="description" rows="3" placeholder="Describe tu producto..." maxlength="500"></textarea>
+   856→                        </div>
+   857→                    </div>
+   858→                    <div class="profile-form-section">
+   859→                        <div class="profile-form-section-title"><i class="fas fa-video"></i> <span>Video del Producto</span></div>
+   860→                        <div class="profile-input-group">
+   861→                            <label for="prodVideo">Video del Producto (YouTube/TikTok URL)</label>
+   862→                            <div class="profile-input-wrapper"><i class="fas fa-video"></i>
+   863→                            <input type="url" id="prodVideo" name="video_url" placeholder="https://youtube.com/watch?v=... o https://tiktok.com/...">
+   864→                            </div>
+   865→                        </div>
+   866→                    </div>
+   867→                </form>
+   868→            </div>
+   869→            <div class="modal-footer">
+   870→                <button class="btn btn-secondary" id="productModalCancel">Cancelar</button>
+   871→                <button class="btn btn-primary" id="productModalSave"><i class="fas fa-save"></i> Publicar</button>
+   872→            </div>
+   873→        </div>
+   874→    </div>
+   875→
+   876→    
+   877→    <!-- Edit Business Modal -->
+   878→    <div class="modal hidden" id="editBusinessModal">
+   879→        <div class="modal-overlay" onclick="closeEditBusinessModal()"></div>
+   880→        <div class="modal-content" style="max-width:680px;">
+   881→            <div class="modal-header">
+   882→                <h3><i class="fas fa-edit" style="color:#059669;"></i> Editar Negocio</h3>
+   883→                <button class="modal-close" onclick="closeEditBusinessModal()">&times;</button>
+   884→            </div>
+   885→            <div class="modal-body" id="editBizModalBody">
+   886→                <div class="eb-loading" id="editBizLoading">
+   887→                    <i class="fas fa-spinner fa-spin"></i>
+   888→                    <p>Cargando datos del negocio...</p>
+   889→                </div>
+   890→                <form id="editBizForm" style="display:none;" onsubmit="return false;">
+   891→                    <input type="hidden" id="editBizId">
+   892→
+   893→                    <!-- Basic Info -->
+   894→                    <div class="eb-section">
+   895→                        <div class="eb-section-title"><i class="fas fa-info-circle"></i> Informacion Basica</div>
+   896→                        <div class="eb-field">
+   897→                            <label for="editBizTitle">Nombre del Negocio *</label>
+   898→                            <input type="text" id="editBizTitle" class="eb-input" required maxlength="150">
+   899→                        </div>
+   900→                        <div class="eb-field">
+   901→                            <label for="editBizDesc">Descripcion</label>
+   902→                            <textarea id="editBizDesc" class="eb-input eb-textarea" rows="3"></textarea>
+   903→                        </div>
+   904→                        <div class="eb-grid-2">
+   905→                            <div class="eb-field">
+   906→                                <label for="editBizCat">Categoria</label>
+   907→                                <select id="editBizCat" class="eb-input eb-select">
+   908→                                    <option value="">Selecciona</option>
+   909→                                    <option value="restaurantes">Restaurantes</option>
+   910→                                    <option value="farmacias">Farmacias</option>
+   911→                                    <option value="clinicas-hospitales">Clinicas y Hospitales</option>
+   912→                                    <option value="supermercados">Supermercados</option>
+   913→                                    <option value="ropas">Ropas</option>
+   914→                                    <option value="barberias">Barberias y Salones</option>
+   915→                                    <option value="auto-talleres">Auto Talleres</option>
+   916→                                    <option value="cafeterias">Cafeterias</option>
+   917→                                    <option value="bares-discotecas">Bares y Discotecas</option>
+   918→                                    <option value="ferreterias">Ferreterias</option>
+   919→                                    <option value="tecnologia">Tecnologia</option>
+   920→                                    <option value="hoteles-posadas">Hoteles y Posadas</option>
+   921→                                    <option value="gimnasios">Gimnasios</option>
+   922→                                    <option value="dentistas">Dentistas</option>
+   923→                                    <option value="celulares">Celulares</option>
+   924→                                    <option value="mueblerias">Mueblerias</option>
+   925→                                    <option value="juridicos">Juridicos</option>
+   926→                                    <option value="academias">Academias</option>
+   927→                                    <option value="veterinarias">Veterinarias</option>
+   928→                                    <option value="electricos">Electricos</option>
+   929→                                    <option value="perfumerias">Perfumerias</option>
+   930→                                    <option value="joyerias">Joyerias</option>
+   931→                                    <option value="zapaterias">Zapaterias</option>
+   932→                                    <option value="panaderias">Panaderias</option>
+   933→                                    <option value="heladerias">Heladerias</option>
+   934→                                    <option value="pizzerias">Pizzerias</option>
+   935→                                    <option value="bicicletas">Bicicletas</option>
+   936→                                    <option value="encomiendas">Encomiendas</option>
+   937→                                    <option value="lavanderias">Lavanderias</option>
+   938→                                    <option value="otro">Otro</option>
+   939→                                </select>
+   940→                            </div>
+   941→                            <div class="eb-field">
+   942→                                <label for="editBizType">Tipo de Negocio</label>
+   943→                                <select id="editBizType" class="eb-input eb-select">
+   944→                                    <option value="">Selecciona</option>
+   945→                                    <option value="negocio">Negocio</option>
+   946→                                    <option value="profesional">Profesional</option>
+   947→                                    <option value="servicio">Servicio</option>
+   948→                                    <option value="restaurante">Restaurante</option>
+   949→                                    <option value="tienda">Tienda</option>
+   950→                                    <option value="otro">Otro</option>
+   951→                                </select>
+   952→                            </div>
+   953→                        </div>
+   954→                    </div>
+   955→
+   956→                    <!-- Contact -->
+   957→                    <div class="eb-section">
+   958→                        <div class="eb-section-title"><i class="fas fa-phone"></i> Contacto</div>
+   959→                        <div class="eb-grid-2">
+   960→                            <div class="eb-field">
+   961→                                <label for="editBizPhone">Telefono</label>
+   962→                                <input type="tel" id="editBizPhone" class="eb-input" placeholder="+58 414 000-0000">
+   963→                            </div>
+   964→                            <div class="eb-field">
+   965→                                <label for="editBizWhatsapp"><i class="fab fa-whatsapp" style="color:#25d366;"></i> WhatsApp</label>
+   966→                                <input type="tel" id="editBizWhatsapp" class="eb-input" placeholder="+58 414 000-0000">
+   967→                            </div>
+   968→                        </div>
+   969→                        <div class="eb-grid-2">
+   970→                            <div class="eb-field">
+   971→                                <label for="editBizEmail"><i class="fas fa-envelope"></i> Email</label>
+   972→                                <input type="email" id="editBizEmail" class="eb-input" placeholder="contacto@negocio.com">
+   973→                            </div>
+   974→                            <div class="eb-field">
+   975→                                <label for="editBizWebsite"><i class="fas fa-globe"></i> Website</label>
+   976→                                <input type="url" id="editBizWebsite" class="eb-input" placeholder="www.tunegocio.com">
+   977→                            </div>
+   978→                        </div>
+   979→                    </div>
+   980→
+   981→                    <!-- Social Media -->
+   982→                    <div class="eb-section">
+   983→                        <div class="eb-section-title"><i class="fas fa-share-nodes"></i> Redes Sociales</div>
+   984→                        <div class="eb-grid-2">
+   985→                            <div class="eb-field">
+   986→                                <label for="editBizInstagram"><i class="fab fa-instagram" style="color:#e4405f;"></i> Instagram</label>
+   987→                                <input type="text" id="editBizInstagram" class="eb-input" placeholder="@tunegocio">
+   988→                            </div>
+   989→                            <div class="eb-field">
+   990→                                <label for="editBizFacebook"><i class="fab fa-facebook" style="color:#1877f2;"></i> Facebook</label>
+   991→                                <input type="text" id="editBizFacebook" class="eb-input" placeholder="facebook.com/tunegocio">
+   992→                            </div>
+   993→                        </div>
+   994→                        <div class="eb-grid-3">
+   995→                            <div class="eb-field">
+   996→                                <label for="editBizTwitter"><i class="fab fa-x-twitter"></i> Twitter/X</label>
+   997→                                <input type="text" id="editBizTwitter" class="eb-input" placeholder="https://x.com/tunegocio">
+   998→                            </div>
+   999→                            <div class="eb-field">
+  1000→                                <label for="editBizTiktok"><i class="fab fa-tiktok"></i> TikTok</label>
+  1001→                                <input type="text" id="editBizTiktok" class="eb-input" placeholder="https://tiktok.com/@tunegocio">
+  1002→                            </div>
+  1003→                            <div class="eb-field">
+  1004→                                <label for="editBizYoutube"><i class="fab fa-youtube" style="color:#ff0000;"></i> YouTube</label>
+  1005→                                <input type="text" id="editBizYoutube" class="eb-input" placeholder="https://youtube.com/@tunegocio">
+  1006→                            </div>
+  1007→                        </div>
+  1008→                    </div>
+  1009→
+  1010→                    <!-- Video -->
+  1011→                    <div class="eb-section">
+  1012→                        <div class="eb-section-title"><i class="fas fa-video" style="color:#6366f1;"></i> Video del Negocio</div>
+  1013→                        <div class="eb-video-tabs">
+  1014→                            <button type="button" class="eb-video-tab active" id="ebVideoTabFile" onclick="setEditBizVideoMode('file')">
+  1015→                                <i class="fas fa-upload"></i> Subir desde PC
+  1016→                            </button>
+  1017→                            <button type="button" class="eb-video-tab" id="ebVideoTabUrl" onclick="setEditBizVideoMode('url')">
+  1018→                                <i class="fas fa-link"></i> Pegar URL
+  1019→                            </button>
+  1020→                        </div>
+  1021→                        <div class="eb-video-content active" id="ebVideoFileContent">
+  1022→                            <div class="eb-video-drop" id="ebVideoDrop" onclick="document.getElementById('ebVideoFileInput').click()">
+  1023→                                <i class="fas fa-cloud-upload-alt"></i>
+  1024→                                <p>Haz clic para seleccionar un video</p>
+  1025→                                <p style="font-size:0.75rem;color:#94a3b8;">MP4, WebM - Max 50MB</p>
+  1026→                            </div>
+  1027→                            <input type="file" id="ebVideoFileInput" accept="video/*" style="display:none;" onchange="handleEditBizVideoFile(this)">
+  1028→                            <div id="ebVideoFileInfo"></div>
+  1029→                        </div>
+  1030→                        <div class="eb-video-content" id="ebVideoUrlContent">
+  1031→                            <input type="url" id="editBizVideoUrl" class="eb-input" placeholder="https://youtube.com/watch?v=... o https://tiktok.com/@user/video/...">
+  1032→                        </div>
+  1033→                        <div class="eb-video-preview" id="ebVideoPreview" style="display:none;"></div>
+  1034→                        <input type="hidden" id="editBizVideoUrlHidden">
+  1035→                    </div>
+  1036→
+  1037→                    <!-- Location -->
+  1038→                    <div class="eb-section">
+  1039→                        <div class="eb-section-title"><i class="fas fa-map-marker-alt"></i> Ubicacion</div>
+  1040→                        <div class="eb-field">
+  1041→                            <label for="editBizAddress">Direccion</label>
+  1042→                            <input type="text" id="editBizAddress" class="eb-input" placeholder="Av. 3 Milagros, Centro">
+  1043→                        </div>
+  1044→                        <div class="eb-grid-2">
+  1045→                            <div class="eb-field">
+  1046→                                <label for="editBizCity">Ciudad</label>
+  1047→                                <input type="text" id="editBizCity" class="eb-input" placeholder="Merida">
+  1048→                            </div>
+  1049→                            <div class="eb-field">
+  1050→                                <label for="editBizState">Estado</label>
+  1051→                                <select id="editBizState" class="eb-input eb-select">
+  1052→                                    <option value="">Selecciona</option>
+  1053→                                    <option value="Amazonas">Amazonas</option><option value="Anzoategui">Anzoategui</option>
+  1054→                                    <option value="Apure">Apure</option><option value="Aragua">Aragua</option>
+  1055→                                    <option value="Barinas">Barinas</option><option value="Bolivar">Bolivar</option>
+  1056→                                    <option value="Carabobo">Carabobo</option><option value="Cojedes">Cojedes</option>
+  1057→                                    <option value="Delta Amacuro">Delta Amacuro</option><option value="Distrito Capital">Distrito Capital</option>
+  1058→                                    <option value="Falcon">Falcon</option><option value="Guarico">Guarico</option>
+  1059→                                    <option value="Lara">Lara</option><option value="Merida">Merida</option>
+  1060→                                    <option value="Miranda">Miranda</option><option value="Monagas">Monagas</option>
+  1061→                                    <option value="Nueva Esparta">Nueva Esparta</option><option value="Portuguesa">Portuguesa</option>
+  1062→                                    <option value="Sucre">Sucre</option><option value="Tachira">Tachira</option>
+  1063→                                    <option value="Trujillo">Trujillo</option><option value="Vargas">Vargas</option>
+  1064→                                    <option value="Yaracuy">Yaracuy</option><option value="Zulia">Zulia</option>
+  1065→                                </select>
+  1066→                            </div>
+  1067→                        </div>
+  1068→                        <div class="eb-grid-2">
+  1069→                            <div class="eb-field">
+  1070→                                <label for="editBizLat">Latitud</label>
+  1071→                                <input type="number" id="editBizLat" class="eb-input" step="any" placeholder="8.63">
+  1072→                            </div>
+  1073→                            <div class="eb-field">
+  1074→                                <label for="editBizLng">Longitud</label>
+  1075→                                <input type="number" id="editBizLng" class="eb-input" step="any" placeholder="-66.59">
+  1076→                            </div>
+  1077→                        </div>
+  1078→                    </div>
+  1079→
+  1080→                    <!-- Schedule & Features -->
+  1081→                    <div class="eb-section">
+  1082→                        <div class="eb-section-title"><i class="fas fa-clipboard-list"></i> Horario y Caracteristicas</div>
+  1083→                        <div class="eb-field">
+  1084→                            <label for="editBizSchedule"><i class="fas fa-clock"></i> Horario de Atencion</label>
+  1085→                            <textarea id="editBizSchedule" class="eb-input eb-textarea" rows="2" placeholder="Lun-Vie 8:00-17:00, Sab 8:00-12:00"></textarea>
+  1086→                        </div>
+  1087→                        <div class="eb-features" id="editBizFeatures">
+  1088→                            <div class="eb-feature" data-feature="Estacionamiento" onclick="this.classList.toggle('checked')">
+  1089→                                <i class="fas fa-parking"></i> Estacionamiento
+  1090→                            </div>
+  1091→                            <div class="eb-feature" data-feature="Wi-Fi" onclick="this.classList.toggle('checked')">
+  1092→                                <i class="fas fa-wifi"></i> WiFi
+  1093→                            </div>
+  1094→                            <div class="eb-feature" data-feature="Tarjeta" onclick="this.classList.toggle('checked')">
+  1095→                                <i class="fas fa-credit-card"></i> Tarjetas
+  1096→                            </div>
+  1097→                            <div class="eb-feature" data-feature="Delivery" onclick="this.classList.toggle('checked')">
+  1098→                                <i class="fas fa-motorcycle"></i> Delivery
+  1099→                            </div>
+  1100→                            <div class="eb-feature" data-feature="Terraza" onclick="this.classList.toggle('checked')">
+  1101→                                <i class="fas fa-umbrella-beach"></i> Terraza
+  1102→                            </div>
+  1103→                        </div>
+  1104→                    </div>
+  1105→                </form>
+  1106→            </div>
+  1107→            <div class="modal-footer">
+  1108→                <button class="btn btn-secondary" onclick="closeEditBusinessModal()">Cancelar</button>
+  1109→                <button class="btn btn-primary" id="editBizSaveBtn" onclick="saveEditBusiness()">
+  1110→                    <i class="fas fa-save"></i> Guardar Cambios
+  1111→                </button>
+  1112→            </div>
+  1113→        </div>
+  1114→    </div>
+  1115→
+  1116→<!-- Toast Notification -->
+  1117→
+  1118→    <!-- Delete Confirmation Modal -->
+  1119→    <div class="modal hidden" id="deleteModal">
+  1120→        <div class="modal-overlay"></div>
+  1121→        <div class="modal-content">
+  1122→            <div class="modal-header">
+  1123→                <h3><i class="fas fa-exclamation-triangle text-danger"></i> Confirmar Eliminación</h3>
+  1124→                <button class="modal-close" id="deleteModalClose">&times;</button>
+  1125→            </div>
+  1126→            <div class="modal-body">
+  1127→                <p>¿Estás seguro de que deseas eliminar este negocio? Esta acción no se puede deshacer.</p>
+  1128→            </div>
+  1129→            <div class="modal-footer">
+  1130→                <button class="btn btn-secondary" id="deleteModalCancel">Cancelar</button>
+  1131→                <button class="btn btn-danger" id="deleteModalConfirm">
+  1132→                    <i class="fas fa-trash"></i> Eliminar
+  1133→                </button>
+  1134→            </div>
+  1135→        </div>
+  1136→    </div>
+  1137→
+  1138→    
+  1139→    <!-- Edit Business Modal -->
+  1140→    <div class="modal hidden" id="editBusinessModal">
+  1141→        <div class="modal-overlay" onclick="closeEditBusinessModal()"></div>
+  1142→        <div class="modal-content" style="max-width:680px;">
+  1143→            <div class="modal-header">
+  1144→                <h3><i class="fas fa-edit" style="color:#059669;"></i> Editar Negocio</h3>
+  1145→                <button class="modal-close" onclick="closeEditBusinessModal()">&times;</button>
+  1146→            </div>
+  1147→            <div class="modal-body" id="editBizModalBody">
+  1148→                <div class="eb-loading" id="editBizLoading">
+  1149→                    <i class="fas fa-spinner fa-spin"></i>
+  1150→                    <p>Cargando datos del negocio...</p>
+  1151→                </div>
+  1152→                <form id="editBizForm" style="display:none;" onsubmit="return false;">
+  1153→                    <input type="hidden" id="editBizId">
+  1154→
+  1155→                    <!-- Basic Info -->
+  1156→                    <div class="eb-section">
+  1157→                        <div class="eb-section-title"><i class="fas fa-info-circle"></i> Informacion Basica</div>
+  1158→                        <div class="eb-field">
+  1159→                            <label for="editBizTitle">Nombre del Negocio *</label>
+  1160→                            <input type="text" id="editBizTitle" class="eb-input" required maxlength="150">
+  1161→                        </div>
+  1162→                        <div class="eb-field">
+  1163→                            <label for="editBizDesc">Descripcion</label>
+  1164→                            <textarea id="editBizDesc" class="eb-input eb-textarea" rows="3"></textarea>
+  1165→                        </div>
+  1166→                        <div class="eb-grid-2">
+  1167→                            <div class="eb-field">
+  1168→                                <label for="editBizCat">Categoria</label>
+  1169→                                <select id="editBizCat" class="eb-input eb-select">
+  1170→                                    <option value="">Selecciona</option>
+  1171→                                    <option value="restaurantes">Restaurantes</option>
+  1172→                                    <option value="farmacias">Farmacias</option>
+  1173→                                    <option value="clinicas-hospitales">Clinicas y Hospitales</option>
+  1174→                                    <option value="supermercados">Supermercados</option>
+  1175→                                    <option value="ropas">Ropas</option>
+  1176→                                    <option value="barberias">Barberias y Salones</option>
+  1177→                                    <option value="auto-talleres">Auto Talleres</option>
+  1178→                                    <option value="cafeterias">Cafeterias</option>
+  1179→                                    <option value="bares-discotecas">Bares y Discotecas</option>
+  1180→                                    <option value="ferreterias">Ferreterias</option>
+  1181→                                    <option value="tecnologia">Tecnologia</option>
+  1182→                                    <option value="hoteles-posadas">Hoteles y Posadas</option>
+  1183→                                    <option value="gimnasios">Gimnasios</option>
+  1184→                                    <option value="dentistas">Dentistas</option>
+  1185→                                    <option value="celulares">Celulares</option>
+  1186→                                    <option value="mueblerias">Mueblerias</option>
+  1187→                                    <option value="juridicos">Juridicos</option>
+  1188→                                    <option value="academias">Academias</option>
+  1189→                                    <option value="veterinarias">Veterinarias</option>
+  1190→                                    <option value="electricos">Electricos</option>
+  1191→                                    <option value="perfumerias">Perfumerias</option>
+  1192→                                    <option value="joyerias">Joyerias</option>
+  1193→                                    <option value="zapaterias">Zapaterias</option>
+  1194→                                    <option value="panaderias">Panaderias</option>
+  1195→                                    <option value="heladerias">Heladerias</option>
+  1196→                                    <option value="pizzerias">Pizzerias</option>
+  1197→                                    <option value="bicicletas">Bicicletas</option>
+  1198→                                    <option value="encomiendas">Encomiendas</option>
+  1199→                                    <option value="lavanderias">Lavanderias</option>
+  1200→                                    <option value="otro">Otro</option>
+  1201→                                </select>
+  1202→                            </div>
+  1203→                            <div class="eb-field">
+  1204→                                <label for="editBizType">Tipo de Negocio</label>
+  1205→                                <select id="editBizType" class="eb-input eb-select">
+  1206→                                    <option value="">Selecciona</option>
+  1207→                                    <option value="negocio">Negocio</option>
+  1208→                                    <option value="profesional">Profesional</option>
+  1209→                                    <option value="servicio">Servicio</option>
+  1210→                                    <option value="restaurante">Restaurante</option>
+  1211→                                    <option value="tienda">Tienda</option>
+  1212→                                    <option value="otro">Otro</option>
+  1213→                                </select>
+  1214→                            </div>
+  1215→                        </div>
+  1216→                    </div>
+  1217→
+  1218→                    <!-- Contact -->
+  1219→                    <div class="eb-section">
+  1220→                        <div class="eb-section-title"><i class="fas fa-phone"></i> Contacto</div>
+  1221→                        <div class="eb-grid-2">
+  1222→                            <div class="eb-field">
+  1223→                                <label for="editBizPhone">Telefono</label>
+  1224→                                <input type="tel" id="editBizPhone" class="eb-input" placeholder="+58 414 000-0000">
+  1225→                            </div>
+  1226→                            <div class="eb-field">
+  1227→                                <label for="editBizWhatsapp"><i class="fab fa-whatsapp" style="color:#25d366;"></i> WhatsApp</label>
+  1228→                                <input type="tel" id="editBizWhatsapp" class="eb-input" placeholder="+58 414 000-0000">
+  1229→                            </div>
+  1230→                        </div>
+  1231→                        <div class="eb-grid-2">
+  1232→                            <div class="eb-field">
+  1233→                                <label for="editBizEmail"><i class="fas fa-envelope"></i> Email</label>
+  1234→                                <input type="email" id="editBizEmail" class="eb-input" placeholder="contacto@negocio.com">
+  1235→                            </div>
+  1236→                            <div class="eb-field">
+  1237→                                <label for="editBizWebsite"><i class="fas fa-globe"></i> Website</label>
+  1238→                                <input type="url" id="editBizWebsite" class="eb-input" placeholder="www.tunegocio.com">
+  1239→                            </div>
+  1240→                        </div>
+  1241→                    </div>
+  1242→
+  1243→                    <!-- Social Media -->
+  1244→                    <div class="eb-section">
+  1245→                        <div class="eb-section-title"><i class="fas fa-share-nodes"></i> Redes Sociales</div>
+  1246→                        <div class="eb-grid-2">
+  1247→                            <div class="eb-field">
+  1248→                                <label for="editBizInstagram"><i class="fab fa-instagram" style="color:#e4405f;"></i> Instagram</label>
+  1249→                                <input type="text" id="editBizInstagram" class="eb-input" placeholder="@tunegocio">
+  1250→                            </div>
+  1251→                            <div class="eb-field">
+  1252→                                <label for="editBizFacebook"><i class="fab fa-facebook" style="color:#1877f2;"></i> Facebook</label>
+  1253→                                <input type="text" id="editBizFacebook" class="eb-input" placeholder="facebook.com/tunegocio">
+  1254→                            </div>
+  1255→                        </div>
+  1256→                        <div class="eb-grid-3">
+  1257→                            <div class="eb-field">
+  1258→                                <label for="editBizTwitter"><i class="fab fa-x-twitter"></i> Twitter/X</label>
+  1259→                                <input type="text" id="editBizTwitter" class="eb-input" placeholder="https://x.com/tunegocio">
+  1260→                            </div>
+  1261→                            <div class="eb-field">
+  1262→                                <label for="editBizTiktok"><i class="fab fa-tiktok"></i> TikTok</label>
+  1263→                                <input type="text" id="editBizTiktok" class="eb-input" placeholder="https://tiktok.com/@tunegocio">
+  1264→                            </div>
+  1265→                            <div class="eb-field">
+  1266→                                <label for="editBizYoutube"><i class="fab fa-youtube" style="color:#ff0000;"></i> YouTube</label>
+  1267→                                <input type="text" id="editBizYoutube" class="eb-input" placeholder="https://youtube.com/@tunegocio">
+  1268→                            </div>
+  1269→                        </div>
+  1270→                    </div>
+  1271→
+  1272→                    <!-- Video -->
+  1273→                    <div class="eb-section">
+  1274→                        <div class="eb-section-title"><i class="fas fa-video" style="color:#6366f1;"></i> Video del Negocio</div>
+  1275→                        <div class="eb-video-tabs">
+  1276→                            <button type="button" class="eb-video-tab active" id="ebVideoTabFile" onclick="setEditBizVideoMode('file')">
+  1277→                                <i class="fas fa-upload"></i> Subir desde PC
+  1278→                            </button>
+  1279→                            <button type="button" class="eb-video-tab" id="ebVideoTabUrl" onclick="setEditBizVideoMode('url')">
+  1280→                                <i class="fas fa-link"></i> Pegar URL
+  1281→                            </button>
+  1282→                        </div>
+  1283→                        <div class="eb-video-content active" id="ebVideoFileContent">
+  1284→                            <div class="eb-video-drop" id="ebVideoDrop" onclick="document.getElementById('ebVideoFileInput').click()">
+  1285→                                <i class="fas fa-cloud-upload-alt"></i>
+  1286→                                <p>Haz clic para seleccionar un video</p>
+  1287→                                <p style="font-size:0.75rem;color:#94a3b8;">MP4, WebM - Max 50MB</p>
+  1288→                            </div>
+  1289→                            <input type="file" id="ebVideoFileInput" accept="video/*" style="display:none;" onchange="handleEditBizVideoFile(this)">
+  1290→                            <div id="ebVideoFileInfo"></div>
+  1291→                        </div>
+  1292→                        <div class="eb-video-content" id="ebVideoUrlContent">
+  1293→                            <input type="url" id="editBizVideoUrl" class="eb-input" placeholder="https://youtube.com/watch?v=... o https://tiktok.com/@user/video/...">
+  1294→                        </div>
+  1295→                        <div class="eb-video-preview" id="ebVideoPreview" style="display:none;"></div>
+  1296→                        <input type="hidden" id="editBizVideoUrlHidden">
+  1297→                    </div>
+  1298→
+  1299→                    <!-- Location -->
+  1300→                    <div class="eb-section">
+  1301→                        <div class="eb-section-title"><i class="fas fa-map-marker-alt"></i> Ubicacion</div>
+  1302→                        <div class="eb-field">
+  1303→                            <label for="editBizAddress">Direccion</label>
+  1304→                            <input type="text" id="editBizAddress" class="eb-input" placeholder="Av. 3 Milagros, Centro">
+  1305→                        </div>
+  1306→                        <div class="eb-grid-2">
+  1307→                            <div class="eb-field">
+  1308→                                <label for="editBizCity">Ciudad</label>
+  1309→                                <input type="text" id="editBizCity" class="eb-input" placeholder="Merida">
+  1310→                            </div>
+  1311→                            <div class="eb-field">
+  1312→                                <label for="editBizState">Estado</label>
+  1313→                                <select id="editBizState" class="eb-input eb-select">
+  1314→                                    <option value="">Selecciona</option>
+  1315→                                    <option value="Amazonas">Amazonas</option><option value="Anzoategui">Anzoategui</option>
+  1316→                                    <option value="Apure">Apure</option><option value="Aragua">Aragua</option>
+  1317→                                    <option value="Barinas">Barinas</option><option value="Bolivar">Bolivar</option>
+  1318→                                    <option value="Carabobo">Carabobo</option><option value="Cojedes">Cojedes</option>
+  1319→                                    <option value="Delta Amacuro">Delta Amacuro</option><option value="Distrito Capital">Distrito Capital</option>
+  1320→                                    <option value="Falcon">Falcon</option><option value="Guarico">Guarico</option>
+  1321→                                    <option value="Lara">Lara</option><option value="Merida">Merida</option>
+  1322→                                    <option value="Miranda">Miranda</option><option value="Monagas">Monagas</option>
+  1323→                                    <option value="Nueva Esparta">Nueva Esparta</option><option value="Portuguesa">Portuguesa</option>
+  1324→                                    <option value="Sucre">Sucre</option><option value="Tachira">Tachira</option>
+  1325→                                    <option value="Trujillo">Trujillo</option><option value="Vargas">Vargas</option>
+  1326→                                    <option value="Yaracuy">Yaracuy</option><option value="Zulia">Zulia</option>
+  1327→                                </select>
+  1328→                            </div>
+  1329→                        </div>
+  1330→                        <div class="eb-grid-2">
+  1331→                            <div class="eb-field">
+  1332→                                <label for="editBizLat">Latitud</label>
+  1333→                                <input type="number" id="editBizLat" class="eb-input" step="any" placeholder="8.63">
+  1334→                            </div>
+  1335→                            <div class="eb-field">
+  1336→                                <label for="editBizLng">Longitud</label>
+  1337→                                <input type="number" id="editBizLng" class="eb-input" step="any" placeholder="-66.59">
+  1338→                            </div>
+  1339→                        </div>
+  1340→                    </div>
+  1341→
+  1342→                    <!-- Schedule & Features -->
+  1343→                    <div class="eb-section">
+  1344→                        <div class="eb-section-title"><i class="fas fa-clipboard-list"></i> Horario y Caracteristicas</div>
+  1345→                        <div class="eb-field">
+  1346→                            <label for="editBizSchedule"><i class="fas fa-clock"></i> Horario de Atencion</label>
+  1347→                            <textarea id="editBizSchedule" class="eb-input eb-textarea" rows="2" placeholder="Lun-Vie 8:00-17:00, Sab 8:00-12:00"></textarea>
+  1348→                        </div>
+  1349→                        <div class="eb-features" id="editBizFeatures">
+  1350→                            <div class="eb-feature" data-feature="Estacionamiento" onclick="this.classList.toggle('checked')">
+  1351→                                <i class="fas fa-parking"></i> Estacionamiento
+  1352→                            </div>
+  1353→                            <div class="eb-feature" data-feature="Wi-Fi" onclick="this.classList.toggle('checked')">
+  1354→                                <i class="fas fa-wifi"></i> WiFi
+  1355→                            </div>
+  1356→                            <div class="eb-feature" data-feature="Tarjeta" onclick="this.classList.toggle('checked')">
+  1357→                                <i class="fas fa-credit-card"></i> Tarjetas
+  1358→                            </div>
+  1359→                            <div class="eb-feature" data-feature="Delivery" onclick="this.classList.toggle('checked')">
+  1360→                                <i class="fas fa-motorcycle"></i> Delivery
+  1361→                            </div>
+  1362→                            <div class="eb-feature" data-feature="Terraza" onclick="this.classList.toggle('checked')">
+  1363→                                <i class="fas fa-umbrella-beach"></i> Terraza
+  1364→                            </div>
+  1365→                        </div>
+  1366→                    </div>
+  1367→                </form>
+  1368→            </div>
+  1369→            <div class="modal-footer">
+  1370→                <button class="btn btn-secondary" onclick="closeEditBusinessModal()">Cancelar</button>
+  1371→                <button class="btn btn-primary" id="editBizSaveBtn" onclick="saveEditBusiness()">
+  1372→                    <i class="fas fa-save"></i> Guardar Cambios
+  1373→                </button>
+  1374→            </div>
+  1375→        </div>
+  1376→    </div>
+  1377→
+  1378→<!-- Toast Notification -->
+  1379→    <div class="toast-container" id="toastContainer"></div>
+  1380→
+  1381→    <script src="js/app.js"></script>
+  1382→    <script src="js/dashboard.js"></script>
+  1383→    <script src="js/chat.js"></script>
+  1384→</body>
+  1385→</html>
+  1386→

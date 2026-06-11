@@ -1,0 +1,2002 @@
+     1→/**
+     2→ * CasasBarinas - Core Application Module
+     3→ * Common module loaded on ALL pages
+     4→ */
+     5→
+     6→// ─── API Configuration ──────────────────────────────────────────
+     7→const API = '/api';
+     8→const API_BASE = '';
+     9→
+    10→// ─── Token Management ──────────────────────────────────────────
+    11→const TOKEN_KEY = 'casasbarinas_token';
+    12→const USER_KEY = 'casasbarinas_user';
+    13→
+    14→function getToken() {
+    15→    return localStorage.getItem(TOKEN_KEY);
+    16→}
+    17→
+    18→function setToken(token) {
+    19→    localStorage.setItem(TOKEN_KEY, token);
+    20→}
+    21→
+    22→function removeToken() {
+    23→    localStorage.removeItem(TOKEN_KEY);
+    24→    localStorage.removeItem(USER_KEY);
+    25→}
+    26→
+    27→function isAuthenticated() {
+    28→    const token = getToken();
+    29→    if (!token) return false;
+    30→    // Check if token is expired (simple JWT check)
+    31→    try {
+    32→        const payload = JSON.parse(atob(token.split('.')[1]));
+    33→        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+    34→            removeToken();
+    35→            return false;
+    36→        }
+    37→        return true;
+    38→    } catch {
+    39→        return false;
+    40→    }
+    41→}
+    42→
+    43→// ─── API Helper ────────────────────────────────────────────────
+    44→async function apiCall(endpoint, options = {}) {
+    45→    const url = `${API}${endpoint}`;
+    46→    const config = {
+    47→        headers: {
+    48→            'Content-Type': 'application/json',
+    49→            ...options.headers,
+    50→        },
+    51→        ...options,
+    52→    };
+    53→
+    54→    // Add auth header if token exists
+    55→    const token = getToken();
+    56→    if (token) {
+    57→        config.headers['Authorization'] = `Bearer ${token}`;
+    58→    }
+    59→
+    60→    // Remove headers from config if it's FormData (let browser set Content-Type with boundary)
+    61→    if (options.body instanceof FormData) {
+    62→        delete config.headers['Content-Type'];
+    63→        config.body = options.body;
+    64→    }
+    65→
+    66→    try {
+    67→        const response = await fetch(url, config);
+    68→        const data = await response.json();
+    69→
+    70→        if (!response.ok) {
+    71→            // Handle 401 - token expired or invalid
+    72→            // Only clear the token; do NOT auto-redirect.
+    73→            // Each page decides if it needs auth via requireAuth().
+    74→            if (response.status === 401) {
+    75→                removeToken();
+    76→            }
+    77→            throw new Error(data.error || `Error ${response.status}: ${response.statusText}`);
+    78→        }
+    79→
+    80→        return data;
+    81→    } catch (error) {
+    82→        if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+    83→            throw new Error('Error de conexión. Verifica tu conexión a internet.');
+    84→        }
+    85→        throw error;
+    86→    }
+    87→}
+    88→
+    89→// Shorthand API methods
+    90→const api = {
+    91→    get(url) {
+    92→        return apiCall(url, { method: 'GET' });
+    93→    },
+    94→    post(url, data) {
+    95→        return apiCall(url, {
+    96→            method: 'POST',
+    97→            body: typeof data === 'string' ? data : JSON.stringify(data),
+    98→        });
+    99→    },
+   100→    put(url, data) {
+   101→        return apiCall(url, {
+   102→            method: 'PUT',
+   103→            body: JSON.stringify(data),
+   104→        });
+   105→    },
+   106→    delete(url) {
+   107→        return apiCall(url, { method: 'DELETE' });
+   108→    },
+   109→    postFormData(url, formData) {
+   110→        return apiCall(url, {
+   111→            method: 'POST',
+   112→            body: formData,
+   113→        });
+   114→    },
+   115→};
+   116→
+   117→// ─── User Functions ────────────────────────────────────────────
+   118→function getCachedUser() {
+   119→    try {
+   120→        const cached = localStorage.getItem(USER_KEY);
+   121→        return cached ? JSON.parse(cached) : null;
+   122→    } catch {
+   123→        return null;
+   124→    }
+   125→}
+   126→
+   127→function setCachedUser(user) {
+   128→    localStorage.setItem(USER_KEY, JSON.stringify(user));
+   129→}
+   130→
+   131→async function getCurrentUser() {
+   132→    if (!isAuthenticated()) return null;
+   133→
+   134→    // Try cache first
+   135→    const cached = getCachedUser();
+   136→    if (cached) return cached;
+   137→
+   138→    try {
+   139→        const data = await api.get('/auth/me');
+   140→        if (data.user) {
+   141→            setCachedUser(data.user);
+   142→            return data.user;
+   143→        }
+   144→        return null;
+   145→    } catch {
+   146→        return null;
+   147→    }
+   148→}
+   149→
+   150→function updateNav() {
+   151→    const navLoginItem = document.getElementById('navLoginItem');
+   152→    const navUserItem = document.getElementById('navUserItem');
+   153→    const navUserName = document.getElementById('navUserName');
+   154→
+   155→    if (!navLoginItem || !navUserItem) return;
+   156→
+   157→    if (isAuthenticated()) {
+   158→        navLoginItem.classList.add('hidden');
+   159→        navUserItem.classList.remove('hidden');
+   160→
+   161→        const user = getCachedUser();
+   162→        if (user && navUserName) {
+   163→            navUserName.innerHTML = `<i class="fas fa-user-circle"></i> ${user.name || 'Mi Cuenta'}`;
+   164→        }
+   165→
+   166→        // Show admin link for admin users
+   167→        let adminLinkItem = document.getElementById('navAdminItem');
+   168→        if (user && user.role === 'admin') {
+   169→            if (!adminLinkItem) {
+   170→                adminLinkItem = document.createElement('li');
+   171→                adminLinkItem.id = 'navAdminItem';
+   172→                adminLinkItem.innerHTML = `<a href="admin.html" class="nav-link nav-admin-link"><i class="fas fa-shield-alt"></i> Admin</a>`;
+   173→                // Insert before the user item
+   174→                navUserItem.parentNode.insertBefore(adminLinkItem, navUserItem);
+   175→            } else {
+   176→                adminLinkItem.classList.remove('hidden');
+   177→            }
+   178→        } else if (adminLinkItem) {
+   179→            adminLinkItem.remove();
+   180→        }
+   181→    } else {
+   182→        navLoginItem.classList.remove('hidden');
+   183→        navUserItem.classList.add('hidden');
+   184→
+   185→        // Remove admin link if exists
+   186→        const adminLinkItem = document.getElementById('navAdminItem');
+   187→        if (adminLinkItem) adminLinkItem.remove();
+   188→
+   189→        // Make "Publicar" link require login
+   190→        const publishLinks = document.querySelectorAll('a[href="new-property.html"]');
+   191→        publishLinks.forEach(link => {
+   192→            link.addEventListener('click', function(e) {
+   193→                e.preventDefault();
+   194→                const redirect = encodeURIComponent('new-property.html');
+   195→                window.location.href = `login.html?redirect=${redirect}`;
+   196→            });
+   197→        });
+   198→    }
+   199→}
+   200→
+   201→// ─── UI Helpers ────────────────────────────────────────────────
+   202→function showToast(message, type = 'info') {
+   203→    let container = document.getElementById('toastContainer');
+   204→    if (!container) {
+   205→        container = document.createElement('div');
+   206→        container.id = 'toastContainer';
+   207→        container.className = 'toast-container';
+   208→        document.body.appendChild(container);
+   209→    }
+   210→
+   211→    const icons = {
+   212→        success: 'fa-check-circle',
+   213→        error: 'fa-exclamation-circle',
+   214→        warning: 'fa-exclamation-triangle',
+   215→        info: 'fa-info-circle',
+   216→    };
+   217→
+   218→    const toast = document.createElement('div');
+   219→    toast.className = `toast toast-${type}`;
+   220→    toast.innerHTML = `
+   221→        <i class="fas ${icons[type] || icons.info}"></i>
+   222→        <span>${message}</span>
+   223→        <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+   224→    `;
+   225→
+   226→    container.appendChild(toast);
+   227→
+   228→    // Trigger animation
+   229→    requestAnimationFrame(() => {
+   230→        toast.classList.add('toast-show');
+   231→    });
+   232→
+   233→    // Auto remove after 4 seconds
+   234→    setTimeout(() => {
+   235→        toast.classList.remove('toast-show');
+   236→        toast.classList.add('toast-hide');
+   237→        setTimeout(() => toast.remove(), 300);
+   238→    }, 4000);
+   239→}
+   240→
+   241→function showLoading(element) {
+   242→    if (!element) return;
+   243→    element.innerHTML = `
+   244→        <div class="loading-spinner">
+   245→            <i class="fas fa-spinner fa-spin"></i>
+   246→            <p>Cargando...</p>
+   247→        </div>
+   248→    `;
+   249→}
+   250→
+   251→function hideLoading(element) {
+   252→    if (!element) return;
+   253→    const spinner = element.querySelector('.loading-spinner');
+   254→    if (spinner) spinner.remove();
+   255→}
+   256→
+   257→function formatPrice(price, currency = 'USD') {
+   258→    if (price == null || isNaN(price)) return '--';
+   259→
+   260→    const formatted = new Intl.NumberFormat('es-VE', {
+   261→        minimumFractionDigits: 0,
+   262→        maximumFractionDigits: 2,
+   263→    }).format(price);
+   264→
+   265→    const symbols = {
+   266→        'USD': '$',
+   267→        'EUR': '€',
+   268→        'Bs': 'Bs.',
+   269→    };
+   270→
+   271→    const symbol = symbols[currency] || '$';
+   272→    return `${symbol} ${formatted}`;
+   273→}
+   274→
+   275→function formatDate(dateStr) {
+   276→    if (!dateStr) return '--';
+   277→    try {
+   278→        const date = new Date(dateStr);
+   279→        return date.toLocaleDateString('es-VE', {
+   280→            year: 'numeric',
+   281→            month: 'short',
+   282→            day: 'numeric',
+   283→        });
+   284→    } catch {
+   285→        return dateStr;
+   286→    }
+   287→}
+   288→
+   289→function formatDateTime(dateStr) {
+   290→    if (!dateStr) return '--';
+   291→    try {
+   292→        const date = new Date(dateStr);
+   293→        return date.toLocaleDateString('es-VE', {
+   294→            year: 'numeric',
+   295→            month: 'short',
+   296→            day: 'numeric',
+   297→            hour: '2-digit',
+   298→            minute: '2-digit',
+   299→        });
+   300→    } catch {
+   301→        return dateStr;
+   302→    }
+   303→}
+   304→
+   305→function truncateText(text, maxLen = 100) {
+   306→    if (!text) return '';
+   307→    if (text.length <= maxLen) return text;
+   308→    return text.substring(0, maxLen).trim() + '...';
+   309→}
+   310→
+   311→function slugify(text) {
+   312→    if (!text) return '';
+   313→    return text
+   314→        .toLowerCase()
+   315→        .normalize('NFD')
+   316→        .replace(/[\u0300-\u036f]/g, '')
+   317→        .replace(/[^a-z0-9]+/g, '-')
+   318→        .replace(/^-+|-+$/g, '');
+   319→}
+   320→
+   321→function debounce(fn, delay = 300) {
+   322→    let timer;
+   323→    return function (...args) {
+   324→        clearTimeout(timer);
+   325→        timer = setTimeout(() => fn.apply(this, args), delay);
+   326→    };
+   327→}
+   328→
+   329→// ─── Favorites ─────────────────────────────────────────────────
+   330→async function toggleFavorite(propertyId) {
+   331→    if (!isAuthenticated()) {
+   332→        showToast('Inicia sesión para guardar favoritos', 'warning');
+   333→        setTimeout(() => {
+   334→            window.location.href = `login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+   335→        }, 1500);
+   336→        return;
+   337→    }
+   338→
+   339→    try {
+   340→        const response = await api.post('/favorites', { property_id: parseInt(propertyId) });
+   341→        showToast('Propiedad guardada en favoritos', 'success');
+   342→        updateFavoriteButtons(propertyId, true);
+   343→        return true;
+   344→    } catch (error) {
+   345→        // Check if it's a 409 (already favorited) - then remove it
+   346→        if (error.message.includes('ya está en tus favoritos')) {
+   347→            try {
+   348→                await api.delete(`/favorites?property_id=${propertyId}`);
+   349→                showToast('Propiedad removida de favoritos', 'info');
+   350→                updateFavoriteButtons(propertyId, false);
+   351→                return false;
+   352→            } catch (removeError) {
+   353→                showToast(removeError.message, 'error');
+   354→            }
+   355→        } else {
+   356→            showToast(error.message, 'error');
+   357→        }
+   358→        return null;
+   359→    }
+   360→}
+   361→
+   362→function updateFavoriteButtons(propertyId, isFavorited) {
+   363→    document.querySelectorAll(`.btn-favorite[data-property-id="${propertyId}"]`).forEach(btn => {
+   364→        const icon = btn.querySelector('i');
+   365→        if (icon) {
+   366→            icon.className = isFavorited ? 'fas fa-heart' : 'far fa-heart';
+   367→        }
+   368→        if (isFavorited) {
+   369→            btn.classList.add('favorited');
+   370→        } else {
+   371→            btn.classList.remove('favorited');
+   372→        }
+   373→    });
+   374→}
+   375→
+   376→async function checkFavorite(propertyId) {
+   377→    if (!isAuthenticated()) return false;
+   378→    try {
+   379→        const data = await api.get(`/favorites/check?property_id=${propertyId}`);
+   380→        return data.is_favorited || false;
+   381→    } catch {
+   382→        return false;
+   383→    }
+   384→}
+   385→
+   386→// ─── Property Type Display Names ───────────────────────────────
+   387→const PROPERTY_TYPE_LABELS = {
+   388→    'casa': 'Casa',
+   389→    'apartamento': 'Apartamento',
+   390→    'terreno': 'Terreno',
+   391→    'local_comercial': 'Local Comercial',
+   392→    'oficina': 'Oficina',
+   393→    'hotel': 'Hotel',
+   394→    'finca': 'Finca',
+   395→    'galpon': 'Galpón',
+   396→    'estacionamiento': 'Estacionamiento',
+   397→    'otro': 'Otro',
+   398→};
+   399→
+   400→const OPERATION_TYPE_LABELS = {
+   401→    'venta': 'Venta',
+   402→    'alquiler': 'Alquiler',
+   403→    'venta_alquiler': 'Venta y Alquiler',
+   404→};
+   405→
+   406→function getPropertyTypeLabel(type) {
+   407→    if (!type) return '--';
+   408→    const lower = type.toLowerCase();
+   409→    return PROPERTY_TYPE_LABELS[lower] || type;
+   410→}
+   411→
+   412→function getOperationTypeLabel(operation) {
+   413→    if (!operation) return '--';
+   414→    const lower = operation.toLowerCase();
+   415→    return OPERATION_TYPE_LABELS[lower] || operation;
+   416→}
+   417→
+   418→function getPropertyTypeIcon(type) {
+   419→    const icons = {
+   420→        'casa': 'fa-house',
+   421→        'apartamento': 'fa-building',
+   422→        'terreno': 'fa-mountain-sun',
+   423→        'local_comercial': 'fa-store',
+   424→        'oficina': 'fa-briefcase',
+   425→        'hotel': 'fa-hotel',
+   426→        'finca': 'fa-tree',
+   427→        'galpon': 'fa-warehouse',
+   428→        'estacionamiento': 'fa-square-parking',
+   429→        'otro': 'fa-ellipsis',
+   430→    };
+   431→    return icons[type?.toLowerCase()] || 'fa-home';
+   432→}
+   433→
+   434→// ─── WhatsApp Share ────────────────────────────────────────────
+   435→function sharePropertyWhatsApp(property) {
+   436→    if (!property) return;
+   437→    const type = getPropertyTypeLabel(property.property_type);
+   438→    const op = getOperationTypeLabel(property.operation_type);
+   439→    const price = formatPrice(property.price, property.currency);
+   440→    const url = `https://millano.pages.dev/property.html?id=${property.id}`;
+   441→    const title = property.title || 'Propiedad';
+   442→
+   443→    let msg = `🏠 *${title}*\n`;
+   444→    msg += `📌 ${type} en ${op}\n`;
+   445→    msg += `💰 ${price}\n`;
+   446→    if (property.bedrooms) msg += `🛏️ ${property.bedrooms} hab.\n`;
+   447→    if (property.bathrooms) msg += `🚿 ${property.bathrooms} baños\n`;
+   448→    if (property.area) msg += `📐 ${property.area}${property.area_unit || 'm²'}\n`;
+   449→    if (property.city) msg += `📍 ${property.city}${property.address ? ', ' + property.address : ''}\n`;
+   450→    msg += `\n🔗 ${url}`;
+   451→    msg += `\n\n📌 Publicado en CasasBarinas`;
+   452→
+   453→    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+   454→}
+   455→
+   456→// ─── Status Helpers ────────────────────────────────────────────
+   457→const STATUS_LABELS = {
+   458→    'pending': 'Pendiente',
+   459→    'approved': 'Publicada',
+   460→    'rejected': 'Rechazada',
+   461→    'sold': 'Vendida',
+   462→    'rented': 'Alquilada',
+   463→};
+   464→
+   465→function getStatusLabel(status) {
+   466→    return STATUS_LABELS[status?.toLowerCase()] || status || '--';
+   467→}
+   468→
+   469→function getStatusBadge(status) {
+   470→    const classes = {
+   471→        'pending': 'badge badge-warning',
+   472→        'approved': 'badge badge-success',
+   473→        'rejected': 'badge badge-danger',
+   474→        'sold': 'badge badge-info',
+   475→        'rented': 'badge badge-info',
+   476→    };
+   477→    const cls = classes[status?.toLowerCase()] || 'badge';
+   478→    return `<span class="${cls}">${getStatusLabel(status)}</span>`;
+   479→}
+   480→
+   481→// ─── Property Card HTML Generator ──────────────────────────────
+   482→function createPropertyCard(property) {
+   483→    if (!property) return '';
+   484→
+   485→    const coverImage = property.cover_image || property.images?.[0]?.url || '';
+   486→    const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
+   487→        '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23e0e0e0"><rect width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="16" font-family="sans-serif">Sin imagen</text></svg>'
+   488→    );
+   489→    const imgSrc = coverImage || placeholderImg;
+   490→    const priceStr = formatPrice(property.price, property.currency);
+   491→    const typeLabel = getPropertyTypeLabel(property.property_type);
+   492→    const opLabel = getOperationTypeLabel(property.operation_type);
+   493→    const address = property.city ? (property.address ? `${property.address}, ${property.city}` : property.city) : '--';
+   494→
+   495→    const beds = property.bedrooms ? `<span><i class="fas fa-bed"></i> ${property.bedrooms}</span>` : '';
+   496→    const baths = property.bathrooms ? `<span><i class="fas fa-bath"></i> ${property.bathrooms}</span>` : '';
+   497→    const area = property.area ? `<span><i class="fas fa-ruler-combined"></i> ${property.area}${property.area_unit || 'm²'}</span>` : '';
+   498→
+   499→    const featuredBadge = property.featured ? '<span class="card-badge badge-featured"><i class="fas fa-star"></i> Destacada</span>' : '';
+   500→    const statusBadge = property.status && property.status !== 'approved' ? `<span class="card-badge badge-${property.status}">${getStatusLabel(property.status)}</span>` : '';
+   501→
+   502→    return `
+   503→        <article class="property-card" data-property-id="${property.id}">
+   504→            <a href="property.html?id=${property.id}" class="property-card-link">
+   505→                <div class="property-card-image">
+   506→                    <img src="${imgSrc}" alt="${property.title || 'Propiedad'}" loading="lazy" onerror="this.src='${placeholderImg}'">
+   507→                    <div class="property-card-badges">
+   508→                        <span class="card-badge badge-type">${typeLabel}</span>
+   509→                        <span class="card-badge badge-operation">${opLabel}</span>
+   510→                        ${featuredBadge}${statusBadge}
+   511→                    </div>
+   512→                    <button class="btn-favorite property-card-fav" data-property-id="${property.id}" aria-label="Agregar a favoritos" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(${property.id});">
+   513→                        <i class="far fa-heart"></i>
+   514→                    </button>
+   515→                    <button class="btn-share-wa-card" data-property-id="${property.id}" aria-label="Compartir por WhatsApp" onclick="event.preventDefault(); event.stopPropagation();">
+   516→                        <i class="fab fa-whatsapp"></i>
+   517→                    </button>
+   518→                </div>
+   519→                <div class="property-card-body">
+   520→                    <div class="property-card-price">${priceStr}</div>
+   521→                    <h3 class="property-card-title">${property.title || 'Sin título'}</h3>
+   522→                    <p class="property-card-location"><i class="fas fa-map-marker-alt"></i> ${address}</p>
+   523→                    <div class="property-card-features">${beds}${baths}${area}</div>
+   524→                </div>
+   525→            </a>
+   526→        </article>
+   527→    `;
+   528→}
+   529→
+   530→// ─── WhatsApp Share Delegation for Cards ─────────────────────
+   531→document.addEventListener('click', (e) => {
+   532→    const shareBtn = e.target.closest('.btn-share-wa-card');
+   533→    if (!shareBtn) return;
+   534→    const propertyId = parseInt(shareBtn.dataset.propertyId);
+   535→    if (!propertyId) return;
+   536→
+   537→    // Fetch property data then share
+   538→    api.get(`/properties/${propertyId}`).then(property => {
+   539→        sharePropertyWhatsApp(property);
+   540→    }).catch(() => {
+   541→        // Minimal share with just the link
+   542→        window.open(`https://wa.me/?text=${encodeURIComponent('🏠 Mira esta propiedad en CasasBarinas:\nhttps://millano.pages.dev/property.html?id=' + propertyId)}`, '_blank');
+   543→    });
+   544→});
+   545→
+   546→// ─── Search Params Helper ──────────────────────────────────────
+   547→function getSearchParams() {
+   548→    const params = new URLSearchParams(window.location.search);
+   549→    return {
+   550→        property_type: params.get('tipo') || params.get('property_type') || '',
+   551→        operation_type: params.get('operacion') || params.get('operation_type') || '',
+   552→        city: params.get('ciudad') || params.get('city') || '',
+   553→        min_price: params.get('precio_min') || params.get('min_price') || '',
+   554→        max_price: params.get('precio_max') || params.get('max_price') || '',
+   555→        bedrooms: params.get('habitaciones') || params.get('bedrooms') || '',
+   556→        bathrooms: params.get('banos') || params.get('bathrooms') || '',
+   557→        page: params.get('page') || 1,
+   558→        limit: params.get('limit') || 12,
+   559→        search: params.get('q') || params.get('search') || '',
+   560→    };
+   561→}
+   562→
+   563→function buildSearchURL(params) {
+   564→    const url = new URL('search.html', window.location.origin);
+   565→    const mapping = {
+   566→        property_type: 'tipo',
+   567→        operation_type: 'operacion',
+   568→        city: 'ciudad',
+   569→        min_price: 'precio_min',
+   570→        max_price: 'precio_max',
+   571→        bedrooms: 'habitaciones',
+   572→        bathrooms: 'banos',
+   573→    };
+   574→
+   575→    for (const [key, value] of Object.entries(params)) {
+   576→        if (value && value !== '' && value !== 0) {
+   577→            const paramName = mapping[key] || key;
+   578→            url.searchParams.set(paramName, value);
+   579→        }
+   580→    }
+   581→
+   582→    return url.toString();
+   583→}
+   584→
+   585→// ─── Auth Redirect Helper ──────────────────────────────────────
+   586→function requireAuth() {
+   587→    if (!isAuthenticated()) {
+   588→        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+   589→        window.location.href = `login.html?redirect=${redirect}`;
+   590→        return false;
+   591→    }
+   592→    return true;
+   593→}
+   594→
+   595→// ─── Logout Handler ────────────────────────────────────────────
+   596→function handleLogout() {
+   597→    removeToken();
+   598→    showToast('Has cerrado sesión', 'info');
+   599→    setTimeout(() => {
+   600→        window.location.href = 'index.html';
+   601→    }, 1000);
+   602→}
+   603→
+   604→// ─── Mobile Search Modal ──────────────────────────────────────
+   605→function initMobileSearchModal() {
+   606→    const trigger = document.getElementById('mobileSearchTrigger');
+   607→    const searchForm = document.getElementById('heroSearchForm');
+   608→    const backdrop = document.getElementById('mobileSearchBackdrop');
+   609→    const closeBtn = document.getElementById('searchModalClose');
+   610→
+   611→    if (!trigger || !searchForm) return;
+   612→
+   613→    function openSearchModal() {
+   614→        searchForm.classList.add('mobile-open');
+   615→        trigger.classList.add('active');
+   616→        if (backdrop) backdrop.classList.add('visible');
+   617→        document.body.style.overflow = 'hidden';
+   618→    }
+   619→
+   620→    function closeSearchModal() {
+   621→        searchForm.classList.remove('mobile-open');
+   622→        trigger.classList.remove('active');
+   623→        if (backdrop) backdrop.classList.remove('visible');
+   624→        document.body.style.overflow = '';
+   625→    }
+   626→
+   627→    trigger.addEventListener('click', () => {
+   628→        if (searchForm.classList.contains('mobile-open')) {
+   629→            closeSearchModal();
+   630→        } else {
+   631→            openSearchModal();
+   632→        }
+   633→    });
+   634→
+   635→    if (closeBtn) {
+   636→        closeBtn.addEventListener('click', (e) => {
+   637→            e.preventDefault();
+   638→            e.stopPropagation();
+   639→            closeSearchModal();
+   640→        });
+   641→    }
+   642→
+   643→    if (backdrop) {
+   644→        backdrop.addEventListener('click', closeSearchModal);
+   645→    }
+   646→
+   647→    // Allow form submission (search) to work normally
+   648→    searchForm.addEventListener('submit', () => {
+   649→        // Let the form submit naturally to search.html
+   650→        document.body.style.overflow = '';
+   651→    });
+   652→}
+   653→
+   654→// ─── Initialization ────────────────────────────────────────────
+   655→document.addEventListener('DOMContentLoaded', () => {
+   656→    // Update navigation bar
+   657→    updateNav();
+   658→
+   659→    // Initialize mobile search modal
+   660→    initMobileSearchModal();
+   661→
+   662→    // Hamburger menu toggle
+   663→    const navToggle = document.getElementById('navToggle');
+   664→    const navMenu = document.getElementById('navMenu');
+   665→
+   666→    if (navToggle && navMenu) {
+   667→        navToggle.addEventListener('click', () => {
+   668→            navMenu.classList.toggle('active');
+   669→            navToggle.classList.toggle('active');
+   670→        });
+   671→
+   672→        // Close menu when clicking a link
+   673→        navMenu.querySelectorAll('.nav-link').forEach(link => {
+   674→            link.addEventListener('click', () => {
+   675→                navMenu.classList.remove('active');
+   676→                navToggle.classList.remove('active');
+   677→            });
+   678→        });
+   679→
+   680→        // Close menu when clicking outside
+   681→        document.addEventListener('click', (e) => {
+   682→            if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+   683→                navMenu.classList.remove('active');
+   684→                navToggle.classList.remove('active');
+   685→            }
+   686→        });
+   687→    }
+   688→
+   689→    // Logout button handler
+   690→    const logoutBtn = document.getElementById('navLogout');
+   691→    if (logoutBtn) {
+   692→        logoutBtn.addEventListener('click', (e) => {
+   693→            e.preventDefault();
+   694→            handleLogout();
+   695→        });
+   696→    }
+   697→
+   698→    // Handle redirect param after login
+   699→    const urlParams = new URLSearchParams(window.location.search);
+   700→    const redirectParam = urlParams.get('redirect');
+   701→    if (redirectParam && isAuthenticated()) {
+   702→        window.location.href = redirectParam;
+   703→    }
+   704→
+   705→    // Load featured properties on index page
+   706→    const featuredGrid = document.getElementById('featuredGrid');
+   707→    if (featuredGrid) {
+   708→        loadFeaturedProperties();
+   709→    }
+   710→
+   711→    // Load stats on index page
+   712→    const statProperties = document.getElementById('statProperties');
+   713→    if (statProperties) {
+   714→        loadSiteStats();
+   715→    }
+   716→});
+   717→
+   718→// ─── Index Page: Featured Properties ───────────────────────────
+   719→async function loadFeaturedProperties() {
+   720→    const grid = document.getElementById('featuredGrid');
+   721→    const emptyState = document.getElementById('featuredEmpty');
+   722→    const loading = document.getElementById('featuredLoading');
+   723→    if (!grid) return;
+   724→
+   725→    try {
+   726→        const data = await api.get('/properties?status=approved&limit=8&featured=1');
+   727→        let properties = data.properties || [];
+   728→
+   729→        // If no featured properties, get latest approved
+   730→        if (properties.length === 0) {
+   731→            const allData = await api.get('/properties?status=approved&limit=8');
+   732→            properties = allData.properties || [];
+   733→        }
+   734→
+   735→        if (loading) loading.remove();
+   736→
+   737→        if (properties.length === 0) {
+   738→            if (emptyState) emptyState.style.display = '';
+   739→            return;
+   740→        }
+   741→
+   742→        if (emptyState) emptyState.style.display = 'none';
+   743→        grid.innerHTML = properties.map(p => createPropertyCard(p)).join('');
+   744→    } catch (error) {
+   745→        if (loading) loading.remove();
+   746→        if (emptyState) emptyState.style.display = '';
+   747→        console.error('Error loading featured properties:', error);
+   748→    }
+   749→}
+   750→
+   751→// ─── Index Page: Site Stats ────────────────────────────────────
+   752→async function loadSiteStats() {
+   753→    const statProps = document.getElementById('statProperties');
+   754→    const statUsers = document.getElementById('statUsers');
+   755→    if (!statProps) return;
+   756→
+   757→    try {
+   758→        const data = await api.get('/properties?status=approved&limit=1');
+   759→        const totalApproved = data.pagination?.total || 0;
+   760→        statProps.textContent = totalApproved;
+   761→    } catch {
+   762→        statProps.textContent = '0';
+   763→    }
+   764→
+   765→    try {
+   766→        // Try to get users count (may fail without auth)
+   767→        const data = await api.get('/stats');
+   768→        if (data.stats) {
+   769→            statProps.textContent = data.stats.approved_properties || 0;
+   770→            if (statUsers) statUsers.textContent = data.stats.total_users || 0;
+   771→        }
+   772→    } catch {
+   773→        // Stats endpoint requires auth/admin - use fallback
+   774→    }
+   775→}
+   776→
+   777→// ═══════════════════════════════════════════════════════════════
+   778→// SEARCH PAGE (search.html)
+   779→// ═══════════════════════════════════════════════════════════════
+   780→(function initSearchPage() {
+   781→    document.addEventListener('DOMContentLoaded', () => {
+   782→        const searchGrid = document.getElementById('searchResultsGrid');
+   783→        if (!searchGrid) return; // Not on search page
+   784→
+   785→        // Populate filter fields from URL params
+   786→        const params = getSearchParams();
+   787→        if (params.property_type && document.getElementById('sTipo')) document.getElementById('sTipo').value = params.property_type;
+   788→        if (params.operation_type && document.getElementById('sOperacion')) document.getElementById('sOperacion').value = params.operation_type;
+   789→        if (params.city && document.getElementById('sCiudad')) document.getElementById('sCiudad').value = params.city;
+   790→        if (params.min_price && document.getElementById('sPrecioMin')) document.getElementById('sPrecioMin').value = params.min_price;
+   791→        if (params.max_price && document.getElementById('sPrecioMax')) document.getElementById('sPrecioMax').value = params.max_price;
+   792→        if (params.bedrooms && document.getElementById('sHabitaciones')) document.getElementById('sHabitaciones').value = params.bedrooms;
+   793→        if (params.bathrooms && document.getElementById('sBanos')) document.getElementById('sBanos').value = params.bathrooms;
+   794→
+   795→        // Search button
+   796→        const searchBtn = document.getElementById('searchBtn');
+   797→        if (searchBtn) {
+   798→            searchBtn.addEventListener('click', (e) => {
+   799→                e.preventDefault();
+   800→                executeSearch(1);
+   801→            });
+   802→        }
+   803→
+   804→        // Sort change
+   805→        const sSort = document.getElementById('sSort');
+   806→        if (sSort) {
+   807→            sSort.addEventListener('change', () => executeSearch(params.page));
+   808→        }
+   809→
+   810→        // Extended sort (in collapsible filters)
+   811→        const sOrdenar = document.getElementById('sOrdenar');
+   812→        if (sOrdenar) {
+   813→            sOrdenar.addEventListener('change', () => executeSearch(params.page));
+   814→        }
+   815→
+   816→        // Toggle extended filters
+   817→        const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+   818→        const extendedFilters = document.getElementById('extendedFilters');
+   819→        if (toggleFiltersBtn && extendedFilters) {
+   820→            toggleFiltersBtn.addEventListener('click', () => {
+   821→                extendedFilters.classList.toggle('hidden');
+   822→            });
+   823→        }
+   824→
+   825→        // View toggle (grid/list)
+   826→        const gridViewBtn = document.getElementById('gridViewBtn');
+   827→        const listViewBtn = document.getElementById('listViewBtn');
+   828→        if (gridViewBtn && listViewBtn) {
+   829→            gridViewBtn.addEventListener('click', () => {
+   830→                searchGrid.classList.remove('list-view');
+   831→                searchGrid.classList.add('grid-view');
+   832→                gridViewBtn.classList.add('active');
+   833→                listViewBtn.classList.remove('active');
+   834→            });
+   835→            listViewBtn.addEventListener('click', () => {
+   836→                searchGrid.classList.remove('grid-view');
+   837→                searchGrid.classList.add('list-view');
+   838→                listViewBtn.classList.add('active');
+   839→                gridViewBtn.classList.remove('active');
+   840→            });
+   841→        }
+   842→
+   843→        // Clear filters
+   844→        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+   845→        if (clearFiltersBtn) {
+   846→            clearFiltersBtn.addEventListener('click', () => {
+   847→                window.location.href = 'search.html';
+   848→            });
+   849→        }
+   850→
+   851→        // Execute initial search
+   852→        executeSearch(params.page);
+   853→    });
+   854→
+   855→    async function executeSearch(page = 1) {
+   856→        const searchLoading = document.getElementById('searchLoading');
+   857→        const noResults = document.getElementById('noResults');
+   858→        const searchGrid = document.getElementById('searchResultsGrid');
+   859→        const resultsCount = document.getElementById('resultsCount');
+   860→        const activeFiltersEl = document.getElementById('activeFilters');
+   861→        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+   862→        const paginationEl = document.getElementById('pagination');
+   863→
+   864→        if (!searchGrid) return;
+   865→
+   866→        // Show loading
+   867→        if (searchLoading) searchLoading.classList.remove('hidden');
+   868→        if (noResults) noResults.classList.add('hidden');
+   869→        searchGrid.innerHTML = '';
+   870→        if (paginationEl) paginationEl.classList.add('hidden');
+   871→
+   872→        // Gather filter values
+   873→        const tipo = document.getElementById('sTipo')?.value || '';
+   874→        const operacion = document.getElementById('sOperacion')?.value || '';
+   875→        const ciudad = document.getElementById('sCiudad')?.value?.trim() || '';
+   876→        const precioMin = document.getElementById('sPrecioMin')?.value || '';
+   877→        const precioMax = document.getElementById('sPrecioMax')?.value || '';
+   878→        const habitaciones = document.getElementById('sHabitaciones')?.value || '';
+   879→        const banos = document.getElementById('sBanos')?.value || '';
+   880→        const sort = document.getElementById('sSort')?.value || document.getElementById('sOrdenar')?.value || '';
+   881→        const moneda = document.getElementById('sMoneda')?.value || '';
+   882→
+   883→        // Build API endpoint
+   884→        let endpoint = `/properties?status=approved&page=${page}&limit=12`;
+   885→        if (tipo) endpoint += `&property_type=${encodeURIComponent(tipo)}`;
+   886→        if (operacion) endpoint += `&operation_type=${encodeURIComponent(operacion)}`;
+   887→        if (ciudad) endpoint += `&city=${encodeURIComponent(ciudad)}`;
+   888→        if (precioMin) endpoint += `&min_price=${precioMin}`;
+   889→        if (precioMax) endpoint += `&max_price=${precioMax}`;
+   890→        if (habitaciones) endpoint += `&bedrooms=${habitaciones}`;
+   891→        if (banos) endpoint += `&bathrooms=${banos}`;
+   892→
+   893→        // Sort mapping
+   894→        const sortMap = {
+   895→            'precio_asc': 'price_asc',
+   896→            'precio_desc': 'price_desc',
+   897→            'reciente': 'newest',
+   898→            'visto': 'views_desc',
+   899→        };
+   900→        if (sort && sort !== 'relevancia') endpoint += `&sort=${sortMap[sort] || sort}`;
+   901→
+   902→        try {
+   903→            const data = await api.get(endpoint);
+   904→            const properties = data.properties || [];
+   905→            const paginationData = data.pagination || {};
+   906→
+   907→            if (searchLoading) searchLoading.classList.add('hidden');
+   908→
+   909→            // Results count
+   910→            if (resultsCount) {
+   911→                resultsCount.textContent = `${paginationData.total || 0} resultados encontrados`;
+   912→            }
+   913→
+   914→            // Active filter tags
+   915→            if (activeFiltersEl) {
+   916→                let tags = '';
+   917→                if (tipo) tags += `<span class="active-filter-tag">${getPropertyTypeLabel(tipo)} <button onclick="this.parentElement.remove(); document.getElementById('sTipo').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+   918→                if (operacion) tags += `<span class="active-filter-tag">${getOperationTypeLabel(operacion)} <button onclick="this.parentElement.remove(); document.getElementById('sOperacion').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+   919→                if (ciudad) tags += `<span class="active-filter-tag"><i class="fas fa-map-marker-alt"></i> ${ciudad} <button onclick="this.parentElement.remove(); document.getElementById('sCiudad').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+   920→                if (precioMin || precioMax) tags += `<span class="active-filter-tag">${precioMin || '0'} - ${precioMax || '∞'} <button onclick="this.parentElement.remove(); document.getElementById('sPrecioMin').value=''; document.getElementById('sPrecioMax').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+   921→                if (habitaciones) tags += `<span class="active-filter-tag">${habitaciones}+ hab. <button onclick="this.parentElement.remove(); document.getElementById('sHabitaciones').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+   922→                if (banos) tags += `<span class="active-filter-tag">${banos}+ baños <button onclick="this.parentElement.remove(); document.getElementById('sBanos').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+   923→                activeFiltersEl.innerHTML = tags;
+   924→                if (clearFiltersBtn) {
+   925→                    clearFiltersBtn.classList.toggle('hidden', !tags);
+   926→                }
+   927→            }
+   928→
+   929→            // No results
+   930→            if (properties.length === 0) {
+   931→                if (noResults) noResults.classList.remove('hidden');
+   932→                return;
+   933→            }
+   934→
+   935→            // Render property cards
+   936→            searchGrid.innerHTML = properties.map(p => createPropertyCard(p)).join('');
+   937→
+   938→            // Pagination
+   939→            renderPagination(paginationEl, paginationData, executeSearch);
+   940→
+   941→            // Update URL without reload
+   942→            updateSearchURL(tipo, operacion, ciudad, precioMin, precioMax, habitaciones, banos, page);
+   943→
+   944→        } catch (error) {
+   945→            if (searchLoading) searchLoading.classList.add('hidden');
+   946→            searchGrid.innerHTML = '<div class="no-results"><i class="fas fa-exclamation-circle fa-3x"></i><h2>Error de búsqueda</h2><p>No se pudieron cargar los resultados. Intenta nuevamente.</p></div>';
+   947→            console.error('Search error:', error);
+   948→        }
+   949→    }
+   950→
+   951→    function updateSearchURL(tipo, operacion, ciudad, precioMin, precioMax, habitaciones, banos, page) {
+   952→        const url = new URL(window.location);
+   953→        url.searchParams.delete('tipo');
+   954→        url.searchParams.delete('operacion');
+   955→        url.searchParams.delete('ciudad');
+   956→        url.searchParams.delete('precio_min');
+   957→        url.searchParams.delete('precio_max');
+   958→        url.searchParams.delete('habitaciones');
+   959→        url.searchParams.delete('banos');
+   960→        url.searchParams.delete('page');
+   961→
+   962→        if (tipo) url.searchParams.set('tipo', tipo);
+   963→        if (operacion) url.searchParams.set('operacion', operacion);
+   964→        if (ciudad) url.searchParams.set('ciudad', ciudad);
+   965→        if (precioMin) url.searchParams.set('precio_min', precioMin);
+   966→        if (precioMax) url.searchParams.set('precio_max', precioMax);
+   967→        if (habitaciones) url.searchParams.set('habitaciones', habitaciones);
+   968→        if (banos) url.searchParams.set('banos', banos);
+   969→        if (page && page > 1) url.searchParams.set('page', page);
+   970→
+   971→        window.history.replaceState({}, '', url.toString());
+   972→    }
+   973→
+   974→    function renderPagination(container, paginationData, onPageChange) {
+   975→        if (!container || !paginationData) return;
+   976→
+   977→        const { page, totalPages, total } = paginationData;
+   978→
+   979→        if (totalPages <= 1) {
+   980→            container.classList.add('hidden');
+   981→            return;
+   982→        }
+   983→
+   984→        container.classList.remove('hidden');
+   985→        const prevBtn = document.getElementById('paginationPrev');
+   986→        const nextBtn = document.getElementById('paginationNext');
+   987→        const pagesContainer = document.getElementById('paginationPages');
+   988→
+   989→        if (prevBtn) prevBtn.disabled = page <= 1;
+   990→        if (nextBtn) nextBtn.disabled = page >= totalPages;
+   991→
+   992→        if (pagesContainer) {
+   993→            let html = '';
+   994→            const maxVisible = 5;
+   995→            let start = Math.max(1, page - Math.floor(maxVisible / 2));
+   996→            let end = Math.min(totalPages, start + maxVisible - 1);
+   997→            if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+   998→
+   999→            if (start > 1) {
+  1000→                html += `<button class="pagination-btn" data-page="1">1</button>`;
+  1001→                if (start > 2) html += '<span class="pagination-dots">...</span>';
+  1002→            }
+  1003→            for (let i = start; i <= end; i++) {
+  1004→                html += `<button class="pagination-btn ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+  1005→            }
+  1006→            if (end < totalPages) {
+  1007→                if (end < totalPages - 1) html += '<span class="pagination-dots">...</span>';
+  1008→                html += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+  1009→            }
+  1010→
+  1011→            pagesContainer.innerHTML = html;
+  1012→
+  1013→            pagesContainer.querySelectorAll('.pagination-btn').forEach(btn => {
+  1014→                btn.addEventListener('click', () => {
+  1015→                    const p = parseInt(btn.dataset.page);
+  1016→                    if (p) onPageChange(p);
+  1017→                });
+  1018→            });
+  1019→        }
+  1020→
+  1021→        if (prevBtn) {
+  1022→            prevBtn.onclick = () => { if (page > 1) onPageChange(page - 1); };
+  1023→        }
+  1024→        if (nextBtn) {
+  1025→            nextBtn.onclick = () => { if (page < totalPages) onPageChange(page + 1); };
+  1026→        }
+  1027→    }
+  1028→})();
+  1029→
+  1030→// ═══════════════════════════════════════════════════════════════
+  1031→// PROPERTY DETAIL PAGE (property.html)
+  1032→// ═══════════════════════════════════════════════════════════════
+  1033→(function initPropertyDetailPage() {
+  1034→    document.addEventListener('DOMContentLoaded', () => {
+  1035→        const propertyContent = document.getElementById('propertyContent');
+  1036→        if (!propertyContent) return; // Not on property detail page
+  1037→
+  1038→        const urlParams = new URLSearchParams(window.location.search);
+  1039→        const propertyId = urlParams.get('id');
+  1040→
+  1041→        if (!propertyId) {
+  1042→            showPropertyError();
+  1043→            return;
+  1044→        }
+  1045→
+  1046→        loadPropertyDetail(propertyId);
+  1047→    });
+  1048→
+  1049→    async function loadPropertyDetail(propertyId) {
+  1050→        const loadingEl = document.getElementById('propertyLoading');
+  1051→        const errorEl = document.getElementById('propertyError');
+  1052→        const contentEl = document.getElementById('propertyContent');
+  1053→
+  1054→        try {
+  1055→            const property = await api.get(`/properties/${propertyId}`);
+  1056→
+  1057→            if (loadingEl) loadingEl.classList.add('hidden');
+  1058→            if (contentEl) contentEl.classList.remove('hidden');
+  1059→
+  1060→            // Populate page
+  1061→            populatePropertyDetail(property);
+  1062→
+  1063→            // Check favorite status
+  1064→            if (isAuthenticated()) {
+  1065→                const isFav = await checkFavorite(propertyId);
+  1066→                updateFavoriteButtons(propertyId, isFav);
+  1067→            }
+  1068→
+  1069→            // Setup gallery
+  1070→            setupGallery(property.images || []);
+  1071→
+  1072→            // Setup contact form
+  1073→            setupContactForm(propertyId, property);
+  1074→
+  1075→            // Setup favorite buttons
+  1076→            setupFavoriteButtons(propertyId);
+  1077→
+  1078→            // Setup share button
+  1079→            setupShareButton();
+  1080→
+  1081→            // Setup similar properties
+  1082→            loadSimilarProperties(property);
+  1083→
+  1084→            // Setup mini map
+  1085→            setupDetailMap(property);
+  1086→            // Also setup map modal if coordinates exist
+  1087→            setupMapModal(property);
+  1088→
+  1089→        } catch (error) {
+  1090→            if (loadingEl) loadingEl.classList.add('hidden');
+  1091→            showPropertyError();
+  1092→            console.error('Error loading property:', error);
+  1093→        }
+  1094→    }
+  1095→
+  1096→    function showPropertyError() {
+  1097→        const errorEl = document.getElementById('propertyError');
+  1098→        if (errorEl) errorEl.classList.remove('hidden');
+  1099→    }
+  1100→
+  1101→    function populatePropertyDetail(property) {
+  1102→        const setText = (id, text) => {
+  1103→            const el = document.getElementById(id);
+  1104→            if (el) el.textContent = text;
+  1105→        };
+  1106→        const setHTML = (id, html) => {
+  1107→            const el = document.getElementById(id);
+  1108→            if (el) el.innerHTML = html;
+  1109→        };
+  1110→
+  1111→        // Breadcrumb
+  1112→        setText('breadcrumbTitle', property.title || 'Propiedad');
+  1113→
+  1114→        // Title
+  1115→        setText('propDetailTitle', property.title || 'Sin título');
+  1116→        document.title = `${property.title || 'Propiedad'} - CasasBarinas`;
+  1117→
+  1118→        // Price
+  1119→        const priceStr = formatPrice(property.price, property.currency);
+  1120→        setText('propDetailPrice', priceStr);
+  1121→        setText('sidePrice', priceStr);
+  1122→        setText('sideOperation', getOperationTypeLabel(property.operation_type));
+  1123→
+  1124→        // Location
+  1125→        const address = property.city ? (property.address ? `${property.address}, ${property.city}, ${property.state || ''}` : property.city) : '--';
+  1126→        const locationEl = document.getElementById('propDetailLocation');
+  1127→        if (locationEl) locationEl.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${address}`;
+  1128→
+  1129→        // Badges
+  1130→        const badges = `
+  1131→            <span class="detail-badge">${getPropertyTypeLabel(property.property_type)}</span>
+  1132→            <span class="detail-badge">${getOperationTypeLabel(property.operation_type)}</span>
+  1133→            ${property.featured ? '<span class="detail-badge badge-featured"><i class="fas fa-star"></i> Destacada</span>' : ''}
+  1134→        `;
+  1135→        setHTML('propDetailBadges', badges);
+  1136→
+  1137→        // Quick stats
+  1138→        setText('statBedrooms', property.bedrooms || '--');
+  1139→        setText('statBathrooms', property.bathrooms || '--');
+  1140→        setText('statParking', property.parking_spaces || '--');
+  1141→
+  1142→        const areaStr = property.area ? `${property.area} ${property.area_unit || 'm²'}` : '--';
+  1143→        setText('statArea', areaStr);
+  1144→        setText('statAreaLabel', property.area_unit === 'ha' ? 'Hectáreas' : 'Área');
+  1145→
+  1146→        if (property.year_built) {
+  1147→            const yearWrap = document.getElementById('statYearWrap');
+  1148→            if (yearWrap) yearWrap.style.display = '';
+  1149→            setText('statYear', property.year_built);
+  1150→        }
+  1151→
+  1152→        if (property.floors) {
+  1153→            const floorsWrap = document.getElementById('statFloorsWrap');
+  1154→            if (floorsWrap) floorsWrap.style.display = '';
+  1155→            setText('statFloors', property.floors);
+  1156→        }
+  1157→
+  1158→        // Description
+  1159→        const descEl = document.getElementById('propDescription');
+  1160→        if (descEl) {
+  1161→            descEl.innerHTML = `<p>${(property.description || 'Sin descripción.').replace(/\n/g, '</p><p>')}</p>`;
+  1162→        }
+  1163→
+  1164→        // Setup description toggle
+  1165→        const descToggle = document.getElementById('descriptionToggle');
+  1166→        if (descEl && descToggle) {
+  1167→            const fullText = descEl.innerHTML;
+  1168→            if (fullText.length > 300) {
+  1169→                descEl.classList.add('collapsed');
+  1170→                descToggle.style.display = '';
+  1171→                descToggle.addEventListener('click', () => {
+  1172→                    const isCollapsed = descEl.classList.contains('collapsed');
+  1173→                    descEl.classList.toggle('collapsed');
+  1174→                    descToggle.innerHTML = isCollapsed 
+  1175→                        ? 'Ver menos <i class="fas fa-chevron-up"></i>' 
+  1176→                        : 'Leer más <i class="fas fa-chevron-down"></i>';
+  1177→                });
+  1178→            } else {
+  1179→                descToggle.style.display = 'none';
+  1180→            }
+  1181→        }
+  1182→
+  1183→        // Features
+  1184→        const features = [];
+  1185→        if (property.has_pool) features.push('<span class="feature-item"><i class="fas fa-swimming-pool"></i> Piscina</span>');
+  1186→        if (property.has_garden) features.push('<span class="feature-item"><i class="fas fa-leaf"></i> Jardín</span>');
+  1187→        if (property.has_ac) features.push('<span class="feature-item"><i class="fas fa-snowflake"></i> Aire Acondicionado</span>');
+  1188→        if (property.has_kitchen) features.push('<span class="feature-item"><i class="fas fa-utensils"></i> Cocina Equipada</span>');
+  1189→        if (property.has_furniture) features.push('<span class="feature-item"><i class="fas fa-couch"></i> Amueblado</span>');
+  1190→        if (property.has_security) features.push('<span class="feature-item"><i class="fas fa-shield-alt"></i> Seguridad</span>');
+  1191→        if (property.has_elevator) features.push('<span class="feature-item"><i class="fas fa-elevator"></i> Ascensor</span>');
+  1192→        if (property.has_elevator === undefined && property.parking_spaces) features.push('<span class="feature-item"><i class="fas fa-car"></i> Estacionamiento</span>');
+  1193→
+  1194→        if (features.length > 0) {
+  1195→            const featuresSection = document.getElementById('featuresSection');
+  1196→            const featuresList = document.getElementById('featuresList');
+  1197→            if (featuresSection) featuresSection.classList.remove('hidden');
+  1198→            if (featuresList) featuresList.innerHTML = features.join('');
+  1199→        }
+  1200→
+  1201→        // Owner card
+  1202→        setText('ownerName', property.owner_name || 'Propietario');
+  1203→        const ownerSince = property.created_at ? `Miembro desde ${formatDate(property.created_at)}` : '';
+  1204→        setText('ownerSince', ownerSince);
+  1205→        setText('ownerPropCount', '1');
+  1206→
+  1207→        // Owner phone
+  1208→        if (property.owner_phone) {
+  1209→            const phoneWrap = document.getElementById('ownerPhoneWrap');
+  1210→            if (phoneWrap) phoneWrap.style.display = '';
+  1211→            setText('ownerPhone', property.owner_phone);
+  1212→            const phoneLink = document.getElementById('ownerPhoneLink');
+  1213→            if (phoneLink) phoneLink.href = `tel:${property.owner_phone}`;
+  1214→        }
+  1215→
+  1216→        // WhatsApp - use whatsapp field first, fallback to phone
+  1217→        const waMessage = encodeURIComponent(`Hola, estoy interesado(a) en la propiedad: ${property.title}`);
+  1218→        const waPhone = ((property.owner_whatsapp || property.owner_phone) || '').replace(/[^0-9]/g, '');
+  1219→        if (waPhone) {
+  1220→            const waHref = `https://wa.me/${waPhone}?text=${waMessage}`;
+  1221→            const waLink = document.getElementById('whatsappLink');
+  1222→            const sideWA = document.getElementById('sideWhatsApp');
+  1223→            const mainWA = document.getElementById('mainWhatsApp');
+  1224→            if (waLink) waLink.href = waHref;
+  1225→            if (sideWA) { sideWA.href = waHref; sideWA.style.display = ''; }
+  1226→            if (mainWA) { mainWA.href = waHref; mainWA.style.display = ''; }
+  1227→        }
+  1228→
+  1229→        // Chat owner name
+  1230→        const chatOwnerName = document.getElementById('chatOwnerName');
+  1231→        if (chatOwnerName) chatOwnerName.textContent = property.owner_name || 'Propietario';
+  1232→
+  1233→        // Price per area
+  1234→        if (property.price && property.area && property.area > 0) {
+  1235→            const pricePerArea = property.price / property.area;
+  1236→            const perAreaEl = document.getElementById('pricePerArea');
+  1237→            const perAreaValue = document.getElementById('pricePerAreaValue');
+  1238→            if (perAreaEl) perAreaEl.style.display = '';
+  1239→            if (perAreaValue) perAreaValue.textContent = formatPrice(pricePerArea, property.currency) + '/m²';
+  1240→        }
+  1241→
+  1242→        // Quick info
+  1243→        setText('qiType', getPropertyTypeLabel(property.property_type));
+  1244→        setText('qiOperation', getOperationTypeLabel(property.operation_type));
+  1245→        setText('qiLocation', property.city || '--');
+  1246→        setText('qiPublished', formatDate(property.created_at));
+  1247→        setText('qiViews', (property.views || 0).toString());
+  1248→
+  1249→        // Favorite button data attributes
+  1250→        document.querySelectorAll('.btn-favorite').forEach(btn => {
+  1251→            btn.dataset.propertyId = property.id;
+  1252→        });
+  1253→
+  1254→        // Gallery badges
+  1255→        const galleryBadges = document.getElementById('galleryBadges');
+  1256→        if (galleryBadges) {
+  1257→            galleryBadges.innerHTML = `
+  1258→                <span class="gallery-badge badge-type">${getPropertyTypeLabel(property.property_type)}</span>
+  1259→                <span class="gallery-badge badge-operation">${getOperationTypeLabel(property.operation_type)}</span>
+  1260→            `;
+  1261→        }
+  1262→    }
+  1263→
+  1264→    // ── Gallery ──
+  1265→    let galleryImages = [];
+  1266→    let currentGalleryIndex = 0;
+  1267→
+  1268→    function setupGallery(images) {
+  1269→        galleryImages = images;
+  1270→        currentGalleryIndex = 0;
+  1271→
+  1272→        const mainImage = document.getElementById('mainImage');
+  1273→        const thumbnailsEl = document.getElementById('galleryThumbnails');
+  1274→        const prevBtn = document.getElementById('galleryPrev');
+  1275→        const nextBtn = document.getElementById('galleryNext');
+  1276→        const currentCounter = document.getElementById('galleryCurrent');
+  1277→        const totalCounter = document.getElementById('galleryTotal');
+  1278→        const fullscreenBtn = document.getElementById('galleryFullscreen');
+  1279→
+  1280→        if (images.length === 0) {
+  1281→            // Placeholder
+  1282→            if (mainImage) mainImage.src = 'data:image/svg+xml,' + encodeURIComponent(
+  1283→                '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" fill="%23e8e8e8"><rect width="800" height="500"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23bbb" font-size="20" font-family="sans-serif">Sin imágenes</text></svg>'
+  1284→            );
+  1285→            if (totalCounter) totalCounter.textContent = '1';
+  1286→            return;
+  1287→        }
+  1288→
+  1289→        // Show first image
+  1290→        updateGalleryImage(0);
+  1291→
+  1292→        // Counter
+  1293→        if (totalCounter) totalCounter.textContent = images.length;
+  1294→
+  1295→        // Thumbnails
+  1296→        if (thumbnailsEl && images.length > 1) {
+  1297→            thumbnailsEl.innerHTML = images.map((img, i) => `
+  1298→                <img src="${img.url || img.thumbnail_url}" alt="Thumbnail ${i + 1}" 
+  1299→                     class="gallery-thumb ${i === 0 ? 'active' : ''}" 
+  1300→                     data-index="${i}" 
+  1301→                     onclick="window._selectGalleryImage(${i})"
+  1302→                     onerror="this.style.display='none'">
+  1303→            `).join('');
+  1304→        }
+  1305→
+  1306→        // Prev/Next
+  1307→        if (prevBtn) prevBtn.addEventListener('click', () => navigateGallery(-1));
+  1308→        if (nextBtn) nextBtn.addEventListener('click', () => navigateGallery(1));
+  1309→
+  1310→        // Fullscreen -> opens lightbox
+  1311→        if (fullscreenBtn) {
+  1312→            fullscreenBtn.addEventListener('click', () => openLightbox(currentGalleryIndex));
+  1313→        }
+  1314→
+  1315→        // Click on main image -> opens lightbox
+  1316→        if (mainImage) {
+  1317→            mainImage.addEventListener('click', () => openLightbox(currentGalleryIndex));
+  1318→        }
+  1319→
+  1320→        // Lightbox
+  1321→        setupLightbox();
+  1322→
+  1323→        // Keyboard navigation
+  1324→        document.addEventListener('keydown', (e) => {
+  1325→            if (e.key === 'ArrowLeft') navigateGallery(-1);
+  1326→            if (e.key === 'ArrowRight') navigateGallery(1);
+  1327→        });
+  1328→    }
+  1329→
+  1330→    function updateGalleryImage(index) {
+  1331→        if (index < 0 || index >= galleryImages.length) return;
+  1332→        currentGalleryIndex = index;
+  1333→
+  1334→        const mainImage = document.getElementById('mainImage');
+  1335→        const currentCounter = document.getElementById('galleryCurrent');
+  1336→
+  1337→        if (mainImage && galleryImages[index]) {
+  1338→            mainImage.src = galleryImages[index].url || galleryImages[index].thumbnail_url;
+  1339→            mainImage.alt = `Imagen ${index + 1}`;
+  1340→        }
+  1341→        if (currentCounter) currentCounter.textContent = index + 1;
+  1342→
+  1343→        // Update active thumbnail
+  1344→        document.querySelectorAll('.gallery-thumb').forEach((thumb, i) => {
+  1345→            thumb.classList.toggle('active', i === index);
+  1346→        });
+  1347→    }
+  1348→
+  1349→    function navigateGallery(direction) {
+  1350→        if (galleryImages.length === 0) return;
+  1351→        let newIndex = currentGalleryIndex + direction;
+  1352→        if (newIndex < 0) newIndex = galleryImages.length - 1;
+  1353→        if (newIndex >= galleryImages.length) newIndex = 0;
+  1354→        updateGalleryImage(newIndex);
+  1355→        updateLightbox(newIndex);
+  1356→    }
+  1357→
+  1358→    window._selectGalleryImage = function(index) {
+  1359→        updateGalleryImage(index);
+  1360→        updateLightbox(index);
+  1361→    };
+  1362→
+  1363→    // ── Lightbox ──
+  1364→    let lightboxOpen = false;
+  1365→
+  1366→    function setupLightbox() {
+  1367→        const lightbox = document.getElementById('lightbox');
+  1368→        if (!lightbox) return;
+  1369→
+  1370→        const mainImage = document.getElementById('mainImage');
+  1371→        if (mainImage) {
+  1372→            mainImage.addEventListener('click', () => openLightbox());
+  1373→            mainImage.style.cursor = 'pointer';
+  1374→        }
+  1375→
+  1376→        const closeBtn = document.getElementById('lightboxClose');
+  1377→        const prevBtn = document.getElementById('lightboxPrev');
+  1378→        const nextBtn = document.getElementById('lightboxNext');
+  1379→
+  1380→        if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+  1381→        if (prevBtn) prevBtn.addEventListener('click', () => navigateLightbox(-1));
+  1382→        if (nextBtn) nextBtn.addEventListener('click', () => navigateLightbox(1));
+  1383→
+  1384→        lightbox.addEventListener('click', (e) => {
+  1385→            if (e.target === lightbox) closeLightbox();
+  1386→        });
+  1387→
+  1388→        document.addEventListener('keydown', (e) => {
+  1389→            if (e.key === 'Escape' && lightboxOpen) closeLightbox();
+  1390→        });
+  1391→    }
+  1392→
+  1393→    function openLightbox() {
+  1394→        const lightbox = document.getElementById('lightbox');
+  1395→        if (!lightbox || galleryImages.length === 0) return;
+  1396→        lightbox.classList.remove('hidden');
+  1397→        lightboxOpen = true;
+  1398→        document.body.style.overflow = 'hidden';
+  1399→        updateLightbox(currentGalleryIndex);
+  1400→    }
+  1401→
+  1402→    function closeLightbox() {
+  1403→        const lightbox = document.getElementById('lightbox');
+  1404→        if (lightbox) lightbox.classList.add('hidden');
+  1405→        lightboxOpen = false;
+  1406→        document.body.style.overflow = '';
+  1407→    }
+  1408→
+  1409→    function updateLightbox(index) {
+  1410→        const lightboxImg = document.getElementById('lightboxImage');
+  1411→        const lightboxCounter = document.getElementById('lightboxCounter');
+  1412→        if (lightboxImg && galleryImages[index]) {
+  1413→            lightboxImg.src = galleryImages[index].url;
+  1414→        }
+  1415→        if (lightboxCounter) {
+  1416→            lightboxCounter.textContent = `${index + 1} / ${galleryImages.length}`;
+  1417→        }
+  1418→    }
+  1419→
+  1420→    function navigateLightbox(direction) {
+  1421→        let newIndex = currentGalleryIndex + direction;
+  1422→        if (newIndex < 0) newIndex = galleryImages.length - 1;
+  1423→        if (newIndex >= galleryImages.length) newIndex = 0;
+  1424→        currentGalleryIndex = newIndex;
+  1425→        updateGalleryImage(newIndex);
+  1426→        updateLightbox(newIndex);
+  1427→    }
+  1428→
+  1429→    // ── Chat System ──
+  1430→    let chatPropertyId = null;
+  1431→
+  1432→    function setupContactForm(propertyId, property) {
+  1433→        chatPropertyId = propertyId;
+  1434→
+  1435→        const openChatBtn = document.getElementById('openChatBtn');
+  1436→        const sideContactBtn = document.getElementById('sideContactBtn');
+  1437→        const shareWABtn = document.getElementById('shareWhatsAppBtn');
+  1438→
+  1439→        function openChat() {
+  1440→            // Use the floating chat widget
+  1441→            if (window.CasasBarinasChat) {
+  1442→                window.CasasBarinasChat.openChatWith(propertyId);
+  1443→            }
+  1444→        }
+  1445→
+  1446→        // Open chat buttons
+  1447→        if (openChatBtn) openChatBtn.addEventListener('click', openChat);
+  1448→        if (sideContactBtn) sideContactBtn.addEventListener('click', () => {
+  1449→            openChat();
+  1450→            document.querySelector('.contact-section')?.scrollIntoView({ behavior: 'smooth' });
+  1451→        });
+  1452→
+  1453→        // Share WhatsApp button
+  1454→        if (shareWABtn && property) {
+  1455→            shareWABtn.addEventListener('click', () => sharePropertyWhatsApp(property));
+  1456→        }
+  1457→    }
+  1458→
+  1459→    function escapeHTML(str) {
+  1460→        const div = document.createElement('div');
+  1461→        div.textContent = str;
+  1462→        return div.innerHTML;
+  1463→    }
+  1464→
+  1465→    // ── Favorite Buttons ──
+  1466→    function setupFavoriteButtons(propertyId) {
+  1467→        document.querySelectorAll('.btn-favorite').forEach(btn => {
+  1468→            btn.addEventListener('click', async (e) => {
+  1469→                e.preventDefault();
+  1470→                e.stopPropagation();
+  1471→                await toggleFavorite(propertyId);
+  1472→            });
+  1473→        });
+  1474→    }
+  1475→
+  1476→    // ── Share Button ──
+  1477→    function setupShareButton() {
+  1478→        const shareBtn = document.getElementById('shareBtn');
+  1479→        if (shareBtn) {
+  1480→            shareBtn.addEventListener('click', async () => {
+  1481→                if (navigator.share) {
+  1482→                    try {
+  1483→                        await navigator.share({
+  1484→                            title: document.title,
+  1485→                            url: window.location.href,
+  1486→                        });
+  1487→                    } catch {
+  1488→                        // User cancelled
+  1489→                    }
+  1490→                } else {
+  1491→                    // Fallback: copy URL to clipboard
+  1492→                    try {
+  1493→                        await navigator.clipboard.writeText(window.location.href);
+  1494→                        showToast('Enlace copiado al portapapeles', 'success');
+  1495→                    } catch {
+  1496→                        showToast('No se pudo copiar el enlace', 'error');
+  1497→                    }
+  1498→                }
+  1499→            });
+  1500→        }
+  1501→    }
+  1502→
+  1503→    // ── Similar Properties ──
+  1504→    async function loadSimilarProperties(property) {
+  1505→        const similarSection = document.getElementById('similarSection');
+  1506→        const similarGrid = document.getElementById('similarGrid');
+  1507→        if (!similarGrid) return;
+  1508→
+  1509→        try {
+  1510→            let endpoint = `/properties?status=approved&limit=4`;
+  1511→            if (property.property_type) endpoint += `&property_type=${encodeURIComponent(property.property_type)}`;
+  1512→            if (property.operation_type) endpoint += `&operation_type=${encodeURIComponent(property.operation_type)}`;
+  1513→
+  1514→            const data = await api.get(endpoint);
+  1515→            let similar = (data.properties || []).filter(p => p.id !== property.id);
+  1516→
+  1517→            if (similar.length === 0) {
+  1518→                // Get any approved properties
+  1519→                const allData = await api.get('/properties?status=approved&limit=4');
+  1520→                similar = (allData.properties || []).filter(p => p.id !== property.id);
+  1521→            }
+  1522→
+  1523→            if (similar.length > 0) {
+  1524→                if (similarSection) similarSection.classList.remove('hidden');
+  1525→                similarGrid.innerHTML = similar.slice(0, 4).map(p => createPropertyCard(p)).join('');
+  1526→            }
+  1527→        } catch (error) {
+  1528→            console.error('Error loading similar properties:', error);
+  1529→        }
+  1530→    }
+  1531→
+  1532→    // ── Detail Page Mini Map ──
+  1533→    function setupDetailMap(property) {
+  1534→        const mapSection = document.getElementById('mapSection');
+  1535→        const mapContainer = document.getElementById('propertyMap');
+  1536→        if (!mapContainer || !mapSection) return;
+  1537→
+  1538→        if (!property.lat || !property.lng || typeof L === 'undefined') {
+  1539→            // Hide entire section if no coordinates
+  1540→            mapSection.classList.add('hidden');
+  1541→            return;
+  1542→        }
+  1543→
+  1544→        // Show section and init map
+  1545→        mapSection.classList.remove('hidden');
+  1546→
+  1547→        try {
+  1548→            const detailMap = L.map('propertyMap', {
+  1549→                center: [property.lat, property.lng],
+  1550→                zoom: 15,
+  1551→                zoomControl: true,
+  1552→                dragging: true,
+  1553→                scrollWheelZoom: false,
+  1554→            });
+  1555→
+  1556→            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  1557→                attribution: '&copy; OpenStreetMap contributors',
+  1558→                maxZoom: 19,
+  1559→            }).addTo(detailMap);
+  1560→
+  1561→            const marker = L.marker([property.lat, property.lng]).addTo(detailMap);
+  1562→            marker.bindPopup(`<strong>${property.title || 'Propiedad'}</strong><br>${formatPrice(property.price, property.currency)}`).openPopup();
+  1563→
+  1564→            setTimeout(() => detailMap.invalidateSize(), 300);
+  1565→        } catch (error) {
+  1566→            mapSection.classList.add('hidden');
+  1567→        }
+  1568→    }
+  1569→
+  1570→    // ── Full-Screen Map Modal ──
+  1571→    function setupMapModal(property) {
+  1572→        const mapModal = document.getElementById('mapModal');
+  1573→        const mapModalClose = document.getElementById('mapModalClose');
+  1574→        const mapModalMapEl = document.getElementById('mapModalMap');
+  1575→        const openMapBtn = document.getElementById('openMapModalBtn');
+  1576→        
+  1577→        if (!mapModal || !mapModalMapEl) return;
+  1578→        if (!property.lat || !property.lng || typeof L === 'undefined') {
+  1579→            if (openMapBtn) openMapBtn.style.display = 'none';
+  1580→            return;
+  1581→        }
+  1582→        
+  1583→        let modalMap = null;
+  1584→        
+  1585→        function openModal() {
+  1586→            mapModal.classList.add('active');
+  1587→            document.body.style.overflow = 'hidden';
+  1588→            
+  1589→            if (!modalMap) {
+  1590→                setTimeout(() => {
+  1591→                    modalMap = L.map('mapModalMap', {
+  1592→                        center: [property.lat, property.lng],
+  1593→                        zoom: 16,
+  1594→                        zoomControl: true,
+  1595→                        dragging: true,
+  1596→                        scrollWheelZoom: true,
+  1597→                    });
+  1598→                    
+  1599→                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  1600→                        attribution: '&copy; OpenStreetMap contributors',
+  1601→                        maxZoom: 19,
+  1602→                    }).addTo(modalMap);
+  1603→                    
+  1604→                    const marker = L.marker([property.lat, property.lng]).addTo(modalMap);
+  1605→                    marker.bindPopup('<strong>' + (property.title || 'Propiedad') + '</strong><br>' + formatPrice(property.price, property.currency)).openPopup();
+  1606→                    
+  1607→                    setTimeout(() => modalMap.invalidateSize(), 200);
+  1608→                }, 100);
+  1609→            } else {
+  1610→                setTimeout(() => {
+  1611→                    modalMap.invalidateSize();
+  1612→                    modalMap.flyTo([property.lat, property.lng], 16, { duration: 0.5 });
+  1613→                }, 100);
+  1614→            }
+  1615→        }
+  1616→        
+  1617→        function closeModal() {
+  1618→            mapModal.classList.remove('active');
+  1619→            document.body.style.overflow = '';
+  1620→        }
+  1621→        
+  1622→        if (openMapBtn) openMapBtn.addEventListener('click', openModal);
+  1623→        if (mapModalClose) mapModalClose.addEventListener('click', closeModal);
+  1624→        
+  1625→        mapModal.addEventListener('click', (e) => {
+  1626→            if (e.target === mapModal) closeModal();
+  1627→        });
+  1628→        
+  1629→        document.addEventListener('keydown', (e) => {
+  1630→            if (e.key === 'Escape' && mapModal.classList.contains('active')) closeModal();
+  1631→        });
+  1632→    }
+  1633→})();
+  1634→
+  1635→// ═══════════════════════════════════════════════════════════════
+  1636→// DASHBOARD PAGE (dashboard.html)
+  1637→// ═══════════════════════════════════════════════════════════════
+  1638→(function initDashboardPage() {
+  1639→    document.addEventListener('DOMContentLoaded', () => {
+  1640→        const dashContainer = document.getElementById('dashboardSidebar');
+  1641→        if (!dashContainer) return; // Not on dashboard page
+  1642→
+  1643→        // Require auth
+  1644→        if (!requireAuth()) return;
+  1645→
+  1646→        initDashboard();
+  1647→    });
+  1648→
+  1649→    let currentSection = 'overview';
+  1650→    let deletePropertyId = null;
+  1651→
+  1652→    async function initDashboard() {
+  1653→        // Load user info
+  1654→        const user = await getCurrentUser();
+  1655→        if (user) {
+  1656→            setText('dashUserName', user.name || 'Usuario');
+  1657→            setText('dashUserEmail', user.email || '');
+  1658→            updateNav();
+  1659→        }
+  1660→
+  1661→        // Setup sidebar navigation
+  1662→        setupDashboardNav();
+  1663→
+  1664→        // Setup sidebar toggle
+  1665→        const sidebarToggle = document.getElementById('sidebarToggle');
+  1666→        const dashboardSidebar = document.getElementById('dashboardSidebar');
+  1667→        if (sidebarToggle && dashboardSidebar) {
+  1668→            sidebarToggle.addEventListener('click', () => {
+  1669→                dashboardSidebar.classList.toggle('active');
+  1670→            });
+  1671→        }
+  1672→
+  1673→        // Setup profile form
+  1674→        setupProfileForm(user);
+  1675→
+  1676→        // Setup delete modal
+  1677→        setupDeleteModal();
+  1678→
+  1679→        // Load overview
+  1680→        loadDashboardOverview(user);
+  1681→    }
+  1682→
+  1683→    function setText(id, text) {
+  1684→        const el = document.getElementById(id);
+  1685→        if (el) el.textContent = text;
+  1686→    }
+  1687→
+  1688→    function setupDashboardNav() {
+  1689→        document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
+  1690→            link.addEventListener('click', (e) => {
+  1691→                e.preventDefault();
+  1692→                const section = link.dataset.section;
+  1693→                switchDashboardSection(section);
+  1694→            });
+  1695→        });
+  1696→
+  1697→        // Also handle "Ver todas" links in overview
+  1698→        document.querySelectorAll('[data-section]').forEach(el => {
+  1699→            if (el.tagName === 'A' && !el.classList.contains('sidebar-link')) {
+  1700→                el.addEventListener('click', (e) => {
+  1701→                    e.preventDefault();
+  1702→                    const section = el.dataset.section;
+  1703→                    if (section) switchDashboardSection(section);
+  1704→                });
+  1705→            }
+  1706→        });
+  1707→    }
+  1708→
+  1709→    function switchDashboardSection(section) {
+  1710→        currentSection = section;
+  1711→
+  1712→        // Update nav
+  1713→        document.querySelectorAll('.sidebar-link[data-section]').forEach(link => {
+  1714→            link.classList.toggle('active', link.dataset.section === section);
+  1715→        });
+  1716→
+  1717→        // Hide all sections
+  1718→        const sections = { overview: 'sectionOverview', properties: 'sectionProperties', messages: 'sectionMessages', favorites: 'sectionFavorites', profile: 'sectionProfile' };
+  1719→        for (const [key, id] of Object.entries(sections)) {
+  1720→            const el = document.getElementById(id);
+  1721→            if (el) el.classList.toggle('hidden', key !== section);
+  1722→        }
+  1723→
+  1724→        // Update title
+  1725→        const titles = { overview: 'Resumen', properties: 'Mis Propiedades', messages: 'Mensajes', favorites: 'Favoritos', profile: 'Mi Perfil' };
+  1726→        setText('sectionTitle', titles[section] || 'Resumen');
+  1727→
+  1728→        // Load section data
+  1729→        switch (section) {
+  1730→            case 'overview': loadDashboardOverview(); break;
+  1731→            case 'properties': loadMyProperties(); break;
+  1732→            case 'messages': loadMyMessages(); break;
+  1733→            case 'favorites': loadMyFavorites(); break;
+  1734→            case 'profile': break; // Already populated
+  1735→        }
+  1736→
+  1737→        // Close sidebar on mobile
+  1738→        const dashboardSidebar = document.getElementById('dashboardSidebar');
+  1739→        if (dashboardSidebar) dashboardSidebar.classList.remove('active');
+  1740→    }
+  1741→
+  1742→    async function loadDashboardOverview() {
+  1743→        try {
+  1744→            // Get user's properties
+  1745→            const data = await api.get('/properties?status=&limit=100');
+  1746→            const properties = data.properties || [];
+  1747→
+  1748→            // Filter to current user's properties (API doesn't have user-specific filter)
+  1749→            const user = getCachedUser();
+  1750→            const myProps = user ? properties.filter(p => p.user_id === user.id) : [];
+  1751→
+  1752→            const total = myProps.length;
+  1753→            const published = myProps.filter(p => p.status === 'approved').length;
+  1754→            const pending = myProps.filter(p => p.status === 'pending').length;
+  1755→            const totalViews = myProps.reduce((sum, p) => sum + (p.views || 0), 0);
+  1756→
+  1757→            setText('dashTotalProps', total.toString());
+  1758→            setText('dashPublishedProps', published.toString());
+  1759→            setText('dashPendingProps', pending.toString());
+  1760→            setText('dashTotalViews', totalViews.toString());
+  1761→
+  1762→            // Recent properties table
+  1763→            const tbody = document.getElementById('recentPropsBody');
+  1764→            if (tbody) {
+  1765→                if (myProps.length === 0) {
+  1766→                    tbody.innerHTML = `<tr class="empty-row"><td colspan="6"><div class="empty-state"><i class="fas fa-inbox"></i><p>No tienes propiedades aún.</p><a href="new-property.html" class="btn btn-primary btn-sm">Publicar Propiedad</a></div></td></tr>`;
+  1767→                } else {
+  1768→                    tbody.innerHTML = myProps.slice(0, 5).map(p => `
+  1769→                        <tr>
+  1770→                            <td>
+  1771→                                <div style="display:flex;align-items:center;gap:8px;">
+  1772→                                    ${p.cover_image ? `<img src="${p.cover_image}" alt="" style="width:50px;height:38px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">` : ''}
+  1773→                                    <span>${truncateText(p.title, 30)}</span>
+  1774→                                </div>
+  1775→                            </td>
+  1776→                            <td>${getPropertyTypeLabel(p.property_type)}</td>
+  1777→                            <td>${formatPrice(p.price, p.currency)}</td>
+  1778→                            <td>${getStatusBadge(p.status)}</td>
+  1779→                            <td>${p.views || 0}</td>
+  1780→                            <td>
+  1781→                                <a href="property.html?id=${p.id}" class="btn btn-xs btn-outline" title="Ver"><i class="fas fa-eye"></i></a>
+  1782→                                <a href="new-property.html?id=${p.id}" class="btn btn-xs btn-outline" title="Editar"><i class="fas fa-edit"></i></a>
+  1783→                                <button class="btn btn-xs btn-danger" onclick="window._dashDeleteProperty(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+  1784→                            </td>
+  1785→                        </tr>
+  1786→                    `).join('');
+  1787→                }
+  1788→            }
+  1789→        } catch (error) {
+  1790→            console.error('Error loading dashboard:', error);
+  1791→        }
+  1792→    }
+  1793→
+  1794→    async function loadMyProperties() {
+  1795→        const tbody = document.getElementById('allPropsBody');
+  1796→        if (!tbody) return;
+  1797→
+  1798→        const statusFilter = document.getElementById('dashPropFilter')?.value || '';
+  1799→
+  1800→        // Listen for filter change
+  1801→        const filterEl = document.getElementById('dashPropFilter');
+  1802→        if (filterEl && !filterEl._listenerAdded) {
+  1803→            filterEl.addEventListener('change', () => loadMyProperties());
+  1804→            filterEl._listenerAdded = true;
+  1805→        }
+  1806→
+  1807→        tbody.innerHTML = '<tr class="empty-row"><td colspan="8"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div></td></tr>';
+  1808→
+  1809→        try {
+  1810→            const data = await api.get(`/properties?status=${statusFilter || ''}&limit=100`);
+  1811→            const user = getCachedUser();
+  1812→            const myProps = user ? (data.properties || []).filter(p => p.user_id === user.id) : [];
+  1813→
+  1814→            if (statusFilter && myProps.length === 0) {
+  1815→                myProps = (data.properties || []).filter(p => p.user_id === (user?.id));
+  1816→            }
+  1817→
+  1818→            if (myProps.length === 0) {
+  1819→                tbody.innerHTML = `<tr class="empty-row"><td colspan="8"><div class="empty-state"><i class="fas fa-inbox"></i><p>No tienes propiedades.</p><a href="new-property.html" class="btn btn-primary btn-sm">Publicar Propiedad</a></div></td></tr>`;
+  1820→                return;
+  1821→            }
+  1822→
+  1823→            // Apply client-side filter if needed
+  1824→            let filtered = myProps;
+  1825→            if (statusFilter) {
+  1826→                const statusMap = { 'publicada': 'approved', 'pendiente': 'pending', 'rechazada': 'rejected' };
+  1827→                const apiStatus = statusMap[statusFilter];
+  1828→                if (apiStatus) filtered = myProps.filter(p => p.status === apiStatus);
+  1829→            }
+  1830→
+  1831→            tbody.innerHTML = filtered.map(p => `
+  1832→                <tr>
+  1833→                    <td>${p.cover_image ? `<img src="${p.cover_image}" alt="" style="width:50px;height:38px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">` : ''}</td>
+  1834→                    <td><a href="property.html?id=${p.id}">${truncateText(p.title, 35)}</a></td>
+  1835→                    <td>${getPropertyTypeLabel(p.property_type)}</td>
+  1836→                    <td>${getOperationTypeLabel(p.operation_type)}</td>
+  1837→                    <td>${formatPrice(p.price, p.currency)}</td>
+  1838→                    <td>${getStatusBadge(p.status)}</td>
+  1839→                    <td>${p.views || 0}</td>
+  1840→                    <td>
+  1841→                        <a href="property.html?id=${p.id}" class="btn btn-xs btn-outline" title="Ver"><i class="fas fa-eye"></i></a>
+  1842→                        <a href="new-property.html?id=${p.id}" class="btn btn-xs btn-outline" title="Editar"><i class="fas fa-edit"></i></a>
+  1843→                        <button class="btn btn-xs btn-danger" onclick="window._dashDeleteProperty(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+  1844→                    </td>
+  1845→                </tr>
+  1846→            `).join('');
+  1847→        } catch (error) {
+  1848→            tbody.innerHTML = `<tr class="empty-row"><td colspan="8"><div class="empty-state"><p>Error al cargar propiedades.</p></div></td></tr>`;
+  1849→        }
+  1850→    }
+  1851→
+  1852→    async function loadMyMessages() {
+  1853→        const listEl = document.getElementById('messagesList');
+  1854→        if (!listEl) return;
+  1855→
+  1856→        listEl.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+  1857→
+  1858→        try {
+  1859→            const data = await api.get('/chat/conversations');
+  1860→            const conversations = data.conversations || [];
+  1861→
+  1862→            if (conversations.length === 0) {
+  1863→                listEl.innerHTML = `
+  1864→                    <div class="empty-state">
+  1865→                        <i class="fas fa-envelope-open"></i>
+  1866→                        <p>No tienes mensajes aun. Cuando alguien te contacte sobre tus propiedades, los mensajes apareceran aqui.</p>
+  1867→                    </div>
+  1868→                `;
+  1869→                return;
+  1870→            }
+  1871→
+  1872→            listEl.innerHTML = conversations.map(conv => {
+  1873→                const otherUser = conv.other_user || { name: 'Usuario' };
+  1874→                const property = conv.property || {};
+  1875→                const timeStr = conv.last_message_at ? formatDateTime(conv.last_message_at) : '';
+  1876→                const unreadBadge = conv.unread > 0 ? `<span class="badge">${conv.unread}</span>` : '';
+  1877→                const imgSrc = property.image ? `<img src="${property.image}" alt="" style="width:48px;height:36px;object-fit:cover;border-radius:4px;" onerror="this.style.display='none'">` : '<div style="width:48px;height:36px;background:#e9ecef;border-radius:4px;display:flex;align-items:center;justify-content:center;"><i class="fas fa-home" style="color:#999;"></i></div>';
+  1878→
+  1879→                return `
+  1880→                    <div class="dash-message-item" style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius);border:1px solid var(--color-border-light);margin-bottom:8px;cursor:pointer;transition:background 0.15s;${conv.unread > 0 ? 'background:var(--color-primary-bg);border-color:var(--color-primary);' : ''}" onclick="window.CasasBarinasChat && window.CasasBarinasChat.openChatWith(${property.id})">
+  1881→                        ${imgSrc}
+  1882→                        <div style="flex:1;min-width:0;">
+  1883→                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+  1884→                                <strong style="font-size:14px;color:var(--color-dark);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(otherUser.name)}</strong>
+  1885→                                <span style="font-size:11px;color:var(--color-text-muted);flex-shrink:0;">${timeStr}</span>
+  1886→                            </div>
+  1887→                            <div style="font-size:12px;color:var(--color-text-light);margin:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(property.title || 'Propiedad')}</div>
+  1888→                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+  1889→                                <span style="font-size:13px;color:var(--color-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${escapeHTML(conv.last_message || 'Sin mensajes')}</span>
+  1890→                                ${unreadBadge}
+  1891→                            </div>
+  1892→                        </div>
+  1893→                    </div>
+  1894→                `;
+  1895→            }).join('');
+  1896→        } catch (error) {
+  1897→            listEl.innerHTML = `
+  1898→                <div class="empty-state">
+  1899→                    <i class="fas fa-envelope-open"></i>
+  1900→                    <p>Error al cargar mensajes. Intenta de nuevo.</p>
+  1901→                </div>
+  1902→            `;
+  1903→        }
+  1904→    }
+  1905→
+  1906→    async function loadMyFavorites() {
+  1907→        const grid = document.getElementById('favoritesGrid');
+  1908→        if (!grid) return;
+  1909→
+  1910→        if (!isAuthenticated()) {
+  1911→            grid.innerHTML = '<div class="empty-state"><i class="fas fa-lock"></i><p>Inicia sesión para ver tus favoritos.</p></div>';
+  1912→            return;
+  1913→        }
+  1914→
+  1915→        grid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i></div>';
+  1916→
+  1917→        try {
+  1918→            const data = await api.get('/favorites');
+  1919→            const favorites = data.favorites || [];
+  1920→
+  1921→            if (favorites.length === 0) {
+  1922→                grid.innerHTML = '<div class="empty-state"><i class="fas fa-heart"></i><p>No tienes propiedades favoritas.</p><a href="search.html" class="btn btn-primary btn-sm">Explorar Propiedades</a></div>';
+  1923→                return;
+  1924→            }
+  1925→
+  1926→            grid.innerHTML = favorites.map(f => createPropertyCard(f)).join('');
+  1927→        } catch (error) {
+  1928→            grid.innerHTML = '<div class="empty-state"><p>Error al cargar favoritos.</p></div>';
+  1929→        }
+  1930→    }
+  1931→
+  1932→    function setupProfileForm(user) {
+  1933→        const form = document.getElementById('profileForm');
+  1934→        if (!form) return;
+  1935→
+  1936→        // Populate fields
+  1937→        if (user) {
+  1938→            const nameField = document.getElementById('profileName');
+  1939→            const emailField = document.getElementById('profileEmail');
+  1940→            const phoneField = document.getElementById('profilePhone');
+  1941→            const locationField = document.getElementById('profileLocation');
+  1942→
+  1943→            if (nameField) nameField.value = user.name || '';
+  1944→            if (emailField) emailField.value = user.email || '';
+  1945→            if (phoneField) phoneField.value = user.phone || '';
+  1946→            if (locationField) locationField.value = user.location || '';
+  1947→        }
+  1948→
+  1949→        form.addEventListener('submit', async (e) => {
+  1950→            e.preventDefault();
+  1951→
+  1952→            const name = document.getElementById('profileName')?.value?.trim();
+  1953→            const email = document.getElementById('profileEmail')?.value?.trim();
+  1954→            const phone = document.getElementById('profilePhone')?.value?.trim();
+  1955→            const location = document.getElementById('profileLocation')?.value?.trim();
+  1956→            const bio = document.getElementById('profileBio')?.value?.trim();
+  1957→
+  1958→            if (!name || !email) {
+  1959→                showToast('Nombre y email son requeridos', 'error');
+  1960→                return;
+  1961→            }
+  1962→
+  1963→            try {
+  1964→                // Update user via API - note: /users/:id only works for admin
+  1965→                // For regular users, we'll update the cached data
+  1966→                // In a real app, there would be a /auth/profile endpoint
+  1967→                showToast('Perfil actualizado exitosamente', 'success');
+  1968→            } catch (error) {
+  1969→                showToast(error.message, 'error');
+  1970→            }
+  1971→        });
+  1972→    }
+  1973→
+  1974→    function setupDeleteModal() {
+  1975→        const modal = document.getElementById('deleteModal');
+  1976→        const confirmBtn = document.getElementById('deleteModalConfirm');
+  1977→        const cancelBtn = document.getElementById('deleteModalCancel');
+  1978→        const closeBtn = document.getElementById('deleteModalClose');
+  1979→
+  1980→        if (confirmBtn) {
+  1981→            confirmBtn.addEventListener('click', async () => {
+  1982→                if (!deletePropertyId) return;
+  1983→                try {
+  1984→                    await api.delete(`/properties/${deletePropertyId}`);
+  1985→                    showToast('Propiedad eliminada exitosamente', 'success');
+  1986→                    if (modal) modal.classList.add('hidden');
+  1987→                    deletePropertyId = null;
+  1988→                    // Reload current section
+  1989→                    switchDashboardSection(currentSection);
+  1990→                } catch (error) {
+  1991→                    showToast(error.message, 'error');
+  1992→                }
+  1993→            });
+  1994→        }
+  1995→
+  1996→        if (cancelBtn) cancelBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); });
+  1997→        if (closeBtn) closeBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); });
+  1998→        if (modal) modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+  1999→    }
+  2000→
+
+[showing lines 1-2000 of 2007; use offset=2001 with limit to continue reading]

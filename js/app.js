@@ -939,6 +939,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statProperties) {
         loadSiteStats();
     }
+
+    // Load featured properties (inmuebles) on index page
+    const featuredPropertiesGrid = document.getElementById('featuredPropertiesGrid');
+    if (featuredPropertiesGrid) {
+        loadFeaturedPropertiesSection();
+    }
 });
 
 // ─── Index Page: Featured Properties ───────────────────────────
@@ -979,6 +985,77 @@ async function loadFeaturedProperties() {
         if (emptyState) emptyState.style.display = '';
         console.error('Error loading featured businesses:', error);
     }
+}
+
+// ─── Index Page: Featured Properties (Inmuebles) ────────────────
+async function loadFeaturedPropertiesSection() {
+    const grid = document.getElementById('featuredPropertiesGrid');
+    const emptyState = document.getElementById('propertiesEmpty');
+    const loading = document.getElementById('propertiesLoading');
+    if (!grid) return;
+
+    try {
+        const selectedState = getSelectedState();
+        let endpoint = '/properties?status=approved&limit=6';
+        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+
+        const data = await api.get(endpoint);
+        let properties = data.properties || [];
+
+        if (loading) loading.remove();
+
+        if (properties.length === 0) {
+            if (emptyState) emptyState.style.display = '';
+            return;
+        }
+
+        if (emptyState) emptyState.style.display = 'none';
+        grid.innerHTML = properties.map(p => createPropertyCard(p)).join('');
+    } catch (error) {
+        if (loading) loading.remove();
+        if (emptyState) emptyState.style.display = '';
+        console.error('Error loading featured properties:', error);
+    }
+}
+
+// ─── Property Card Creator (used on index and search) ──────────
+const PROPERTY_TYPE_LABELS = {
+    casa: 'Casa', apartamento: 'Apartamento', terreno: 'Terreno',
+    local_comercial: 'Local Comercial', oficina: 'Oficina', hotel: 'Hotel',
+    finca: 'Finca', galpon: 'Galpón', estacionamiento: 'Estacionamiento', otro: 'Otro'
+};
+const OPERATION_TYPE_LABELS = { venta: 'Venta', alquiler: 'Alquiler', venta_alquiler: 'Venta y Alquiler' };
+const CURRENCY_SYMBOLS = { USD: '$', EUR: '€', Bs: 'Bs' };
+
+function createPropertyCard(p) {
+    const typeLabel = PROPERTY_TYPE_LABELS[p.property_type] || p.property_type;
+    const opLabel = OPERATION_TYPE_LABELS[p.operation_type] || p.operation_type;
+    const currSymbol = CURRENCY_SYMBOLS[p.currency] || '$';
+    const img = p.cover_image || '';
+    const featuredBadge = p.featured ? '<span class="card-badge-featured"><i class="fas fa-star"></i></span>' : '';
+
+    let statsHtml = '';
+    if (p.bedrooms) statsHtml += `<span><i class="fas fa-bed"></i> ${p.bedrooms}</span>`;
+    if (p.bathrooms) statsHtml += `<span><i class="fas fa-bath"></i> ${p.bathrooms}</span>`;
+    if (p.area) statsHtml += `<span><i class="fas fa-ruler-combined"></i> ${p.area}${p.area_unit === 'ha' ? ' ha' : ' m²'}</span>`;
+
+    return `
+    <a href="property-detail.html?id=${p.id}" class="business-card">
+        ${featuredBadge}
+        <div class="business-card-img">
+            ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.title)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 300%22><rect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23ccc%22 font-size=%2240%22>🏠</text></svg>'">` : '<div class="card-img-placeholder"><i class="fas fa-home"></i></div>'}
+            <div class="card-badges">
+                <span class="card-badge card-badge-type">${escapeHtml(typeLabel)}</span>
+                <span class="card-badge card-badge-op">${escapeHtml(opLabel)}</span>
+            </div>
+        </div>
+        <div class="business-card-body">
+            <h3 class="business-card-title">${escapeHtml(p.title)}</h3>
+            <div class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(p.city || '')}${p.state ? ', ' + escapeHtml(p.state) : ''}</div>
+            ${statsHtml ? `<div class="business-card-stats">${statsHtml}</div>` : ''}
+            <div class="business-card-price">${currSymbol} ${Number(p.price).toLocaleString('es-VE')}</div>
+        </div>
+    </a>`;
 }
 
 // ─── Index Page: Site Stats ────────────────────────────────────

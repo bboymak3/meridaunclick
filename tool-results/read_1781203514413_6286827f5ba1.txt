@@ -1,0 +1,808 @@
+    80→   119→                    }
+    81→   120→                });
+    82→   121→            }
+    83→   122→
+    84→   123→            // Fix map size after container is visible
+    85→   124→            setTimeout(() => locationMap.invalidateSize(), 500);
+    86→   125→
+    87→   126→        } catch (error) {
+    88→   127→            console.error('Error initializing location picker:', error);
+    89→   128→        }
+    90→   129→    }
+    91→   130→
+    92→   131→    function updateCoordinateFields() {
+    93→   132→        const latInput = document.getElementById('propLat');
+    94→   133→        const lngInput = document.getElementById('propLng');
+    95→   134→        const latDisplay = document.getElementById('coordLatDisplay');
+    96→   135→        const lngDisplay = document.getElementById('coordLngDisplay');
+    97→   136→
+    98→   137→        if (latInput) latInput.value = selectedLat.toFixed(6);
+    99→   138→        if (lngInput) lngInput.value = selectedLng.toFixed(6);
+   100→   139→        if (latDisplay) latDisplay.textContent = selectedLat.toFixed(6);
+   101→   140→        if (lngDisplay) lngDisplay.textContent = selectedLng.toFixed(6);
+   102→   141→    }
+   103→   142→
+   104→   143→    async function searchLocation(query) {
+   105→   144→        if (!query || !query.trim() || !geocoder) return;
+   106→   145→
+   107→   146→        try {
+   108→   147→            const results = await geocoder.geocode(query);
+   109→   148→            if (results && results.length > 0) {
+   110→   149→                const loc = results[0].center;
+   111→   150→                selectedLat = loc.lat;
+   112→   151→                selectedLng = loc.lng;
+   113→   152→                locationMarker.setLatLng([selectedLat, selectedLng]);
+   114→   153→                locationMap.flyTo([selectedLat, selectedLng], 16, { duration: 1 });
+   115→   154→                updateCoordinateFields();
+   116→   155→
+   117→   156→                // Update address field if empty
+   118→   157→                const dirInput = document.getElementById('propDireccion');
+   119→   158→                if (dirInput && !dirInput.value.trim()) {
+   120→   159→                    dirInput.value = results[0].name || query;
+   121→   160→                }
+   122→   161→
+   123→   162→                // Update city if empty
+   124→   163→                const cityInput = document.getElementById('propCiudad');
+   125→   164→                if (cityInput && !cityInput.value.trim() && results[0].properties) {
+   126→   165→                    const city = results[0].properties.city || results[0].properties.town || '';
+   127→   166→                    if (city) cityInput.value = city;
+   128→   167→                }
+   129→   168→            } else {
+   130→   169→                showToast('No se encontró la ubicación. Intenta con otra búsqueda.', 'warning');
+   131→   170→            }
+   132→   171→        } catch (error) {
+   133→   172→            console.error('Geocoding error:', error);
+   134→   173→            showToast('Error al buscar la ubicación.', 'error');
+   135→   174→        }
+   136→   175→    }
+   137→   176→
+   138→   177→    // ─── Character Counters ────────────────────────────────────
+   139→   178→    function setupCharCounters() {
+   140→   179→        const titleInput = document.getElementById('propTitle');
+   141→   180→        const descInput = document.getElementById('propDescription');
+   142→   181→        const titleCount = document.getElementById('titleCharCount');
+   143→   182→        const descCount = document.getElementById('descCharCount');
+   144→   183→
+   145→   184→        if (titleInput && titleCount) {
+   146→   185→            titleInput.addEventListener('input', () => {
+   147→   186→                const len = titleInput.value.length;
+   148→   187→                titleCount.textContent = len + '/150';
+   149→   188→                titleCount.style.color = len > 140 ? '#ef4444' : len > 100 ? '#f59e0b' : '#9ca3af';
+   150→   189→            });
+   151→   190→        }
+   152→   191→
+   153→   192→        if (descInput && descCount) {
+   154→   193→            descInput.addEventListener('input', () => {
+   155→   194→                const len = descInput.value.length;
+   156→   195→                descCount.textContent = len + '/2000';
+   157→   196→                descCount.style.color = len > 1800 ? '#ef4444' : len > 1500 ? '#f59e0b' : '#9ca3af';
+   158→   197→            });
+   159→   198→        }
+   160→   199→    }
+   161→   200→
+   162→   201→    // ─── Step Progress ──────────────────────────────────────────
+   163→   202→    function setupStepProgress() {
+   164→   203→        const sections = document.querySelectorAll('.pf-section');
+   165→   204→        const steps = document.querySelectorAll('.pf-step');
+   166→   205→        const stepLines = document.querySelectorAll('.pf-step-line');
+   167→   206→
+   168→   207→        if (!sections.length || !steps.length) return;
+   169→   208→
+   170→   209→        // IntersectionObserver to highlight active step
+   171→   210→        const observer = new IntersectionObserver((entries) => {
+   172→   211→            entries.forEach(entry => {
+   173→   212→                if (entry.isIntersecting) {
+   174→   213→                    const sectionNum = parseInt(entry.target.dataset.section);
+   175→   214→                    updateStepIndicator(sectionNum);
+   176→   215→                }
+   177→   216→            });
+   178→   217→        }, { threshold: 0.3, rootMargin: '-100px 0px -50% 0px' });
+   179→   218→
+   180→   219→        sections.forEach(section => observer.observe(section));
+   181→   220→
+   182→   221→        // Focus tracking on inputs within sections
+   183→   222→        sections.forEach(section => {
+   184→   223→            const inputs = section.querySelectorAll('input, select, textarea');
+   185→   224→            inputs.forEach(input => {
+   186→   225→                input.addEventListener('focus', () => {
+   187→   226→                    sections.forEach(s => s.classList.remove('in-focus'));
+   188→   227→                    section.classList.add('in-focus');
+   189→   228→                    const sectionNum = parseInt(section.dataset.section);
+   190→   229→                    updateStepIndicator(sectionNum);
+   191→   230→                });
+   192→   231→            });
+   193→   232→        });
+   194→   233→    }
+   195→   234→
+   196→   235→    function updateStepIndicator(activeStep) {
+   197→   236→        const steps = document.querySelectorAll('.pf-step');
+   198→   237→        const stepLines = document.querySelectorAll('.pf-step-line');
+   199→   238→
+   200→   239→        steps.forEach((step, i) => {
+   201→   240→            const stepNum = i + 1;
+   202→   241→            step.classList.remove('active', 'completed');
+   203→   242→            if (stepNum < activeStep) {
+   204→   243→                step.classList.add('completed');
+   205→   244→            } else if (stepNum === activeStep) {
+   206→   245→                step.classList.add('active');
+   207→   246→            }
+   208→   247→        });
+   209→   248→
+   210→   249→        stepLines.forEach((line, i) => {
+   211→   250→            const lineStep = i + 1;
+   212→   251→            line.classList.toggle('active', lineStep < activeStep);
+   213→   252→        });
+   214→   253→    }
+   215→   254→
+   216→   255→    // ─── Currency Radio Buttons ─────────────────────────────────
+   217→   256→    function setupCurrencySelector() {
+   218→   257→        const radios = document.querySelectorAll('input[name="moneda"]');
+   219→   258→        const priceSymbol = document.getElementById('priceSymbol');
+   220→   259→
+   221→   260→        const symbols = { 'USD': '$', 'EUR': '€', 'Bs': 'Bs' };
+   222→   261→
+   223→   262→        radios.forEach(radio => {
+   224→   263→            radio.addEventListener('change', () => {
+   225→   264→                if (priceSymbol) {
+   226→   265→                    priceSymbol.textContent = symbols[radio.value] || '$';
+   227→   266→                }
+   228→   267→            });
+   229→   268→        });
+   230→   269→    }
+   231→   270→
+   232→   271→    function getSelectedCurrency() {
+   233→   272→        const checked = document.querySelector('input[name="moneda"]:checked');
+   234→   273→        return checked ? checked.value : 'USD';
+   235→   274→    }
+   236→   275→
+   237→   276→    // ─── Initialization ─────────────────────────────────────────
+   238→   277→    function initForm() {
+   239→   278→        // Check authentication
+   240→   279→        if (!requireAuth()) return;
+   241→   280→
+   242→   281→        // Check for edit mode via URL param
+   243→   282→        const urlParams = new URLSearchParams(window.location.search);
+   244→   283→        const editId = urlParams.get('id');
+   245→   284→        if (editId) {
+   246→   285→            editingPropertyId = parseInt(editId);
+   247→   286→            loadPropertyForEdit(editingPropertyId);
+   248→   287→        }
+   249→   288→
+   250→   289→        // Set up event listeners
+   251→   290→        setupPhotoUpload();
+   252→   291→        setupFormSubmit();
+   253→   292→        setupCharCounters();
+   254→   293→        setupStepProgress();
+   255→   294→        setupCurrencySelector();
+   256→   295→
+   257→   296→        // Initialize location picker map
+   258→   297→        initLocationPicker();
+   259→   298→    }
+   260→   299→
+   261→   300→    // ─── Load Property for Editing ──────────────────────────────
+   262→   301→    async function loadPropertyForEdit(propertyId) {
+   263→   302→        try {
+   264→   303→            const property = await api.get(`/properties/${propertyId}`);
+   265→   304→
+   266→   305→            if (formTitle) {
+   267→   306→                formTitle.textContent = 'Editar Propiedad';
+   268→   307→            }
+   269→   308→            if (submitBtnText) {
+   270→   309→                submitBtnText.textContent = 'Guardar Cambios';
+   271→   310→            }
+   272→   311→
+   273→   312→            updateFormFromProperty(property);
+   274→   313→        } catch (error) {
+   275→   314→            showToast('Error al cargar la propiedad para editar', 'error');
+   276→   315→            console.error('Error loading property:', error);
+   277→   316→        }
+   278→   317→    }
+   279→   318→
+   280→   319→    // ─── Populate Form from Property Data ───────────────────────
+   281→   320→    function updateFormFromProperty(property) {
+   282→   321→        if (!property) return;
+   283→   322→
+   284→   323→        const setValue = (id, value) => {
+   285→   324→            const el = document.getElementById(id);
+   286→   325→            if (el) el.value = value || '';
+   287→   326→        };
+   288→   327→
+   289→   328→        setValue('propTitle', property.title);
+   290→   329→        setValue('propDescription', property.description);
+   291→   330→        setValue('propPrecio', property.price);
+   292→   331→        // Currency - now uses radio buttons
+   293→   332→        const currencyRadio = document.querySelector(`input[name="moneda"][value="${property.currency || 'USD'}"]`);
+   294→   333→        if (currencyRadio) currencyRadio.checked = true;
+   295→   334→        const priceSymbol = document.getElementById('priceSymbol');
+   296→   335→        if (priceSymbol) {
+   297→   336→            const symbols = { 'USD': '$', 'EUR': '€', 'Bs': 'Bs' };
+   298→   337→            priceSymbol.textContent = symbols[property.currency || 'USD'] || '$';
+   299→   338→        }
+   300→   339→        setValue('propDireccion', property.address);
+   301→   340→        setValue('propCiudad', property.city);
+   302→   341→        setValue('propEstado', property.state);
+   303→   342→        setValue('propLat', property.lat);
+   304→   343→        setValue('propLng', property.lng);
+   305→   344→
+   306→   345→        // Update map marker if coordinates exist
+   307→   346→        if (property.lat && property.lng && locationMap && locationMarker) {
+   308→   347→            selectedLat = property.lat;
+   309→   348→            selectedLng = property.lng;
+   310→   349→            locationMarker.setLatLng([selectedLat, selectedLng]);
+   311→   350→            locationMap.flyTo([selectedLat, selectedLng], 15, { duration: 0.5 });
+   312→   351→            updateCoordinateFields();
+   313→   352→        }
+   314→   353→        setValue('propHabitaciones', property.bedrooms);
+   315→   354→        setValue('propBanos', property.bathrooms);
+   316→   355→        setValue('propEstacionamientos', property.parking_spaces);
+   317→   356→        setValue('propPisos', property.floors);
+   318→   357→        setValue('propArea', property.area);
+   319→   358→        setValue('propAreaUnidad', property.area_unit);
+   320→   359→        setValue('propAno', property.year_built);
+   321→   360→
+   322→   361→        // Property type - capitalize for display in select
+   323→   362→        const propTipo = document.getElementById('propTipo');
+   324→   363→        if (propTipo && property.property_type) {
+   325→   364→            const typeMap = {
+   326→   365→                'casa': 'Casa',
+   327→   366→                'apartamento': 'Apartamento',
+   328→   367→                'terreno': 'Terreno',
+   329→   368→                'local_comercial': 'Local Comercial',
+   330→   369→                'oficina': 'Oficina',
+   331→   370→                'hotel': 'Hotel',
+   332→   371→                'finca': 'Finca',
+   333→   372→                'galpon': 'Galpón',
+   334→   373→                'estacionamiento': 'Estacionamiento',
+   335→   374→                'otro': 'Otro',
+   336→   375→            };
+   337→   376→            propTipo.value = typeMap[property.property_type.toLowerCase()] || property.property_type;
+   338→   377→        }
+   339→   378→
+   340→   379→        // Operation type
+   341→   380→        const propOperacion = document.getElementById('propOperacion');
+   342→   381→        if (propOperacion && property.operation_type) {
+   343→   382→            const opMap = {
+   344→   383→                'venta': 'Venta',
+   345→   384→                'alquiler': 'Alquiler',
+   346→   385→                'venta_alquiler': 'Venta y Alquiler',
+   347→   386→            };
+   348→   387→            propOperacion.value = opMap[property.operation_type.toLowerCase()] || property.operation_type;
+   349→   388→        }
+   350→   389→
+   351→   390→        // Features checkboxes
+   352→   391→        const featuresMap = {
+   353→   392→            'has_pool': 'Piscina',
+   354→   393→            'has_garden': 'Jardín',
+   355→   394→            'has_ac': 'Aire Acondicionado',
+   356→   395→            'has_kitchen': 'Cocina',
+   357→   396→            'has_furniture': 'Amueblado',
+   358→   397→            'has_security': 'Seguridad',
+   359→   398→            'has_elevator': 'Ascensor',
+   360→   399→        };
+   361→   400→        for (const [field, label] of Object.entries(featuresMap)) {
+   362→   401→            if (property[field]) {
+   363→   402→                const checkbox = propertyForm?.querySelector(`input[name="caracteristicas"][value="${label}"]`);
+   364→   403→                if (checkbox) checkbox.checked = true;
+   365→   404→            }
+   366→   405→        }
+   367→   406→
+   368→   407→        // Load existing images
+   369→   408→        if (property.images && property.images.length > 0) {
+   370→   409→            uploadedImages = property.images.map((img, index) => ({
+   371→   410→                url: img.url,
+   372→   411→                file: null,
+   373→   412→                preview: img.url || img.thumbnail_url,
+   374→   413→                isExisting: true,
+   375→   414→                imageId: img.id,
+   376→   415→                isCover: img.is_cover,
+   377→   416→                orderIndex: img.order_index,
+   378→   417→            }));
+   379→   418→            renderPhotoPreviews();
+   380→   419→        }
+   381→   420→
+   382→   421→        // Trigger char counters for edit mode
+   383→   422→        const titleInput = document.getElementById('propTitle');
+   384→   423→        const descInput = document.getElementById('propDescription');
+   385→   424→        const titleCount = document.getElementById('titleCharCount');
+   386→   425→        const descCount = document.getElementById('descCharCount');
+   387→   426→        if (titleInput && titleCount) {
+   388→   427→            const len = (titleInput.value || '').length;
+   389→   428→            titleCount.textContent = len + '/150';
+   390→   429→        }
+   391→   430→        if (descInput && descCount) {
+   392→   431→            const len = (descInput.value || '').length;
+   393→   432→            descCount.textContent = len + '/2000';
+   394→   433→        }
+   395→   434→    }
+   396→   435→
+   397→   436→    // ─── Photo Upload Setup ─────────────────────────────────────
+   398→   437→    function setupPhotoUpload() {
+   399→   438→        if (!uploadArea || !photoInput) return;
+   400→   439→
+   401→   440→        // Click to upload (gallery)
+   402→   441→        uploadArea.addEventListener('click', () => {
+   403→   442→            photoInput.click();
+   404→   443→        });
+   405→   444→
+   406→   445→        // File input change
+   407→   446→        photoInput.addEventListener('change', (e) => {
+   408→   447→            if (e.target.files) {
+   409→   448→                handlePhotoUpload(Array.from(e.target.files));
+   410→   449→                photoInput.value = ''; // Reset so same file can be selected again
+   411→   450→            }
+   412→   451→        });
+   413→   452→
+   414→   453→        // Drag and drop
+   415→   454→        uploadArea.addEventListener('dragover', (e) => {
+   416→   455→            e.preventDefault();
+   417→   456→            e.stopPropagation();
+   418→   457→            uploadArea.classList.add('active');
+   419→   458→        });
+   420→   459→
+   421→   460→        uploadArea.addEventListener('dragleave', (e) => {
+   422→   461→            e.preventDefault();
+   423→   462→            e.stopPropagation();
+   424→   463→            uploadArea.classList.remove('active');
+   425→   464→        });
+   426→   465→
+   427→   466→        uploadArea.addEventListener('drop', (e) => {
+   428→   467→            e.preventDefault();
+   429→   468→            e.stopPropagation();
+   430→   469→            uploadArea.classList.remove('active');
+   431→   470→
+   432→   471→            const files = Array.from(e.dataTransfer.files);
+   433→   472→            handlePhotoUpload(files);
+   434→   473→        });
+   435→   474→
+   436→   475→        // Gallery button
+   437→   476→        const galleryBtn = document.getElementById('galleryBtn');
+   438→   477→        if (galleryBtn) {
+   439→   478→            galleryBtn.addEventListener('click', () => {
+   440→   479→                photoInput.click();
+   441→   480→            });
+   442→   481→        }
+   443→   482→
+   444→   483→        // Camera button
+   445→   484→        const cameraBtn = document.getElementById('cameraBtn');
+   446→   485→        const cameraInput = document.getElementById('cameraInput');
+   447→   486→        if (cameraBtn && cameraInput) {
+   448→   487→            cameraBtn.addEventListener('click', () => {
+   449→   488→                cameraInput.click();
+   450→   489→            });
+   451→   490→            cameraInput.addEventListener('change', (e) => {
+   452→   491→                if (e.target.files) {
+   453→   492→                    handlePhotoUpload(Array.from(e.target.files));
+   454→   493→                    cameraInput.value = '';
+   455→   494→                }
+   456→   495→            });
+   457→   496→        }
+   458→   497→    }
+   459→   498→
+   460→   499→    // ─── Handle Photo Upload ────────────────────────────────────
+   461→   500→    function handlePhotoUpload(files) {
+   462→   501→        if (!files || files.length === 0) return;
+   463→   502→
+   464→   503→        // Check total count
+   465→   504→        const remaining = MAX_PHOTOS - uploadedImages.length;
+   466→   505→        if (remaining <= 0) {
+   467→   506→            showToast(`Máximo ${MAX_PHOTOS} imágenes permitidas`, 'warning');
+   468→   507→            return;
+   469→   508→        }
+   470→   509→
+   471→   510→        const validFiles = files.slice(0, remaining);
+   472→   511→
+   473→   512→        for (const file of validFiles) {
+   474→   513→            // Validate file extension
+   475→   514→            const extension = file.name.split('.').pop().toLowerCase();
+   476→   515→            if (!ALLOWED_EXTENSIONS.includes(extension)) {
+   477→   516→                showToast(`Archivo "${file.name}" no es un formato soportado. Usa JPG, PNG, WebP o GIF.`, 'error');
+   478→   517→                continue;
+   479→   518→            }
+   480→   519→
+   481→   520→            // Validate file type
+   482→   521→            if (!ALLOWED_TYPES.includes(file.type)) {
+   483→   522→                showToast(`Tipo de archivo "${file.name}" no soportado.`, 'error');
+   484→   523→                continue;
+   485→   524→            }
+   486→   525→
+   487→   526→            // Validate file size
+   488→   527→            if (file.size > MAX_FILE_SIZE) {
+   489→   528→                showToast(`Archivo "${file.name}" excede el límite de 5MB.`, 'error');
+   490→   529→                continue;
+   491→   530→            }
+   492→   531→
+   493→   532→            // Create preview
+   494→   533→            const reader = new FileReader();
+   495→   534→            reader.onload = (e) => {
+   496→   535→                uploadedImages.push({
+   497→   536→                    url: null,
+   498→   537→                    file: file,
+   499→   538→                    preview: e.target.result,
+   500→   539→                    isExisting: false,
+   501→   540→                });
+   502→   541→                renderPhotoPreviews();
+   503→   542→            };
+   504→   543→            reader.readAsDataURL(file);
+   505→   544→        }
+   506→   545→    }
+   507→   546→
+   508→   547→    // ─── Render Photo Previews ──────────────────────────────────
+   509→   548→    function renderPhotoPreviews() {
+   510→   549→        if (!photosPreview) return;
+   511→   550→
+   512→   551→        photosPreview.innerHTML = '';
+   513→   552→
+   514→   553→        uploadedImages.forEach((img, index) => {
+   515→   554→            const wrapper = document.createElement('div');
+   516→   555→            wrapper.className = 'photo-preview-item';
+   517→   556→            wrapper.draggable = true;
+   518→   557→            wrapper.dataset.index = index;
+   519→   558→
+   520→   559→            wrapper.innerHTML = `
+   521→   560→                <img src="${img.preview}" alt="Preview ${index + 1}">
+   522→   561→                ${index === 0 ? '<span class="photo-cover-badge">Principal</span>' : ''}
+   523→   562→                <button type="button" class="photo-remove-btn" title="Eliminar imagen">
+   524→   563→                    <i class="fas fa-times"></i>
+   525→   564→                </button>
+   526→   565→            `;
+   527→   566→
+   528→   567→            // Remove button
+   529→   568→            const removeBtn = wrapper.querySelector('.photo-remove-btn');
+   530→   569→            removeBtn.addEventListener('click', (e) => {
+   531→   570→                e.stopPropagation();
+   532→   571→                removePhoto(index);
+   533→   572→            });
+   534→   573→
+   535→   574→            // Drag to reorder
+   536→   575→            wrapper.addEventListener('dragstart', (e) => {
+   537→   576→                e.dataTransfer.setData('text/plain', index.toString());
+   538→   577→                wrapper.classList.add('dragging');
+   539→   578→            });
+   540→   579→
+   541→   580→            wrapper.addEventListener('dragend', () => {
+   542→   581→                wrapper.classList.remove('dragging');
+   543→   582→            });
+   544→   583→
+   545→   584→            wrapper.addEventListener('dragover', (e) => {
+   546→   585→                e.preventDefault();
+   547→   586→                wrapper.classList.add('drag-over');
+   548→   587→            });
+   549→   588→
+   550→   589→            wrapper.addEventListener('dragleave', () => {
+   551→   590→                wrapper.classList.remove('drag-over');
+   552→   591→            });
+   553→   592→
+   554→   593→            wrapper.addEventListener('drop', (e) => {
+   555→   594→                e.preventDefault();
+   556→   595→                wrapper.classList.remove('drag-over');
+   557→   596→                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+   558→   597→                const toIndex = index;
+   559→   598→                if (fromIndex !== toIndex) {
+   560→   599→                    const item = uploadedImages.splice(fromIndex, 1)[0];
+   561→   600→                    uploadedImages.splice(toIndex, 0, item);
+   562→   601→                    renderPhotoPreviews();
+   563→   602→                }
+   564→   603→            });
+   565→   604→
+   566→   605→            photosPreview.appendChild(wrapper);
+   567→   606→        });
+   568→   607→
+   569→   608→        // Update upload area message
+   570→   609→        if (uploadPlaceholder) {
+   571→   610→            if (uploadedImages.length >= MAX_PHOTOS) {
+   572→   611→                uploadPlaceholder.innerHTML = `
+   573→   612→                    <i class="fas fa-check-circle"></i>
+   574→   613→                    <h3>Máximo de imágenes alcanzado</h3>
+   575→   614→                    <p>Has alcanzado el límite de ${MAX_PHOTOS} imágenes</p>
+   576→   615→                `;
+   577→   616→                uploadArea.style.pointerEvents = 'none';
+   578→   617→                uploadArea.style.opacity = '0.6';
+   579→   618→            } else {
+   580→   619→                uploadArea.style.pointerEvents = '';
+   581→   620→                uploadArea.style.opacity = '';
+   582→   621→            }
+   583→   622→        }
+   584→   623→    }
+   585→   624→
+   586→   625→    // ─── Remove Photo ───────────────────────────────────────────
+   587→   626→    function removePhoto(index) {
+   588→   627→        if (index < 0 || index >= uploadedImages.length) return;
+   589→   628→
+   590→   629→        const removed = uploadedImages[index];
+   591→   630→        uploadedImages.splice(index, 1);
+   592→   631→        renderPhotoPreviews();
+   593→   632→
+   594→   633→        if (removed.isExisting) {
+   595→   634→            showToast('La imagen se eliminará al guardar los cambios', 'info');
+   596→   635→        }
+   597→   636→    }
+   598→   637→
+   599→   638→    // ─── Setup Form Submit ──────────────────────────────────────
+   600→   639→    function setupFormSubmit() {
+   601→   640→        if (!propertyForm) return;
+   602→   641→
+   603→   642→        propertyForm.addEventListener('submit', handleFormSubmit);
+   604→   643→    }
+   605→   644→
+   606→   645→    // ─── Handle Form Submit ─────────────────────────────────────
+   607→   646→    async function handleFormSubmit(e) {
+   608→   647→        e.preventDefault();
+   609→   648→
+   610→   649→        if (isSubmitting) return;
+   611→   650→
+   612→   651→        // Clear previous errors
+   613→   652→        document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+   614→   653→
+   615→   654→        // Gather form values
+   616→   655→        const getValue = (id) => {
+   617→   656→            const el = document.getElementById(id);
+   618→   657→            return el ? el.value.trim() : '';
+   619→   658→        };
+   620→   659→
+   621→   660→        const getValueNum = (id) => {
+   622→   661→            const el = document.getElementById(id);
+   623→   662→            return el ? parseFloat(el.value) : null;
+   624→   663→        };
+   625→   664→
+   626→   665→        const title = getValue('propTitle');
+   627→   666→        const description = getValue('propDescription');
+   628→   667→        const tipo = getValue('propTipo');
+   629→   668→        const operacion = getValue('propOperacion');
+   630→   669→        const precio = getValueNum('propPrecio');
+   631→   670→        const moneda = getSelectedCurrency();
+   632→   671→        const direccion = getValue('propDireccion');
+   633→   672→        const ciudad = getValue('propCiudad');
+   634→   673→        const estado = getValue('propEstado');
+   635→   674→        let lat = getValueNum('propLat');
+   636→   675→        let lng = getValueNum('propLng');
+   637→   676→        const habitaciones = getValueNum('propHabitaciones');
+   638→   677→        const banos = getValueNum('propBanos');
+   639→   678→        const estacionamientos = getValueNum('propEstacionamientos');
+   640→   679→        const pisos = getValueNum('propPisos');
+   641→   680→        const area = getValueNum('propArea');
+   642→   681→        const areaUnidad = getValue('propAreaUnidad');
+   643→   682→        const ano = getValueNum('propAno');
+   644→   683→
+   645→   684→        // ── Validation ──
+   646→   685→        let hasError = false;
+   647→   686→
+   648→   687→        if (!title) {
+   649→   688→            showFormError('propTitle', 'El título es requerido');
+   650→   689→            hasError = true;
+   651→   690→        } else if (title.length > 150) {
+   652→   691→            showFormError('propTitle', 'El título no puede exceder 150 caracteres');
+   653→   692→            hasError = true;
+   654→   693→        }
+   655→   694→
+   656→   695→        if (!description) {
+   657→   696→            showFormError('propDescription', 'La descripción es requerida');
+   658→   697→            hasError = true;
+   659→   698→        }
+   660→   699→
+   661→   700→        if (!tipo) {
+   662→   701→            showFormError('propTipo', 'Selecciona un tipo de propiedad');
+   663→   702→            hasError = true;
+   664→   703→        }
+   665→   704→
+   666→   705→        if (!operacion) {
+   667→   706→            showFormError('propOperacion', 'Selecciona un tipo de operación');
+   668→   707→            hasError = true;
+   669→   708→        }
+   670→   709→
+   671→   710→        if (!precio || precio <= 0) {
+   672→   711→            showFormError('propPrecio', 'Ingresa un precio válido');
+   673→   712→            hasError = true;
+   674→   713→        }
+   675→   714→
+   676→   715→        if (!direccion) {
+   677→   716→            showFormError('propDireccion', 'La dirección es requerida');
+   678→   717→            hasError = true;
+   679→   718→        }
+   680→   719→
+   681→   720→        if (!ciudad) {
+   682→   721→            showFormError('propCiudad', 'La ciudad es requerida');
+   683→   722→            hasError = true;
+   684→   723→        }
+   685→   724→
+   686→   725→        if (!area || area <= 0) {
+   687→   726→            showFormError('propArea', 'El área es requerida');
+   688→   727→            hasError = true;
+   689→   728→        }
+   690→   729→
+   691→   730→        if (hasError) {
+   692→   731→            showToast('Por favor corrige los errores en el formulario', 'error');
+   693→   732→            // Scroll to first error
+   694→   733→            const firstError = document.querySelector('.form-error:not(:empty)');
+   695→   734→            if (firstError) {
+   696→   735→                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+   697→   736→            }
+   698→   737→            return;
+   699→   738→        }
+   700→   739→
+   701→   740→        // Default coordinates to Barinas if not provided
+   702→   741→        if (isNaN(lat) || isNaN(lng)) {
+   703→   742→            lat = BARINAS_DEFAULT.lat;
+   704→   743→            lng = BARINAS_DEFAULT.lng;
+   705→   744→        }
+   706→   745→
+   707→   746→        // Map form values to API field names
+   708→   747→        const tipoMap = {
+   709→   748→            'Casa': 'casa',
+   710→   749→            'Apartamento': 'apartamento',
+   711→   750→            'Terreno': 'terreno',
+   712→   751→            'Local Comercial': 'local_comercial',
+   713→   752→            'Oficina': 'oficina',
+   714→   753→            'Hotel': 'hotel',
+   715→   754→            'Finca': 'finca',
+   716→   755→            'Galpón': 'Galpón',
+   717→   756→            'Estacionamiento': 'estacionamiento',
+   718→   757→            'Otro': 'otro',
+   719→   758→        };
+   720→   759→
+   721→   760→        const operacionMap = {
+   722→   761→            'Venta': 'venta',
+   723→   762→            'Alquiler': 'alquiler',
+   724→   763→            'Venta y Alquiler': 'venta_alquiler',
+   725→   764→        };
+   726→   765→
+   727→   766→        // Gather features
+   728→   767→        const features = {};
+   729→   768→        const featureMap = {
+   730→   769→            'Piscina': 'has_pool',
+   731→   770→            'Jardín': 'has_garden',
+   732→   771→            'Aire Acondicionado': 'has_ac',
+   733→   772→            'Cocina': 'has_kitchen',
+   734→   773→            'Amueblado': 'has_furniture',
+   735→   774→            'Seguridad': 'has_security',
+   736→   775→            'Ascensor': 'has_elevator',
+   737→   776→        };
+   738→   777→
+   739→   778→        const checkedFeatures = propertyForm.querySelectorAll('input[name="caracteristicas"]:checked');
+   740→   779→        checkedFeatures.forEach(cb => {
+   741→   780→            const apiField = featureMap[cb.value];
+   742→   781→            if (apiField) features[apiField] = true;
+   743→   782→        });
+   744→   783→
+   745→   784→        const propertyData = {
+   746→   785→            title,
+   747→   786→            description,
+   748→   787→            property_type: tipoMap[tipo] || tipo.toLowerCase(),
+   749→   788→            operation_type: operacionMap[operacion] || operacion.toLowerCase(),
+   750→   789→            price: precio,
+   751→   790→            currency: moneda || 'USD',
+   752→   791→            address: direccion,
+   753→   792→            city: ciudad,
+   754→   793→            state: estado || 'Barinas',
+   755→   794→            lat,
+   756→   795→            lng,
+   757→   796→            bedrooms: habitaciones || null,
+   758→   797→            bathrooms: banos || null,
+   759→   798→            parking_spaces: estacionamientos || null,
+   760→   799→            area,
+   761→   800→            area_unit: areaUnidad || 'm2',
+   762→   801→            year_built: ano || null,
+   763→   802→            floors: pisos || null,
+   764→   803→            ...features,
+   765→   804→        };
+   766→   805→
+   767→   806→        // Submit
+   768→   807→        isSubmitting = true;
+   769→   808→        if (submitBtn) {
+   770→   809→            submitBtn.disabled = true;
+   771→   810→            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+   772→   811→        }
+   773→   812→
+   774→   813→        try {
+   775→   814→            let propertyId = editingPropertyId;
+   776→   815→
+   777→   816→            if (editingPropertyId) {
+   778→   817→                // Update existing property
+   779→   818→                await api.put(`/properties/${editingPropertyId}`, propertyData);
+   780→   819→                propertyId = editingPropertyId;
+   781→   820→            } else {
+   782→   821→                // Create new property
+   783→   822→                const result = await api.post('/properties', propertyData);
+   784→   823→                propertyId = result.property_id;
+   785→   824→            }
+   786→   825→
+   787→   826→            // Upload new images (files that haven't been uploaded yet)
+   788→   827→            const newFiles = uploadedImages.filter(img => !img.isExisting && img.file);
+   789→   828→            let imagesUploaded = 0;
+   790→   829→            let r2NotConfigured = false;
+   791→   830→
+   792→   831→            if (newFiles.length > 0 && propertyId) {
+   793→   832→                for (let i = 0; i < newFiles.length; i++) {
+   794→   833→                    try {
+   795→   834→                        const img = newFiles[i];
+   796→   835→                        const formData = new FormData();
+   797→   836→                        formData.append('file', img.file);
+   798→   837→                        formData.append('property_id', propertyId.toString());
+   799→   838→
+   800→   839→                        // Upload file to R2
+   801→   840→                        const uploadResult = await api.postFormData('/upload', formData);
+   802→   841→
+   803→   842→                        if (uploadResult.url) {
+   804→   843→                            // Register image in DB
+   805→   844→                            const isCover = (i === 0 && !uploadedImages.some(u => u.isExisting && u.isCover));
+   806→   845→                            await api.post(`/images/${propertyId}`, {
+   807→   846→                                url: uploadResult.url,
+   808→   847→                                is_cover: isCover,
+   809→   848→                                order_index: uploadedImages.indexOf(img),
+   810→   849→                            });
+   811→   850→                            imagesUploaded++;
+   812→   851→                        }
+   813→   852→                    } catch (uploadError) {
+   814→   853→                        console.error('Error uploading image:', uploadError);
+   815→   854→                        // Detect if R2 is not configured
+   816→   855→                        if (uploadError.message && (
+   817→   856→                            uploadError.message.includes('R2') ||
+   818→   857→                            uploadError.message.includes('Almacenamiento') ||
+   819→   858→                            uploadError.message.includes('r2')
+   820→   859→                        )) {
+   821→   860→                            r2NotConfigured = true;
+   822→   861→                        } else {
+   823→   862→                            showToast(`Error al subir imagen ${i + 1}: ${uploadError.message}`, 'warning');
+   824→   863→                        }
+   825→   864→                    }
+   826→   865→                }
+   827→   866→            }
+   828→   867→
+   829→   868→            // Show success with appropriate message
+   830→   869→            if (editingPropertyId) {
+   831→   870→                showToast('Propiedad actualizada exitosamente', 'success');
+   832→   871→            } else {
+   833→   872→                showToast('Propiedad publicada exitosamente. Pendiente de aprobación.', 'success');
+   834→   873→            }
+   835→   874→
+   836→   875→            // Show R2 warning if needed
+   837→   876→            if (r2NotConfigured) {
+   838→   877→                setTimeout(() => {
+   839→   878→                    showToast('Las imágenes no se pudieron subir. Configura el bucket R2 en Cloudflare.', 'warning');
+   840→   879→                }, 500);
+   841→   880→            } else if (newFiles.length > 0 && imagesUploaded === 0 && newFiles.length > 0) {
+   842→   881→                setTimeout(() => {
+   843→   882→                    showToast('No se subieron imágenes. Revisa la configuración de R2.', 'warning');
+   844→   883→                }, 500);
+   845→   884→            }
+   846→   885→
+   847→   886→            // Redirect to dashboard
+   848→   887→            setTimeout(() => {
+   849→   888→                window.location.href = 'dashboard.html';
+   850→   889→            }, 1500);
+   851→   890→
+   852→   891→        } catch (error) {
+   853→   892→            showToast(error.message || 'Error al guardar la propiedad', 'error');
+   854→   893→        } finally {
+   855→   894→            isSubmitting = false;
+   856→   895→            if (submitBtn) {
+   857→   896→                submitBtn.disabled = false;
+   858→   897→                submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> <span id="submitBtnText">${editingPropertyId ? 'Guardar Cambios' : 'Publicar Propiedad'}</span>`;
+   859→   898→            }
+   860→   899→        }
+   861→   900→    }
+   862→   901→
+   863→   902→    // ─── Form Error Helper ──────────────────────────────────────
+   864→   903→    function showFormError(fieldId, message) {
+   865→   904→        const field = document.getElementById(fieldId);
+   866→   905→        if (field) {
+   867→   906→            field.classList.add('input-error');
+   868→   907→            // Find or create error span
+   869→   908→            let errorSpan = field.parentElement.querySelector('.form-error');
+   870→   909→            if (!errorSpan) {
+   871→   910→                errorSpan = field.closest('.form-group')?.querySelector('.form-error');
+   872→   911→            }
+   873→   912→            if (errorSpan) {
+   874→   913→                errorSpan.textContent = message;
+   875→   914→            }
+   876→   915→        }
+   877→   916→    }
+   878→   917→
+   879→   918→    // ─── Initialize on DOM Ready ────────────────────────────────
+   880→   919→    if (document.readyState === 'loading') {
+   881→   920→        document.addEventListener('DOMContentLoaded', initForm);
+   882→   921→    } else {
+   883→   922→        initForm();
+   884→   923→    }
+   885→   924→
+   886→   925→})();
+   887→   926→

@@ -170,6 +170,7 @@
             messages: 'Mensajes',
             favorites: 'Favoritos',
             products: 'Mis Productos',
+            'my-properties': 'Mis Inmuebles',
             profile: 'Mi Perfil',
             stats: 'Estadísticas',
             admin: 'Panel de Administracion',
@@ -192,6 +193,9 @@
                 break;
             case 'products':
                 loadMyProducts();
+                break;
+            case 'my-properties':
+                loadMyInmuebles();
                 break;
             case 'stats':
                 loadBusinessStats();
@@ -1750,6 +1754,135 @@
             btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
         }
     };
+
+
+    // ─── My Inmuebles (Properties) ─────────────────────────────
+    const PROPERTY_TYPE_LABELS = {
+        casa: 'Casa',
+        apartamento: 'Apartamento',
+        terreno: 'Terreno',
+        local_comercial: 'Local Comercial',
+        oficina: 'Oficina',
+        hotel: 'Hotel',
+        finca: 'Finca',
+        galpon: 'Galpón',
+        estacionamiento: 'Estacionamiento',
+        otro: 'Otro',
+    };
+
+    const OPERATION_LABELS = {
+        venta: 'Venta',
+        alquiler: 'Alquiler',
+        venta_alquiler: 'Venta y Alquiler',
+    };
+
+    function getPropertyTypeLabel(type) {
+        return PROPERTY_TYPE_LABELS[type] || type || '--';
+    }
+
+    function getOperationLabel(op) {
+        return OPERATION_LABELS[op] || op || '--';
+    }
+
+    function getPropertyStatusColor(status) {
+        const colors = { approved: '#059669', pending: '#d97706', rejected: '#dc2626' };
+        return colors[status] || '#64748b';
+    }
+
+    async function loadMyInmuebles(statusFilter) {
+        const grid = document.getElementById('myPropertiesGrid');
+        if (!grid || !currentUser) return;
+
+        // Show loading
+        grid.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Cargando inmuebles...</p></div>';
+
+        try {
+            let url = `/properties?user_id=${currentUser.id}&limit=50`;
+            if (statusFilter) url += `&status=${statusFilter}`;
+
+            const data = await api.get(url);
+            const properties = data.properties || data.data || [];
+
+            if (properties.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column:1/-1;">
+                        <i class="fas fa-home"></i>
+                        <p>${statusFilter ? 'No hay inmuebles con ese filtro.' : 'No tienes inmuebles publicados.'}</p>
+                        <a href="new-property.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Publicar Inmueble</a>
+                    </div>
+                `;
+                return;
+            }
+
+            const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
+                '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23e0e0e0"><rect width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="16" font-family="sans-serif">Sin imagen</text></svg>'
+            );
+
+            grid.innerHTML = properties.map(p => {
+                const cover = p.cover_image || p.images?.[0]?.url || '';
+                const imgSrc = cover || placeholderImg;
+                const typeLabel = getPropertyTypeLabel(p.property_type || p.type);
+                const opLabel = getOperationLabel(p.operation);
+                const statusColor = getPropertyStatusColor(p.status);
+                const price = p.price ? formatPrice(p.price, p.currency) : 'Precio no disponible';
+                const city = p.city || '--';
+
+                return `
+                    <article class="business-card" style="display:flex;flex-direction:column;">
+                        <div class="business-card-image">
+                            <img src="${imgSrc}" alt="${escapeAttr(p.title)}" loading="lazy" onerror="this.src='${placeholderImg}'">
+                            <div class="business-card-badges">
+                                <span class="card-badge badge-type">${typeLabel}</span>
+                                <span class="card-badge" style="background:#6366f1;color:#fff;">${opLabel}</span>
+                                <span class="card-badge" style="background:${statusColor};color:#fff;">${getStatusLabel(p.status)}</span>
+                            </div>
+                        </div>
+                        <div class="business-card-body" style="flex:1;display:flex;flex-direction:column;">
+                            <h3 class="business-card-title">${truncateText(p.title, 40)}</h3>
+                            <p class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${city}</p>
+                            <p style="font-size:0.9rem;font-weight:700;color:#059669;margin:4px 0;">${price}</p>
+                            <p style="font-size:0.72rem;color:#94a3b8;margin-bottom:8px;"><i class="fas fa-eye"></i> ${p.views || 0} vistas</p>
+                            <div style="margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;">
+                                <a href="property-detail.html?id=${p.id}" class="btn btn-sm btn-secondary" title="Ver"><i class="fas fa-eye"></i> Ver</a>
+                                <a href="new-property.html?id=${p.id}" class="btn btn-sm btn-secondary" title="Editar"><i class="fas fa-edit"></i> Editar</a>
+                                <button class="btn btn-sm btn-danger" onclick="deleteMyInmueble(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </article>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('Error loading inmuebles:', error);
+            grid.innerHTML = `
+                <div class="empty-state" style="grid-column:1/-1;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Error al cargar inmuebles.</p>
+                </div>
+            `;
+        }
+    }
+
+    window.deleteMyInmueble = async function (id) {
+        if (!confirm('¿Estás seguro de que deseas eliminar este inmueble? Esta acción no se puede deshacer.')) return;
+        try {
+            await api.delete(`/properties/${id}`);
+            showToast('Inmueble eliminado exitosamente', 'success');
+
+            // Reload with current filter
+            const filterSelect = document.getElementById('myPropsFilter');
+            loadMyInmuebles(filterSelect ? filterSelect.value : '');
+        } catch (error) {
+            showToast(error.message || 'Error al eliminar el inmueble', 'error');
+        }
+    };
+
+    // Wire up inmuebles filter
+    const myPropsFilter = document.getElementById('myPropsFilter');
+    if (myPropsFilter) {
+        myPropsFilter.addEventListener('change', () => {
+            loadMyInmuebles(myPropsFilter.value);
+        });
+    }
 
 
 })();
