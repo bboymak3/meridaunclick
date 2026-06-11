@@ -1,6 +1,32 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: 3
+Agent: Main
+Task: Paso 3 - Plans tab in admin, WhatsApp conditional, subscriptions management
+
+Work Log:
+- Added "Planes" tab to admin panel sidebar (crown icon)
+- Created Plans tab HTML in admin.html: plan cards grid + subscriptions table
+- Added loadPlansTab(), loadPlans(), loadSubscriptions(), formatFeatureName() to admin.js
+- Plans cards show: name, price, duration, feature list with checkmarks
+- Subscriptions table shows: ID, user, plan, status badge, start/end dates, notes
+- Auto-detects expired subscriptions and highlights them in red
+- Status filter dropdown (Todas/Activas/Expiradas/Canceladas)
+- Created /api/subscriptions/index.js - GET handler returns all subscriptions with user/plan info (admin only)
+- Updated businesses/[id].js GET: now returns owner_account_type, owner_user_type, owner_whatsapp_enabled
+- Updated business-detail.js: WhatsApp button only visible when owner_account_type === 'paid' AND whatsapp_enabled
+- Free accounts show "Botón de WhatsApp disponible solo para cuentas de pago" notice
+- Bumped SW cache to v33
+
+Stage Summary:
+- Admin panel now has a dedicated Plans tab showing all plans and subscription history
+- WhatsApp button on business profiles is now conditional on the business owner being a paid user
+- Free account businesses show a locked notice instead of the WhatsApp button
+- Subscription history is fully trackable from the admin Plans tab
+- All deployed to aunclick.pages.dev (SW v33)
+
+---
 Task ID: 2
 Agent: Main
 Task: Paso 2 - Schema v3: Sistema de cuentas (Gratis/Pago), Planes, Suscripciones, Destacados
