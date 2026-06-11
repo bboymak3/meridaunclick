@@ -1,6 +1,40 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: 6
+Agent: Main
+Task: Paso 6 - Integracion casasbarinas + aunclick: DB compartida, Google OAuth, admin de propiedades
+
+Work Log:
+- Columnas google_id y auth_provider agregadas a users en generico_db
+- Usuarios migrados: Gustavo Ruiz y Joseph Valencia insertados, Carlos Herrera google_id actualizado
+- Tablas creadas en generico_db: properties, property_images, property_contacts, property_favorites (con indices)
+- 6 propiedades migradas de casas_db a generico_db con imagenes (14 registros)
+- Mapeo de user_ids: casas_db user 2 -> generico_db user 3 (bboymak3@gmail.com)
+- Creada API /properties (GET con filtros/paginacion, POST crear propiedad)
+- Creada API /properties/[id] (GET detalle, DELETE admin)
+- Creada API /properties/[id]/approve y reject (POST admin)
+- Google OAuth agregado a aunclick: /auth/google.js + /auth/google-config.js
+- auth/me.js: SELECT ahora incluye google_id y auth_provider
+- Admin: nueva pestaña "Casas" con tabla de propiedades (tipo, operacion, precio, propietario, estatus)
+- Admin: botones aprobar/rechazar/eliminar, filtro por estatus, paginacion
+- Menu index: link "Casas / Inmuebles" en dropdown Mas -> casasbarinas.pages.dev
+- casasbarinas reconectado a generico_db via Cloudflare API (DB binding cambiada)
+- casasbarinas: tablas renombradas (images->property_images, contacts->property_contacts, favorites->property_favorites)
+- casasbarinas: JWT_SECRET fallback unificado a aunclick_default_secret_2024
+- casasbarinas: auth/me.js y register.js actualizados con google_id/auth_provider
+- SW cache bumped a v36 (aunclick)
+- Ambos repos push a main
+
+Stage Summary:
+- Ambos portales (aunclick + casasbarinas) ahora comparten la misma DB generico_db
+- Mismo sistema de usuarios: misma cuenta funciona en ambos portales
+- Google OAuth disponible en aunclick (necesita GOOGLE_CLIENT_ID en dashboard)
+- Propiedades se gestionan desde admin de aunclick (pestaña Casas)
+- Casas NO aparecen en aunclick index (contenido separado)
+- Menu de aunclick incluye link a casasbarinas
+
+---
 Task ID: 5
 Agent: Main
 Task: Paso 5 - Sistema completo de destacados (featured_items API, productos y empleos)

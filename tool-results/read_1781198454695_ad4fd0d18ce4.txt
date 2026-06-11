@@ -1,0 +1,628 @@
+     1→<!DOCTYPE html>
+     2→<html lang="es">
+     3→<head>
+     4→    <meta charset="UTF-8">
+     5→    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→    <meta name="robots" content="noindex, nofollow">
+     7→    <meta name="description" content="Panel de Administración - CasasBarinas">
+     8→    <title>Administración - CasasBarinas</title>
+     9→    <link rel="stylesheet" href="css/styles.css">
+    10→    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    11→</head>
+    12→<body>
+    13→    <!-- Navigation -->
+    14→    <nav class="navbar navbar-admin" id="navbar">
+    15→        <div class="nav-container">
+    16→            <a href="index.html" class="nav-logo">
+    17→                <i class="fas fa-home"></i>
+    18→                <span>CasasBarinas</span>
+    19→                <span class="admin-badge">Admin</span>
+    20→            </a>
+    21→            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+    22→                <i class="fas fa-bars"></i>
+    23→            </button>
+    24→            <ul class="nav-menu" id="navMenu">
+    25→                <li><a href="index.html" class="nav-link"><i class="fas fa-globe"></i> Ver Sitio</a></li>
+    26→                <li><a href="search.html" class="nav-link"><i class="fas fa-building"></i> Propiedades</a></li>
+    27→                <li id="navUserItem" class="nav-user">
+    28→                    <a href="dashboard.html" class="nav-link" id="navUserName">
+    29→                        <i class="fas fa-user-shield"></i> Administrador
+    30→                    </a>
+    31→                    <button class="nav-link btn-logout" id="navLogout">
+    32→                        <i class="fas fa-sign-out-alt"></i> Salir
+    33→                    </button>
+    34→                </li>
+    35→            </ul>
+    36→        </div>
+    37→    </nav>
+    38→
+    39→    <!-- Admin Panel -->
+    40→    <main class="admin-panel">
+    41→        <div class="admin-layout">
+    42→            <!-- Admin Sidebar -->
+    43→            <aside class="admin-sidebar" id="adminSidebar">
+    44→                <div class="admin-sidebar-header">
+    45→                    <i class="fas fa-cogs"></i>
+    46→                    <span>Administración</span>
+    47→                </div>
+    48→                <nav class="admin-nav">
+    49→                    <a href="#" class="admin-nav-link active" data-tab="dashboard">
+    50→                        <i class="fas fa-tachometer-alt"></i>
+    51→                        <span>Dashboard</span>
+    52→                    </a>
+    53→                    <a href="#" class="admin-nav-link" data-tab="properties">
+    54→                        <i class="fas fa-building"></i>
+    55→                        <span>Propiedades</span>
+    56→                        <span class="badge" id="adminPendingBadge">0</span>
+    57→                    </a>
+    58→                    <a href="#" class="admin-nav-link" data-tab="users">
+    59→                        <i class="fas fa-users"></i>
+    60→                        <span>Usuarios</span>
+    61→                    </a>
+    62→                    <a href="#" class="admin-nav-link" data-tab="messages">
+    63→                        <i class="fas fa-envelope"></i>
+    64→                        <span>Mensajes</span>
+    65→                        <span class="badge" id="adminMsgBadge">0</span>
+    66→                    </a>
+    67→                    <a href="#" class="admin-nav-link" data-tab="facebook">
+    68→                        <i class="fab fa-facebook"></i>
+    69→                        <span>Facebook Import</span>
+    70→                    </a>
+    71→                </nav>
+    72→            </aside>
+    73→
+    74→            <!-- Admin Content -->
+    75→            <div class="admin-content">
+    76→                <!-- Top Bar -->
+    77→                <div class="admin-topbar">
+    78→                    <div class="admin-topbar-left">
+    79→                        <button class="admin-sidebar-toggle" id="adminSidebarToggle">
+    80→                            <i class="fas fa-bars"></i>
+    81→                        </button>
+    82→                        <h1 class="admin-page-title" id="adminPageTitle">Dashboard</h1>
+    83→                    </div>
+    84→                    <div class="admin-topbar-right">
+    85→                        <span class="admin-date" id="adminDate"></span>
+    86→                    </div>
+    87→                </div>
+    88→
+    89→                <!-- ==================== DASHBOARD TAB ==================== -->
+    90→                <div class="admin-tab" id="tabDashboard">
+    91→                    <!-- Stats Cards -->
+    92→                    <div class="admin-stats-grid">
+    93→                        <div class="admin-stat-card">
+    94→                            <div class="admin-stat-icon" style="background: #e8f0fe; color: #1a73e8;">
+    95→                                <i class="fas fa-building"></i>
+    96→                            </div>
+    97→                            <div class="admin-stat-info">
+    98→                                <div class="admin-stat-number" id="adminTotalProps">0</div>
+    99→                                <div class="admin-stat-label">Total Propiedades</div>
+   100→                            </div>
+   101→                        </div>
+   102→                        <div class="admin-stat-card">
+   103→                            <div class="admin-stat-icon" style="background: #fff3e0; color: #ff6b35;">
+   104→                                <i class="fas fa-clock"></i>
+   105→                            </div>
+   106→                            <div class="admin-stat-info">
+   107→                                <div class="admin-stat-number" id="adminPendingProps">0</div>
+   108→                                <div class="admin-stat-label">Pendientes de Aprobación</div>
+   109→                            </div>
+   110→                        </div>
+   111→                        <div class="admin-stat-card">
+   112→                            <div class="admin-stat-icon" style="background: #e8f5e9; color: #28a745;">
+   113→                                <i class="fas fa-users"></i>
+   114→                            </div>
+   115→                            <div class="admin-stat-info">
+   116→                                <div class="admin-stat-number" id="adminTotalUsers">0</div>
+   117→                                <div class="admin-stat-label">Usuarios Registrados</div>
+   118→                            </div>
+   119→                        </div>
+   120→                        <div class="admin-stat-card">
+   121→                            <div class="admin-stat-icon" style="background: #fce4ec; color: #e91e63;">
+   122→                                <i class="fas fa-envelope"></i>
+   123→                            </div>
+   124→                            <div class="admin-stat-info">
+   125→                                <div class="admin-stat-number" id="adminTotalMsgs">0</div>
+   126→                                <div class="admin-stat-label">Mensajes de Contacto</div>
+   127→                            </div>
+   128→                        </div>
+   129→                    </div>
+   130→
+   131→                    <!-- Recent Activity -->
+   132→                    <div class="admin-card">
+   133→                        <div class="admin-card-header">
+   134→                            <h3><i class="fas fa-history"></i> Actividad Reciente</h3>
+   135→                        </div>
+   136→                        <div class="admin-card-body">
+   137→                            <div class="activity-list" id="adminActivityList">
+   138→                                <div class="empty-state-sm">
+   139→                                    <p>No hay actividad reciente.</p>
+   140→                                </div>
+   141→                            </div>
+   142→                        </div>
+   143→                    </div>
+   144→
+   145→                    <!-- Recent Properties -->
+   146→                    <div class="admin-card">
+   147→                        <div class="admin-card-header">
+   148→                            <h3><i class="fas fa-building"></i> Últimas Propiedades</h3>
+   149→                            <a href="#" class="admin-link" data-tab="properties">Ver todas</a>
+   150→                        </div>
+   151→                        <div class="admin-card-body">
+   152→                            <div class="admin-table-responsive">
+   153→                                <table class="admin-table">
+   154→                                    <thead>
+   155→                                        <tr>
+   156→                                            <th>Propiedad</th>
+   157→                                            <th>Tipo</th>
+   158→                                            <th>Usuario</th>
+   159→                                            <th>Estado</th>
+   160→                                            <th>Fecha</th>
+   161→                                        </tr>
+   162→                                    </thead>
+   163→                                    <tbody id="adminRecentProps">
+   164→                                        <tr class="empty-row">
+   165→                                            <td colspan="5">
+   166→                                                <div class="empty-state-sm"><p>No hay propiedades.</p></div>
+   167→                                            </td>
+   168→                                        </tr>
+   169→                                    </tbody>
+   170→                                </table>
+   171→                            </div>
+   172→                        </div>
+   173→                    </div>
+   174→
+   175→                    <!-- Recent Users -->
+   176→                    <div class="admin-card">
+   177→                        <div class="admin-card-header">
+   178→                            <h3><i class="fas fa-users"></i> Últimos Usuarios</h3>
+   179→                            <a href="#" class="admin-link" data-tab="users">Ver todos</a>
+   180→                        </div>
+   181→                        <div class="admin-card-body">
+   182→                            <div class="admin-table-responsive">
+   183→                                <table class="admin-table">
+   184→                                    <thead>
+   185→                                        <tr>
+   186→                                            <th>Usuario</th>
+   187→                                            <th>Email</th>
+   188→                                            <th>Rol</th>
+   189→                                            <th>Estado</th>
+   190→                                            <th>Fecha</th>
+   191→                                        </tr>
+   192→                                    </thead>
+   193→                                    <tbody id="adminRecentUsers">
+   194→                                        <tr class="empty-row">
+   195→                                            <td colspan="5">
+   196→                                                <div class="empty-state-sm"><p>No hay usuarios.</p></div>
+   197→                                            </td>
+   198→                                        </tr>
+   199→                                    </tbody>
+   200→                                </table>
+   201→                            </div>
+   202→                        </div>
+   203→                    </div>
+   204→                </div>
+   205→
+   206→                <!-- ==================== PROPERTIES TAB ==================== -->
+   207→                <div class="admin-tab hidden" id="tabProperties">
+   208→                    <div class="admin-card">
+   209→                        <div class="admin-card-header">
+   210→                            <h3><i class="fas fa-building"></i> Gestión de Propiedades</h3>
+   211→                            <div class="admin-card-actions">
+   212→                                <select id="adminPropStatusFilter" class="form-select-sm">
+   213→                                    <option value="">Todos los estados</option>
+   214→                                    <option value="publicada">Publicadas</option>
+   215→                                    <option value="pendiente">Pendientes</option>
+   216→                                    <option value="rechazada">Rechazadas</option>
+   217→                                </select>
+   218→                                <select id="adminPropTypeFilter" class="form-select-sm">
+   219→                                    <option value="">Todos los tipos</option>
+   220→                                    <option value="Casa">Casas</option>
+   221→                                    <option value="Apartamento">Apartamentos</option>
+   222→                                    <option value="Terreno">Terrenos</option>
+   223→                                    <option value="Local Comercial">Locales Comerciales</option>
+   224→                                    <option value="Oficina">Oficinas</option>
+   225→                                    <option value="Hotel">Hoteles</option>
+   226→                                    <option value="Finca">Fincas</option>
+   227→                                    <option value="Galpón">Galpones</option>
+   228→                                    <option value="Estacionamiento">Estacionamientos</option>
+   229→                                    <option value="Otro">Otros</option>
+   230→                                </select>
+   231→                                <input type="text" id="adminPropSearch" class="form-input-sm" placeholder="Buscar...">
+   232→                            </div>
+   233→                        </div>
+   234→                        <div class="admin-card-body">
+   235→                            <div class="admin-table-responsive">
+   236→                                <table class="admin-table admin-table-props">
+   237→                                    <thead>
+   238→                                        <tr>
+   239→                                            <th>ID</th>
+   240→                                            <th>Imagen</th>
+   241→                                            <th>Título</th>
+   242→                                            <th>Tipo</th>
+   243→                                            <th>Operación</th>
+   244→                                            <th>Precio</th>
+   245→                                            <th>Usuario</th>
+   246→                                            <th>Estado</th>
+   247→                                            <th>Destacada</th>
+   248→                                            <th>Acciones</th>
+   249→                                        </tr>
+   250→                                    </thead>
+   251→                                    <tbody id="adminPropsTableBody">
+   252→                                        <tr class="empty-row">
+   253→                                            <td colspan="10">
+   254→                                                <div class="empty-state-sm"><p>Cargando propiedades...</p></div>
+   255→                                            </td>
+   256→                                        </tr>
+   257→                                    </tbody>
+   258→                                </table>
+   259→                            </div>
+   260→                            <div class="admin-pagination" id="adminPropsPagination"></div>
+   261→                        </div>
+   262→                    </div>
+   263→                </div>
+   264→
+   265→                <!-- ==================== USERS TAB ==================== -->
+   266→                <div class="admin-tab hidden" id="tabUsers">
+   267→                    <div class="admin-card">
+   268→                        <div class="admin-card-header">
+   269→                            <h3><i class="fas fa-users"></i> Gestión de Usuarios</h3>
+   270→                            <div class="admin-card-actions">
+   271→                                <select id="adminUserRoleFilter" class="form-select-sm">
+   272→                                    <option value="">Todos los roles</option>
+   273→                                    <option value="user">Usuarios</option>
+   274→                                    <option value="admin">Administradores</option>
+   275→                                </select>
+   276→                                <input type="text" id="adminUserSearch" class="form-input-sm" placeholder="Buscar usuario...">
+   277→                            </div>
+   278→                        </div>
+   279→                        <div class="admin-card-body">
+   280→                            <div class="admin-table-responsive">
+   281→                                <table class="admin-table">
+   282→                                    <thead>
+   283→                                        <tr>
+   284→                                            <th>ID</th>
+   285→                                            <th>Nombre</th>
+   286→                                            <th>Email</th>
+   287→                                            <th>Teléfono</th>
+   288→                                            <th>Rol</th>
+   289→                                            <th>Estado</th>
+   290→                                            <th>Propiedades</th>
+   291→                                            <th>Fecha Registro</th>
+   292→                                            <th>Acciones</th>
+   293→                                        </tr>
+   294→                                    </thead>
+   295→                                    <tbody id="adminUsersTableBody">
+   296→                                        <tr class="empty-row">
+   297→                                            <td colspan="9">
+   298→                                                <div class="empty-state-sm"><p>Cargando usuarios...</p></div>
+   299→                                            </td>
+   300→                                        </tr>
+   301→                                    </tbody>
+   302→                                </table>
+   303→                            </div>
+   304→                            <div class="admin-pagination" id="adminUsersPagination"></div>
+   305→                        </div>
+   306→                    </div>
+   307→                </div>
+   308→
+   309→                <!-- ==================== FACEBOOK TAB ==================== -->
+   310→                <div class="admin-tab hidden" id="tabFacebook">
+   311→                    <!-- Facebook Config Card -->
+   312→                    <div class="admin-card">
+   313→                        <div class="admin-card-header">
+   314→                            <h3><i class="fab fa-facebook"></i> Importar desde Página de Facebook</h3>
+   315→                        </div>
+   316→                        <div class="admin-card-body">
+   317→                            <p style="margin-bottom:16px;color:#666;">Conecta tu página de Facebook para importar automáticamente las propiedades que publiques all&iacute;. Los posts con fotos se convertir&aacute;n en propiedades en tu web.</p>
+   318→
+   319→                            <div class="form-group">
+   320→                                <label for="fbPageId"><i class="fab fa-facebook"></i> Page ID de Facebook</label>
+   321→                                <input type="text" id="fbPageId" class="form-input" placeholder="Ej: 123456789012345">
+   322→                                <small class="form-hint">El ID num&eacute;rico de tu p&aacute;gina. Lo encuentras en facebook.com/ TU-PAGINA &rarr; Informaci&oacute;n &rarr; ID de la p&aacute;gina.</small>
+   323→                            </div>
+   324→
+   325→                            <div class="form-group">
+   326→                                <label for="fbAccessToken"><i class="fas fa-key"></i> Page Access Token</label>
+   327→                                <input type="password" id="fbAccessToken" class="form-input" placeholder="EAAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+   328→                                <small class="form-hint">Token de acceso a la p&aacute;gina de Facebook. Se obtiene en developers.facebook.com.</small>
+   329→                            </div>
+   330→
+   331→                            <div class="form-row" style="margin-bottom:16px;">
+   332→                                <div class="form-group">
+   333→                                    <label for="fbCity"><i class="fas fa-map-marker-alt"></i> Ciudad por defecto</label>
+   334→                                    <input type="text" id="fbCity" class="form-input" value="Barinas">
+   335→                                </div>
+   336→                                <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:4px;">
+   337→                                    <label class="feature-checkbox" style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+   338→                                        <input type="checkbox" id="fbAutoApprove" checked>
+   339→                                        <span>Aprobar propiedades importadas autom&aacute;ticamente</span>
+   340→                                    </label>
+   341→                                </div>
+   342→                            </div>
+   343→
+   344→                            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+   345→                                <button class="btn btn-primary" id="fbSaveConfig">
+   346→                                    <i class="fas fa-save"></i> Guardar Configuraci&oacute;n
+   347→                                </button>
+   348→                                <button class="btn btn-secondary" id="fbTestConnection">
+   349→                                    <i class="fas fa-plug"></i> Probar Conexi&oacute;n
+   350→                                </button>
+   351→                            </div>
+   352→                            <div id="fbConfigStatus" style="margin-top:12px;"></div>
+   353→                        </div>
+   354→                    </div>
+   355→
+   356→                    <!-- Manual Import Card -->
+   357→                    <div class="admin-card">
+   358→                        <div class="admin-card-header">
+   359→                            <h3><i class="fas fa-download"></i> Importaci&oacute;n Manual</h3>
+   360→                        </div>
+   361→                        <div class="admin-card-body">
+   362→                            <p style="margin-bottom:16px;color:#666;">Importa los &uacute;ltimos 25 posts de tu p&aacute;gina. Los posts que ya fueron importados se omitir&aacute;n autom&aacute;ticamente.</p>
+   363→                            <button class="btn btn-primary btn-lg" id="fbImportNow">
+   364→                                <i class="fab fa-facebook"></i> Importar Posts Ahora
+   365→                            </button>
+   366→                            <div id="fbImportStatus" style="margin-top:12px;"></div>
+   367→                        </div>
+   368→                    </div>
+   369→
+   370→                    <!-- Import History Card -->
+   371→                    <div class="admin-card">
+   372→                        <div class="admin-card-header">
+   373→                            <h3><i class="fas fa-history"></i> Historial de Importaciones</h3>
+   374→                        </div>
+   375→                        <div class="admin-card-body">
+   376→                            <div id="fbHistoryContent">
+   377→                                <p style="color:#999;">Cargando historial...</p>
+   378→                            </div>
+   379→                        </div>
+   380→                    </div>
+   381→                </div>
+   382→
+   383→                <!-- ==================== MESSAGES TAB ==================== -->
+   384→                <div class="admin-tab hidden" id="tabMessages">
+   385→                    <div class="admin-card">
+   386→                        <div class="admin-card-header">
+   387→                            <h3><i class="fas fa-envelope"></i> Mensajes de Contacto</h3>
+   388→                            <div class="admin-card-actions">
+   389→                                <select id="adminMsgFilter" class="form-select-sm">
+   390→                                    <option value="">Todos</option>
+   391→                                    <option value="nuevo">Nuevos</option>
+   392→                                    <option value="leido">Leídos</option>
+   393→                                </select>
+   394→                            </div>
+   395→                        </div>
+   396→                        <div class="admin-card-body">
+   397→                            <div class="admin-table-responsive">
+   398→                                <table class="admin-table">
+   399→                                    <thead>
+   400→                                        <tr>
+   401→                                            <th>Fecha</th>
+   402→                                            <th>Remitente</th>
+   403→                                            <th>Email</th>
+   404→                                            <th>Propiedad</th>
+   405→                                            <th>Mensaje</th>
+   406→                                            <th>Teléfono</th>
+   407→                                            <th>Estado</th>
+   408→                                            <th>Acciones</th>
+   409→                                        </tr>
+   410→                                    </thead>
+   411→                                    <tbody id="adminMsgsTableBody">
+   412→                                        <tr class="empty-row">
+   413→                                            <td colspan="8">
+   414→                                                <div class="empty-state-sm"><p>Cargando mensajes...</p></div>
+   415→                                            </td>
+   416→                                        </tr>
+   417→                                    </tbody>
+   418→                                </table>
+   419→                            </div>
+   420→                            <div class="admin-pagination" id="adminMsgsPagination"></div>
+   421→                        </div>
+   422→                    </div>
+   423→                </div>
+   424→            </div>
+   425→        </div>
+   426→    </main>
+   427→
+   428→    <!-- Property Detail Modal -->
+   429→    <div class="modal hidden" id="adminPropertyModal">
+   430→        <div class="modal-overlay"></div>
+   431→        <div class="modal-content modal-lg">
+   432→            <div class="modal-header">
+   433→                <h3 id="adminPropModalTitle">Detalle de Propiedad</h3>
+   434→                <button class="modal-close" id="adminPropModalClose">&times;</button>
+   435→            </div>
+   436→            <div class="modal-body" id="adminPropModalBody">
+   437→                <!-- Content loaded dynamically -->
+   438→            </div>
+   439→            <div class="modal-footer" id="adminPropModalFooter">
+   440→                <!-- Actions loaded dynamically -->
+   441→            </div>
+   442→        </div>
+   443→    </div>
+   444→
+   445→    <!-- User Edit Modal -->
+   446→    <div class="modal hidden" id="adminUserModal">
+   447→        <div class="modal-overlay"></div>
+   448→        <div class="modal-content modal-lg">
+   449→            <div class="modal-header">
+   450→                <h3><i class="fas fa-user-edit" style="color:#1a73e8"></i> Editar Usuario</h3>
+   451→                <button class="modal-close" id="adminUserModalClose">&times;</button>
+   452→            </div>
+   453→            <div class="modal-body">
+   454→                <!-- User Header -->
+   455→                <div class="edit-user-header" id="editUserHeader">
+   456→                    <div class="edit-user-avatar" id="editUserAvatar">
+   457→                        <i class="fas fa-user"></i>
+   458→                    </div>
+   459→                    <div class="edit-user-meta">
+   460→                        <div class="edit-user-id">ID: <span id="editUserIdDisplay">—</span></div>
+   461→                        <div class="edit-user-joined">Registro: <span id="editUserJoined">—</span></div>
+   462→                    </div>
+   463→                </div>
+   464→
+   465→                <form id="adminUserEditForm">
+   466→                    <!-- Datos Básicos -->
+   467→                    <div class="edit-user-section">
+   468→                        <div class="edit-user-section-title">
+   469→                            <i class="fas fa-id-card"></i> Datos Básicos
+   470→                        </div>
+   471→                        <div class="form-row">
+   472→                            <div class="form-group">
+   473→                                <label for="editUserName">Nombre Completo</label>
+   474→                                <div class="profile-input-wrapper">
+   475→                                    <i class="fas fa-user"></i>
+   476→                                    <input type="text" id="editUserName" name="name" class="form-control" required placeholder="Nombre del usuario">
+   477→                                </div>
+   478→                            </div>
+   479→                            <div class="form-group">
+   480→                                <label for="editUserEmail">Correo Electrónico</label>
+   481→                                <div class="profile-input-wrapper">
+   482→                                    <i class="fas fa-envelope"></i>
+   483→                                    <input type="email" id="editUserEmail" name="email" class="form-control" required placeholder="correo@ejemplo.com">
+   484→                                </div>
+   485→                            </div>
+   486→                        </div>
+   487→                    </div>
+   488→
+   489→                    <!-- Teléfonos -->
+   490→                    <div class="edit-user-section">
+   491→                        <div class="edit-user-section-title">
+   492→                            <i class="fas fa-phone-alt"></i> Teléfonos de Contacto
+   493→                        </div>
+   494→                        <div class="form-row">
+   495→                            <div class="form-group">
+   496→                                <label for="editUserPhone">Teléfono</label>
+   497→                                <div class="profile-input-wrapper">
+   498→                                    <i class="fas fa-phone"></i>
+   499→                                    <input type="tel" id="editUserPhone" name="phone" class="form-control" placeholder="+58 414 0000000">
+   500→                                </div>
+   501→                            </div>
+   502→                            <div class="form-group">
+   503→                                <label for="editUserWhatsApp">
+   504→                                    <i class="fab fa-whatsapp" style="color:#25d366"></i> WhatsApp
+   505→                                </label>
+   506→                                <div class="profile-input-wrapper">
+   507→                                    <i class="fab fa-whatsapp" style="color:#25d366"></i>
+   508→                                    <input type="tel" id="editUserWhatsApp" name="whatsapp" class="form-control" placeholder="+58 414 0000000">
+   509→                                </div>
+   510→                                <small class="form-hint">Número que verán los compradores al contactar por WhatsApp</small>
+   511→                            </div>
+   512→                        </div>
+   513→                    </div>
+   514→
+   515→                    <!-- Biografía -->
+   516→                    <div class="edit-user-section">
+   517→                        <div class="edit-user-section-title">
+   518→                            <i class="fas fa-align-left"></i> Biografía
+   519→                        </div>
+   520→                        <div class="form-group">
+   521→                            <textarea id="editUserBio" name="bio" class="form-control" rows="3" placeholder="Descripción del usuario..." maxlength="500"></textarea>
+   522→                        </div>
+   523→                    </div>
+   524→
+   525→                    <!-- Administración -->
+   526→                    <div class="edit-user-section edit-user-section-admin">
+   527→                        <div class="edit-user-section-title">
+   528→                            <i class="fas fa-shield-alt"></i> Administración
+   529→                        </div>
+   530→                        <div class="form-row">
+   531→                            <div class="form-group">
+   532→                                <label for="editUserRole">Rol</label>
+   533→                                <select id="editUserRole" name="role" class="form-control">
+   534→                                    <option value="user">Usuario</option>
+   535→                                    <option value="admin">Administrador</option>
+   536→                                    <option value="agent">Agente</option>
+   537→                                </select>
+   538→                            </div>
+   539→                            <div class="form-group">
+   540→                                <label for="editUserStatus">Estado</label>
+   541→                                <select id="editUserStatus" name="status" class="form-control">
+   542→                                    <option value="activo">Activo</option>
+   543→                                    <option value="inactivo">Inactivo</option>
+   544→                                </select>
+   545→                            </div>
+   546→                        </div>
+   547→                    </div>
+   548→                </form>
+   549→            </div>
+   550→            <div class="modal-footer">
+   551→                <button class="btn btn-secondary" id="adminUserModalCancel">
+   552→                    <i class="fas fa-times"></i> Cancelar
+   553→                </button>
+   554→                <button class="btn btn-primary" id="adminUserModalSave">
+   555→                    <i class="fas fa-save"></i> Guardar Cambios
+   556→                </button>
+   557→            </div>
+   558→        </div>
+   559→    </div>
+   560→
+   561→    <!-- Reject Reason Modal -->
+   562→    <div class="modal hidden" id="adminRejectModal">
+   563→        <div class="modal-overlay"></div>
+   564→        <div class="modal-content">
+   565→            <div class="modal-header">
+   566→                <h3><i class="fas fa-ban text-danger"></i> Rechazar Propiedad</h3>
+   567→                <button class="modal-close" id="adminRejectModalClose">&times;</button>
+   568→            </div>
+   569→            <div class="modal-body">
+   570→                <div class="form-group">
+   571→                    <label for="rejectReason">Motivo del rechazo</label>
+   572→                    <textarea id="rejectReason" name="reason" rows="4" placeholder="Explique por qué esta propiedad es rechazada..." required></textarea>
+   573→                </div>
+   574→            </div>
+   575→            <div class="modal-footer">
+   576→                <button class="btn btn-secondary" id="adminRejectCancel">Cancelar</button>
+   577→                <button class="btn btn-danger" id="adminRejectConfirm">
+   578→                    <i class="fas fa-ban"></i> Rechazar
+   579→                </button>
+   580→            </div>
+   581→        </div>
+   582→    </div>
+   583→
+   584→    <!-- Message Detail Modal -->
+   585→    <div class="modal hidden" id="adminMsgModal">
+   586→        <div class="modal-overlay"></div>
+   587→        <div class="modal-content">
+   588→            <div class="modal-header">
+   589→                <h3><i class="fas fa-envelope-open"></i> Detalle del Mensaje</h3>
+   590→                <button class="modal-close" id="adminMsgModalClose">&times;</button>
+   591→            </div>
+   592→            <div class="modal-body" id="adminMsgModalBody">
+   593→                <!-- Message content loaded dynamically -->
+   594→            </div>
+   595→            <div class="modal-footer">
+   596→                <button class="btn btn-secondary" id="adminMsgModalCloseBtn">Cerrar</button>
+   597→            </div>
+   598→        </div>
+   599→    </div>
+   600→
+   601→    <!-- Confirm Delete Modal -->
+   602→    <div class="modal hidden" id="adminDeleteModal">
+   603→        <div class="modal-overlay"></div>
+   604→        <div class="modal-content">
+   605→            <div class="modal-header">
+   606→                <h3><i class="fas fa-exclamation-triangle text-danger"></i> Confirmar Eliminación</h3>
+   607→                <button class="modal-close" id="adminDeleteModalClose">&times;</button>
+   608→            </div>
+   609→            <div class="modal-body">
+   610→                <p id="adminDeleteMsg">¿Estás seguro de que deseas eliminar este elemento? Esta acción no se puede deshacer.</p>
+   611→            </div>
+   612→            <div class="modal-footer">
+   613→                <button class="btn btn-secondary" id="adminDeleteCancel">Cancelar</button>
+   614→                <button class="btn btn-danger" id="adminDeleteConfirm">
+   615→                    <i class="fas fa-trash"></i> Eliminar
+   616→                </button>
+   617→            </div>
+   618→        </div>
+   619→    </div>
+   620→
+   621→    <!-- Toast Notification -->
+   622→    <div class="toast-container" id="toastContainer"></div>
+   623→
+   624→    <script src="js/app.js"></script>
+   625→    <script src="js/admin.js"></script>
+   626→</body>
+   627→</html>
+   628→
