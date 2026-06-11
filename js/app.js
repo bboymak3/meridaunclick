@@ -958,8 +958,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadFeaturedJobs();
     }
 
-    // Initialize home map with toggle buttons
-    initHomeMap();
+    // initHomeMap is handled by home-map.js
 });
 
 // ─── Index Page: Featured Properties ───────────────────────────
@@ -1443,96 +1442,3 @@ async function loadFeaturedJobs() {
     }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// INDEX PAGE: Home Map with Toggle
-// ═══════════════════════════════════════════════════════════════
-async function initHomeMap() {
-    const mapEl = document.getElementById('homeMap');
-    if (!mapEl || typeof L === 'undefined') return;
-
-    try {
-        const homeMap = L.map('homeMap', {
-            center: [8.6233, -66.5897],
-            zoom: 6,
-            zoomControl: false,
-            scrollWheelZoom: false,
-            dragging: true,
-            tap: false,
-            attributionControl: false,
-        });
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-        }).addTo(homeMap);
-
-        L.control.zoom({ position: 'bottomright' }).addTo(homeMap);
-        homeMap.attributionControl.remove();
-
-        const markerLayer = L.layerGroup().addTo(homeMap);
-        let currentType = 'businesses';
-
-        // Add toggle buttons
-        const mapWrapper = mapEl.closest('.idx-map-wrapper');
-        if (mapWrapper) {
-            const toggleDiv = document.createElement('div');
-            toggleDiv.style.cssText = 'position:absolute;top:12px;left:12px;z-index:1000;display:flex;gap:6px;';
-            toggleDiv.innerHTML = `
-                <button class="btn btn-primary btn-sm" id="homeMapBtnNegocios" style="box-shadow:0 2px 8px rgba(0,0,0,0.3);"><i class="fas fa-store"></i> Negocios</button>
-                <button class="btn btn-secondary btn-sm" id="homeMapBtnPropiedades" style="box-shadow:0 2px 8px rgba(0,0,0,0.3);"><i class="fas fa-home"></i> Propiedades</button>
-            `;
-            mapEl.parentElement.appendChild(toggleDiv);
-
-            document.getElementById('homeMapBtnNegocios').addEventListener('click', () => {
-                currentType = 'businesses';
-                document.getElementById('homeMapBtnNegocios').className = 'btn btn-primary btn-sm';
-                document.getElementById('homeMapBtnNegocios').style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-                document.getElementById('homeMapBtnPropiedades').className = 'btn btn-secondary btn-sm';
-                loadHomeMarkers();
-            });
-            document.getElementById('homeMapBtnPropiedades').addEventListener('click', () => {
-                currentType = 'properties';
-                document.getElementById('homeMapBtnPropiedades').className = 'btn btn-primary btn-sm';
-                document.getElementById('homeMapBtnPropiedades').style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
-                document.getElementById('homeMapBtnNegocios').className = 'btn btn-secondary btn-sm';
-                loadHomeMarkers();
-            });
-        }
-
-        async function loadHomeMarkers() {
-            markerLayer.clearLayers();
-            let items = [];
-            if (currentType === 'businesses') {
-                const data = await api.get('/businesses?status=approved&limit=50');
-                items = data.businesses || [];
-            } else {
-                const data = await api.get('/properties?status=approved&limit=50');
-                items = data.properties || [];
-            }
-
-            const validItems = items.filter(i => i.lat && i.lng);
-            validItems.forEach(item => {
-                const isBusiness = currentType === 'businesses';
-                const color = isBusiness ? '#1a73e8' : '#059669';
-                const icon = L.divIcon({
-                    className: 'custom-map-marker',
-                    html: '<div class="marker-pin" style="background-color:' + color + ';"><span class="marker-price" style="font-size:10px;"><i class="fas fa-' + (isBusiness ? 'store' : 'home') + '"></i></span></div><div class="marker-shadow"></div>',
-                    iconSize: [40, 52], iconAnchor: [20, 52], popupAnchor: [0, -56],
-                });
-                const title = isBusiness ? (item.title || 'Negocio') : (item.title || 'Propiedad');
-                const marker = L.marker([item.lat, item.lng], { icon: icon });
-                marker.bindPopup('<div class="map-popup"><div class="map-popup-content"><h4 class="map-popup-title">' + escapeHtml(title) + '</h4></div></div>');
-                markerLayer.addLayer(marker);
-            });
-
-            if (validItems.length > 0) {
-                const bounds = L.latLngBounds(validItems.map(i => [i.lat, i.lng]));
-                if (bounds.isValid()) homeMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
-            }
-        }
-
-        await loadHomeMarkers();
-        setTimeout(() => homeMap.invalidateSize(), 300);
-    } catch (e) {
-        console.error('Error initializing home map:', e);
-    }
-}

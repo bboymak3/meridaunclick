@@ -47,6 +47,19 @@
 
             // Fix size after render
             setTimeout(function () { map.invalidateSize(); }, 300);
+
+            // Also invalidate when map section becomes visible (IntersectionObserver)
+            var mapSection = document.getElementById('homeMapSection');
+            if (mapSection && 'IntersectionObserver' in window) {
+                var observer = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            setTimeout(function () { map.invalidateSize(); }, 100);
+                        }
+                    });
+                }, { threshold: 0.1 });
+                observer.observe(mapSection);
+            }
         } catch (error) {
             console.error('Error loading home map:', error);
         }
