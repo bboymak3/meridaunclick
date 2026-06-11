@@ -19,7 +19,8 @@
     let allBusinesses = [];
     let activeCardId = null;
     let miniMapInitialized = false;
-    let currentMapType = 'businesses'; // 'businesses' or 'properties'
+    let allProperties = [];
+    let currentMapType = 'both'; // 'businesses', 'properties', or 'both'
 
     // ─── DOM Elements ───────────────────────────────────────────
     const mapContainer = document.getElementById('map');
@@ -120,8 +121,8 @@
             // Marker layer group
             markerLayer = L.layerGroup().addTo(map);
 
-            // Load businesses
-            loadMapBusinesses();
+            // Load both businesses and properties
+            loadMapAll();
 
             // Fix rendering
             setTimeout(function () { map.invalidateSize(); }, 300);
@@ -297,6 +298,140 @@
         });
     }
 
+    // ─── Load Both Businesses & Properties ────────────────────
+    function loadMapAll() {
+        if (!isMapView) return;
+
+        if (mapLoading) mapLoading.style.display = '';
+
+        var filters = getFilterValues();
+        var bizEndpoint = '/businesses?status=approved&limit=100';
+        var propEndpoint = '/properties?status=approved&limit=100';
+
+        if (filters.categoria) {
+            bizEndpoint += '&categoria=' + encodeURIComponent(filters.categoria);
+            propEndpoint += '&property_type=' + encodeURIComponent(filters.categoria);
+        }
+        if (filters.state) {
+            bizEndpoint += '&state=' + encodeURIComponent(filters.state);
+            propEndpoint += '&state=' + encodeURIComponent(filters.state);
+        }
+        if (filters.city) {
+            bizEndpoint += '&city=' + encodeURIComponent(filters.city);
+            propEndpoint += '&city=' + encodeURIComponent(filters.city);
+        }
+
+        Promise.all([
+            api.get(bizEndpoint).catch(function () { return { businesses: [] }; }),
+            api.get(propEndpoint).catch(function () { return { properties: [] }; })
+        ]).then(function (results) {
+            allBusinesses = results[0].businesses || [];
+            allProperties = results[1].properties || [];
+
+            if (markerLayer) markerLayer.clearLayers();
+            markers = [];
+
+            var totalCount = allBusinesses.length + allProperties.length;
+            if (mapResultCount) {
+                mapResultCount.textContent = totalCount + ' resultados encontrados';
+            }
+
+            // Add business markers
+            allBusinesses.forEach(function (business) {
+                var marker = createMarker(business);
+                if (marker) {
+                    markers.push({ marker: marker, business: business });
+                    markerLayer.addLayer(marker);
+                }
+            });
+
+            // Add property markers
+            allProperties.forEach(function (property) {
+                var marker = createPropertyMarker(property);
+                if (marker) {
+                    markers.push({ marker: marker, business: property });
+                    markerLayer.addLayer(marker);
+                }
+            });
+
+            if (markers.length > 0) {
+                fitAllMarkers();
+            }
+
+            // Render combined list
+            renderCombinedList(allBusinesses, allProperties);
+        }).catch(function (error) {
+            console.error('Error loading map data:', error);
+            showToast('Error al cargar datos en el mapa', 'error');
+        }).finally(function () {
+            if (mapLoading) mapLoading.style.display = 'none';
+        });
+    }
+
+    // ─── Render Combined List ──────────────────────────────────
+    function renderCombinedList(businesses, properties) {
+        if (!mapBusinessList) return;
+
+        var totalCount = businesses.length + properties.length;
+        if (totalCount === 0) {
+            mapBusinessList.innerHTML = '<div class="map-no-results"><i class="fas fa-search"></i><p>No se encontraron resultados.</p></div>';
+            return;
+        }
+
+        var html = '';
+
+        // Business cards
+        businesses.forEach(function (p) {
+            var coverImage = p.cover_image || (p.images && p.images[0] && p.images[0].url) || '';
+            var typeLabel = safeGetTypeLabel(p.business_type);
+            var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
+            html += '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p.lat || '') + '" data-lng="' + (p.lng || '') + '">'
+                + '<img src="' + coverImage + '" alt="' + (p.title || 'Negocio') + '" onerror="this.style.display=\'none\'">'
+                + '<div class="card-info">'
+                + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin t\u00edtulo') + '</div>'
+                + '<div class="card-location">' + address + '</div>'
+                + '<div class="card-badges">'
+                + '<span class="card-badge badge-type" style="background:#1a73e8;color:#fff;">' + typeLabel + '</span>'
+                + '</div>'
+                + '</div>'
+                + '</div>';
+        });
+
+        // Property cards
+        properties.forEach(function (p) {
+            var coverImage = p.cover_image || '';
+            var opLabel = (p.operation_type || '').replace('_', ' ');
+            var price = p.price ? '$' + Number(p.price).toLocaleString('es-VE') : '';
+            var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
+            html += '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p.lat || '') + '" data-lng="' + (p.lng || '') + '">'
+                + (coverImage ? '<img src="' + coverImage + '" alt="' + (p.title || 'Propiedad') + '" onerror="this.style.display=\'none\'">' : '')
+                + '<div class="card-info">'
+                + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin t\u00edtulo') + '</div>'
+                + '<div class="card-location">' + address + '</div>'
+                + '<div class="card-badges">'
+                + '<span class="card-badge badge-type" style="background:#059669;color:#fff;">' + opLabel + '</span>'
+                + (price ? '<span class="card-badge badge-price">' + price + '</span>' : '')
+                + '</div>'
+                + '</div>'
+                + '</div>';
+        });
+
+        mapBusinessList.innerHTML = html;
+
+        // Click handlers
+        mapBusinessList.querySelectorAll('.map-business-card').forEach(function (card) {
+            card.addEventListener('click', function () {
+                var id = parseInt(card.dataset.businessId);
+                var lat = parseFloat(card.dataset.lat);
+                var lng = parseFloat(card.dataset.lng);
+                highlightCard(id);
+                if (!isNaN(lat) && !isNaN(lng) && map) {
+                    flyToBusiness(id);
+                }
+            });
+        });
+    }
+
     // ─── Sidebar Toggle ─────────────────────────────────────────
     function setupSidebarToggle() {
         if (mapSidebarToggle && mapSidebar) {
@@ -327,6 +462,7 @@
         // Toggle type buttons
         var btnNegocios = document.getElementById('mapToggleNegocios');
         var btnPropiedades = document.getElementById('mapTogglePropiedades');
+        var btnTodos = document.getElementById('mapToggleTodos');
         if (btnNegocios) {
             btnNegocios.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -339,9 +475,23 @@
                 showMapType('properties');
             });
         }
+        if (btnTodos) {
+            btnTodos.addEventListener('click', function (e) {
+                e.preventDefault();
+                showMapType('both');
+            });
+        }
 
         if (mapSearchBtn) {
-            mapSearchBtn.addEventListener('click', function () { loadMapBusinesses(); });
+            mapSearchBtn.addEventListener('click', function () {
+                if (currentMapType === 'properties') {
+                    loadMapProperties();
+                } else if (currentMapType === 'businesses') {
+                    loadMapBusinesses();
+                } else {
+                    loadMapAll();
+                }
+            });
         }
         if (mapResetBtn) {
             mapResetBtn.addEventListener('click', resetFilters);
@@ -349,7 +499,15 @@
         [mapCiudad, mapEstado].forEach(function (input) {
             if (input) {
                 input.addEventListener('keydown', function (e) {
-                    if (e.key === 'Enter') loadMapBusinesses();
+                    if (e.key === 'Enter') {
+                        if (currentMapType === 'properties') {
+                            loadMapProperties();
+                        } else if (currentMapType === 'businesses') {
+                            loadMapBusinesses();
+                        } else {
+                            loadMapAll();
+                        }
+                    }
                 });
             }
         });
@@ -370,8 +528,10 @@
         // Reload based on current type
         if (currentMapType === 'properties') {
             loadMapProperties();
-        } else {
+        } else if (currentMapType === 'businesses') {
             loadMapBusinesses();
+        } else {
+            loadMapAll();
         }
     }
 
@@ -618,7 +778,7 @@
         var marker = L.marker([property.lat, property.lng], { icon: icon });
 
         var imgTag = coverImage
-            ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display='none'"></div>'
+            ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display=\'none\'"></div>'
             : '';
 
         var address = property.city ? (property.state ? property.city + ', ' + property.state : property.city) : '';
@@ -705,18 +865,32 @@
         currentMapType = type;
         var btnNegocios = document.getElementById('mapToggleNegocios');
         var btnPropiedades = document.getElementById('mapTogglePropiedades');
+        var btnTodos = document.getElementById('mapToggleTodos');
 
         if (btnNegocios) {
             btnNegocios.className = type === 'businesses' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+            btnNegocios.style.flex = '1';
         }
         if (btnPropiedades) {
             btnPropiedades.className = type === 'properties' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+            btnPropiedades.style.flex = '1';
+        }
+        if (btnTodos) {
+            btnTodos.className = type === 'both' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+            btnTodos.style.flex = '1';
+            if (type === 'both') {
+                btnTodos.style.background = 'linear-gradient(135deg,#1a73e8,#059669)';
+            } else {
+                btnTodos.style.background = '';
+            }
         }
 
         if (type === 'properties') {
             loadMapProperties();
-        } else {
+        } else if (type === 'businesses') {
             loadMapBusinesses();
+        } else {
+            loadMapAll();
         }
     }
 
@@ -727,6 +901,7 @@
         filterBusinesses: loadMapBusinesses,
         loadMapBusinesses: loadMapBusinesses,
         loadMapProperties: loadMapProperties,
+        loadMapAll: loadMapAll,
         showType: showMapType,
         invalidateSize: function () {
             if (map) map.invalidateSize();
