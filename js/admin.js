@@ -2215,6 +2215,9 @@
 
         // Load featured businesses selector
         loadFeaturedSelector();
+        // Load featured products & properties selectors
+        loadFeaturedProductsSelector();
+        loadFeaturedPropertiesSelector();
     }
 
     async function saveSettings() {
@@ -2373,6 +2376,182 @@
         productsPage = page;
         loadProducts();
     };
+
+    // ─── Featured Products Selector ──────────────────────────────
+    async function loadFeaturedProductsSelector() {
+        const container = document.getElementById('featuredProductsContainer');
+        if (!container) return;
+        try {
+            const [allData, featuredData] = await Promise.all([
+                api.get('/marketplace?limit=200&all=true'),
+                api.get('/featured-items?item_type=product')
+            ]);
+            const products = allData.products || [];
+            const featured = featuredData.featured_items || [];
+            const featuredIds = new Set(featured.map(f => f.item_id));
+
+            if (products.length === 0) {
+                container.innerHTML = '<p style="color:#9ca3af;font-size:0.85rem;">No hay productos disponibles.</p>';
+                return;
+            }
+
+            let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+            html += '<div style="margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Productos actualmente destacados:</div>';
+
+            products.filter(p => featuredIds.has(p.id)).forEach(p => {
+                const price = p.price ? `$${parseFloat(p.price).toFixed(2)}` : '';
+                html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #2563eb;border-radius:10px;background:#eff6ff;cursor:pointer;">
+                    <input type="checkbox" class="featured-product-checkbox" value="${p.id}" checked style="width:18px;height:18px;accent-color:#2563eb;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.name)}</div>
+                        <div style="font-size:0.75rem;color:#6b7280;">${escapeHtml(p.category || '')} ${price ? '· ' + price : ''}</div>
+                    </div>
+                </label>`;
+            });
+
+            const nonFeatured = products.filter(p => !featuredIds.has(p.id));
+            if (nonFeatured.length > 0) {
+                html += '<div style="margin-top:12px;margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Otros productos (selecciona para destacar):</div>';
+                nonFeatured.slice(0, 30).forEach(p => {
+                    const price = p.price ? `$${parseFloat(p.price).toFixed(2)}` : '';
+                    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;">
+                        <input type="checkbox" class="featured-product-checkbox" value="${p.id}" style="width:18px;height:18px;accent-color:#2563eb;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.name)}</div>
+                            <div style="font-size:0.75rem;color:#6b7280;">${escapeHtml(p.category || '')} ${price ? '· ' + price : ''}</div>
+                        </div>
+                    </label>`;
+                });
+                if (nonFeatured.length > 30) {
+                    html += `<p style="font-size:0.78rem;color:#9ca3af;text-align:center;">... y ${nonFeatured.length - 30} más. Usa la sección de productos para ver todos.</p>`;
+                }
+            }
+
+            html += '</div>';
+            html += '<button class="btn btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#2563eb,#1d4ed8);" onclick="window._adminSaveFeaturedProducts()"><i class="fas fa-save"></i> Guardar Productos Destacados</button>';
+            container.innerHTML = html;
+
+            container.querySelectorAll('.featured-product-checkbox').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const checked = container.querySelectorAll('.featured-product-checkbox:checked');
+                    if (checked.length > 6) { cb.checked = false; showToast('Máximo 6 productos destacados', 'warning'); }
+                });
+            });
+        } catch (err) {
+            console.error('Error loading featured products:', err);
+            container.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al cargar productos.</p>';
+        }
+    }
+
+    async function saveFeaturedProducts() {
+        const container = document.getElementById('featuredProductsContainer');
+        if (!container) return;
+        const checked = container.querySelectorAll('.featured-product-checkbox:checked');
+        const selectedIds = Array.from(checked).map(cb => parseInt(cb.value));
+        try {
+            // Remove existing product featured items
+            const existing = await api.get('/featured-items?item_type=product');
+            for (const item of (existing.featured_items || [])) {
+                try { await api.delete(`/featured-items?id=${item.id}`); } catch(e) {}
+            }
+            // Add new featured products
+            for (const id of selectedIds) {
+                try { await api.post('/featured-items', { item_type: 'product', item_id: id }); } catch(e) {}
+            }
+            showToast(`${selectedIds.length} producto(s) destacado(s)`, 'success');
+            loadFeaturedProductsSelector();
+        } catch (err) {
+            showToast('Error al guardar productos destacados: ' + err.message, 'error');
+        }
+    }
+    window._adminSaveFeaturedProducts = saveFeaturedProducts;
+
+    // ─── Featured Properties Selector ────────────────────────────
+    async function loadFeaturedPropertiesSelector() {
+        const container = document.getElementById('featuredPropertiesContainer');
+        if (!container) return;
+        try {
+            const [allData, featuredData] = await Promise.all([
+                api.get('/properties?limit=200&all=true'),
+                api.get('/featured-items?item_type=property')
+            ]);
+            const properties = allData.properties || [];
+            const featured = featuredData.featured_items || [];
+            const featuredIds = new Set(featured.map(f => f.item_id));
+
+            if (properties.length === 0) {
+                container.innerHTML = '<p style="color:#9ca3af;font-size:0.85rem;">No hay inmuebles disponibles.</p>';
+                return;
+            }
+
+            let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+            html += '<div style="margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Inmuebles actualmente destacados:</div>';
+
+            properties.filter(p => featuredIds.has(p.id)).forEach(p => {
+                const price = p.price ? `$${parseFloat(p.price).toLocaleString('es-VE')}` : '';
+                html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #059669;border-radius:10px;background:#ecfdf5;cursor:pointer;">
+                    <input type="checkbox" class="featured-property-checkbox" value="${p.id}" checked style="width:18px;height:18px;accent-color:#059669;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.title)}</div>
+                        <div style="font-size:0.75rem;color:#6b7280;">${escapeHtml(p.property_type || '')} · ${escapeHtml(p.city || '')} ${price ? '· ' + price : ''}</div>
+                    </div>
+                </label>`;
+            });
+
+            const nonFeatured = properties.filter(p => !featuredIds.has(p.id));
+            if (nonFeatured.length > 0) {
+                html += '<div style="margin-top:12px;margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Otros inmuebles (selecciona para destacar):</div>';
+                nonFeatured.slice(0, 30).forEach(p => {
+                    const price = p.price ? `$${parseFloat(p.price).toLocaleString('es-VE')}` : '';
+                    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;">
+                        <input type="checkbox" class="featured-property-checkbox" value="${p.id}" style="width:18px;height:18px;accent-color:#059669;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.title)}</div>
+                            <div style="font-size:0.75rem;color:#6b7280;">${escapeHtml(p.property_type || '')} · ${escapeHtml(p.city || '')} ${price ? '· ' + price : ''}</div>
+                        </div>
+                    </label>`;
+                });
+                if (nonFeatured.length > 30) {
+                    html += `<p style="font-size:0.78rem;color:#9ca3af;text-align:center;">... y ${nonFeatured.length - 30} más. Usa la sección de inmuebles para ver todos.</p>`;
+                }
+            }
+
+            html += '</div>';
+            html += '<button class="btn btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#059669,#047857);" onclick="window._adminSaveFeaturedProperties()"><i class="fas fa-save"></i> Guardar Inmuebles Destacados</button>';
+            container.innerHTML = html;
+
+            container.querySelectorAll('.featured-property-checkbox').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const checked = container.querySelectorAll('.featured-property-checkbox:checked');
+                    if (checked.length > 6) { cb.checked = false; showToast('Máximo 6 inmuebles destacados', 'warning'); }
+                });
+            });
+        } catch (err) {
+            console.error('Error loading featured properties:', err);
+            container.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al cargar inmuebles.</p>';
+        }
+    }
+
+    async function saveFeaturedProperties() {
+        const container = document.getElementById('featuredPropertiesContainer');
+        if (!container) return;
+        const checked = container.querySelectorAll('.featured-property-checkbox:checked');
+        const selectedIds = Array.from(checked).map(cb => parseInt(cb.value));
+        try {
+            const existing = await api.get('/featured-items?item_type=property');
+            for (const item of (existing.featured_items || [])) {
+                try { await api.delete(`/featured-items?id=${item.id}`); } catch(e) {}
+            }
+            for (const id of selectedIds) {
+                try { await api.post('/featured-items', { item_type: 'property', item_id: id }); } catch(e) {}
+            }
+            showToast(`${selectedIds.length} inmueble(s) destacado(s)`, 'success');
+            loadFeaturedPropertiesSelector();
+        } catch (err) {
+            showToast('Error al guardar inmuebles destacados: ' + err.message, 'error');
+        }
+    }
+    window._adminSaveFeaturedProperties = saveFeaturedProperties;
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {

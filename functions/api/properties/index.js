@@ -59,7 +59,8 @@ export async function onRequestGet(context) {
     const maxPrice = params.get('max_price');
     const bedrooms = params.get('bedrooms');
     const bathrooms = params.get('bathrooms');
-    const status = params.get('status') || 'approved';
+    const all = params.get('all') === 'true';
+    const status = params.get('status') || (all ? null : 'approved');
     const page = parseInt(params.get('page')) || 1;
     const limit = parseInt(params.get('limit')) || 12;
     const offset = (page - 1) * limit;
@@ -70,8 +71,10 @@ export async function onRequestGet(context) {
     const conditions = [];
     const bindings = [];
 
-    conditions.push('p.status = ?');
-    bindings.push(status);
+    if (status) {
+      conditions.push('p.status = ?');
+      bindings.push(status);
+    }
 
     if (userId) {
       conditions.push('p.user_id = ?');
