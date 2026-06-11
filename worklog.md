@@ -1,6 +1,29 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: admin-fix-jun12
+Agent: Main
+Task: Fix admin panel - negocios, escapeHtml, filtros, rendimiento marketplace
+
+Work Log:
+- Diagnosticado: Panel admin negocios FUNCIONA correctamente (10 negocios mostrados, modal view/edit abre)
+- Error console: "escapeHtml is not defined" en app.js:1013 (funcion no declarada)
+- Agregada funcion escapeHtml() a js/app.js antes de createPropertyCard()
+- Corregidos encabezados tabla negocios admin: Categoría/Estado/Estatus → Tipo/Ubicación/Estatus
+- Corregidos valores filtro estado: publicada/pendiente/rechazada → approved/pending/rejected
+- Corregidos valores filtro tipo negocio: slugs de categorías → valores reales de business_type
+- Eliminada migracion de slugs en cada request de marketplace API (mejora rendimiento)
+- Eliminada migracion de slugs en cada request de businesses API (mejora rendimiento)
+- Push a main, deploy exitoso en aunclick.pages.dev
+
+Stage Summary:
+- escapeHtml ya no causa error en propiedades destacadas del index
+- Admin tabla negocios tiene encabezados correctos
+- Filtros de estado y tipo funcionan con valores correctos de la DB
+- Marketplace API más rapida sin migracion de slugs en cada request
+- Todo desplegado en aunclick.pages.dev
+
+---
 Task ID: inmuebles-system
 Agent: Main
 Task: Sistema completo de inmuebles - publicar, buscar, gestionar propiedades desde aunclick
