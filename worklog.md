@@ -1,6 +1,48 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: inmuebles-system
+Agent: Main
+Task: Sistema completo de inmuebles - publicar, buscar, gestionar propiedades desde aunclick
+
+Work Log:
+- Creado schema-properties.sql: tablas properties, property_images, property_contacts, property_favorites con indices
+- Creada API /properties: GET (listar con filtros: tipo, operacion, ciudad, estado, precio, habitaciones, banos, busqueda, paginacion, destacados) + POST (crear)
+- Creada API /properties/[id]: GET (detalle con imagenes y owner info, incrementa views) + PUT (editar, owner/admin) + DELETE (eliminar con limpieza R2)
+- Creada API /properties/[id]/approve: POST (admin aprueba propiedad)
+- Creada API /properties/[id]/reject: POST (admin rechaza propiedad)
+- Creada API /property-images/[propertyId]: GET (listar), POST (registrar imagen desde URL), DELETE (eliminar)
+- Creada API /property-favorites: GET (listar favoritos), POST (agregar), DELETE (quitar)
+- Creada API /property-favorites/check: GET (verificar si es favorito)
+- Creada new-property.html: formulario 5 pasos (Info basica, Precio, Ubicacion con mapa Leaflet, Caracteristicas, Fotos con drag-drop y URL)
+- Creado js/property-form.js: logica completa del formulario, mapa interactivo, subida de imagenes, edicion de propiedades
+- Creada property-detail.html: detalle con galeria, badges, precio, caracteristicas, mapa, contacto WhatsApp, propiedades similares
+- Creado js/property-detail.js: galeria con lightbox, favoritos, mapa, WhatsApp, propiedades similares
+- Creada properties.html: busqueda con filtros avanzados, vista grid/lista, mini-mapa toggleable
+- Creado js/properties-search.js: busqueda con paginacion, ordenamiento, filtros activos, mini-mapa Leaflet
+- Modificado index.html: nueva seccion "Inmuebles Destacados" con grid de propiedades
+- Modificado js/app.js: loadFeaturedPropertiesSection(), createPropertyCard(), mapeos de tipos/operaciones/monedas
+- Modificado admin.html: nueva pestana "Inmuebles" con tabla, filtros (status, tipo, busqueda), paginacion
+- Modificado js/admin.js: loadInmueblesTab(), renderInmuebleRow(), approve/reject/delete/toggleFeatured
+- Modificado dashboard.html: nueva seccion "Mis Inmuebles" con grid y filtro de status
+- Modificado js/dashboard.js: loadMyInmuebles(), deleteMyInmueble(), filtro por status
+- Modificadas 15 paginas HTML: enlace "Inmuebles" en nav + "Publicar Inmueble" en dropdown
+- Modificado css/styles.css: estilos para business-card-img, card-badges, card-badge-type, card-badge-op, business-card-price, business-card-stats
+- Modificado sw.js: cache v40 con nuevas paginas y JS
+- Deploy exitoso a aunclick.pages.dev
+
+Stage Summary:
+- Sistema de inmuebles completo integrado en Un Click
+- Usuarios normales pueden publicar inmuebles (no solo negocios)
+- 10 tipos de propiedad: casa, apartamento, terreno, local_comercial, oficina, hotel, finca, galpon, estacionamiento, otro
+- 3 tipos de operacion: venta, alquiler, venta_alquiler
+- Formulario con mapa interactivo (Leaflet + Nominatim, restringido a Venezuela)
+- Admin puede aprobar/rechazar/destacar propiedades
+- Dashboard muestra "Mis Inmuebles" para cada usuario
+- Busqueda con filtros avanzados y mini-mapa
+- PENDIENTE: Ejecutar schema-properties.sql en D1 remoto para crear tablas
+
+---
 Task ID: 7-8-final
 Agent: Main
 Task: Paso 7-8 completos: Inmuebles destacados en index, Foto desde URL, Admin selector
