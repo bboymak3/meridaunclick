@@ -1,6 +1,25 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: 6-fix
+Agent: Main
+Task: Correccion de URLs - casasbarinas.pages.dev -> millano.pages.dev
+
+Work Log:
+- index.html:63 - Link del menu "Casas / Inmuebles" corregido a millano.pages.dev
+- admin.html:538 - Boton "Publicar Casa" corregido a millano.pages.dev/new-property.html
+- js/admin.js:2202 - Link de detalle de propiedad corregido a millano.pages.dev/property.html
+- SW cache bumped a v37 para invalidar cache de usuarios con URLs viejas
+- Verificado: no quedan referencias a casasbarinas.pages.dev en meridaunclick
+- No hay URLs auto-referenciales en casasbarinas repo (ningun cambio necesario alli)
+- Push a main, deploy exitoso en aunclick.pages.dev
+
+Stage Summary:
+- Todas las URLs de aunclick que apuntaban al portal de casas ahora redirigen a https://millano.pages.dev
+- El repo sigue siendo github.com/bboymak3/casasbarinas pero la web es millano.pages.dev
+- Deploy verificado: aunclick.pages.dev responde 200
+
+---
 Task ID: 6
 Agent: Main
 Task: Paso 6 - Integracion casasbarinas + aunclick: DB compartida, Google OAuth, admin de propiedades
