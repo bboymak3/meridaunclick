@@ -356,3 +356,28 @@ Stage Summary:
 - Nuevos uploads de propiedades irán a merida/properties/{propertyId}/
 - Nuevos uploads de marketplace irán a merida/marketplace/{userId}/
 - Nuevos uploads de negocios irán a merida/businesses/{businessId}/
+
+---
+Task ID: 1
+Agent: Main Agent
+Task: Fix map page loading forever, index map filters, and featured items save error
+
+Work Log:
+- Discovered critical syntax error in js/map.js line 621: `onerror="this.parentElement.style.display='none'"` inside single-quoted JS string caused premature string termination, making the entire map IIFE fail silently
+- Fixed the syntax error by escaping the inner quotes: `display=\'none\'`
+- Found duplicate `initHomeMap()` function in app.js (line 1449) that conflicted with home-map.js, creating two Leaflet maps on the same element
+- Removed the duplicate from app.js, keeping home-map.js as the sole handler
+- Rewrote home-map.js to load both businesses AND properties simultaneously, with 3 filter buttons (Negocios/Todos/Propiedades)
+- Added `loadMapAll()` function to map.js for combined business+property loading
+- Added "Todos" (Both) button to map.html sidebar
+- Updated showMapType() to support 'both' type
+- Added IntersectionObserver to home-map.js for proper rendering when scrolled into view
+- Updated index.html map section with inline filter buttons
+- Added renderCombinedList() function for sidebar list with both business and property cards
+
+Stage Summary:
+- Map page now loads correctly with 15+ markers (businesses + properties)
+- casasMap object properly exposed with all methods including showType
+- Index page map shows both businesses and properties by default with working filter buttons
+- No console errors on either page
+- Deployed as commits 86d463a and 09404b3
