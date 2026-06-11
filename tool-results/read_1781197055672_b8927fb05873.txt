@@ -1,0 +1,1383 @@
+     1→/**
+     2→ * Un Click - Core Application Module
+     3→ * Common module loaded on ALL pages
+     4→ * Directorio Nacional de Negocios de Venezuela
+     5→ */
+     6→
+     7→// ─── API Configuration ──────────────────────────────────────────
+     8→const API = '/api';
+     9→
+    10→// ─── Token Management ──────────────────────────────────────────
+    11→const TOKEN_KEY = 'meridaunclick_token';
+    12→const USER_KEY = 'meridaunclick_user';
+    13→
+    14→// ─── Venezuela States ────────────────────────────────────────────
+    15→const VENEZUELA_STATES = [
+    16→  { name: 'Amazonas', slug: 'amazonas' },
+    17→  { name: 'Anzoátegui', slug: 'anzoategui' },
+    18→  { name: 'Apure', slug: 'apure' },
+    19→  { name: 'Aragua', slug: 'aragua' },
+    20→  { name: 'Barinas', slug: 'barinas' },
+    21→  { name: 'Bolívar', slug: 'bolivar' },
+    22→  { name: 'Carabobo', slug: 'carabobo' },
+    23→  { name: 'Cojedes', slug: 'cojedes' },
+    24→  { name: 'Delta Amacuro', slug: 'delta-amacuro' },
+    25→  { name: 'Distrito Capital', slug: 'distrito-capital' },
+    26→  { name: 'Falcón', slug: 'falcon' },
+    27→  { name: 'Guárico', slug: 'guarico' },
+    28→  { name: 'Lara', slug: 'lara' },
+    29→  { name: 'Mérida', slug: 'merida' },
+    30→  { name: 'Miranda', slug: 'miranda' },
+    31→  { name: 'Monagas', slug: 'monagas' },
+    32→  { name: 'Nueva Esparta', slug: 'nueva-esparta' },
+    33→  { name: 'Portuguesa', slug: 'portuguesa' },
+    34→  { name: 'Sucre', slug: 'sucre' },
+    35→  { name: 'Táchira', slug: 'tachira' },
+    36→  { name: 'Trujillo', slug: 'trujillo' },
+    37→  { name: 'Vargas', slug: 'vargas' },
+    38→  { name: 'Yaracuy', slug: 'yaracuy' },
+    39→  { name: 'Zulia', slug: 'zulia' },
+    40→];
+    41→
+    42→const LOCATION_KEY = 'aunclick_selected_state';
+    43→
+    44→// ─── Location Selector System ───────────────────────────────────
+    45→function getSelectedState() {
+    46→  return localStorage.getItem(LOCATION_KEY) || '';
+    47→}
+    48→
+    49→function setSelectedState(stateName) {
+    50→  if (stateName) {
+    51→    localStorage.setItem(LOCATION_KEY, stateName);
+    52→  } else {
+    53→    localStorage.removeItem(LOCATION_KEY);
+    54→  }
+    55→  updateBrandDisplay(stateName);
+    56→  updateLocationLabel(stateName);
+    57→  // Reload businesses if on index or search page
+    58→  const featuredGrid = document.getElementById('featuredGrid');
+    59→  if (featuredGrid) {
+    60→    loadFeaturedProperties();
+    61→  }
+    62→  const searchGrid = document.getElementById('searchResultsGrid');
+    63→  if (searchGrid) {
+    64→    executeSearch(1);
+    65→  }
+    66→}
+    67→
+    68→function updateBrandDisplay(stateName) {
+    69→  // Update all #brandCity elements
+    70→  document.querySelectorAll('#brandCity').forEach(el => {
+    71→    el.textContent = stateName ? stateName + ' ' : '';
+    72→  });
+    73→  // Update page title dynamically
+    74→  if (stateName) {
+    75→    document.title = stateName + ' Un Click - Directorio de Negocios en Venezuela';
+    76→  } else {
+    77→    document.title = 'Un Click - Directorio de Negocios en Venezuela';
+    78→  }
+    79→}
+    80→
+    81→function updateLocationLabel(stateName) {
+    82→  const label = document.getElementById('locationLabel');
+    83→  if (label) {
+    84→    label.textContent = stateName || 'Todo Venezuela';
+    85→  }
+    86→}
+    87→
+    88→function initLocationSelector() {
+    89→  const locationBtn = document.getElementById('locationBtn');
+    90→  const locationDropdown = document.getElementById('locationDropdown');
+    91→  const locationList = document.getElementById('locationList');
+    92→  const locationSearchInput = document.getElementById('locationSearchInput');
+    93→  const locationSelector = document.getElementById('locationSelector');
+    94→
+    95→  if (!locationBtn || !locationDropdown || !locationList) return;
+    96→
+    97→  // Populate states list
+    98→  locationList.innerHTML = VENEZUELA_STATES.map(state => `
+    99→    <div class="location-option" data-state="${state.name}">
+   100→      <i class="fas fa-map-marker-alt"></i>
+   101→      <span>${state.name}</span>
+   102→    </div>
+   103→  `).join('');
+   104→
+   105→  // Toggle dropdown
+   106→  locationBtn.addEventListener('click', (e) => {
+   107→    e.stopPropagation();
+   108→    locationDropdown.classList.toggle('hidden');
+   109→    locationBtn.classList.toggle('active');
+   110→    if (!locationDropdown.classList.contains('hidden') && locationSearchInput) {
+   111→      locationSearchInput.value = '';
+   112→      filterLocations('');
+   113→      locationSearchInput.focus();
+   114→    }
+   115→  });
+   116→
+   117→  // Close dropdown when clicking outside
+   118→  document.addEventListener('click', (e) => {
+   119→    if (!locationSelector.contains(e.target)) {
+   120→      locationDropdown.classList.add('hidden');
+   121→      locationBtn.classList.remove('active');
+   122→    }
+   123→  });
+   124→
+   125→  // State option click
+   126→  locationList.addEventListener('click', (e) => {
+   127→    const option = e.target.closest('.location-option');
+   128→    if (option) {
+   129→      const stateName = option.dataset.state || '';
+   130→      setSelectedState(stateName);
+   131→      locationDropdown.classList.add('hidden');
+   132→      locationBtn.classList.remove('active');
+   133→    }
+   134→  });
+   135→
+   136→  // "Todo Venezuela" option click
+   137→  const allVzlaOption = locationDropdown.querySelector('.location-option[data-state=""]');
+   138→  if (allVzlaOption) {
+   139→    allVzlaOption.addEventListener('click', () => {
+   140→      setSelectedState('');
+   141→      locationDropdown.classList.add('hidden');
+   142→      locationBtn.classList.remove('active');
+   143→    });
+   144→  }
+   145→
+   146→  // Search/filter states
+   147→  if (locationSearchInput) {
+   148→    locationSearchInput.addEventListener('input', (e) => {
+   149→      filterLocations(e.target.value.toLowerCase());
+   150→    });
+   151→    // Prevent form submission
+   152→    locationSearchInput.addEventListener('keydown', (e) => {
+   153→      if (e.key === 'Enter') e.preventDefault();
+   154→    });
+   155→  }
+   156→
+   157→  // Restore saved state
+   158→  const savedState = getSelectedState();
+   159→  if (savedState) {
+   160→    updateBrandDisplay(savedState);
+   161→    updateLocationLabel(savedState);
+   162→  }
+   163→}
+   164→
+   165→function filterLocations(query) {
+   166→  const locationList = document.getElementById('locationList');
+   167→  if (!locationList) return;
+   168→
+   169→  const options = locationList.querySelectorAll('.location-option');
+   170→  options.forEach(option => {
+   171→    const stateName = (option.dataset.state || '').toLowerCase();
+   172→    option.style.display = (!query || stateName.includes(query)) ? '' : 'none';
+   173→  });
+   174→}
+   175→
+   176→function getToken() {
+   177→    return localStorage.getItem(TOKEN_KEY);
+   178→}
+   179→
+   180→function setToken(token) {
+   181→    localStorage.setItem(TOKEN_KEY, token);
+   182→}
+   183→
+   184→function removeToken() {
+   185→    localStorage.removeItem(TOKEN_KEY);
+   186→    localStorage.removeItem(USER_KEY);
+   187→}
+   188→
+   189→function isAuthenticated() {
+   190→    const token = getToken();
+   191→    if (!token) return false;
+   192→    // Check if token is expired (simple JWT check)
+   193→    try {
+   194→        const payload = JSON.parse(atob(token.split('.')[1]));
+   195→        if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+   196→            removeToken();
+   197→            return false;
+   198→        }
+   199→        return true;
+   200→    } catch {
+   201→        return false;
+   202→    }
+   203→}
+   204→
+   205→// ─── API Helper ────────────────────────────────────────────────
+   206→async function apiCall(endpoint, options = {}) {
+   207→    const url = `${API}${endpoint}`;
+   208→    const config = {
+   209→        headers: {
+   210→            'Content-Type': 'application/json',
+   211→            ...options.headers,
+   212→        },
+   213→        ...options,
+   214→    };
+   215→
+   216→    // Add auth header if token exists
+   217→    const token = getToken();
+   218→    if (token) {
+   219→        config.headers['Authorization'] = `Bearer ${token}`;
+   220→    }
+   221→
+   222→    // Remove headers from config if it's FormData (let browser set Content-Type with boundary)
+   223→    if (options.body instanceof FormData) {
+   224→        delete config.headers['Content-Type'];
+   225→        config.body = options.body;
+   226→    }
+   227→
+   228→    try {
+   229→        const response = await fetch(url, config);
+   230→        const data = await response.json();
+   231→
+   232→        if (!response.ok) {
+   233→            // Handle 401 - token expired or invalid
+   234→            // Only clear the token; do NOT auto-redirect.
+   235→            // Each page decides if it needs auth via requireAuth().
+   236→            if (response.status === 401) {
+   237→                removeToken();
+   238→            }
+   239→            throw new Error(data.error || `Error ${response.status}: ${response.statusText}`);
+   240→        }
+   241→
+   242→        return data;
+   243→    } catch (error) {
+   244→        if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+   245→            throw new Error('Error de conexión. Verifica tu conexión a internet.');
+   246→        }
+   247→        throw error;
+   248→    }
+   249→}
+   250→
+   251→// Shorthand API methods
+   252→const api = {
+   253→    get(url) {
+   254→        return apiCall(url, { method: 'GET' });
+   255→    },
+   256→    post(url, data) {
+   257→        return apiCall(url, {
+   258→            method: 'POST',
+   259→            body: typeof data === 'string' ? data : JSON.stringify(data),
+   260→        });
+   261→    },
+   262→    put(url, data) {
+   263→        return apiCall(url, {
+   264→            method: 'PUT',
+   265→            body: JSON.stringify(data),
+   266→        });
+   267→    },
+   268→    delete(url) {
+   269→        return apiCall(url, { method: 'DELETE' });
+   270→    },
+   271→    postFormData(url, formData) {
+   272→        return apiCall(url, {
+   273→            method: 'POST',
+   274→            body: formData,
+   275→        });
+   276→    },
+   277→};
+   278→
+   279→// ─── User Functions ────────────────────────────────────────────
+   280→function getCachedUser() {
+   281→    try {
+   282→        const cached = localStorage.getItem(USER_KEY);
+   283→        return cached ? JSON.parse(cached) : null;
+   284→    } catch {
+   285→        return null;
+   286→    }
+   287→}
+   288→
+   289→function setCachedUser(user) {
+   290→    localStorage.setItem(USER_KEY, JSON.stringify(user));
+   291→}
+   292→
+   293→async function getCurrentUser() {
+   294→    if (!isAuthenticated()) return null;
+   295→
+   296→    // Try cache first
+   297→    const cached = getCachedUser();
+   298→    if (cached) return cached;
+   299→
+   300→    try {
+   301→        const data = await api.get('/auth/me');
+   302→        if (data.user) {
+   303→            setCachedUser(data.user);
+   304→            return data.user;
+   305→        }
+   306→        return null;
+   307→    } catch {
+   308→        return null;
+   309→    }
+   310→}
+   311→
+   312→// ─── Web Page Selector Modal ────────────────────────────────────
+   313→function showWebPageSelector() {
+   314→    // Remove existing modal if any
+   315→    const existing = document.getElementById('webPageSelectorModal');
+   316→    if (existing) { existing.remove(); return; }
+   317→
+   318→    const modal = document.createElement('div');
+   319→    modal.id = 'webPageSelectorModal';
+   320→    modal.style.cssText = 'position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;padding:20px;';
+   321→    modal.innerHTML = `
+   322→        <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;max-height:80vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+   323→            <div style="padding:20px 24px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+   324→                <h3 style="margin:0;font-size:1.1rem;font-weight:700;color:#0f172a;"><i class="fas fa-globe" style="color:#0ea5e9;margin-right:8px;"></i>Mis Paginas Web</h3>
+   325→                <button id="webPageSelectorClose" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#64748b;padding:4px;"><i class="fas fa-times"></i></button>
+   326→            </div>
+   327→            <div id="webPageSelectorBody" style="padding:16px 24px 24px;overflow-y:auto;max-height:60vh;">
+   328→                <div style="text-align:center;padding:30px 0;color:#94a3b8;">
+   329→                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+   330→                    <p style="margin-top:12px;font-size:0.9rem;">Cargando tus negocios...</p>
+   331→                </div>
+   332→            </div>
+   333→        </div>
+   334→    `;
+   335→    document.body.appendChild(modal);
+   336→
+   337→    // Close handlers
+   338→    document.getElementById('webPageSelectorClose').addEventListener('click', () => modal.remove());
+   339→    modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+   340→
+   341→    // Check if user is logged in
+   342→    const token = localStorage.getItem('meridaunclick_token');
+   343→    if (!token) {
+   344→        const body = document.getElementById('webPageSelectorBody');
+   345→        body.innerHTML = `
+   346→            <div style="text-align:center;padding:20px 0;color:#64748b;">
+   347→                <i class="fas fa-user-lock" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
+   348→                <p style="font-size:0.95rem;font-weight:600;">Inicia sesion para ver tus paginas web</p>
+   349→                <p style="font-size:0.85rem;margin-top:4px;">Necesitas tener una cuenta y al menos un negocio registrado.</p>
+   350→                <a href="/login.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#059669;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Iniciar Sesion</a>
+   351→            </div>`;
+   352→        return;
+   353→    }
+   354→
+   355→    // Fetch businesses
+   356→    api.get('/user/my-businesses').then(res => {
+   357→        const body = document.getElementById('webPageSelectorBody');
+   358→        const businesses = res.data || [];
+   359→        if (businesses.length === 0) {
+   360→            body.innerHTML = `
+   361→                <div style="text-align:center;padding:20px 0;color:#64748b;">
+   362→                    <i class="fas fa-store" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
+   363→                    <p style="font-size:0.95rem;font-weight:600;">No tienes negocios registrados</p>
+   364→                    <p style="font-size:0.85rem;margin-top:4px;">Primero crea un negocio para generar su pagina web.</p>
+   365→                    <a href="/new-business.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#059669;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Crear Negocio</a>
+   366→                </div>`;
+   367→            return;
+   368→        }
+   369→
+   370→        let html = '<p style="font-size:0.82rem;color:#94a3b8;margin-bottom:14px;">Selecciona a que negocio le quieres generar la pagina web:</p>';
+   371→        businesses.forEach(b => {
+   372→            const coverImg = b.cover_image || '';
+   373→            html += `
+   374→                <a href="/web/${b.slug}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;padding:14px;border:1px solid #e5e7eb;border-radius:12px;margin-bottom:10px;text-decoration:none;color:inherit;transition:all 0.2s;background:#fff;" onmouseover="this.style.borderColor='#0ea5e9';this.style.boxShadow='0 4px 12px rgba(14,165,233,0.1)';" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none';">
+   375→                    <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center;">
+   376→                        ${coverImg ? `<img src="${coverImg}" alt="" style="width:100%;height:100%;object-fit:cover;">` : '<i class="fas fa-store" style="font-size:1.2rem;color:#94a3b8;"></i>'}
+   377→                    </div>
+   378→                    <div style="flex:1;min-width:0;">
+   379→                        <div style="font-size:0.95rem;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${b.title || 'Sin nombre'}</div>
+   380→                        <div style="font-size:0.78rem;color:#64748b;margin-top:2px;">${b.city || ''}${b.state ? ', ' + b.state : ''} ${b.category_name ? ' · ' + b.category_name : ''}</div>
+   381→                    </div>
+   382→                    <div style="flex-shrink:0;color:#0ea5e9;font-size:0.8rem;font-weight:600;display:flex;align-items:center;gap:4px;">
+   383→                        Ver <i class="fas fa-external-link-alt" style="font-size:0.7rem;"></i>
+   384→                    </div>
+   385→                </a>`;
+   386→        });
+   387→
+   388→        body.innerHTML = html;
+   389→    }).catch(() => {
+   390→        const body = document.getElementById('webPageSelectorBody');
+   391→        if (body) body.innerHTML = '<p style="text-align:center;color:#ef4444;padding:20px;">Error al cargar tus negocios. Intenta de nuevo.</p>';
+   392→    });
+   393→}
+   394→
+   395→// ─── Add Web Page Menu Item ────────────────────────────────────
+   396→function addWebPageMenuItem() {
+   397→    const existing = document.getElementById('navWebPageItem');
+   398→    if (existing) return;
+   399→    const dropdownMenu = document.querySelector('.nav-dropdown-menu');
+   400→    if (!dropdownMenu) return;
+   401→    const divider = dropdownMenu.querySelector('.nav-dropdown-divider');
+   402→    const webLi = document.createElement('li');
+   403→    webLi.id = 'navWebPageItem';
+   404→    webLi.innerHTML = `<a href="#" class="nav-link" id="navWebPageBtn" style="color:#0ea5e9;"><i class="fas fa-globe"></i> Pagina Web</a>`;
+   405→    if (divider) {
+   406→        dropdownMenu.insertBefore(webLi, divider);
+   407→    } else {
+   408→        dropdownMenu.appendChild(webLi);
+   409→    }
+   410→    const webBtn = document.getElementById('navWebPageBtn');
+   411→    if (webBtn) {
+   412→        webBtn.addEventListener('click', function(e) {
+   413→            e.preventDefault();
+   414→            showWebPageSelector();
+   415→        });
+   416→    }
+   417→}
+   418→
+   419→// ─── Navigation ────────────────────────────────────────────────
+   420→function updateNav() {
+   421→    const navLoginItem = document.getElementById('navLoginItem');
+   422→    const navUserItem = document.getElementById('navUserItem');
+   423→    const navUserName = document.getElementById('navUserName');
+   424→
+   425→    if (!navLoginItem || !navUserItem) return;
+   426→
+   427→    if (isAuthenticated()) {
+   428→        navLoginItem.classList.add('hidden');
+   429→        navUserItem.classList.remove('hidden');
+   430→
+   431→        const user = getCachedUser();
+   432→        if (user && navUserName) {
+   433→            navUserName.innerHTML = `<i class="fas fa-user-circle"></i> ${user.name || 'Mi Cuenta'}`;
+   434→        }
+   435→
+   436→        // Show golden "Publicar Producto" CTA for logged-in users
+   437→        const mobileCtaProduct = document.getElementById('mobileCtaProduct');
+   438→        if (mobileCtaProduct) mobileCtaProduct.style.display = '';
+   439→
+   440→        // Show admin link for admin users
+   441→        let adminLinkItem = document.getElementById('navAdminItem');
+   442→        if (user && user.role === 'admin') {
+   443→            if (!adminLinkItem) {
+   444→                adminLinkItem = document.createElement('li');
+   445→                adminLinkItem.id = 'navAdminItem';
+   446→                adminLinkItem.innerHTML = `<a href="admin.html" class="nav-link nav-admin-link"><i class="fas fa-shield-alt"></i> Admin</a>`;
+   447→                // Insert before the user item
+   448→                navUserItem.parentNode.insertBefore(adminLinkItem, navUserItem);
+   449→            } else {
+   450→                adminLinkItem.classList.remove('hidden');
+   451→            }
+   452→        } else if (adminLinkItem) {
+   453→            adminLinkItem.remove();
+   454→        }
+   455→
+   456→        // Add "Crear Pagina Web" in "Más" dropdown for logged-in users
+   457→        addWebPageMenuItem();
+   458→
+   459→    } else {
+   460→        navLoginItem.classList.remove('hidden');
+   461→        navUserItem.classList.add('hidden');
+   462→
+   463→        // Remove admin link if exists
+   464→        const adminLinkItem = document.getElementById('navAdminItem');
+   465→        if (adminLinkItem) adminLinkItem.remove();
+   466→
+   467→        // Also show web page link for non-logged users
+   468→        addWebPageMenuItem();
+   469→
+   470→        // Make "Publicar" link require login
+   471→        const publishLinks = document.querySelectorAll('a[href="new-business.html"]');
+   472→        publishLinks.forEach(link => {
+   473→            link.addEventListener('click', function(e) {
+   474→                e.preventDefault();
+   475→                const redirect = encodeURIComponent('new-business.html');
+   476→                window.location.href = `login.html?redirect=${redirect}`;
+   477→            });
+   478→        });
+   479→    }
+   480→}
+   481→
+   482→// ─── UI Helpers ────────────────────────────────────────────────
+   483→function showToast(message, type = 'info') {
+   484→    let container = document.getElementById('toastContainer');
+   485→    if (!container) {
+   486→        container = document.createElement('div');
+   487→        container.id = 'toastContainer';
+   488→        container.className = 'toast-container';
+   489→        document.body.appendChild(container);
+   490→    }
+   491→
+   492→    const icons = {
+   493→        success: 'fa-check-circle',
+   494→        error: 'fa-exclamation-circle',
+   495→        warning: 'fa-exclamation-triangle',
+   496→        info: 'fa-info-circle',
+   497→    };
+   498→
+   499→    const toast = document.createElement('div');
+   500→    toast.className = `toast toast-${type}`;
+   501→    toast.innerHTML = `
+   502→        <i class="fas ${icons[type] || icons.info}"></i>
+   503→        <span>${message}</span>
+   504→        <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+   505→    `;
+   506→
+   507→    container.appendChild(toast);
+   508→
+   509→    // Trigger animation
+   510→    requestAnimationFrame(() => {
+   511→        toast.classList.add('toast-show');
+   512→    });
+   513→
+   514→    // Auto remove after 4 seconds
+   515→    setTimeout(() => {
+   516→        toast.classList.remove('toast-show');
+   517→        toast.classList.add('toast-hide');
+   518→        setTimeout(() => toast.remove(), 300);
+   519→    }, 4000);
+   520→}
+   521→
+   522→
+   523→
+   524→function formatPrice(price, currency = 'USD') {
+   525→    if (price == null || isNaN(price)) return '--';
+   526→
+   527→    const formatted = new Intl.NumberFormat('es-VE', {
+   528→        minimumFractionDigits: 0,
+   529→        maximumFractionDigits: 2,
+   530→    }).format(price);
+   531→
+   532→    const symbols = {
+   533→        'USD': '$',
+   534→        'EUR': '€',
+   535→        'Bs': 'Bs.',
+   536→    };
+   537→
+   538→    const symbol = symbols[currency] || '$';
+   539→    return `${symbol} ${formatted}`;
+   540→}
+   541→
+   542→function formatDate(dateStr) {
+   543→    if (!dateStr) return '--';
+   544→    try {
+   545→        const date = new Date(dateStr);
+   546→        return date.toLocaleDateString('es-VE', {
+   547→            year: 'numeric',
+   548→            month: 'short',
+   549→            day: 'numeric',
+   550→        });
+   551→    } catch {
+   552→        return dateStr;
+   553→    }
+   554→}
+   555→
+   556→function formatDateTime(dateStr) {
+   557→    if (!dateStr) return '--';
+   558→    try {
+   559→        const date = new Date(dateStr);
+   560→        return date.toLocaleDateString('es-VE', {
+   561→            year: 'numeric',
+   562→            month: 'short',
+   563→            day: 'numeric',
+   564→            hour: '2-digit',
+   565→            minute: '2-digit',
+   566→        });
+   567→    } catch {
+   568→        return dateStr;
+   569→    }
+   570→}
+   571→
+   572→function truncateText(text, maxLen = 100) {
+   573→    if (!text) return '';
+   574→    if (text.length <= maxLen) return text;
+   575→    return text.substring(0, maxLen).trim() + '...';
+   576→}
+   577→
+   578→
+   579→function debounce(fn, delay = 300) {
+   580→    let timer;
+   581→    return function (...args) {
+   582→        clearTimeout(timer);
+   583→        timer = setTimeout(() => fn.apply(this, args), delay);
+   584→    };
+   585→}
+   586→
+   587→// ─── Favorites ─────────────────────────────────────────────────
+   588→async function toggleFavorite(businessId) {
+   589→    if (!isAuthenticated()) {
+   590→        showToast('Inicia sesión para guardar favoritos', 'warning');
+   591→        setTimeout(() => {
+   592→            window.location.href = `login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+   593→        }, 1500);
+   594→        return;
+   595→    }
+   596→
+   597→    try {
+   598→        const response = await api.post('/favorites', { business_id: parseInt(businessId) });
+   599→        showToast('Negocio guardado en favoritos', 'success');
+   600→        updateFavoriteButtons(businessId, true);
+   601→        return true;
+   602→    } catch (error) {
+   603→        // Check if it's a 409 (already favorited) - then remove it
+   604→        if (error.message.includes('ya está en tus favoritos')) {
+   605→            try {
+   606→                await api.delete(`/favorites?business_id=${businessId}`);
+   607→                showToast('Negocio removido de favoritos', 'info');
+   608→                updateFavoriteButtons(businessId, false);
+   609→                return false;
+   610→            } catch (removeError) {
+   611→                showToast(removeError.message, 'error');
+   612→            }
+   613→        } else {
+   614→            showToast(error.message, 'error');
+   615→        }
+   616→        return null;
+   617→    }
+   618→}
+   619→
+   620→function updateFavoriteButtons(businessId, isFavorited) {
+   621→    document.querySelectorAll(`.btn-favorite[data-business-id="${businessId}"]`).forEach(btn => {
+   622→        const icon = btn.querySelector('i');
+   623→        if (icon) {
+   624→            icon.className = isFavorited ? 'fas fa-heart' : 'far fa-heart';
+   625→        }
+   626→        if (isFavorited) {
+   627→            btn.classList.add('favorited');
+   628→        } else {
+   629→            btn.classList.remove('favorited');
+   630→        }
+   631→    });
+   632→}
+   633→
+   634→async function checkFavorite(businessId) {
+   635→    if (!isAuthenticated()) return false;
+   636→    try {
+   637→        const data = await api.get(`/favorites/check?business_id=${businessId}`);
+   638→        return data.is_favorited || false;
+   639→    } catch {
+   640→        return false;
+   641→    }
+   642→}
+   643→
+   644→// ─── Business Type Display Names ───────────────────────────────
+   645→const BUSINESS_TYPE_LABELS = {
+   646→    'negocio': 'Negocio',
+   647→    'profesional': 'Profesional',
+   648→    'servicio': 'Servicio',
+   649→    'restaurante': 'Restaurante',
+   650→    'tienda': 'Tienda',
+   651→    'otro': 'Otro',
+   652→};
+   653→
+   654→function getBusinessTypeLabel(type) {
+   655→    if (!type) return '--';
+   656→    return BUSINESS_TYPE_LABELS[type?.toLowerCase()] || type;
+   657→}
+   658→
+   659→
+   660→// ─── Business URL Helper ─────────────────────────────────────
+   661→function getBusinessUrl(business) {
+   662→    if (!business) return '#';
+   663→    if (business.slug) return '/negocio/' + business.slug;
+   664→    return '/business.html?id=' + business.id;
+   665→}
+   666→
+   667→// ─── WhatsApp Share ────────────────────────────────────────────
+   668→function shareBusinessWhatsApp(business) {
+   669→    if (!business) return;
+   670→    const type = getBusinessTypeLabel(business.business_type);
+   671→    const url = 'https://aunclick.pages.dev' + getBusinessUrl(business);
+   672→    const title = business.title || 'Negocio';
+   673→
+   674→    let msg = `🏪 *${title}*\n`;
+   675→    msg += `📌 ${type}\n`;
+   676→    if (business.city) msg += `📍 ${business.city}${business.state ? ', ' + business.state : ''}\n`;
+   677→    msg += `\n🔗 ${url}`;
+   678→    msg += `\n\n📌 Publicado en Un Click`;
+   679→
+   680→    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+   681→}
+   682→
+   683→// ─── Status Helpers ────────────────────────────────────────────
+   684→const STATUS_LABELS = {
+   685→    'pending': 'Pendiente',
+   686→    'approved': 'Publicada',
+   687→    'rejected': 'Rechazada',
+   688→    'closed': 'Cerrada',
+   689→};
+   690→
+   691→function getStatusLabel(status) {
+   692→    return STATUS_LABELS[status?.toLowerCase()] || status || '--';
+   693→}
+   694→
+   695→function getStatusBadge(status) {
+   696→    const classes = {
+   697→        'pending': 'badge badge-warning',
+   698→        'approved': 'badge badge-success',
+   699→        'rejected': 'badge badge-danger',
+   700→        'closed': 'badge badge-info',
+   701→    };
+   702→    const cls = classes[status?.toLowerCase()] || 'badge';
+   703→    return `<span class="${cls}">${getStatusLabel(status)}</span>`;
+   704→}
+   705→
+   706→// ─── Business Card HTML Generator ──────────────────────────────
+   707→function createBusinessCard(business) {
+   708→    if (!business) return '';
+   709→
+   710→    const coverImage = business.cover_image || business.images?.[0]?.url || '';
+   711→    const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
+   712→        '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23e0e0e0"><rect width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="16" font-family="sans-serif">Sin imagen</text></svg>'
+   713→    );
+   714→    const imgSrc = coverImage || placeholderImg;
+   715→    const typeLabel = business.category_name || getBusinessTypeLabel(business.business_type);
+   716→    const address = business.city ? (business.state ? `${business.city}, ${business.state}` : business.city) : '--';
+   717→    const descSnippet = business.description ? `<p class="business-card-desc">${truncateText(business.description, 80)}</p>` : '';
+   718→
+   719→    const featuredBadge = business.featured ? '<span class="card-badge badge-featured"><i class="fas fa-star"></i> Destacada</span>' : '';
+   720→    const statusBadge = business.status && business.status !== 'approved' ? `<span class="card-badge badge-${business.status}">${getStatusLabel(business.status)}</span>` : '';
+   721→
+   722→    const bizUrl = getBusinessUrl(business);
+   723→    return `
+   724→        <article class="business-card" data-business-id="${business.id}">
+   725→            <a href="${bizUrl}" class="business-card-link">
+   726→                <div class="business-card-image">
+   727→                    <img src="${imgSrc}" alt="${business.title || 'Sin título'}" loading="lazy" onerror="this.src='${placeholderImg}'">
+   728→                    <div class="business-card-badges">
+   729→                        <span class="card-badge badge-type">${typeLabel}</span>
+   730→                        ${featuredBadge}${statusBadge}
+   731→                    </div>
+   732→                    <button class="btn-favorite business-card-fav" data-business-id="${business.id}" aria-label="Agregar a favoritos" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(${business.id});">
+   733→                        <i class="far fa-heart"></i>
+   734→                    </button>
+   735→                    <button class="btn-share-wa-card" data-business-id="${business.id}" aria-label="Compartir por WhatsApp" onclick="event.preventDefault(); event.stopPropagation();">
+   736→                        <i class="fab fa-whatsapp"></i>
+   737→                    </button>
+   738→                </div>
+   739→                <div class="business-card-body">
+   740→                    <h3 class="business-card-title">${business.title || 'Sin título'}</h3>
+   741→                    <p class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${address}</p>
+   742→                    ${descSnippet}
+   743→                </div>
+   744→            </a>
+   745→        </article>
+   746→    `;
+   747→}
+   748→
+   749→// ─── WhatsApp Share Delegation for Cards ─────────────────────
+   750→document.addEventListener('click', (e) => {
+   751→    const shareBtn = e.target.closest('.btn-share-wa-card');
+   752→    if (!shareBtn) return;
+   753→    const businessId = parseInt(shareBtn.dataset.businessId);
+   754→    if (!businessId) return;
+   755→
+   756→    // Fetch business data then share
+   757→    api.get(`/businesses/${businessId}`).then(business => {
+   758→        shareBusinessWhatsApp(business);
+   759→    }).catch(() => {
+   760→        // Minimal share with just the link
+   761→        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en Un Click:\nhttps://aunclick.pages.dev/negocio/' + businessId)}`, '_blank');
+   762→    });
+   763→});
+   764→
+   765→// ─── Search Params Helper ──────────────────────────────────────
+   766→function getSearchParams() {
+   767→    const params = new URLSearchParams(window.location.search);
+   768→    return {
+   769→        estado: params.get('estado') || '',
+   770→        categoria: params.get('categoria') || '',
+   771→        city: params.get('ciudad') || params.get('city') || '',
+   772→        search: params.get('q') || params.get('search') || '',
+   773→        business_type: params.get('tipo_negocio') || '',
+   774→        page: params.get('page') || 1,
+   775→        limit: params.get('limit') || 12,
+   776→    };
+   777→}
+   778→
+   779→
+   780→
+   781→// ─── Auth Redirect Helper ──────────────────────────────────────
+   782→function requireAuth() {
+   783→    if (!isAuthenticated()) {
+   784→        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+   785→        window.location.href = `login.html?redirect=${redirect}`;
+   786→        return false;
+   787→    }
+   788→    return true;
+   789→}
+   790→
+   791→// ─── Logout Handler ────────────────────────────────────────────
+   792→function handleLogout() {
+   793→    removeToken();
+   794→    showToast('Has cerrado sesión', 'info');
+   795→    setTimeout(() => {
+   796→        window.location.href = 'index.html';
+   797→    }, 1000);
+   798→}
+   799→
+   800→// ─── Mobile Search Modal ──────────────────────────────────────
+   801→function initMobileSearchModal() {
+   802→    const trigger = document.getElementById('mobileSearchTrigger');
+   803→    const searchForm = document.getElementById('heroSearchForm');
+   804→    const backdrop = document.getElementById('mobileSearchBackdrop');
+   805→    const closeBtn = document.getElementById('searchModalClose');
+   806→
+   807→    if (!trigger || !searchForm) return;
+   808→
+   809→    function openSearchModal() {
+   810→        searchForm.classList.add('mobile-open');
+   811→        trigger.classList.add('active');
+   812→        if (backdrop) backdrop.classList.add('visible');
+   813→        document.body.style.overflow = 'hidden';
+   814→    }
+   815→
+   816→    function closeSearchModal() {
+   817→        searchForm.classList.remove('mobile-open');
+   818→        trigger.classList.remove('active');
+   819→        if (backdrop) backdrop.classList.remove('visible');
+   820→        document.body.style.overflow = '';
+   821→    }
+   822→
+   823→    trigger.addEventListener('click', () => {
+   824→        if (searchForm.classList.contains('mobile-open')) {
+   825→            closeSearchModal();
+   826→        } else {
+   827→            openSearchModal();
+   828→        }
+   829→    });
+   830→
+   831→    if (closeBtn) {
+   832→        closeBtn.addEventListener('click', (e) => {
+   833→            e.preventDefault();
+   834→            e.stopPropagation();
+   835→            closeSearchModal();
+   836→        });
+   837→    }
+   838→
+   839→    if (backdrop) {
+   840→        backdrop.addEventListener('click', closeSearchModal);
+   841→    }
+   842→
+   843→    // Allow form submission (search) to work normally
+   844→    searchForm.addEventListener('submit', () => {
+   845→        // Let the form submit naturally to search.html
+   846→        document.body.style.overflow = '';
+   847→    });
+   848→}
+   849→
+   850→// ─── Initialization ────────────────────────────────────────────
+   851→document.addEventListener('DOMContentLoaded', () => {
+   852→    // Update navigation bar
+   853→    updateNav();
+   854→
+   855→    // Initialize location selector (loads saved state, updates brand)
+   856→    initLocationSelector();
+   857→
+   858→    // Initialize mobile search modal
+   859→    initMobileSearchModal();
+   860→
+   861→    // Hamburger menu toggle
+   862→    const navToggle = document.getElementById('navToggle');
+   863→    const navMenu = document.getElementById('navMenu');
+   864→
+   865→    if (navToggle && navMenu) {
+   866→        navToggle.addEventListener('click', () => {
+   867→            navMenu.classList.toggle('active');
+   868→            navToggle.classList.toggle('active');
+   869→        });
+   870→
+   871→        // Close menu when clicking a link
+   872→        navMenu.querySelectorAll('.nav-link').forEach(link => {
+   873→            link.addEventListener('click', () => {
+   874→                navMenu.classList.remove('active');
+   875→                navToggle.classList.remove('active');
+   876→            });
+   877→        });
+   878→
+   879→        // Close menu when clicking outside
+   880→        document.addEventListener('click', (e) => {
+   881→            if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+   882→                navMenu.classList.remove('active');
+   883→                navToggle.classList.remove('active');
+   884→            }
+   885→        });
+   886→    }
+   887→
+   888→    // Navbar dropdown toggle ("Más")
+   889→    document.querySelectorAll('.nav-dropdown-toggle').forEach(toggleBtn => {
+   890→        toggleBtn.addEventListener('click', (e) => {
+   891→            e.stopPropagation();
+   892→            const menu = toggleBtn.nextElementSibling;
+   893→            if (menu) {
+   894→                // Close other dropdowns
+   895→                document.querySelectorAll('.nav-dropdown-menu.active').forEach(m => {
+   896→                    if (m !== menu) m.classList.remove('active');
+   897→                });
+   898→                document.querySelectorAll('.nav-dropdown-toggle.active').forEach(b => {
+   899→                    if (b !== toggleBtn) b.classList.remove('active');
+   900→                });
+   901→                menu.classList.toggle('active');
+   902→                toggleBtn.classList.toggle('active');
+   903→            }
+   904→        });
+   905→    });
+   906→
+   907→    // Close dropdown when clicking outside
+   908→    document.addEventListener('click', (e) => {
+   909→        if (!e.target.closest('.nav-dropdown')) {
+   910→            document.querySelectorAll('.nav-dropdown-menu.active').forEach(m => m.classList.remove('active'));
+   911→            document.querySelectorAll('.nav-dropdown-toggle.active').forEach(b => b.classList.remove('active'));
+   912→        }
+   913→    });
+   914→
+   915→    // Logout button handler
+   916→    const logoutBtn = document.getElementById('navLogout');
+   917→    if (logoutBtn) {
+   918→        logoutBtn.addEventListener('click', (e) => {
+   919→            e.preventDefault();
+   920→            handleLogout();
+   921→        });
+   922→    }
+   923→
+   924→    // Handle redirect param after login
+   925→    const urlParams = new URLSearchParams(window.location.search);
+   926→    const redirectParam = urlParams.get('redirect');
+   927→    if (redirectParam && isAuthenticated()) {
+   928→        window.location.href = redirectParam;
+   929→    }
+   930→
+   931→    // Load featured businesses on index page
+   932→    const featuredGrid = document.getElementById('featuredGrid');
+   933→    if (featuredGrid) {
+   934→        loadFeaturedProperties();
+   935→    }
+   936→
+   937→    // Load featured products on index page
+   938→    const featuredProductsGrid = document.getElementById('featuredProductsGrid');
+   939→    if (featuredProductsGrid) {
+   940→        loadFeaturedProducts();
+   941→    }
+   942→
+   943→    // Load featured jobs on index page
+   944→    const featuredJobsList = document.getElementById('featuredJobsList');
+   945→    if (featuredJobsList) {
+   946→        loadFeaturedJobs();
+   947→    }
+   948→
+   949→    // Load stats on index page
+   950→    const statProperties = document.getElementById('statProperties');
+   951→    if (statProperties) {
+   952→        loadSiteStats();
+   953→    }
+   954→});
+   955→
+   956→// ─── Index Page: Featured Properties ───────────────────────────
+   957→async function loadFeaturedProperties() {
+   958→    const grid = document.getElementById('featuredGrid');
+   959→    const emptyState = document.getElementById('featuredEmpty');
+   960→    const loading = document.getElementById('featuredLoading');
+   961→    if (!grid) return;
+   962→
+   963→    try {
+   964→        // Respect selected state
+   965→        const selectedState = getSelectedState();
+   966→        let endpoint = '/businesses?status=approved&limit=3&featured=1';
+   967→        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+   968→
+   969→        const data = await api.get(endpoint);
+   970→        let businesses = data.businesses || [];
+   971→
+   972→        // If no featured businesses, get latest approved
+   973→        if (businesses.length === 0) {
+   974→            let fallbackEndpoint = '/businesses?status=approved&limit=8';
+   975→            if (selectedState) fallbackEndpoint += `&state=${encodeURIComponent(selectedState)}`;
+   976→            const allData = await api.get(fallbackEndpoint);
+   977→            businesses = allData.businesses || [];
+   978→        }
+   979→
+   980→        if (loading) loading.remove();
+   981→
+   982→        if (businesses.length === 0) {
+   983→            if (emptyState) emptyState.style.display = '';
+   984→            return;
+   985→        }
+   986→
+   987→        if (emptyState) emptyState.style.display = 'none';
+   988→        grid.innerHTML = businesses.map(p => createBusinessCard(p)).join('');
+   989→    } catch (error) {
+   990→        if (loading) loading.remove();
+   991→        if (emptyState) emptyState.style.display = '';
+   992→        console.error('Error loading featured businesses:', error);
+   993→    }
+   994→}
+   995→
+   996→// ─── Index Page: Featured Products ───────────────────────────
+   997→async function loadFeaturedProducts() {
+   998→    const grid = document.getElementById('featuredProductsGrid');
+   999→    const emptyState = document.getElementById('featuredProductsEmpty');
+  1000→    const loading = document.getElementById('featuredProductsLoading');
+  1001→    if (!grid) return;
+  1002→
+  1003→    try {
+  1004→        const selectedState = getSelectedState();
+  1005→        let endpoint = '/marketplace?status=approved&limit=8';
+  1006→        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+  1007→
+  1008→        const data = await api.get(endpoint);
+  1009→        const products = data.products || [];
+  1010→
+  1011→        if (loading) loading.remove();
+  1012→
+  1013→        if (products.length === 0) {
+  1014→            if (emptyState) emptyState.style.display = '';
+  1015→            return;
+  1016→        }
+  1017→
+  1018→        if (emptyState) emptyState.style.display = 'none';
+  1019→
+  1020→        grid.innerHTML = products.map(p => {
+  1021→            const images = (() => { try { return JSON.parse(p.images || '[]'); } catch { return []; } })();
+  1022→            const coverImage = images[0] || '';
+  1023→            const price = p.price ? `$${Number(p.price).toFixed(2)}` : '';
+  1024→            const condition = p.condition === 'new' ? 'Nuevo' : p.condition === 'used' ? 'Usado' : '';
+  1025→
+  1026→            return `
+  1027→                <a href="marketplace.html?producto=${p.id}" class="product-card">
+  1028→                    ${coverImage
+  1029→                        ? `<img src="${coverImage}" alt="${p.title || 'Producto'}" onerror="this.src='data:image/svg+xml,${encodeURIComponent(\"<svg xmlns='http://www.w3.org/2000/svg' width='200' height='160' fill='%23e0e0e0'><rect width='200' height='160'/><text x='50%' y='50%' text-anchor='middle' dy='.3em' fill='%23999' font-size='14' font-family='sans-serif'>Sin imagen</text></svg>\")}'">`
+  1030→                        : `<div style="width:100%;height:160px;background:#f0f0f0;display:flex;align-items:center;justify-content:center;"><i class="fas fa-box" style="font-size:2rem;color:#ccc;"></i></div>`}
+  1031→                    <div class="product-card-body">
+  1032→                        <div class="product-card-name">${p.title || 'Sin titulo'}</div>
+  1033→                        ${price ? `<div class="product-card-price">${price}</div>` : ''}
+  1034→                        <div style="font-size:0.75rem;color:#888;margin-top:4px;">${p.city || ''} ${p.state ? ', ' + p.state : ''}</div>
+  1035→                        ${condition ? `<span style="font-size:0.7rem;padding:2px 8px;border-radius:8px;background:${condition === 'Nuevo' ? '#e8f5e9' : '#fff3e0'};color:${condition === 'Nuevo' ? '#2e7d32' : '#e65100'};font-weight:600;">${condition}</span>` : ''}
+  1036→                    </div>
+  1037→                </a>
+  1038→            `;
+  1039→        }).join('');
+  1040→    } catch (error) {
+  1041→        if (loading) loading.remove();
+  1042→        if (emptyState) emptyState.style.display = '';
+  1043→        console.error('Error loading featured products:', error);
+  1044→    }
+  1045→}
+  1046→
+  1047→// ─── Index Page: Featured Jobs ───────────────────────────────
+  1048→async function loadFeaturedJobs() {
+  1049→    const list = document.getElementById('featuredJobsList');
+  1050→    const emptyState = document.getElementById('featuredJobsEmpty');
+  1051→    const loading = document.getElementById('featuredJobsLoading');
+  1052→    if (!list) return;
+  1053→
+  1054→    try {
+  1055→        const data = await api.get('/jobs?status=approved&limit=6');
+  1056→        const jobs = data.jobs || [];
+  1057→
+  1058→        if (loading) loading.remove();
+  1059→
+  1060→        if (jobs.length === 0) {
+  1061→            if (emptyState) emptyState.style.display = '';
+  1062→            return;
+  1063→        }
+  1064→
+  1065→        if (emptyState) emptyState.style.display = 'none';
+  1066→
+  1067→        const jobTypeLabels = {
+  1068→            'tiempo_completo': 'Tiempo Completo',
+  1069→            'medio_tiempo': 'Medio Tiempo',
+  1070→            'contrato': 'Contrato',
+  1071→            'remoto': 'Remoto',
+  1072→            'freelance': 'Freelance',
+  1073→        };
+  1074→
+  1075→        list.innerHTML = jobs.map(j => {
+  1076→            const typeLabel = jobTypeLabels[j.job_type] || j.job_type || '';
+  1077→            const salaryText = j.salary || 'A convenir';
+  1078→            const locationText = [j.city, j.state].filter(Boolean).join(', ') || 'Venezuela';
+  1079→
+  1080→            return `
+  1081→                <a href="empleo.html?job=${j.id}" style="text-decoration:none;color:inherit;display:block;margin-bottom:12px;">
+  1082→                    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px;display:flex;align-items:center;gap:14px;transition:box-shadow 0.2s,transform 0.2s;cursor:pointer;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';this.style.transform='translateY(-1px)';" onmouseout="this.style.boxShadow='';this.style.transform='';">
+  1083→                        <div style="width:44px;height:44px;border-radius:10px;background:#fef3c7;color:#f59e0b;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+  1084→                            <i class="fas fa-briefcase"></i>
+  1085→                        </div>
+  1086→                        <div style="flex:1;min-width:0;">
+  1087→                            <div style="font-weight:600;font-size:0.95rem;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${j.title || 'Sin titulo'}</div>
+  1088→                            <div style="font-size:0.8rem;color:#6b7280;">${j.company_name || ''} &middot; ${locationText}</div>
+  1089→                        </div>
+  1090→                        <div style="text-align:right;flex-shrink:0;">
+  1091→                            ${typeLabel ? `<span style="font-size:0.7rem;padding:3px 8px;border-radius:8px;background:#eff6ff;color:#1a73e8;font-weight:600;">${typeLabel}</span>` : ''}
+  1092→                            <div style="font-size:0.78rem;color:#059669;font-weight:600;margin-top:4px;">${salaryText}</div>
+  1093→                        </div>
+  1094→                    </div>
+  1095→                </a>
+  1096→            `;
+  1097→        }).join('');
+  1098→    } catch (error) {
+  1099→        if (loading) loading.remove();
+  1100→        if (emptyState) emptyState.style.display = '';
+  1101→        console.error('Error loading featured jobs:', error);
+  1102→    }
+  1103→}
+  1104→
+  1105→// ─── Index Page: Site Stats ────────────────────────────────────
+  1106→async function loadSiteStats() {
+  1107→    const statProps = document.getElementById('statProperties');
+  1108→    const statUsers = document.getElementById('statUsers');
+  1109→    if (!statProps) return;
+  1110→
+  1111→    try {
+  1112→        const data = await api.get('/businesses?status=approved&limit=1');
+  1113→        const totalApproved = data.pagination?.total || 0;
+  1114→        statProps.textContent = totalApproved;
+  1115→    } catch {
+  1116→        statProps.textContent = '0';
+  1117→    }
+  1118→
+  1119→    try {
+  1120→        // Try to get users count (may fail without auth)
+  1121→        const data = await api.get('/stats');
+  1122→        if (data.stats) {
+  1123→            statProps.textContent = data.stats.approved_businesses || 0;
+  1124→            if (statUsers) statUsers.textContent = data.stats.total_users || 0;
+  1125→        }
+  1126→    } catch {
+  1127→        // Stats endpoint requires auth/admin - use fallback
+  1128→    }
+  1129→}
+  1130→
+  1131→// ═══════════════════════════════════════════════════════════════
+  1132→// SEARCH PAGE (search.html)
+  1133→// ═══════════════════════════════════════════════════════════════
+  1134→(function initSearchPage() {
+  1135→    document.addEventListener('DOMContentLoaded', () => {
+  1136→        const searchGrid = document.getElementById('searchResultsGrid');
+  1137→        if (!searchGrid) return; // Not on search page
+  1138→
+  1139→        // Populate filter fields from URL params
+  1140→        const params = getSearchParams();
+  1141→        if (params.estado && document.getElementById('sEstado')) document.getElementById('sEstado').value = params.estado;
+  1142→        if (params.categoria && document.getElementById('sCategoria')) document.getElementById('sCategoria').value = params.categoria;
+  1143→        if (params.city && document.getElementById('sCiudad')) document.getElementById('sCiudad').value = params.city;
+  1144→        if (params.business_type && document.getElementById('sTipoNegocio')) document.getElementById('sTipoNegocio').value = params.business_type;
+  1145→        if (params.search && document.getElementById('sBusqueda')) document.getElementById('sBusqueda').value = params.search;
+  1146→
+  1147→        // Search button
+  1148→        const searchBtn = document.getElementById('searchBtn');
+  1149→        if (searchBtn) {
+  1150→            searchBtn.addEventListener('click', (e) => {
+  1151→                e.preventDefault();
+  1152→                executeSearch(1);
+  1153→            });
+  1154→        }
+  1155→
+  1156→        // Sort change
+  1157→        const sSort = document.getElementById('sSort');
+  1158→        if (sSort) {
+  1159→            sSort.addEventListener('change', () => executeSearch(params.page));
+  1160→        }
+  1161→
+  1162→        // Extended sort (in collapsible filters)
+  1163→        const sOrdenar = document.getElementById('sOrdenar');
+  1164→        if (sOrdenar) {
+  1165→            sOrdenar.addEventListener('change', () => executeSearch(params.page));
+  1166→        }
+  1167→
+  1168→        // Toggle extended filters
+  1169→        const toggleFiltersBtn = document.getElementById('toggleFiltersBtn');
+  1170→        const extendedFilters = document.getElementById('extendedFilters');
+  1171→        if (toggleFiltersBtn && extendedFilters) {
+  1172→            toggleFiltersBtn.addEventListener('click', () => {
+  1173→                extendedFilters.classList.toggle('hidden');
+  1174→            });
+  1175→        }
+  1176→
+  1177→        // View toggle (grid/list)
+  1178→        const gridViewBtn = document.getElementById('gridViewBtn');
+  1179→        const listViewBtn = document.getElementById('listViewBtn');
+  1180→        if (gridViewBtn && listViewBtn) {
+  1181→            gridViewBtn.addEventListener('click', () => {
+  1182→                searchGrid.classList.remove('list-view');
+  1183→                searchGrid.classList.add('grid-view');
+  1184→                gridViewBtn.classList.add('active');
+  1185→                listViewBtn.classList.remove('active');
+  1186→            });
+  1187→            listViewBtn.addEventListener('click', () => {
+  1188→                searchGrid.classList.remove('grid-view');
+  1189→                searchGrid.classList.add('list-view');
+  1190→                listViewBtn.classList.add('active');
+  1191→                gridViewBtn.classList.remove('active');
+  1192→            });
+  1193→        }
+  1194→
+  1195→        // Clear filters
+  1196→        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+  1197→        if (clearFiltersBtn) {
+  1198→            clearFiltersBtn.addEventListener('click', () => {
+  1199→                window.location.href = 'search.html';
+  1200→            });
+  1201→        }
+  1202→
+  1203→        // Execute initial search
+  1204→        executeSearch(params.page);
+  1205→    });
+  1206→
+  1207→    async function executeSearch(page = 1) {
+  1208→        const searchLoading = document.getElementById('searchLoading');
+  1209→        const noResults = document.getElementById('noResults');
+  1210→        const searchGrid = document.getElementById('searchResultsGrid');
+  1211→        const resultsCount = document.getElementById('resultsCount');
+  1212→        const activeFiltersEl = document.getElementById('activeFilters');
+  1213→        const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+  1214→        const paginationEl = document.getElementById('pagination');
+  1215→
+  1216→        if (!searchGrid) return;
+  1217→
+  1218→        // Show loading
+  1219→        if (searchLoading) searchLoading.classList.remove('hidden');
+  1220→        if (noResults) noResults.classList.add('hidden');
+  1221→        searchGrid.innerHTML = '';
+  1222→        if (paginationEl) paginationEl.classList.add('hidden');
+  1223→
+  1224→        // Gather filter values
+  1225→        const estado = document.getElementById('sEstado')?.value || '';
+  1226→        const categoria = document.getElementById('sCategoria')?.value || '';
+  1227→        const ciudad = document.getElementById('sCiudad')?.value?.trim() || '';
+  1228→        const tipoNegocio = document.getElementById('sTipoNegocio')?.value || '';
+  1229→        const q = document.getElementById('sBusqueda')?.value?.trim() || '';
+  1230→        const sort = document.getElementById('sSort')?.value || document.getElementById('sOrdenar')?.value || '';
+  1231→
+  1232→        // Build API endpoint
+  1233→        let endpoint = `/businesses?status=approved&page=${page}&limit=12`;
+  1234→        if (estado) endpoint += `&state=${encodeURIComponent(estado)}`;
+  1235→        if (categoria) endpoint += `&categoria=${encodeURIComponent(categoria)}`;
+  1236→        if (ciudad) endpoint += `&city=${encodeURIComponent(ciudad)}`;
+  1237→        if (tipoNegocio) endpoint += `&business_type=${encodeURIComponent(tipoNegocio)}`;
+  1238→        if (q) endpoint += `&search=${encodeURIComponent(q)}`;
+  1239→
+  1240→        // Sort mapping
+  1241→        const sortMap = {
+  1242→            'reciente': 'newest',
+  1243→            'visto': 'views_desc',
+  1244→        };
+  1245→        if (sort && sort !== 'relevancia') endpoint += `&sort=${sortMap[sort] || sort}`;
+  1246→
+  1247→        try {
+  1248→            const data = await api.get(endpoint);
+  1249→            const businesses = data.businesses || [];
+  1250→            const paginationData = data.pagination || {};
+  1251→
+  1252→            if (searchLoading) searchLoading.classList.add('hidden');
+  1253→
+  1254→            // Results count
+  1255→            if (resultsCount) {
+  1256→                resultsCount.textContent = `${paginationData.total || 0} resultados encontrados`;
+  1257→            }
+  1258→
+  1259→            // Active filter tags
+  1260→            if (activeFiltersEl) {
+  1261→                let tags = '';
+  1262→                if (estado) tags += `<span class="active-filter-tag"><i class="fas fa-map"></i> ${estado} <button onclick="this.parentElement.remove(); document.getElementById('sEstado').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1263→                if (categoria) tags += `<span class="active-filter-tag"><i class="fas fa-tag"></i> ${categoria} <button onclick="this.parentElement.remove(); document.getElementById('sCategoria').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1264→                if (ciudad) tags += `<span class="active-filter-tag"><i class="fas fa-map-marker-alt"></i> ${ciudad} <button onclick="this.parentElement.remove(); document.getElementById('sCiudad').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1265→                if (tipoNegocio) tags += `<span class="active-filter-tag">${getBusinessTypeLabel(tipoNegocio)} <button onclick="this.parentElement.remove(); document.getElementById('sTipoNegocio').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1266→                if (q) tags += `<span class="active-filter-tag"><i class="fas fa-search"></i> "${truncateText(q, 20)}" <button onclick="this.parentElement.remove(); document.getElementById('sBusqueda').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+  1267→                activeFiltersEl.innerHTML = tags;
+  1268→                if (clearFiltersBtn) {
+  1269→                    clearFiltersBtn.classList.toggle('hidden', !tags);
+  1270→                }
+  1271→            }
+  1272→
+  1273→            // No results
+  1274→            if (businesses.length === 0) {
+  1275→                if (noResults) noResults.classList.remove('hidden');
+  1276→                return;
+  1277→            }
+  1278→
+  1279→            // Render business cards
+  1280→            searchGrid.innerHTML = businesses.map(p => createBusinessCard(p)).join('');
+  1281→
+  1282→            // Pagination
+  1283→            renderPagination(paginationEl, paginationData, executeSearch);
+  1284→
+  1285→            // Update URL without reload
+  1286→            updateSearchURL(estado, categoria, ciudad, tipoNegocio, q, page);
+  1287→
+  1288→        } catch (error) {
+  1289→            if (searchLoading) searchLoading.classList.add('hidden');
+  1290→            searchGrid.innerHTML = '<div class="no-results"><i class="fas fa-exclamation-circle fa-3x"></i><h2>Error de búsqueda</h2><p>No se pudieron cargar los resultados. Intenta nuevamente.</p></div>';
+  1291→            console.error('Search error:', error);
+  1292→        }
+  1293→    }
+  1294→
+  1295→    function updateSearchURL(estado, categoria, ciudad, tipoNegocio, q, page) {
+  1296→        const url = new URL(window.location);
+  1297→        url.searchParams.delete('estado');
+  1298→        url.searchParams.delete('categoria');
+  1299→        url.searchParams.delete('ciudad');
+  1300→        url.searchParams.delete('tipo_negocio');
+  1301→        url.searchParams.delete('q');
+  1302→        url.searchParams.delete('page');
+  1303→
+  1304→        if (estado) url.searchParams.set('estado', estado);
+  1305→        if (categoria) url.searchParams.set('categoria', categoria);
+  1306→        if (ciudad) url.searchParams.set('ciudad', ciudad);
+  1307→        if (tipoNegocio) url.searchParams.set('tipo_negocio', tipoNegocio);
+  1308→        if (q) url.searchParams.set('q', q);
+  1309→        if (page && page > 1) url.searchParams.set('page', page);
+  1310→
+  1311→        window.history.replaceState({}, '', url.toString());
+  1312→    }
+  1313→
+  1314→    function renderPagination(container, paginationData, onPageChange) {
+  1315→        if (!container || !paginationData) return;
+  1316→
+  1317→        const { page, totalPages, total } = paginationData;
+  1318→
+  1319→        if (totalPages <= 1) {
+  1320→            container.classList.add('hidden');
+  1321→            return;
+  1322→        }
+  1323→
+  1324→        container.classList.remove('hidden');
+  1325→        const prevBtn = document.getElementById('paginationPrev');
+  1326→        const nextBtn = document.getElementById('paginationNext');
+  1327→        const pagesContainer = document.getElementById('paginationPages');
+  1328→
+  1329→        if (prevBtn) prevBtn.disabled = page <= 1;
+  1330→        if (nextBtn) nextBtn.disabled = page >= totalPages;
+  1331→
+  1332→        if (pagesContainer) {
+  1333→            let html = '';
+  1334→            const maxVisible = 5;
+  1335→            let start = Math.max(1, page - Math.floor(maxVisible / 2));
+  1336→            let end = Math.min(totalPages, start + maxVisible - 1);
+  1337→            if (end - start < maxVisible - 1) start = Math.max(1, end - maxVisible + 1);
+  1338→
+  1339→            if (start > 1) {
+  1340→                html += `<button class="pagination-btn" data-page="1">1</button>`;
+  1341→                if (start > 2) html += '<span class="pagination-dots">...</span>';
+  1342→            }
+  1343→            for (let i = start; i <= end; i++) {
+  1344→                html += `<button class="pagination-btn ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
+  1345→            }
+  1346→            if (end < totalPages) {
+  1347→                if (end < totalPages - 1) html += '<span class="pagination-dots">...</span>';
+  1348→                html += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
+  1349→            }
+  1350→
+  1351→            pagesContainer.innerHTML = html;
+  1352→
+  1353→            pagesContainer.querySelectorAll('.pagination-btn').forEach(btn => {
+  1354→                btn.addEventListener('click', () => {
+  1355→                    const p = parseInt(btn.dataset.page);
+  1356→                    if (p) onPageChange(p);
+  1357→                });
+  1358→            });
+  1359→        }
+  1360→
+  1361→        if (prevBtn) {
+  1362→            prevBtn.onclick = () => { if (page > 1) onPageChange(page - 1); };
+  1363→        }
+  1364→        if (nextBtn) {
+  1365→            nextBtn.onclick = () => { if (page < totalPages) onPageChange(page + 1); };
+  1366→        }
+  1367→    }
+  1368→})();
+  1369→
+  1370→
+  1371→// ─── Force SW update check ─────────────────────────────────
+  1372→if ('serviceWorker' in navigator) {
+  1373→    navigator.serviceWorker.addEventListener('controllerchange', () => {
+  1374→        // New SW activated, reload to get fresh assets
+  1375→        window.location.reload();
+  1376→    });
+  1377→    // Check for updates every 60 seconds
+  1378→    setInterval(() => {
+  1379→        navigator.serviceWorker.getRegistration().then(reg => {
+  1380→            if (reg) reg.update();
+  1381→        });
+  1382→    }, 60000);
+  1383→}

@@ -1,0 +1,676 @@
+     1→<!DOCTYPE html>
+     2→<html lang="es">
+     3→<head>
+     4→    <meta charset="UTF-8">
+     5→    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→    <meta name="description" content="Un Click - El directorio de negocios y comercios más completo de Venezuela. Encuentra restaurantes, farmacias, tiendas, profesionales y más en todo el país.">
+     7→    <meta name="keywords" content="directorio de negocios, Venezuela, comercios, restaurantes, farmacias, tiendas, profesionales, servicios, Mérida, registro gratis">
+     8→    <title>Un Click - Directorio de Negocios en Venezuela</title>
+     9→    <link rel="stylesheet" href="css/styles.css">
+    10→    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    11→    <link rel="preconnect" href="https://fonts.googleapis.com">
+    12→    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    13→    <link rel="manifest" href="/manifest.json">
+    14→    <meta name="theme-color" content="#1a73e8">
+    15→    <meta property="og:title" content="Un Click - Directorio de Negocios en Venezuela">
+    16→    <meta property="og:description" content="El directorio de negocios más completo de Venezuela. Restaurantes, farmacias, tiendas y más.">
+    17→    <meta property="og:type" content="website">
+    18→    <meta property="og:url" content="https://aunclick.pages.dev">
+    19→</head>
+    20→<body>
+    21→    <!-- Navigation -->
+    22→    <nav class="navbar" id="navbar">
+    23→        <div class="nav-container">
+    24→            <a href="index.html" class="nav-logo">
+    25→                <i class="fas fa-store"></i>
+    26→                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> Un Click</span>
+    27→            </a>
+    28→            <div class="location-selector" id="locationSelector">
+    29→                <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
+    30→                    <i class="fas fa-map-marker-alt"></i>
+    31→                    <span class="location-label" id="locationLabel">Todo Venezuela</span>
+    32→                    <i class="fas fa-chevron-down"></i>
+    33→                </button>
+    34→                <div class="location-dropdown hidden" id="locationDropdown">
+    35→                    <div class="location-search">
+    36→                        <input type="text" id="locationSearchInput" placeholder="Buscar estado..." autocomplete="off">
+    37→                    </div>
+    38→                    <div class="location-option" data-state="" data-city="">
+    39→                        <i class="fas fa-globe-americas"></i>
+    40→                        <span>Todo Venezuela</span>
+    41→                    </div>
+    42→                    <div class="location-divider"></div>
+    43→                    <div class="location-list" id="locationList">
+    44→                        <!-- States loaded dynamically -->
+    45→                    </div>
+    46→                </div>
+    47→            </div>
+    48→            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+    49→                <i class="fas fa-bars"></i>
+    50→            </button>
+    51→            <ul class="nav-menu" id="navMenu">
+    52→                <li><a href="index.html" class="nav-link active">Inicio</a></li>
+    53→                <li><a href="search.html" class="nav-link">Negocios</a></li>
+    54→                <li><a href="map.html" class="nav-link">Mapa</a></li>
+    55→                <li><a href="entretenimiento.html" class="nav-link">Entretenimiento</a></li>
+    56→                <li><a href="empleo.html" class="nav-link">Empleo</a></li>
+    57→                <li class="nav-dropdown">
+    58→                    <button class="nav-dropdown-toggle" aria-label="Más opciones">
+    59→                        Más <i class="fas fa-chevron-down"></i>
+    60→                    </button>
+    61→                    <ul class="nav-dropdown-menu">
+    62→                        <li><a href="marketplace.html" class="nav-link"><i class="fas fa-shopping-bag"></i> Marketplace</a></li>
+    63→                        <li class="nav-dropdown-divider"></li>
+    64→                        <li><a href="emergencia.html" class="nav-link" style="color:#dc3545;"><i class="fas fa-exclamation-triangle"></i> Emergencias</a></li>
+    65→                    </ul>
+    66→                </li>
+    67→                <li id="navLoginItem"><a href="login.html" class="nav-link nav-btn">Login</a></li>
+    68→                <li id="navUserItem" class="nav-user hidden">
+    69→                    <a href="dashboard.html" class="nav-link" id="navUserName">
+    70→                        <i class="fas fa-user-circle"></i> Mi Cuenta
+    71→                    </a>
+    72→                    <button class="nav-link btn-logout" id="navLogout">
+    73→                        <i class="fas fa-sign-out-alt"></i> Salir
+    74→                    </button>
+    75→                </li>
+    76→                <li class="nav-mobile-cta">
+    77→                    <a href="marketplace.html" class="nav-mobile-cta-marketplace">
+    78→                        <i class="fas fa-shopping-bag"></i> Marketplace
+    79→                    </a>
+    80→                </li>
+    81→            </ul>
+    82→        </div>
+    83→    </nav>
+    84→
+    85→    <!-- ===== 1. HERO SECTION ===== -->
+    86→    <section class="idx-hero">
+    87→        <div class="idx-hero-bg"></div>
+    88→        <div class="idx-hero-particles"></div>
+    89→        <div class="idx-hero-content">
+    90→            <div class="idx-hero-badge">
+    91→                <i class="fas fa-star"></i> El directorio comercial #1 de Venezuela
+    92→            </div>
+    93→            <h1 class="idx-hero-title">Encuentra los mejores <span class="idx-hero-highlight">negocios y comercios</span> en Venezuela</h1>
+    94→            <p class="idx-hero-subtitle">Negocios, profesionales, servicios y más. Registra tu comercio gratis y conecta con clientes en todo el país.</p>
+    95→
+    96→            <!-- Mobile: Search Trigger Button -->
+    97→            <button class="idx-mobile-search-trigger" id="mobileSearchTrigger">
+    98→                <i class="fas fa-search"></i>
+    99→                <span>Explorar Negocios</span>
+   100→                <i class="fas fa-chevron-down idx-mobile-search-arrow"></i>
+   101→            </button>
+   102→
+   103→            <!-- Search Bar (desktop inline, mobile inside modal) -->
+   104→            <form class="idx-search-bar" id="heroSearchForm" action="search.html" method="GET">
+   105→                <div class="idx-search-modal-header" id="searchModalHeader">
+   106→                    <h3><i class="fas fa-search"></i> Explorar Negocios</h3>
+   107→                    <button type="button" class="idx-search-modal-close" id="searchModalClose">
+   108→                        <i class="fas fa-times"></i>
+   109→                    </button>
+   110→                </div>
+   111→                <div class="idx-search-row">
+   112→                    <div class="idx-search-field">
+   113→                        <label><i class="fas fa-map"></i> Estado</label>
+   114→                        <div class="idx-select-wrap">
+   115→                            <select id="searchEstado" name="estado">
+   116→                                <option value="">Todo el país</option>
+   117→                                <option value="Amazonas">Amazonas</option>
+   118→                                <option value="Anzoátegui">Anzoátegui</option>
+   119→                                <option value="Apure">Apure</option>
+   120→                                <option value="Aragua">Aragua</option>
+   121→                                <option value="Barinas">Barinas</option>
+   122→                                <option value="Bolívar">Bolívar</option>
+   123→                                <option value="Carabobo">Carabobo</option>
+   124→                                <option value="Cojedes">Cojedes</option>
+   125→                                <option value="Delta Amacuro">Delta Amacuro</option>
+   126→                                <option value="Distrito Capital">Distrito Capital</option>
+   127→                                <option value="Falcón">Falcón</option>
+   128→                                <option value="Guárico">Guárico</option>
+   129→                                <option value="Lara">Lara</option>
+   130→                                <option value="Mérida">Mérida</option>
+   131→                                <option value="Miranda">Miranda</option>
+   132→                                <option value="Monagas">Monagas</option>
+   133→                                <option value="Nueva Esparta">Nueva Esparta</option>
+   134→                                <option value="Portuguesa">Portuguesa</option>
+   135→                                <option value="Sucre">Sucre</option>
+   136→                                <option value="Táchira">Táchira</option>
+   137→                                <option value="Trujillo">Trujillo</option>
+   138→                                <option value="Vargas">Vargas</option>
+   139→                                <option value="Yaracuy">Yaracuy</option>
+   140→                                <option value="Zulia">Zulia</option>
+   141→                            </select>
+   142→                            <i class="fas fa-chevron-down idx-select-arrow"></i>
+   143→                        </div>
+   144→                    </div>
+   145→                    <div class="idx-search-field">
+   146→                        <label><i class="fas fa-th-large"></i> Categoría</label>
+   147→                        <div class="idx-select-wrap">
+   148→                            <select id="searchCategoria" name="categoria">
+   149→                                <option value="">Todas</option>
+   150→                                <option value="restaurantes">Restaurantes</option>
+   151→                                <option value="farmacias">Farmacias</option>
+   152→                                <option value="clinicas-hospitales">Clínicas y Hospitales</option>
+   153→                                <option value="supermercados">Supermercados</option>
+   154→                                <option value="ropas">Ropas</option>
+   155→                                <option value="barberias">Barberías y Salones</option>
+   156→                                <option value="auto-talleres">Auto Talleres</option>
+   157→                                <option value="cafeterias">Cafeterías</option>
+   158→                                <option value="bares-discotecas">Bares y Discotecas</option>
+   159→                                <option value="ferreterias">Ferreterías</option>
+   160→                                <option value="tecnologia">Tecnología</option>
+   161→                                <option value="hoteles-posadas">Hoteles y Posadas</option>
+   162→                                <option value="gimnasios">Gimnasios</option>
+   163→                                <option value="dentistas">Dentistas</option>
+   164→                                <option value="celulares">Celulares</option>
+   165→                                <option value="mueblerias">Mueblerías</option>
+   166→                                <option value="juridicos">Jurídicos</option>
+   167→                                <option value="academias">Academias</option>
+   168→                                <option value="veterinarias">Veterinarias</option>
+   169→                                <option value="electricos">Eléctricos</option>
+   170→                                <option value="perfumerias">Perfumerías</option>
+   171→                                <option value="joyerias">Joyerías</option>
+   172→                                <option value="zapaterias">Zapaterías</option>
+   173→                                <option value="panaderias">Panaderías</option>
+   174→                                <option value="heladerias">Heladerías</option>
+   175→                                <option value="pizzerias">Pizzerías</option>
+   176→                                <option value="bicicletas">Bicicletas</option>
+   177→                                <option value="encomiendas">Encomiendas</option>
+   178→                                <option value="lavanderias">Lavanderías</option>
+   179→                                <option value="otro">Otro</option>
+   180→                            </select>
+   181→                            <i class="fas fa-chevron-down idx-select-arrow"></i>
+   182→                        </div>
+   183→                    </div>
+   184→                    <div class="idx-search-field">
+   185→                        <label><i class="fas fa-map-marker-alt"></i> Ciudad</label>
+   186→                        <input type="text" id="searchCiudad" name="ciudad" placeholder="Ej: Mérida">
+   187→                    </div>
+   188→                </div>
+   189→                <div class="idx-search-row idx-search-row-2">
+   190→                    <div class="idx-search-field idx-search-field-full">
+   191→                        <label><i class="fas fa-search"></i> Buscar</label>
+   192→                        <input type="text" id="searchQuery" name="q" placeholder="Nombre o describe el negocio...">
+   193→                    </div>
+   194→                    <button type="submit" class="idx-search-btn">
+   195→                        <i class="fas fa-search"></i> Buscar
+   196→                    </button>
+   197→                </div>
+   198→                <!-- Quick Links inside form (visible in mobile modal) -->
+   199→                <div class="idx-quick-links idx-quick-links-modal">
+   200→                    <a href="search.html?sort=popular" class="idx-quick-link">
+   201→                        <i class="fas fa-fire"></i> Negocios Populares
+   202→                    </a>
+   203→                    <a href="search.html?sort=reciente" class="idx-quick-link">
+   204→                        <i class="fas fa-clock"></i> Últimos Registrados
+   205→                    </a>
+   206→                    <a href="search.html?tipo_negocio=profesional" class="idx-quick-link">
+   207→                        <i class="fas fa-mountain-sun"></i> Profesionales
+   208→                    </a>
+   209→                    <a href="new-business.html" class="idx-quick-link idx-quick-link-publish">
+   210→                        <i class="fas fa-plus-circle"></i> Registrar Gratis
+   211→                    </a>
+   212→                </div>
+   213→            </form>
+   214→
+   215→            <!-- Quick Links (desktop only) -->
+   216→            <div class="idx-quick-links">
+   217→                <a href="search.html?sort=popular" class="idx-quick-link">
+   218→                    <i class="fas fa-fire"></i> Negocios Populares
+   219→                </a>
+   220→                <a href="search.html?sort=reciente" class="idx-quick-link">
+   221→                    <i class="fas fa-clock"></i> Últimos Registrados
+   222→                </a>
+   223→                <a href="search.html?tipo_negocio=profesional" class="idx-quick-link">
+   224→                    <i class="fas fa-mountain-sun"></i> Profesionales
+   225→                </a>
+   226→                <a href="new-business.html" class="idx-quick-link idx-quick-link-publish">
+   227→                    <i class="fas fa-plus-circle"></i> Registrar Gratis
+   228→                </a>
+   229→            </div>
+   230→
+   231→            <!-- Mobile Search Modal Backdrop -->
+   232→            <div class="idx-mobile-search-backdrop" id="mobileSearchBackdrop"></div>
+   233→        </div>
+   234→    </section>
+   235→
+   236→    <!-- ===== 2. FEATURED PROPERTIES ===== -->
+   237→    <section class="idx-section" id="featuredSection">
+   238→        <div class="container">
+   239→            <div class="idx-section-header">
+   240→                <div class="idx-section-header-left">
+   241→                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #1a73e8, #4a90e8);">
+   242→                        <i class="fas fa-star"></i>
+   243→                    </div>
+   244→                    <div>
+   245→                        <h2 class="idx-section-title">Negocios Destacados</h2>
+   246→                        <p class="idx-section-subtitle">Las mejores oportunidades comerciales en Venezuela</p>
+   247→                    </div>
+   248→                </div>
+   249→                <a href="search.html" class="idx-section-link">
+   250→                    Ver todas <i class="fas fa-arrow-right"></i>
+   251→                </a>
+   252→            </div>
+   253→            <div class="business-grid" id="featuredGrid">
+   254→                <div class="loading-spinner" id="featuredLoading">
+   255→                    <i class="fas fa-spinner fa-spin"></i>
+   256→                    <p>Cargando negocios...</p>
+   257→                </div>
+   258→            </div>
+   259→            <div class="text-center" id="featuredEmpty" style="display:none;">
+   260→                <p class="text-muted">No hay negocios destacados en este momento.</p>
+   261→            </div>
+   262→        </div>
+   263→    </section>
+   264→
+   265→    <!-- ===== 3. FEATURED PRODUCTS ===== -->
+   266→    <section class="idx-section idx-section-alt" id="featuredProductsSection">
+   267→        <div class="container">
+   268→            <div class="idx-section-header">
+   269→                <div class="idx-section-header-left">
+   270→                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #059669, #34d399);">
+   271→                        <i class="fas fa-boxes-stacked"></i>
+   272→                    </div>
+   273→                    <div>
+   274→                        <h2 class="idx-section-title">Productos Destacados</h2>
+   275→                        <p class="idx-section-subtitle">Los mejores productos del marketplace</p>
+   276→                    </div>
+   277→                </div>
+   278→                <a href="marketplace.html" class="idx-section-link">
+   279→                    Ver todos <i class="fas fa-arrow-right"></i>
+   280→                </a>
+   281→            </div>
+   282→            <div class="business-grid" id="featuredProductsGrid">
+   283→                <div class="loading-spinner" id="featuredProductsLoading">
+   284→                    <i class="fas fa-spinner fa-spin"></i>
+   285→                    <p>Cargando productos...</p>
+   286→                </div>
+   287→            </div>
+   288→            <div class="text-center" id="featuredProductsEmpty" style="display:none;">
+   289→                <p class="text-muted">No hay productos destacados en este momento.</p>
+   290→            </div>
+   291→        </div>
+   292→    </section>
+   293→
+   294→    <!-- ===== 4. FEATURED JOBS ===== -->
+   295→    <section class="idx-section" id="featuredJobsSection">
+   296→        <div class="container">
+   297→            <div class="idx-section-header">
+   298→                <div class="idx-section-header-left">
+   299→                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24);">
+   300→                        <i class="fas fa-briefcase"></i>
+   301→                    </div>
+   302→                    <div>
+   303→                        <h2 class="idx-section-title">Empleos Destacados</h2>
+   304→                        <p class="idx-section-subtitle">Oportunidades laborales disponibles</p>
+   305→                    </div>
+   306→                </div>
+   307→                <a href="empleo.html" class="idx-section-link">
+   308→                    Ver todos <i class="fas fa-arrow-right"></i>
+   309→                </a>
+   310→            </div>
+   311→            <div id="featuredJobsList">
+   312→                <div class="loading-spinner" id="featuredJobsLoading">
+   313→                    <i class="fas fa-spinner fa-spin"></i>
+   314→                    <p>Cargando empleos...</p>
+   315→                </div>
+   316→            </div>
+   317→            <div class="text-center" id="featuredJobsEmpty" style="display:none;">
+   318→                <p class="text-muted">No hay empleos destacados en este momento.</p>
+   319→            </div>
+   320→        </div>
+   321→    </section>
+   322→
+   323→    <!-- ===== 5. EXPLORE BY TYPE ===== -->
+   324→    <section class="idx-section idx-section-alt">
+   325→        <div class="container">
+   326→            <div class="idx-section-header">
+   327→                <div class="idx-section-header-left">
+   328→                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #6f42c1, #8b5cf6);">
+   329→                        <i class="fas fa-th-large"></i>
+   330→                    </div>
+   331→                    <div>
+   332→                        <h2 class="idx-section-title">Explora por Categoría</h2>
+   333→                        <p class="idx-section-subtitle">Encuentra exactamente lo que buscas</p>
+   334→                    </div>
+   335→                </div>
+   336→            </div>
+   337→            <div class="idx-types-grid">
+   338→                <a href="search.html?categoria=restaurantes" class="idx-type-card">
+   339→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fef2f2, #fecaca); color: #e74c3c;">
+   340→                        <i class="fas fa-utensils"></i>
+   341→                    </div>
+   342→                    <h3>Restaurantes</h3>
+   343→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   344→                </a>
+   345→                <a href="search.html?categoria=farmacias" class="idx-type-card">
+   346→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #e74c3c;">
+   347→                        <i class="fas fa-pills"></i>
+   348→                    </div>
+   349→                    <h3>Farmacias</h3>
+   350→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   351→                </a>
+   352→                <a href="search.html?categoria=clinicas-hospitales" class="idx-type-card">
+   353→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fef2f2, #fecaca); color: #c0392b;">
+   354→                        <i class="fas fa-hospital"></i>
+   355→                    </div>
+   356→                    <h3>Clínicas</h3>
+   357→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   358→                </a>
+   359→                <a href="search.html?categoria=supermercados" class="idx-type-card">
+   360→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #2ecc71;">
+   361→                        <i class="fas fa-shopping-cart"></i>
+   362→                    </div>
+   363→                    <h3>Supermercados</h3>
+   364→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   365→                </a>
+   366→                <a href="search.html?categoria=barberias" class="idx-type-card">
+   367→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f1f5f9, #cbd5e1); color: #607d8b;">
+   368→                        <i class="fas fa-cut"></i>
+   369→                    </div>
+   370→                    <h3>Barberías</h3>
+   371→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   372→                </a>
+   373→                <a href="search.html?categoria=auto-talleres" class="idx-type-card">
+   374→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fff7ed, #fed7aa); color: #ff9800;">
+   375→                        <i class="fas fa-wrench"></i>
+   376→                    </div>
+   377→                    <h3>Auto Talleres</h3>
+   378→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   379→                </a>
+   380→                <a href="search.html?categoria=ropas" class="idx-type-card">
+   381→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); color: #e91e63;">
+   382→                        <i class="fas fa-tshirt"></i>
+   383→                    </div>
+   384→                    <h3>Ropas</h3>
+   385→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   386→                </a>
+   387→                <a href="search.html?categoria=ferreterias" class="idx-type-card">
+   388→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #ff9800;">
+   389→                        <i class="fas fa-tools"></i>
+   390→                    </div>
+   391→                    <h3>Ferreterías</h3>
+   392→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   393→                </a>
+   394→                <a href="search.html?categoria=cafeterias" class="idx-type-card">
+   395→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #795548;">
+   396→                        <i class="fas fa-coffee"></i>
+   397→                    </div>
+   398→                    <h3>Cafeterías</h3>
+   399→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   400→                </a>
+   401→                <a href="search.html?categoria=tecnologia" class="idx-type-card">
+   402→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0f9ff, #bae6fd); color: #2196f3;">
+   403→                        <i class="fas fa-laptop"></i>
+   404→                    </div>
+   405→                    <h3>Tecnología</h3>
+   406→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   407→                </a>
+   408→                <a href="search.html?categoria=hoteles-posadas" class="idx-type-card">
+   409→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fef9c3, #fde68a); color: #e91e63;">
+   410→                        <i class="fas fa-bed"></i>
+   411→                    </div>
+   412→                    <h3>Hoteles</h3>
+   413→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   414→                </a>
+   415→                <a href="search.html?categoria=gimnasios" class="idx-type-card">
+   416→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #2980b9;">
+   417→                        <i class="fas fa-dumbbell"></i>
+   418→                    </div>
+   419→                    <h3>Gimnasios</h3>
+   420→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   421→                </a>
+   422→                <a href="search.html?categoria=celulares" class="idx-type-card">
+   423→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #00bcd4;">
+   424→                        <i class="fas fa-mobile-alt"></i>
+   425→                    </div>
+   426→                    <h3>Celulares</h3>
+   427→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   428→                </a>
+   429→                <a href="search.html?categoria=artesanias" class="idx-type-card">
+   430→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fff7ed, #fed7aa); color: #ff9800;">
+   431→                        <i class="fas fa-palette"></i>
+   432→                    </div>
+   433→                    <h3>Artesanías</h3>
+   434→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   435→                </a>
+   436→                <a href="search.html?categoria=academias" class="idx-type-card">
+   437→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #3f51b5;">
+   438→                        <i class="fas fa-graduation-cap"></i>
+   439→                    </div>
+   440→                    <h3>Academias</h3>
+   441→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   442→                </a>
+   443→                <a href="search.html?categoria=dentistas" class="idx-type-card">
+   444→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #fef2f2, #fecaca); color: #1abc9c;">
+   445→                        <i class="fas fa-tooth"></i>
+   446→                    </div>
+   447→                    <h3>Dentistas</h3>
+   448→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   449→                </a>
+   450→                <a href="search.html?categoria=electricos" class="idx-type-card">
+   451→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f1f5f9, #cbd5e1); color: #ffeb3b;">
+   452→                        <i class="fas fa-bolt"></i>
+   453→                    </div>
+   454→                    <h3>Eléctricos</h3>
+   455→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   456→                </a>
+   457→                <a href="search.html?categoria=bares-discotecas" class="idx-type-card">
+   458→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f3e8ff, #e9d5ff); color: #8e44ad;">
+   459→                        <i class="fas fa-cocktail"></i>
+   460→                    </div>
+   461→                    <h3>Bares</h3>
+   462→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   463→                </a>
+   464→                <a href="search.html?categoria=all" class="idx-type-card">
+   465→                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0f9ff, #bae6fd); color: #0284c7;">
+   466→                        <i class="fas fa-th-large"></i>
+   467→                    </div>
+   468→                    <h3>Ver Todas</h3>
+   469→                    <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
+   470→                </a>
+   471→            </div>
+   472→        </div>
+   473→    </section>
+   474→
+   475→    <!-- ===== 6. MAP SECTION ===== -->
+   476→    <section class="idx-section" id="homeMapSection">
+   477→        <div class="container">
+   478→            <div class="idx-section-header">
+   479→                <div class="idx-section-header-left">
+   480→                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8c5a);">
+   481→                        <i class="fas fa-map-marked-alt"></i>
+   482→                    </div>
+   483→                    <div>
+   484→                        <h2 class="idx-section-title">Mapa de Negocios</h2>
+   485→                        <p class="idx-section-subtitle">Explora los negocios disponibles en Venezuela visualmente</p>
+   486→                    </div>
+   487→                </div>
+   488→                <a href="map.html" class="idx-section-link">
+   489→                    <i class="fas fa-expand"></i> Ver Mapa Completo
+   490→                </a>
+   491→            </div>
+   492→            <div class="idx-map-wrapper">
+   493→                <div id="homeMap" class="home-map"></div>
+   494→                <div class="idx-map-overlay" id="homeMapOverlay">
+   495→                    <div class="idx-map-overlay-content">
+   496→                        <div class="idx-map-overlay-icon">
+   497→                            <i class="fas fa-map-marked-alt"></i>
+   498→                        </div>
+   499→                        <p>Mapa interactivo con todas los negocios</p>
+   500→                        <a href="map.html" class="idx-map-btn">
+   501→                            <i class="fas fa-expand"></i> Abrir Mapa Completo
+   502→                        </a>
+   503→                    </div>
+   504→                </div>
+   505→            </div>
+   506→        </div>
+   507→    </section>
+   508→
+   509→    <!-- ===== 7. HOW IT WORKS ===== -->
+   510→    <section class="idx-section idx-section-alt">
+   511→        <div class="container">
+   512→            <div class="idx-section-header idx-section-header-center">
+   513→                <div class="idx-section-icon" style="background: linear-gradient(135deg, #28a745, #5cb85c);">
+   514→                    <i class="fas fa-rocket"></i>
+   515→                </div>
+   516→                <div>
+   517→                    <h2 class="idx-section-title">¿Cómo funciona?</h2>
+   518→                    <p class="idx-section-subtitle">Encuentra o publica tu negocio en 3 sencillos pasos</p>
+   519→                </div>
+   520→            </div>
+   521→            <div class="idx-steps-grid">
+   522→                <div class="idx-step-card">
+   523→                    <div class="idx-step-connector"></div>
+   524→                    <div class="idx-step-number">01</div>
+   525→                    <div class="idx-step-icon-wrap">
+   526→                        <div class="idx-step-icon" style="background: linear-gradient(135deg, #1a73e8, #4a90e8);">
+   527→                            <i class="fas fa-plus-circle"></i>
+   528→                        </div>
+   529→                    </div>
+   530→                    <h3>Registra</h3>
+   531→                    <p>Regístrate y publica tu negocio con fotos, detalles y contacto de forma completamente gratuita.</p>
+   532→                </div>
+   533→                <div class="idx-step-card">
+   534→                    <div class="idx-step-connector"></div>
+   535→                    <div class="idx-step-number">02</div>
+   536→                    <div class="idx-step-icon-wrap">
+   537→                        <div class="idx-step-icon" style="background: linear-gradient(135deg, #ff6b35, #ff8c5a);">
+   538→                            <i class="fas fa-search-location"></i>
+   539→                        </div>
+   540→                    </div>
+   541→                    <h3>Explora</h3>
+   542→                    <p>Explora negocios usando filtros avanzados, mapa interactivo y búsqueda por zona.</p>
+   543→                </div>
+   544→                <div class="idx-step-card">
+   545→                    <div class="idx-step-number">03</div>
+   546→                    <div class="idx-step-icon-wrap">
+   547→                        <div class="idx-step-icon" style="background: linear-gradient(135deg, #28a745, #5cb85c);">
+   548→                            <i class="fas fa-comments"></i>
+   549→                        </div>
+   550→                    </div>
+   551→                    <h3>Contacta</h3>
+   552→                    <p>Comunícate directamente con el dueño del negocio sin intermediarios.</p>
+   553→                </div>
+   554→            </div>
+   555→        </div>
+   556→    </section>
+   557→
+   558→    <!-- ===== 8. STATS SECTION ===== -->
+   559→    <section class="idx-stats-section">
+   560→        <div class="idx-stats-bg"></div>
+   561→        <div class="container">
+   562→            <div class="idx-stats-grid">
+   563→                <div class="idx-stat-card">
+   564→                    <div class="idx-stat-icon-wrap">
+   565→                        <i class="fas fa-store"></i>
+   566→                    </div>
+   567→                    <div class="idx-stat-number" id="statProperties">0</div>
+   568→                    <div class="idx-stat-label">Negocios Registrados</div>
+   569→                </div>
+   570→                <div class="idx-stat-card">
+   571→                    <div class="idx-stat-icon-wrap" style="background: rgba(40, 167, 69, 0.15);">
+   572→                        <i class="fas fa-users"></i>
+   573→                    </div>
+   574→                    <div class="idx-stat-number" id="statUsers">0</div>
+   575→                    <div class="idx-stat-label">Usuarios Activos</div>
+   576→                </div>
+   577→                <div class="idx-stat-card">
+   578→                    <div class="idx-stat-icon-wrap" style="background: rgba(255, 107, 53, 0.15);">
+   579→                        <i class="fas fa-map-marker-alt"></i>
+   580→                    </div>
+   581→                    <div class="idx-stat-number">24</div>
+   582→                    <div class="idx-stat-label">Estados</div>
+   583→                </div>
+   584→                <div class="idx-stat-card">
+   585→                    <div class="idx-stat-icon-wrap" style="background: rgba(111, 66, 193, 0.15);">
+   586→                        <i class="fas fa-handshake"></i>
+   587→                    </div>
+   588→                    <div class="idx-stat-number">100%</div>
+   589→                    <div class="idx-stat-label">Gratuito</div>
+   590→                </div>
+   591→            </div>
+   592→        </div>
+   593→    </section>
+   594→
+   595→    <!-- ===== 9. CTA SECTION ===== -->
+   596→    <section class="idx-cta-section">
+   597→        <div class="container">
+   598→            <div class="idx-cta-card">
+   599→                <div class="idx-cta-glow"></div>
+   600→                <div class="idx-cta-content">
+   601→                    <h2>¿Tienes un negocio o comercio?</h2>
+   602→                    <p>Registra tu negocio gratis en Un Click y llega a miles de personas en toda Venezuela.</p>
+   603→                    <a href="new-business.html" class="idx-cta-btn">
+   604→                        <i class="fas fa-plus-circle"></i> Registrar Negocio Gratis
+   605→                    </a>
+   606→                </div>
+   607→            </div>
+   608→        </div>
+   609→    </section>
+   610→
+   611→    <!-- Footer -->
+   612→    <footer class="footer">
+   613→        <div class="container">
+   614→            <div class="footer-grid">
+   615→                <div class="footer-col">
+   616→                    <a href="index.html" class="footer-logo">
+   617→                        <i class="fas fa-store"></i>
+   618→                        <span>Un Click</span>
+   619→                    </a>
+   620→                    <p>El directorio de negocios más completo de Venezuela. Conectamos comercios con clientes en todo el país.</p>
+   621→                    <div class="footer-social">
+   622→                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+   623→                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+   624→                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+   625→                        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+   626→                    </div>
+   627→                </div>
+   628→                <div class="footer-col">
+   629→                    <h4>Navegación</h4>
+   630→                    <ul>
+   631→                        <li><a href="index.html">Inicio</a></li>
+   632→                        <li><a href="search.html">Negocios</a></li>
+   633→                        <li><a href="map.html">Mapa</a></li>
+   634→                        <li><a href="new-business.html">Registrar Negocio</a></li>
+   635→                    </ul>
+   636→                </div>
+   637→                <div class="footer-col">
+   638→                    <h4>Categorías</h4>
+   639→                    <ul>
+   640→                        <li><a href="search.html?categoria=restaurantes">Restaurantes</a></li>
+   641→                        <li><a href="search.html?categoria=farmacias">Farmacias</a></li>
+   642→                        <li><a href="search.html?categoria=supermercados">Supermercados</a></li>
+   643→                        <li><a href="search.html?categoria=barberias">Barberías</a></li>
+   644→                        <li><a href="search.html?categoria=tecnologia">Tecnología</a></li>
+   645→                        <li><a href="search.html?categoria=hoteles-posadas">Hoteles y Posadas</a></li>
+   646→                    </ul>
+   647→                </div>
+   648→                <div class="footer-col">
+   649→                    <h4>Contacto</h4>
+   650→                    <ul>
+   651→                        <li><i class="fas fa-envelope"></i> info@aunclick.pages.dev</li>
+   652→                        <li><i class="fas fa-phone"></i> +58 414-000-0000</li>
+   653→                        <li><i class="fas fa-map-marker-alt"></i> Venezuela</li>
+   654→                    </ul>
+   655→                </div>
+   656→            </div>
+   657→            <div class="footer-bottom">
+   658→                <p>&copy; 2025 Un Click. Todos los derechos reservados.</p>
+   659→            </div>
+   660→        </div>
+   661→    </footer>
+   662→
+   663→    <!-- Leaflet JS -->
+   664→    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+   665→    <script src="js/app.js"></script>
+   666→    <script src="js/home-map.js"></script>
+   667→    <script src="js/chat.js"></script>
+   668→    <script src="js/ai-chatbot.js"></script>
+   669→    <script>
+   670→        if ('serviceWorker' in navigator) {
+   671→            navigator.serviceWorker.register('/sw.js').catch(() => {});
+   672→        }
+   673→    </script>
+   674→</body>
+   675→</html>
+   676→

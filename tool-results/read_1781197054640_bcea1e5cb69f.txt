@@ -1,0 +1,673 @@
+     1→/**
+     2→ * Un Click - Business Detail Page Loader
+     3→ * Loads business data from API and populates business.html
+     4→ */
+     5→
+     6→(function initBusinessDetail() {
+     7→    document.addEventListener('DOMContentLoaded', async () => {
+     8→        const loadingEl = document.getElementById('businessLoading');
+     9→        const errorEl = document.getElementById('businessError');
+    10→        const contentEl = document.getElementById('businessContent');
+    11→        const breadcrumbTitle = document.getElementById('breadcrumbTitle');
+    12→
+    13→        // Must have the loading/content/error elements
+    14→        if (!loadingEl || !contentEl) return;
+    15→
+    16→        // Get business ID from injected variable or URL param
+    17→        let businessId = window.__BUSINESS_ID || null;
+    18→        const urlParams = new URLSearchParams(window.location.search);
+    19→        if (!businessId) {
+    20→            businessId = urlParams.get('id');
+    21→        }
+    22→
+    23→        if (!businessId) {
+    24→            showError();
+    25→            return;
+    26→        }
+    27→
+    28→        try {
+    29→            // Fetch business data
+    30→            const business = await api.get(`/businesses/${businessId}`);
+    31→
+    32→            // If accessed via ?id= param, update URL to slug format
+    33→            if (business.slug && window.location.pathname === '/business.html' && !window.__BUSINESS_SLUG) {
+    34→                history.replaceState(null, '', '/negocio/' + business.slug);
+    35→            }
+    36→
+    37→            // Populate page
+    38→            populateBusinessDetail(business);
+    39→
+    40→            // Show content, hide loading
+    41→            loadingEl.classList.add('hidden');
+    42→            contentEl.classList.remove('hidden');
+    43→
+    44→            // Update page title
+    45→            document.title = `${business.title || 'Negocio'} - Un Click`;
+    46→
+    47→            // Load similar businesses
+    48→            loadSimilarBusinesses(business);
+    49→
+    50→        } catch (error) {
+    51→            console.error('Error loading business:', error);
+    52→            if (error.message.includes('no encontrado') || error.message.includes('404')) {
+    53→                showError();
+    54→            } else {
+    55→                loadingEl.innerHTML = `
+    56→                    <i class="fas fa-exclamation-triangle fa-spin fa-3x" style="color:#f59e0b;"></i>
+    57→                    <p>Error al cargar. Intenta nuevamente.</p>
+    58→                    <button class="btn btn-primary" onclick="location.reload()" style="margin-top:16px;">
+    59→                        <i class="fas fa-redo"></i> Reintentar
+    60→                    </button>
+    61→                `;
+    62→            }
+    63→        }
+    64→
+    65→        function showError() {
+    66→            loadingEl.classList.add('hidden');
+    67→            if (errorEl) errorEl.classList.remove('hidden');
+    68→        }
+    69→    });
+    70→})();
+    71→
+    72→function populateBusinessDetail(b) {
+    73→    // ─── Breadcrumb ──────────────────────────────────────────
+    74→    const breadcrumbTitle = document.getElementById('breadcrumbTitle');
+    75→    if (breadcrumbTitle) {
+    76→        breadcrumbTitle.textContent = b.title || 'Negocio';
+    77→    }
+    78→
+    79→    // ─── Gallery ──────────────────────────────────────────────
+    80→    const images = b.images || [];
+    81→    const mainImage = document.getElementById('mainImage');
+    82→    const galleryThumbnails = document.getElementById('galleryThumbnails');
+    83→    const galleryCurrent = document.getElementById('galleryCurrent');
+    84→    const galleryTotal = document.getElementById('galleryTotal');
+    85→    const galleryBadges = document.getElementById('galleryBadges');
+    86→    const businessGallery = document.getElementById('businessGallery');
+    87→
+    88→    const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
+    89→        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" fill="%23e0e0e0"><rect width="800" height="600"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif">Sin imagen</text></svg>'
+    90→    );
+    91→
+    92→    if (images.length === 0) {
+    93→        if (mainImage) mainImage.src = placeholderImg;
+    94→        if (mainImage) mainImage.alt = b.title || 'Sin imagen';
+    95→        if (businessGallery) {
+    96→            // Hide navigation if no images
+    97→            const prevBtn = document.getElementById('galleryPrev');
+    98→            const nextBtn = document.getElementById('galleryNext');
+    99→            if (prevBtn) prevBtn.style.display = 'none';
+   100→            if (nextBtn) nextBtn.style.display = 'none';
+   101→        }
+   102→        if (galleryThumbnails) galleryThumbnails.style.display = 'none';
+   103→    } else {
+   104→        // Set main image
+   105→        if (mainImage) {
+   106→            mainImage.src = images[0].url || placeholderImg;
+   107→            mainImage.alt = b.title || 'Negocio';
+   108→        }
+   109→        if (galleryCurrent) galleryCurrent.textContent = '1';
+   110→        if (galleryTotal) galleryTotal.textContent = images.length;
+   111→
+   112→        // Build thumbnails
+   113→        if (galleryThumbnails) {
+   114→            galleryThumbnails.innerHTML = images.map((img, i) => `
+   115→                <div class="gallery-thumb ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="setGalleryImage(${i})">
+   116→                    <img src="${img.url}" alt="Imagen ${i + 1}" loading="lazy" onerror="this.src='${placeholderImg}'">
+   117→                </div>
+   118→            `).join('');
+   119→        }
+   120→
+   121→        // Init gallery navigation
+   122→        initGallery(images);
+   123→    }
+   124→
+   125→    // Gallery badges (type, featured, status)
+   126→    if (galleryBadges) {
+   127→        let badges = '';
+   128→        if (b.category_name) {
+   129→            badges += `<span class="gallery-badge badge-type">${escapeHtml(b.category_name)}</span>`;
+   130→        }
+   131→        if (b.featured) {
+   132→            badges += `<span class="gallery-badge badge-featured"><i class="fas fa-star"></i> Destacado</span>`;
+   133→        }
+   134→        galleryBadges.innerHTML = badges;
+   135→    }
+   136→
+   137→    // ─── Title ────────────────────────────────────────────────
+   138→    const titleEl = document.getElementById('propDetailTitle');
+   139→    if (titleEl) titleEl.textContent = b.title || 'Sin título';
+   140→
+   141→    // ─── Price (hidden for businesses) ─────────────────────────
+   142→    const priceEl = document.getElementById('propDetailPrice');
+   143→    if (priceEl) priceEl.style.display = 'none';
+   144→
+   145→    // ─── Address ───────────────────────────────────────────────
+   146→    const locationEl = document.getElementById('propDetailLocation');
+   147→    if (locationEl) {
+   148→        let addr = b.address || '';
+   149→        if (b.city) addr += (addr ? ', ' : '') + b.city;
+   150→        if (b.state) addr += (addr ? ', ' : '') + b.state;
+   151→        locationEl.innerHTML = `<i class="fas fa-map-marker-alt"></i> <span>${escapeHtml(addr || 'Sin dirección')}</span>`;
+   152→    }
+   153→
+   154→    // ─── Feature Chips ────────────────────────────────────────
+   155→    // State/City
+   156→    const stateCity = document.getElementById('statStateCity');
+   157→    const stateCityWrap = document.getElementById('statStateCityWrap');
+   158→    if (stateCity) {
+   159→        let loc = '';
+   160→        if (b.city) loc += b.city;
+   161→        if (b.state) loc += (loc ? ', ' : '') + b.state;
+   162→        stateCity.textContent = loc || '--';
+   163→        if (stateCityWrap) stateCityWrap.style.display = loc ? '' : 'none';
+   164→    }
+   165→
+   166→    // Category
+   167→    const catEl = document.getElementById('statCategoria');
+   168→    const catWrap = document.getElementById('statCategoriaWrap');
+   169→    if (catEl) {
+   170→        catEl.textContent = b.category_name || '--';
+   171→        if (catWrap) catWrap.style.display = b.category_name ? '' : 'none';
+   172→    }
+   173→
+   174→    // Schedule
+   175→    const schedEl = document.getElementById('statSchedule');
+   176→    const schedWrap = document.getElementById('statScheduleWrap');
+   177→    if (schedWrap) {
+   178→        if (b.schedule) {
+   179→            schedEl.textContent = b.schedule;
+   180→            schedWrap.style.display = '';
+   181→        } else {
+   182→            schedWrap.style.display = 'none';
+   183→        }
+   184→    }
+   185→
+   186→    // Phone
+   187→    const phoneEl = document.getElementById('statPhone');
+   188→    const phoneWrap = document.getElementById('statPhoneWrap');
+   189→    if (phoneWrap) {
+   190→        if (b.phone) {
+   191→            phoneEl.textContent = b.phone;
+   192→            phoneWrap.style.display = '';
+   193→        } else {
+   194→            phoneWrap.style.display = 'none';
+   195→        }
+   196→    }
+   197→
+   198→    // WhatsApp
+   199→    const waEl = document.getElementById('statWhatsApp');
+   200→    const waWrap = document.getElementById('statWhatsAppWrap');
+   201→    if (waWrap) {
+   202→        if (b.whatsapp) {
+   203→            waEl.textContent = b.whatsapp;
+   204→            waWrap.style.display = '';
+   205→        } else {
+   206→            waWrap.style.display = 'none';
+   207→        }
+   208→    }
+   209→
+   210→    // Feature: Parking
+   211→    const featParking = document.getElementById('statFeatureParking');
+   212→    if (featParking) featParking.style.display = b.has_parking ? '' : 'none';
+   213→
+   214→    // Feature: WiFi
+   215→    const featWifi = document.getElementById('statFeatureWifi');
+   216→    if (featWifi) featWifi.style.display = b.has_wifi ? '' : 'none';
+   217→
+   218→    // Feature: Cards
+   219→    const featCards = document.getElementById('statFeatureCards');
+   220→    if (featCards) featCards.style.display = b.has_card ? '' : 'none';
+   221→
+   222→    // Feature: Delivery
+   223→    const featDelivery = document.getElementById('statFeatureDelivery');
+   224→    if (featDelivery) featDelivery.style.display = b.has_delivery ? '' : 'none';
+   225→
+   226→    // Feature: Outdoor
+   227→    const featOutdoor = document.getElementById('statFeatureOutdoor');
+   228→    if (featOutdoor) featOutdoor.style.display = b.has_outdoor ? '' : 'none';
+   229→
+   230→    // ─── Description ──────────────────────────────────────────
+   231→    const descEl = document.getElementById('propDescription');
+   232→    const descToggle = document.getElementById('descriptionToggle');
+   233→    if (descEl) {
+   234→        if (b.description) {
+   235→            descEl.innerHTML = `<p>${escapeHtml(b.description)}</p>`;
+   236→            // Check if description is long enough for collapse
+   237→            if (b.description.length > 200) {
+   238→                descEl.classList.add('collapsed');
+   239→                if (descToggle) {
+   240→                    descToggle.style.display = '';
+   241→                    descToggle.onclick = () => {
+   242→                        descEl.classList.toggle('collapsed');
+   243→                        descToggle.innerHTML = descEl.classList.contains('collapsed')
+   244→                            ? 'Leer más <i class="fas fa-chevron-down"></i>'
+   245→                            : 'Leer menos <i class="fas fa-chevron-up"></i>';
+   246→                    };
+   247→                }
+   248→            } else {
+   249→                descEl.classList.remove('collapsed');
+   250→            }
+   251→        } else {
+   252→            descEl.innerHTML = '<p>Sin descripción disponible.</p>';
+   253→            if (descToggle) descToggle.style.display = 'none';
+   254→        }
+   255→    }
+   256→
+   257→    // ─── Features Section ───────────────────────────────────────
+   258→    const featuresSection = document.getElementById('featuresSection');
+   259→    const featuresList = document.getElementById('featuresList');
+   260→    if (featuresSection && featuresList) {
+   261→        const features = [];
+   262→        if (b.has_parking) features.push('<div class="feature-item"><i class="fas fa-parking"></i> Estacionamiento</div>');
+   263→        if (b.has_wifi) features.push('<div class="feature-item"><i class="fas fa-wifi"></i> WiFi</div>');
+   264→        if (b.has_card) features.push('<div class="feature-item"><i class="fas fa-credit-card"></i> Acepta tarjetas</div>');
+   265→        if (b.has_delivery) features.push('<div class="feature-item"><i class="fas fa-motorcycle"></i> Delivery</div>');
+   266→        if (b.has_outdoor) features.push('<div class="feature-item"><i class="fas fa-umbrella-beach"></i> Área al aire libre</div>');
+   267→        if (b.website) features.push(`<div class="feature-item"><i class="fas fa-globe"></i> <a href="${escapeHtml(b.website)}" target="_blank" rel="noopener">${escapeHtml(b.website)}</a></div>`);
+   268→        if (b.instagram) features.push(`<div class="feature-item"><i class="fab fa-instagram"></i> <a href="https://instagram.com/${escapeHtml(b.instagram.replace('@',''))}" target="_blank" rel="noopener">${escapeHtml(b.instagram)}</a></div>`);
+   269→        if (b.facebook) features.push(`<div class="feature-item"><i class="fab fa-facebook"></i> <a href="${escapeHtml(b.facebook)}" target="_blank" rel="noopener">${escapeHtml(b.facebook)}</a></div>`);
+   270→        if (b.email_contact) features.push(`<div class="feature-item"><i class="fas fa-envelope"></i> <a href="mailto:${escapeHtml(b.email_contact)}">${escapeHtml(b.email_contact)}</a></div>`);
+   271→
+   272→        if (features.length > 0) {
+   273→            featuresList.innerHTML = features.join('');
+   274→            featuresSection.classList.remove('hidden');
+   275→        }
+   276→    }
+   277→
+   278→    // ─── Map Section ──────────────────────────────────────────
+   279→    const mapSection = document.getElementById('mapSection');
+   280→    const businessMap = document.getElementById('businessMap');
+   281→    const openMapModalBtn = document.getElementById('openMapModalBtn');
+   282→
+   283→    if (mapSection && b.lat && b.lng) {
+   284→        mapSection.classList.remove('hidden');
+   285→
+   286→        try {
+   287→            const map = L.map('businessMap').setView([b.lat, b.lng], 15);
+   288→            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+   289→                attribution: '&copy; OpenStreetMap'
+   290→            }).addTo(map);
+   291→
+   292→            const marker = L.marker([b.lat, b.lng]).addTo(map);
+   293→            const popupContent = `<strong>${escapeHtml(b.title || 'Negocio')}</strong>${b.address ? '<br>' + escapeHtml(b.address) : ''}`;
+   294→            marker.bindPopup(popupContent);
+   295→
+   296→            // Full-screen map modal
+   297→            if (openMapModalBtn) {
+   298→                openMapModalBtn.onclick = () => {
+   299→                    const modal = document.getElementById('mapModal');
+   300→                    if (!modal) return;
+   301→                    modal.classList.add('visible');
+   302→                    document.body.style.overflow = 'hidden';
+   303→
+   304→                    // Create map in modal after a short delay for DOM to update
+   305→                    setTimeout(() => {
+   306→                        const modalMapEl = document.getElementById('mapModalMap');
+   307→                        if (modalMapEl && !modalMapEl._leafletMap) {
+   308→                            const modalMap = L.map('mapModalMap').setView([b.lat, b.lng], 15);
+   309→                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+   310→                                attribution: '&copy; OpenStreetMap'
+   311→                            }).addTo(modalMap);
+   312→                            L.marker([b.lat, b.lng]).addTo(modalMap).bindPopup(`<strong>${escapeHtml(b.title || 'Negocio')}</strong><br>${escapeHtml(b.address || '')}`).openPopup();
+   313→                            modalMapEl._leafletMap = modalMap;
+   314→                            setTimeout(() => modalMap.invalidateSize(), 200);
+   315→                        }
+   316→                    }, 100);
+   317→                };
+   318→            }
+   319→
+   320→            // Map modal close
+   321→            const mapModalClose = document.getElementById('mapModalClose');
+   322→            if (mapModalClose) {
+   323→                mapModalClose.onclick = () => {
+   324→                    const modal = document.getElementById('mapModal');
+   325→                    if (modal) {
+   326→                        modal.classList.remove('visible');
+   327→                        document.body.style.overflow = '';
+   328→                    }
+   329→                };
+   330→            }
+   331→
+   332→            // Close modal on backdrop click
+   333→            const mapModal = document.getElementById('mapModal');
+   334→            if (mapModal) {
+   335→                mapModal.addEventListener('click', (e) => {
+   336→                    if (e.target === mapModal) {
+   337→                        mapModal.classList.remove('visible');
+   338→                        document.body.style.overflow = '';
+   339→                    }
+   340→                });
+   341→            }
+   342→        } catch (mapError) {
+   343→            console.warn('Error initializing map:', mapError);
+   344→        }
+   345→    } else if (mapSection) {
+   346→        mapSection.classList.add('hidden');
+   347→    }
+   348→
+   349→    // ─── Contact Actions ──────────────────────────────────────
+   350→    const mainWhatsApp = document.getElementById('mainWhatsApp');
+   351→    const ownerIsPaid = b.owner_account_type === 'paid';
+   352→    const ownerWaEnabled = b.owner_whatsapp_enabled !== 0 && b.owner_whatsapp_enabled !== false;
+   353→
+   354→    if (mainWhatsApp) {
+   355→        const waNumber = b.whatsapp || b.phone || b.owner_whatsapp || '';
+   356→        // WhatsApp button only shows for paid users with whatsapp enabled
+   357→        if (waNumber && ownerIsPaid && ownerWaEnabled) {
+   358→            const cleanNumber = waNumber.replace(/[^0-9+]/g, '');
+   359→            const msg = encodeURIComponent(`Hola, vi tu negocio "${b.title}" en Un Click y me interesa saber más.`);
+   360→            mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
+   361→            mainWhatsApp.style.display = '';
+   362→        } else {
+   363→            mainWhatsApp.style.display = 'none';
+   364→            // Show upgrade notice for free users
+   365→            if (waNumber && !ownerIsPaid && mainWhatsApp.parentElement) {
+   366→                const noticeEl = document.createElement('div');
+   367→                noticeEl.style.cssText = 'text-align:center;padding:10px;font-size:0.82rem;color:#888;background:#f9f9f9;border-radius:8px;margin-top:8px;';
+   368→                noticeEl.innerHTML = '<i class="fas fa-lock" style="margin-right:4px;"></i> Botón de WhatsApp disponible solo para cuentas de pago';
+   369→                mainWhatsApp.parentElement.insertBefore(noticeEl, mainWhatsApp.nextSibling);
+   370→            }
+   371→        }
+   372→    }
+   373→
+   374→    // Open chat button
+   375→    const openChatBtn = document.getElementById('openChatBtn');
+   376→    if (openChatBtn) {
+   377→        openChatBtn.onclick = () => {
+   378→            if (typeof UnClickChat !== 'undefined' && UnClickChat.openChatWith) {
+   379→                UnClickChat.openChatWith(b.id, `Hola, vi tu negocio "${b.title}" en Un Click`);
+   380→            } else {
+   381→                showToast('Chat no disponible', 'warning');
+   382→            }
+   383→        };
+   384→    }
+   385→
+   386→    // Share WhatsApp button
+   387→    const shareWhatsAppBtn = document.getElementById('shareWhatsAppBtn');
+   388→    if (shareWhatsAppBtn) {
+   389→        shareWhatsAppBtn.onclick = () => {
+   390→            shareBusinessWhatsApp(b);
+   391→        };
+   392→    }
+   393→
+   394→    // ─── Favorite Button ──────────────────────────────────────
+   395→    const btnFavorite = document.getElementById('btnFavorite');
+   396→    if (btnFavorite) {
+   397→        btnFavorite.dataset.businessId = b.id;
+   398→        btnFavorite.onclick = () => toggleFavorite(b.id);
+   399→
+   400→        // Check if already favorited
+   401→        checkFavorite(b.id).then(isFav => {
+   402→            const icon = btnFavorite.querySelector('i');
+   403→            if (icon) icon.className = isFav ? 'fas fa-heart' : 'far fa-heart';
+   404→            if (isFav) btnFavorite.classList.add('favorited');
+   405→        });
+   406→    }
+   407→
+   408→    // ─── Fullscreen Gallery ───────────────────────────────────
+   409→    const fullscreenBtn = document.getElementById('galleryFullscreen');
+   410→    if (fullscreenBtn) {
+   411→        fullscreenBtn.onclick = () => {
+   412→            const lightbox = document.getElementById('lightbox');
+   413→            if (lightbox) lightbox.classList.remove('hidden');
+   414→        };
+   415→    }
+   416→
+   417→    // Lightbox init
+   418→    initLightbox(images);
+   419→
+   420→    // ─── SEO Meta Description ─────────────────────────────────
+   421→    const metaDesc = document.querySelector('meta[name="description"]');
+   422→    if (metaDesc) metaDesc.content = `${b.title || 'Negocio'} - ${b.category_name || ''} en ${b.city || 'Mérida'}, ${b.state || 'Venezuela'}. ${b.description ? b.description.substring(0, 150) : 'Visita Un Click para más información.'}`;
+   423→
+   424→    // ─── Load Business Products, Jobs, Services ─────────────
+   425→    loadBusinessProducts(b.id);
+   426→    loadBusinessJobs(b.id);
+   427→    loadBusinessServices(b.id);
+   428→}
+   429→
+   430→// ─── Gallery Navigation ─────────────────────────────────────
+   431→let currentGalleryIndex = 0;
+   432→let galleryImages = [];
+   433→
+   434→function initGallery(images) {
+   435→    galleryImages = images;
+   436→    currentGalleryIndex = 0;
+   437→
+   438→    const prevBtn = document.getElementById('galleryPrev');
+   439→    const nextBtn = document.getElementById('galleryNext');
+   440→
+   441→    if (prevBtn) {
+   442→        prevBtn.onclick = () => setGalleryImage(currentGalleryIndex - 1);
+   443→    }
+   444→    if (nextBtn) {
+   445→        nextBtn.onclick = () => setGalleryImage(currentGalleryIndex + 1);
+   446→    }
+   447→}
+   448→
+   449→function setGalleryImage(index) {
+   450→    if (galleryImages.length === 0) return;
+   451→
+   452→    // Wrap around
+   453→    if (index < 0) index = galleryImages.length - 1;
+   454→    if (index >= galleryImages.length) index = 0;
+   455→
+   456→    currentGalleryIndex = index;
+   457→
+   458→    const mainImage = document.getElementById('mainImage');
+   459→    const galleryCurrent = document.getElementById('galleryCurrent');
+   460→
+   461→    const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
+   462→        '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" fill="%23e0e0e0"><rect width="800" height="600"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif">Sin imagen</text></svg>'
+   463→    );
+   464→
+   465→    if (mainImage) {
+   466→        mainImage.src = galleryImages[index].url || placeholderImg;
+   467→    }
+   468→    if (galleryCurrent) galleryCurrent.textContent = index + 1;
+   469→
+   470→    // Update active thumbnail
+   471→    document.querySelectorAll('.gallery-thumb').forEach((thumb, i) => {
+   472→        thumb.classList.toggle('active', i === index);
+   473→    });
+   474→}
+   475→
+   476→// ─── Lightbox ────────────────────────────────────────────────
+   477→function initLightbox(images) {
+   478→    let lightboxIndex = currentGalleryIndex;
+   479→
+   480→    const lightbox = document.getElementById('lightbox');
+   481→    const lightboxImage = document.getElementById('lightboxImage');
+   482→    const lightboxPrev = document.getElementById('lightboxPrev');
+   483→    const lightboxNext = document.getElementById('lightboxNext');
+   484→    const lightboxClose = document.getElementById('lightboxClose');
+   485→    const lightboxCounter = document.getElementById('lightboxCounter');
+   486→
+   487→    if (!lightbox || images.length === 0) return;
+   488→
+   489→    function updateLightbox() {
+   490→        const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
+   491→            '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" fill="%23e0e0e0"><rect width="800" height="600"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="20" font-family="sans-serif">Sin imagen</text></svg>'
+   492→        );
+   493→        if (lightboxImage) lightboxImage.src = images[lightboxIndex]?.url || placeholderImg;
+   494→        if (lightboxCounter) lightboxCounter.textContent = `${lightboxIndex + 1} / ${images.length}`;
+   495→    }
+   496→
+   497→    if (lightboxPrev) {
+   498→        lightboxPrev.onclick = (e) => {
+   499→            e.stopPropagation();
+   500→            lightboxIndex = (lightboxIndex - 1 + images.length) % images.length;
+   501→            updateLightbox();
+   502→        };
+   503→    }
+   504→
+   505→    if (lightboxNext) {
+   506→        lightboxNext.onclick = (e) => {
+   507→            e.stopPropagation();
+   508→            lightboxIndex = (lightboxIndex + 1) % images.length;
+   509→            updateLightbox();
+   510→        };
+   511→    }
+   512→
+   513→    if (lightboxClose) {
+   514→        lightboxClose.onclick = () => lightbox.classList.add('hidden');
+   515→    }
+   516→
+   517→    // Close on backdrop click
+   518→    lightbox.addEventListener('click', (e) => {
+   519→        if (e.target === lightbox) lightbox.classList.add('hidden');
+   520→    });
+   521→
+   522→    // Keyboard navigation
+   523→    document.addEventListener('keydown', (e) => {
+   524→        if (lightbox.classList.contains('hidden')) return;
+   525→        if (e.key === 'Escape') lightbox.classList.add('hidden');
+   526→        if (e.key === 'ArrowLeft') {
+   527→            lightboxIndex = (lightboxIndex - 1 + images.length) % images.length;
+   528→            updateLightbox();
+   529→        }
+   530→        if (e.key === 'ArrowRight') {
+   531→            lightboxIndex = (lightboxIndex + 1) % images.length;
+   532→            updateLightbox();
+   533→        }
+   534→    });
+   535→
+   536→    updateLightbox();
+   537→}
+   538→
+   539→// ─── Similar Businesses ─────────────────────────────────────
+   540→async function loadSimilarBusinesses(currentBusiness) {
+   541→    const similarSection = document.getElementById('similarSection');
+   542→    const similarGrid = document.getElementById('similarGrid');
+   543→
+   544→    if (!similarSection || !similarGrid) return;
+   545→
+   546→    try {
+   547→        let endpoint = `/businesses?status=approved&limit=4`;
+   548→        if (currentBusiness.category_id) {
+   549→            endpoint += `&category_id=${currentBusiness.category_id}`;
+   550→        } else if (currentBusiness.category_slug) {
+   551→            endpoint += `&categoria=${encodeURIComponent(currentBusiness.category_slug)}`;
+   552→        }
+   553→        if (currentBusiness.state) {
+   554→            endpoint += `&state=${encodeURIComponent(currentBusiness.state)}`;
+   555→        }
+   556→
+   557→        const data = await api.get(endpoint);
+   558→        let businesses = (data.businesses || []).filter(b => b.id !== currentBusiness.id);
+   559→
+   560→        if (businesses.length > 0) {
+   561→            similarGrid.innerHTML = businesses.slice(0, 4).map(b => createBusinessCard(b)).join('');
+   562→            similarSection.classList.remove('hidden');
+   563→        }
+   564→    } catch (error) {
+   565→        console.warn('Error loading similar businesses:', error);
+   566→    }
+   567→}
+   568→
+   569→// ─── Business Products ──────────────────────────────────────
+   570→async function loadBusinessProducts(businessId) {
+   571→    const section = document.getElementById('productsSection');
+   572→    const grid = document.getElementById('businessProductsGrid');
+   573→    const viewAll = document.getElementById('viewAllProducts');
+   574→    if (!section || !grid) return;
+   575→
+   576→    try {
+   577→        const data = await api.get(`/marketplace?business_id=${businessId}&status=approved&limit=12`);
+   578→        const products = data.products || [];
+   579→        
+   580→        if (products.length === 0) {
+   581→            section.style.display = 'none';
+   582→            return;
+   583→        }
+   584→
+   585→        section.style.display = '';
+   586→        if (viewAll) viewAll.href = `/marketplace.html?business_id=${businessId}`;
+   587→
+   588→        grid.innerHTML = products.map(p => {
+   589→            const imgSrc = p.image || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="%23f1f5f9"><rect width="200" height="160"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14" font-family="sans-serif">Sin imagen</text></svg>');
+   590→            const productSlug = p.slug || p.id;
+   591→            const productUrl = `/producto/${productSlug}`;
+   592→            const productPrice = p.price ? `$${Number(p.price).toLocaleString('es-VE')}` : '';
+   593→            return `<a href="${productUrl}" class="product-card">
+   594→                <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.style.display='none'">
+   595→                <div class="product-card-body">
+   596→                    <div class="product-card-name">${escapeHtml(p.name || 'Sin nombre')}</div>
+   597→                    ${productPrice ? `<div class="product-card-price">${productPrice}</div>` : ''}
+   598→                </div>
+   599→            </a>`;
+   600→        }).join('');
+   601→    } catch (err) {
+   602→        console.warn('Error loading business products:', err);
+   603→    }
+   604→}
+   605→
+   606→// ─── Business Jobs ───────────────────────────────────────────
+   607→async function loadBusinessJobs(businessId) {
+   608→    const section = document.getElementById('jobsSection');
+   609→    const list = document.getElementById('businessJobsList');
+   610→    const viewAll = document.getElementById('viewAllJobs');
+   611→    if (!section || !list) return;
+   612→
+   613→    try {
+   614→        const data = await api.get(`/jobs?business_id=${businessId}&limit=10`);
+   615→        const jobs = data.jobs || [];
+   616→
+   617→        if (jobs.length === 0) {
+   618→            section.style.display = 'none';
+   619→            return;
+   620→        }
+   621→
+   622→        section.style.display = '';
+   623→        if (viewAll) viewAll.href = `empleo.html?business_id=${businessId}`;
+   624→
+   625→        list.innerHTML = jobs.map(j => `
+   626→            <a href="empleo.html" class="job-item" style="text-decoration:none;color:inherit;">
+   627→                <div class="job-item-icon"><i class="fas fa-briefcase"></i></div>
+   628→                <div class="job-item-info">
+   629→                    <div class="job-item-title">${escapeHtml(j.title)}</div>
+   630→                    <div class="job-item-meta">${escapeHtml(j.job_type || 'Tiempo completo')} · ${escapeHtml(j.city || j.state || 'Venezuela')}</div>
+   631→                </div>
+   632→            </a>
+   633→        `).join('');
+   634→    } catch (err) {
+   635→        console.warn('Error loading business jobs:', err);
+   636→    }
+   637→}
+   638→
+   639→// ─── Business Services ──────────────────────────────────────
+   640→async function loadBusinessServices(businessId) {
+   641→    const section = document.getElementById('servicesSection');
+   642→    const list = document.getElementById('businessServicesList');
+   643→    if (!section || !list) return;
+   644→
+   645→    try {
+   646→        const data = await api.get(`/businesses/${businessId}/services`);
+   647→        const services = data.services || [];
+   648→
+   649→        if (services.length === 0) {
+   650→            section.style.display = 'none';
+   651→            return;
+   652→        }
+   653→
+   654→        section.style.display = '';
+   655→        list.innerHTML = services.map(s => `
+   656→            <div class="service-item">
+   657→                <h3>${escapeHtml(s.title)}</h3>
+   658→                <p>${escapeHtml(s.description || '')}</p>
+   659→            </div>
+   660→        `).join('');
+   661→    } catch (err) {
+   662→        console.warn('Error loading business services:', err);
+   663→    }
+   664→}
+   665→
+   666→// ─── Utility ────────────────────────────────────────────────
+   667→function escapeHtml(str) {
+   668→    if (!str) return '';
+   669→    const div = document.createElement('div');
+   670→    div.textContent = str;
+   671→    return div.innerHTML;
+   672→}
+   673→

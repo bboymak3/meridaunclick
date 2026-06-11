@@ -1,6 +1,38 @@
 # Worklog - MeridaUnClick
 
 ---
+Task ID: 5
+Agent: Main
+Task: Paso 5 - Sistema completo de destacados (featured_items API, productos y empleos)
+
+Work Log:
+- Created /api/featured-items/index.js: GET (public, lists featured items by type with date validation) + POST (admin, creates featured item with 30-day default, sets featured flags)
+- Created /api/featured-items/[id].js: DELETE (admin, removes featured item and unsets flags) + PUT (admin, update dates/active status)
+- Updated marketplace API: added ?featured=1 filter checking featured_at column OR featured_items table
+- Updated jobs API: added ?featured=1 filter checking featured column OR featured_items table
+- Updated marketplace API SELECT: now returns featured_at and condition fields in public mode
+- Added featured products selector to admin.html Settings tab (up to 8 products)
+- Added featured jobs selector to admin.html Settings tab (up to 6 jobs)
+- Added loadFeaturedProductsSelector(): fetches all approved products, shows checkboxes, limits to 8
+- Added saveFeaturedProducts(): clears old featured items, creates new ones via /featured-items API
+- Added loadFeaturedJobsSelector(): fetches all approved jobs, shows checkboxes, limits to 6
+- Added saveFeaturedJobs(): clears old featured items, creates new ones via /featured-items API
+- Updated loadSettings() to also call loadFeaturedProductsSelector and loadFeaturedJobsSelector
+- Updated loadFeaturedProducts() in app.js: now fetches ?featured=1 first, falls back to latest 8
+- Updated loadFeaturedJobs() in app.js: now fetches ?featured=1 first, falls back to latest 6
+- Added gold "Destacado" badge with star icon on product cards (top-left)
+- Added gold "Destacado" badge with star icon on job cards (top-right)
+- Fixed product cards: now use p.name (not p.title), p.image as fallback for cover
+- SW cache bumped to v35
+
+Stage Summary:
+- Complete featured items system using featured_items table with date-based activation
+- Admin can manage featured businesses (up to 3), products (up to 8), and jobs (up to 6) from Settings tab
+- All 3 types of content on index page now try to show featured items first, fallback to latest
+- Gold "Destacado" badges visually distinguish featured items from regular ones
+- All deployed to aunclick.pages.dev (SW v35)
+
+---
 Task ID: 4
 Agent: Main
 Task: Paso 4 - Destacados en index (productos+empleos), tipo usuario persona natural
