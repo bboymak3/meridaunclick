@@ -133,15 +133,18 @@ export async function onRequestPost(context) {
     }
 
     // Also record in featured_items table
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const endDate = end_date || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
     const result = await env.DB.prepare(`
-      INSERT INTO featured_items (item_type, item_id, title, start_date, end_date)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO featured_items (item_type, item_id, user_id, title, start_date, end_date)
+      VALUES (?, ?, ?, ?, ?, ?)
     `).bind(
       item_type,
       parseInt(item_id),
+      user.id,
       title || null,
-      start_date || null,
-      end_date || null
+      start_date || now,
+      endDate
     ).run();
 
     return new Response(JSON.stringify({

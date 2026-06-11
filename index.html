@@ -294,7 +294,67 @@
         </div>
     </section>
 
-    <!-- ===== 4. EXPLORE BY TYPE ===== -->
+    <!-- ===== 4. FEATURED PRODUCTS ===== -->
+    <section class="idx-section idx-section-alt" id="featuredProductsSection">
+        <div class="container">
+            <div class="idx-section-header">
+                <div class="idx-section-header-left">
+                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #e83e8c, #fd79a8);">
+                        <i class="fas fa-boxes-stacked"></i>
+                    </div>
+                    <div>
+                        <h2 class="idx-section-title">Productos Destacados</h2>
+                        <p class="idx-section-subtitle">Los mejores productos del marketplace</p>
+                    </div>
+                </div>
+                <a href="marketplace.html" class="idx-section-link">
+                    Ver Todos <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="business-grid" id="featuredProductsGrid">
+                <div class="loading-spinner" id="productsLoading">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando productos...</p>
+                </div>
+                <div class="empty-state hidden" id="productsEmpty">
+                    <i class="fas fa-box fa-3x" style="color:#e83e8c;"></i>
+                    <p>Aún no hay productos publicados</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 5. FEATURED JOBS ===== -->
+    <section class="idx-section" id="featuredJobsSection">
+        <div class="container">
+            <div class="idx-section-header">
+                <div class="idx-section-header-left">
+                    <div class="idx-section-icon" style="background: linear-gradient(135deg, #17a2b8, #20c997);">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <div>
+                        <h2 class="idx-section-title">Empleos Destacados</h2>
+                        <p class="idx-section-subtitle">Oportunidades laborales en Venezuela</p>
+                    </div>
+                </div>
+                <a href="empleo.html" class="idx-section-link">
+                    Ver Todos <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="business-grid" id="featuredJobsGrid">
+                <div class="loading-spinner" id="jobsLoading">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando empleos...</p>
+                </div>
+                <div class="empty-state hidden" id="jobsEmpty">
+                    <i class="fas fa-briefcase fa-3x" style="color:#17a2b8;"></i>
+                    <p>Aún no hay empleos publicados</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== 6. EXPLORE BY TYPE ===== -->
     <section class="idx-section idx-section-alt">
         <div class="container">
             <div class="idx-section-header">
@@ -455,15 +515,15 @@
                         <i class="fas fa-map-marked-alt"></i>
                     </div>
                     <div>
-                        <h2 class="idx-section-title">Mapa de Negocios</h2>
-                        <p class="idx-section-subtitle">Explora los negocios disponibles en Venezuela visualmente</p>
+                        <h2 class="idx-section-title">Mapa Interactivo</h2>
+                        <p class="idx-section-subtitle">Explora negocios y propiedades en Venezuela</p>
                     </div>
                 </div>
                 <a href="map.html" class="idx-section-link">
                     <i class="fas fa-expand"></i> Ver Mapa Completo
                 </a>
             </div>
-            <div class="idx-map-wrapper">
+            <div class="idx-map-wrapper" style="position:relative;">
                 <div id="homeMap" class="home-map"></div>
                 <div class="idx-map-overlay" id="homeMapOverlay">
                     <div class="idx-map-overlay-content">

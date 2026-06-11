@@ -324,6 +324,22 @@
 
     // ─── Map Filters ────────────────────────────────────────────
     function setupMapFilters() {
+        // Toggle type buttons
+        var btnNegocios = document.getElementById('mapToggleNegocios');
+        var btnPropiedades = document.getElementById('mapTogglePropiedades');
+        if (btnNegocios) {
+            btnNegocios.addEventListener('click', function (e) {
+                e.preventDefault();
+                showMapType('businesses');
+            });
+        }
+        if (btnPropiedades) {
+            btnPropiedades.addEventListener('click', function (e) {
+                e.preventDefault();
+                showMapType('properties');
+            });
+        }
+
         if (mapSearchBtn) {
             mapSearchBtn.addEventListener('click', function () { loadMapBusinesses(); });
         }
@@ -351,7 +367,12 @@
         if (mapTipo) mapTipo.value = '';
         if (mapEstado) mapEstado.value = '';
         if (mapCiudad) mapCiudad.value = '';
-        loadMapBusinesses();
+        // Reload based on current type
+        if (currentMapType === 'properties') {
+            loadMapProperties();
+        } else {
+            loadMapBusinesses();
+        }
     }
 
     // ─── Render Sidebar Business List ───────────────────────────

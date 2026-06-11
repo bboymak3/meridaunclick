@@ -945,6 +945,21 @@ document.addEventListener('DOMContentLoaded', () => {
     if (featuredPropertiesGrid) {
         loadFeaturedPropertiesSection();
     }
+
+    // Load featured products on index page
+    const featuredProductsGrid = document.getElementById('featuredProductsGrid');
+    if (featuredProductsGrid) {
+        loadFeaturedProducts();
+    }
+
+    // Load featured jobs on index page
+    const featuredJobsGrid = document.getElementById('featuredJobsGrid');
+    if (featuredJobsGrid) {
+        loadFeaturedJobs();
+    }
+
+    // Initialize home map with toggle buttons
+    initHomeMap();
 });
 
 // ─── Index Page: Featured Properties ───────────────────────────
@@ -1327,3 +1342,197 @@ async function loadSiteStats() {
         }
     }
 })();
+
+// ═══════════════════════════════════════════════════════════════
+// INDEX PAGE: Featured Products
+// ═══════════════════════════════════════════════════════════════
+async function loadFeaturedProducts() {
+    const grid = document.getElementById('featuredProductsGrid');
+    const loading = document.getElementById('productsLoading');
+    const emptyState = document.getElementById('productsEmpty');
+    if (!grid) return;
+
+    try {
+        const data = await api.get('/marketplace?status=approved&limit=8&sort=newest');
+        const products = data.products || [];
+
+        if (loading) loading.remove();
+
+        if (products.length === 0) {
+            if (emptyState) emptyState.classList.remove('hidden');
+            return;
+        }
+
+        if (emptyState) emptyState.classList.add('hidden');
+        grid.innerHTML = products.map(p => {
+            const img = p.image || '';
+            const price = p.price > 0 ? '$' + Number(p.price).toLocaleString('es-VE') : 'Gratis';
+            const bizName = p.business_name || '';
+            const featuredBadge = p.featured ? '<span class="card-badge-featured"><i class="fas fa-star"></i></span>' : '';
+
+            return `
+            <a href="marketplace.html" class="business-card">
+                ${featuredBadge}
+                <div class="business-card-img">
+                    ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.style.display='none'">` : '<div class="card-img-placeholder"><i class="fas fa-box"></i></div>'}
+                    <div class="card-badges">
+                        <span class="card-badge card-badge-type">${escapeHtml(p.category || 'General')}</span>
+                    </div>
+                </div>
+                <div class="business-card-body">
+                    <h3 class="business-card-title">${escapeHtml(p.name)}</h3>
+                    ${bizName ? `<div class="business-card-location"><i class="fas fa-store"></i> ${escapeHtml(bizName)}</div>` : ''}
+                    <div class="business-card-price">${price}</div>
+                </div>
+            </a>`;
+        }).join('');
+    } catch (error) {
+        if (loading) loading.remove();
+        console.error('Error loading featured products:', error);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INDEX PAGE: Featured Jobs
+// ═══════════════════════════════════════════════════════════════
+async function loadFeaturedJobs() {
+    const grid = document.getElementById('featuredJobsGrid');
+    const loading = document.getElementById('jobsLoading');
+    const emptyState = document.getElementById('jobsEmpty');
+    if (!grid) return;
+
+    try {
+        const data = await api.get('/jobs?status=approved&limit=6&sort=newest');
+        const jobs = data.jobs || [];
+
+        if (loading) loading.remove();
+
+        if (jobs.length === 0) {
+            if (emptyState) emptyState.classList.remove('hidden');
+            return;
+        }
+
+        if (emptyState) emptyState.classList.add('hidden');
+        grid.innerHTML = jobs.map(j => {
+            const salary = j.salary ? '$' + Number(j.salary).toLocaleString('es-VE') : '';
+            const typeLabel = (j.job_type || '').replace('_', ' ');
+            const featuredBadge = j.featured ? '<span class="card-badge-featured"><i class="fas fa-star"></i></span>' : '';
+
+            return `
+            <a href="empleo.html" class="business-card">
+                ${featuredBadge}
+                <div class="business-card-img">
+                    <div class="card-img-placeholder" style="background:linear-gradient(135deg,#17a2b8,#20c997);">
+                        <i class="fas fa-briefcase" style="color:#fff;font-size:2rem;"></i>
+                    </div>
+                    <div class="card-badges">
+                        <span class="card-badge card-badge-type">${escapeHtml(typeLabel)}</span>
+                    </div>
+                </div>
+                <div class="business-card-body">
+                    <h3 class="business-card-title">${escapeHtml(j.title)}</h3>
+                    <div class="business-card-location"><i class="fas fa-building"></i> ${escapeHtml(j.company_name || j.business_name || '')}</div>
+                    ${j.location ? `<div class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(j.location)}</div>` : ''}
+                    ${salary ? `<div class="business-card-price">${salary}</div>` : ''}
+                </div>
+            </a>`;
+        }).join('');
+    } catch (error) {
+        if (loading) loading.remove();
+        console.error('Error loading featured jobs:', error);
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INDEX PAGE: Home Map with Toggle
+// ═══════════════════════════════════════════════════════════════
+async function initHomeMap() {
+    const mapEl = document.getElementById('homeMap');
+    if (!mapEl || typeof L === 'undefined') return;
+
+    try {
+        const homeMap = L.map('homeMap', {
+            center: [8.6233, -66.5897],
+            zoom: 6,
+            zoomControl: false,
+            scrollWheelZoom: false,
+            dragging: true,
+            tap: false,
+            attributionControl: false,
+        });
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+        }).addTo(homeMap);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(homeMap);
+        homeMap.attributionControl.remove();
+
+        const markerLayer = L.layerGroup().addTo(homeMap);
+        let currentType = 'businesses';
+
+        // Add toggle buttons
+        const mapWrapper = mapEl.closest('.idx-map-wrapper');
+        if (mapWrapper) {
+            const toggleDiv = document.createElement('div');
+            toggleDiv.style.cssText = 'position:absolute;top:12px;left:12px;z-index:1000;display:flex;gap:6px;';
+            toggleDiv.innerHTML = `
+                <button class="btn btn-primary btn-sm" id="homeMapBtnNegocios" style="box-shadow:0 2px 8px rgba(0,0,0,0.3);"><i class="fas fa-store"></i> Negocios</button>
+                <button class="btn btn-secondary btn-sm" id="homeMapBtnPropiedades" style="box-shadow:0 2px 8px rgba(0,0,0,0.3);"><i class="fas fa-home"></i> Propiedades</button>
+            `;
+            mapEl.parentElement.appendChild(toggleDiv);
+
+            document.getElementById('homeMapBtnNegocios').addEventListener('click', () => {
+                currentType = 'businesses';
+                document.getElementById('homeMapBtnNegocios').className = 'btn btn-primary btn-sm';
+                document.getElementById('homeMapBtnNegocios').style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                document.getElementById('homeMapBtnPropiedades').className = 'btn btn-secondary btn-sm';
+                loadHomeMarkers();
+            });
+            document.getElementById('homeMapBtnPropiedades').addEventListener('click', () => {
+                currentType = 'properties';
+                document.getElementById('homeMapBtnPropiedades').className = 'btn btn-primary btn-sm';
+                document.getElementById('homeMapBtnPropiedades').style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+                document.getElementById('homeMapBtnNegocios').className = 'btn btn-secondary btn-sm';
+                loadHomeMarkers();
+            });
+        }
+
+        async function loadHomeMarkers() {
+            markerLayer.clearLayers();
+            let items = [];
+            if (currentType === 'businesses') {
+                const data = await api.get('/businesses?status=approved&limit=50');
+                items = data.businesses || [];
+            } else {
+                const data = await api.get('/properties?status=approved&limit=50');
+                items = data.properties || [];
+            }
+
+            const validItems = items.filter(i => i.lat && i.lng);
+            validItems.forEach(item => {
+                const isBusiness = currentType === 'businesses';
+                const color = isBusiness ? '#1a73e8' : '#059669';
+                const icon = L.divIcon({
+                    className: 'custom-map-marker',
+                    html: '<div class="marker-pin" style="background-color:' + color + ';"><span class="marker-price" style="font-size:10px;"><i class="fas fa-' + (isBusiness ? 'store' : 'home') + '"></i></span></div><div class="marker-shadow"></div>',
+                    iconSize: [40, 52], iconAnchor: [20, 52], popupAnchor: [0, -56],
+                });
+                const title = isBusiness ? (item.title || 'Negocio') : (item.title || 'Propiedad');
+                const marker = L.marker([item.lat, item.lng], { icon: icon });
+                marker.bindPopup('<div class="map-popup"><div class="map-popup-content"><h4 class="map-popup-title">' + escapeHtml(title) + '</h4></div></div>');
+                markerLayer.addLayer(marker);
+            });
+
+            if (validItems.length > 0) {
+                const bounds = L.latLngBounds(validItems.map(i => [i.lat, i.lng]));
+                if (bounds.isValid()) homeMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
+            }
+        }
+
+        await loadHomeMarkers();
+        setTimeout(() => homeMap.invalidateSize(), 300);
+    } catch (e) {
+        console.error('Error initializing home map:', e);
+    }
+}
