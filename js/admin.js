@@ -2056,16 +2056,39 @@
     }
 
     function approveJob(id) {
-        executeD1Action(`UPDATE job_listings SET status='approved' WHERE id=${id}`, 'Oferta aprobada', loadJobs);
+        const token = localStorage.getItem(TOKEN_KEY);
+        fetch(`/api/jobs/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ action: 'approve' })
+        }).then(r => {
+            if (r.ok) { showToast('Oferta aprobada', 'success'); loadJobs(); }
+            else showToast('Error al aprobar empleo', 'error');
+        }).catch(e => showToast(e.message || 'Error', 'error'));
     }
 
     function rejectJob(id) {
-        executeD1Action(`UPDATE job_listings SET status='rejected' WHERE id=${id}`, 'Oferta rechazada', loadJobs);
+        const token = localStorage.getItem(TOKEN_KEY);
+        fetch(`/api/jobs/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ action: 'reject' })
+        }).then(r => {
+            if (r.ok) { showToast('Oferta rechazada', 'success'); loadJobs(); }
+            else showToast('Error al rechazar empleo', 'error');
+        }).catch(e => showToast(e.message || 'Error', 'error'));
     }
 
     function deleteJob(id) {
         if (confirm('¿Eliminar esta oferta de empleo?')) {
-            executeD1Action(`DELETE FROM job_listings WHERE id=${id}`, 'Oferta eliminada', loadJobs);
+            const token = localStorage.getItem(TOKEN_KEY);
+            fetch(`/api/jobs/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            }).then(r => {
+                if (r.ok) { showToast('Oferta eliminada', 'success'); loadJobs(); }
+                else showToast('Error al eliminar empleo', 'error');
+            }).catch(e => showToast(e.message || 'Error', 'error'));
         }
     }
 
