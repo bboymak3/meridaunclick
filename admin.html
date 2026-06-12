@@ -464,6 +464,12 @@
                         <div class="admin-card-header">
                             <h3><i class="fas fa-briefcase"></i> Ofertas de Empleo</h3>
                             <div class="admin-card-actions">
+                                <select id="jobStatusFilter" class="form-select-sm">
+                                    <option value="pending">Pendientes</option>
+                                    <option value="">Todos</option>
+                                    <option value="approved">Aprobados</option>
+                                    <option value="rejected">Rechazados</option>
+                                </select>
                                 <button class="btn btn-primary btn-sm" id="adminCreateJobBtn">
                                     <i class="fas fa-plus"></i> Publicar Empleo
                                 </button>
@@ -812,6 +818,12 @@
                             <label class="feature-checkbox" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.85rem;">
                                 <input type="checkbox" id="bizEditOutdoor" value="1"> Área al aire libre
                             </label>
+                        </div>
+                        <div class="form-group" style="margin-top:12px;">
+                            <label for="bizEditVideoUrl" style="font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:4px;display:block;">
+                                <i class="fas fa-video" style="color:#ef4444;"></i> URL del Video (YouTube, TikTok, etc.)
+                            </label>
+                            <input type="url" id="bizEditVideoUrl" name="video_url" placeholder="https://www.youtube.com/watch?v=..." style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
                         </div>
                     </div>
                 </form>

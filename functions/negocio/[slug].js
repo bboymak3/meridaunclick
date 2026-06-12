@@ -661,6 +661,9 @@ function getVideoEmbed(url) {
   // YouTube: youtube.com/watch?v=XXX or youtu.be/XXX
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
   if (ytMatch) return `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  // YouTube Shorts: youtube.com/shorts/XXX
+  const ytShortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+  if (ytShortsMatch) return `<iframe src="https://www.youtube.com/embed/${ytShortsMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
   // TikTok: tiktok.com/@user/video/XXX
   const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
   if (ttMatch) return `<iframe src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;

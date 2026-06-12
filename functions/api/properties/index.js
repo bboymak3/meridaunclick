@@ -121,7 +121,7 @@ export async function onRequestGet(context) {
       bindings.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    const whereClause = conditions.join(' AND ');
+    const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
 
     const countQuery = `SELECT COUNT(*) as total FROM properties p WHERE ${whereClause}`;
     const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();
@@ -188,7 +188,7 @@ export async function onRequestPost(context) {
     const body = await request.json();
 
     const { title, property_type, operation_type, price } = body;
-    if (!title || !property_type || !operation_type || price) {
+    if (!title || !property_type || !operation_type || !price) {
       return new Response(JSON.stringify({ error: 'Título, tipo de propiedad, tipo de operación y precio son requeridos' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

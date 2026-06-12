@@ -893,6 +893,9 @@
             document.getElementById('bizEditDelivery').checked = !!biz.has_delivery;
             document.getElementById('bizEditOutdoor').checked = !!biz.has_outdoor;
 
+            // Video URL
+            document.getElementById('bizEditVideoUrl').value = biz.video_url || '';
+
             // Load images gallery
             adminBizEditModal.dataset.imageCount = (biz.images || []).length;
             loadBizEditGallery(businessId);
@@ -1069,6 +1072,7 @@
                 has_delivery: document.getElementById('bizEditDelivery')?.checked ? 1 : 0,
                 has_outdoor: document.getElementById('bizEditOutdoor')?.checked ? 1 : 0,
                 image: adminBizEditModal.dataset.currentImage || '',
+                video_url: document.getElementById('bizEditVideoUrl')?.value?.trim() || '',
             };
 
             await api.put(`/businesses/${businessId}`, body);
@@ -1943,7 +1947,9 @@
     // ─── JOBS MANAGEMENT ──────────────────────────────────────
     async function loadJobs() {
         try {
+            const statusFilter = document.getElementById('jobStatusFilter')?.value || 'pending';
             const params = new URLSearchParams({ page: jobsPage, limit: PAGE_LIMIT });
+            if (statusFilter) params.set('status', statusFilter);
             const data = await api.get(`/jobs?${params}`);
             const tbody = document.getElementById('adminJobsTableBody');
             if (!tbody) return;
@@ -2004,6 +2010,9 @@
         if (modal) modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
 
         if (submitBtn) submitBtn.addEventListener('click', submitJob);
+
+        const jobStatusFilter = document.getElementById('jobStatusFilter');
+        if (jobStatusFilter) jobStatusFilter.addEventListener('change', () => { jobsPage = 1; loadJobs(); });
     }
 
     async function submitJob() {
