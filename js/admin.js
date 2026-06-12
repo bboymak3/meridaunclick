@@ -2227,6 +2227,7 @@
         // Load featured products & properties selectors
         loadFeaturedProductsSelector();
         loadFeaturedPropertiesSelector();
+        loadFeaturedJobsSelector();
     }
 
     async function saveSettings() {
@@ -2561,6 +2562,93 @@
         }
     }
     window._adminSaveFeaturedProperties = saveFeaturedProperties;
+
+    // ─── Featured Jobs Selector ──────────────────────────────
+    async function loadFeaturedJobsSelector() {
+        const container = document.getElementById('featuredJobsContainer');
+        if (!container) return;
+        try {
+            const [allData, featuredData] = await Promise.all([
+                api.get('/jobs?limit=200&all=true'),
+                api.get('/featured-items?item_type=job')
+            ]);
+            const jobs = allData.jobs || [];
+            const featured = featuredData.featured_items || [];
+            const featuredIds = new Set(featured.map(f => f.item_id));
+
+            if (jobs.length === 0) {
+                container.innerHTML = '<p style="color:#9ca3af;font-size:0.85rem;">No hay empleos disponibles.</p>';
+                return;
+            }
+
+            let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+            html += '<div style="margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Empleos actualmente destacados:</div>';
+
+            jobs.filter(j => featuredIds.has(j.id)).forEach(j => {
+                const salary = j.salary ? `$${j.salary}` : '';
+                html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #8b5cf6;border-radius:10px;background:#f5f3ff;cursor:pointer;">
+                    <input type="checkbox" class="featured-job-checkbox" value="${j.id}" checked style="width:18px;height:18px;accent-color:#8b5cf6;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(j.title)}</div>
+                        <div style="font-size:0.75rem;color:#6b7280;">${escapeHtml(j.company_name || '')} · ${escapeHtml(j.city || '')} ${salary ? '· ' + salary : ''}</div>
+                    </div>
+                </label>`;
+            });
+
+            const nonFeatured = jobs.filter(j => !featuredIds.has(j.id));
+            if (nonFeatured.length > 0) {
+                html += '<div style="margin-top:12px;margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Otros empleos (selecciona para destacar):</div>';
+                nonFeatured.slice(0, 40).forEach(j => {
+                    const salary = j.salary ? `$${j.salary}` : '';
+                    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;">
+                        <input type="checkbox" class="featured-job-checkbox" value="${j.id}" style="width:18px;height:18px;accent-color:#8b5cf6;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(j.title)}</div>
+                            <div style="font-size:0.75rem;color:#6b7280;">${escapeHtml(j.company_name || '')} · ${escapeHtml(j.city || '')} ${salary ? '· ' + salary : ''}</div>
+                        </div>
+                    </label>`;
+                });
+                if (nonFeatured.length > 40) {
+                    html += `<p style="font-size:0.78rem;color:#9ca3af;text-align:center;">... y ${nonFeatured.length - 40} más.</p>`;
+                }
+            }
+
+            html += '</div>';
+            html += '<button class="btn btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);" onclick="window._adminSaveFeaturedJobs()"><i class="fas fa-save"></i> Guardar Empleos Destacados</button>';
+            container.innerHTML = html;
+
+            container.querySelectorAll('.featured-job-checkbox').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const checked = container.querySelectorAll('.featured-job-checkbox:checked');
+                    if (checked.length > 4) { cb.checked = false; showToast('Máximo 4 empleos destacados', 'warning'); }
+                });
+            });
+        } catch (err) {
+            console.error('Error loading featured jobs:', err);
+            container.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al cargar empleos.</p>';
+        }
+    }
+
+    async function saveFeaturedJobs() {
+        const container = document.getElementById('featuredJobsContainer');
+        if (!container) return;
+        const checked = container.querySelectorAll('.featured-job-checkbox:checked');
+        const selectedIds = Array.from(checked).map(cb => parseInt(cb.value));
+        try {
+            const existing = await api.get('/featured-items?item_type=job');
+            for (const item of (existing.featured_items || [])) {
+                try { await api.delete(`/featured-items?id=${item.id}`); } catch(e) {}
+            }
+            for (const id of selectedIds) {
+                try { await api.post('/featured-items', { item_type: 'job', item_id: id }); } catch(e) {}
+            }
+            showToast(`${selectedIds.length} empleo(s) destacado(s)`, 'success');
+            loadFeaturedJobsSelector();
+        } catch (err) {
+            showToast('Error al guardar empleos destacados: ' + err.message, 'error');
+        }
+    }
+    window._adminSaveFeaturedJobs = saveFeaturedJobs;
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {

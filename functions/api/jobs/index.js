@@ -58,7 +58,8 @@ export async function onRequestGet(context) {
     const url = new URL(request.url);
     const params = url.searchParams;
 
-    const status = params.get('status') || 'approved';
+    const all = params.get('all') === 'true';
+    const status = params.get('status') || (all ? null : 'approved');
     const state = params.get('state');
     const jobType = params.get('job_type');
     const search = params.get('search');
@@ -72,8 +73,10 @@ export async function onRequestGet(context) {
     const conditions = [];
     const bindings = [];
 
-    conditions.push('status = ?');
-    bindings.push(status);
+    if (status) {
+      conditions.push('status = ?');
+      bindings.push(status);
+    }
 
     if (userId) {
       conditions.push('user_id = ?');
@@ -95,7 +98,7 @@ export async function onRequestGet(context) {
       bindings.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
-    const whereClause = conditions.join(' AND ');
+    const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
 
     // Sort
     let orderBy = 'created_at DESC';
