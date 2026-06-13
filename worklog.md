@@ -431,3 +431,29 @@ Stage Summary:
 - Featured products now link to individual product pages instead of generic marketplace listing
 - Marketplace banner already had dark design with shapes — confirmed working
 - Marketplace product cards correctly correspond to their products and businesses
+---
+Task ID: 2
+Agent: main
+Task: Create video management panel for uploading videos to businesses
+
+Work Log:
+- Created `business_videos` table in D1 with fields: id, business_id, title, description, url, thumbnail_url, file_name, file_size, sort_order, status, created_at
+- Created `functions/api/business-videos/index.js` with GET (list videos by business_id) and POST (upload video to R2)
+- Created `functions/api/business-videos/[id].js` with DELETE (remove video + R2 file) and PATCH (update title/description)
+- Video upload flow: FormData POST → validate file type/size → upload to R2 at `merida/videos/{businessId}/{timestamp}_{filename}` → insert record in D1
+- Added "Videos" tab in admin panel (`admin.html`) with:
+  - Business selector dropdown (loads approved businesses)
+  - Drag & drop upload zone (supports MP4, WebM, MOV, OGG up to 100MB)
+  - Title and description fields
+  - Upload progress bar
+  - Video gallery grid with inline player and delete button
+- Updated `js/admin.js`: added tabVideos reference, switchTab mapping, loadVideoTab(), uploadBusinessVideo(), deleteBusinessVideo(), loadBusinessVideos()
+- Added videos section in `functions/negocio/[slug].js` server-rendered HTML (videosSection with businessVideosGrid)
+- Added `loadBusinessVideos()` in `js/business-detail.js` to fetch and display videos on business detail page
+- Deployed to Cloudflare Pages: https://aunclick.pages.dev
+
+Stage Summary:
+- Full video management system created: upload from PC, associate with business, display on business detail page
+- Admin can select a business, upload videos via drag-and-drop or file picker, manage (view/delete) existing videos
+- Public business detail pages now show all associated videos in a grid with player
+- API verified: GET /api/business-videos?business_id=X returns {videos:[]}
