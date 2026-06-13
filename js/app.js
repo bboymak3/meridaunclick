@@ -1419,8 +1419,30 @@ async function loadFeaturedJobs() {
     if (!grid) return;
 
     try {
-        const data = await api.get('/jobs?status=approved&limit=6&sort=newest');
-        const jobs = data.jobs || [];
+        // First try to get featured jobs from featured_items table
+        let jobs = [];
+        try {
+            const featuredData = await api.get('/featured-items?item_type=job');
+            const featuredItems = featuredData.featured_items || [];
+            if (featuredItems.length > 0) {
+                const jobIds = featuredItems.map(f => f.item_id);
+                // Fetch only the featured jobs that are approved
+                const allJobsPromises = jobIds.map(id => api.get(`/jobs/${id}`).catch(() => null));
+                const jobResults = await Promise.all(allJobsPromises);
+                jobs = jobResults.filter(j => j && j.status === 'approved');
+            }
+        } catch (e) {
+            // Fallback: just get latest approved
+        }
+
+        // Fallback: if no featured jobs, get latest 3 approved
+        if (jobs.length === 0) {
+            const data = await api.get('/jobs?status=approved&limit=3&sort=newest');
+            jobs = data.jobs || [];
+        }
+
+        // Limit to 3
+        jobs = jobs.slice(0, 3);
 
         if (loading) loading.remove();
 
