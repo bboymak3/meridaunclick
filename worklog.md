@@ -408,3 +408,26 @@ Stage Summary:
 - Jobs approval now works with default "Pendientes" filter
 - Featured properties selector now loads without 500 error
 - YouTube Shorts videos now display correctly on business detail pages and cards
+---
+Task ID: 1
+Agent: main
+Task: Fix job links, featured jobs count, product cards, and marketplace banner
+
+Work Log:
+- Investigated job links from business detail pages: clicking jobs in `/negocio/{slug}` resolved to `/negocio/empleo.html` (404) because of relative URL
+- Fixed `js/business-detail.js`: Changed `empleo.html` → `/empleo.html?id=${j.id}` and `empleo.html?business_id=${businessId}` → `/empleo.html?business_id=${businessId}`
+- Fixed `functions/negocio/[slug].js`: Added script to set `viewAllJobs` link href with business_id
+- Fixed `js/app.js` `loadFeaturedJobs()`: Changed `empleo.html` → `/empleo.html?id=${j.id}`, added dedup for featured_items
+- Fixed `js/app.js` `loadFeaturedProducts()`: Changed generic `marketplace.html` → `/producto/{slug}`, added featured-items API usage with dedup
+- Fixed `index.html`: Changed relative links to absolute paths (`/marketplace.html`, `/empleo.html`)
+- Checked DB: 3 featured job items, all approved — `slice(0,3)` should work; added dedup as safety
+- Checked marketplace banner: Already has dark theme with animated shapes (purple/blue/green gradients) — no changes needed
+- Checked marketplace cards: Already correctly link to `/producto/{slug}` and `/negocio/{business_slug}` via `renderProductCard()`
+- Deployed to Cloudflare Pages: https://f6ef70cb.aunclick.pages.dev
+
+Stage Summary:
+- Fixed all job link 404 errors across business detail pages and index
+- Added dedup logic to featured items loading for both jobs and products
+- Featured products now link to individual product pages instead of generic marketplace listing
+- Marketplace banner already had dark design with shapes — confirmed working
+- Marketplace product cards correctly correspond to their products and businesses
