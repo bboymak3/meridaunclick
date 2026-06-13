@@ -457,3 +457,26 @@ Stage Summary:
 - Admin can select a business, upload videos via drag-and-drop or file picker, manage (view/delete) existing videos
 - Public business detail pages now show all associated videos in a grid with player
 - API verified: GET /api/business-videos?business_id=X returns {videos:[]}
+---
+Task ID: 3
+Agent: main
+Task: Add state filtering for products/jobs and popular businesses carousel on index
+
+Work Log:
+- Added `state` parameter support to `/api/marketplace` GET endpoint (filters by `b.state` via JOIN)
+- Added `popular` (views DESC, rating DESC) and `rating_desc` sort options to `/api/businesses` GET endpoint
+- Updated `loadFeaturedProducts()` in app.js to filter by selected state (both featured items client-side and fallback API call)
+- Updated `loadFeaturedJobs()` in app.js to filter by selected state (both featured items client-side and fallback API call)
+- Updated `setSelectedState()` to reload ALL index sections when state changes (products, jobs, properties, popular)
+- Created new "Negocios Populares" section on index with horizontal scrollable carousel
+- Carousel shows businesses sorted by views + rating, with fire badge for popular items, star ratings, and view counts
+- Navigation arrows on desktop (left/right), swipeable on mobile (arrows hidden)
+- Added complete CSS for carousel (scroll, buttons, badges, responsive breakpoints)
+- Verified API: popular businesses returns correct sort order (Mijahia2: 142 views, merida en la casa 3: 94 views, etc.)
+- Verified marketplace state filter works (Mérida returns 2 products matching)
+
+Stage Summary:
+- Products and jobs on index now respect the selected state filter
+- New "Negocios Populares" carousel section with 20 businesses sorted by popularity
+- Carousel is fully responsive with swipe on mobile and arrow buttons on desktop
+- Deployed to: https://aunclick.pages.dev
