@@ -65,7 +65,31 @@ export async function onRequestGet(context) {
     const query = `SELECT * FROM featured_items WHERE ${whereClause} ORDER BY created_at DESC`;
     const result = await env.DB.prepare(query).bind(...bindings).all();
 
-    return new Response(JSON.stringify({ featured_items: result.results }), {
+    // For each featured item, verify the actual item still exists and is approved/active
+    const validItems = [];
+    for (const item of result.results) {
+      try {
+        let exists = false;
+        if (item.item_type === 'business') {
+          const biz = await env.DB.prepare('SELECT id, status FROM businesses WHERE id = ? AND status = ?').bind(item.item_id, 'approved').first();
+          exists = !!biz;
+        } else if (item.item_type === 'property') {
+          const prop = await env.DB.prepare('SELECT id, status FROM properties WHERE id = ? AND status = ?').bind(item.item_id, 'approved').first();
+          exists = !!prop;
+        } else if (item.item_type === 'product') {
+          const prod = await env.DB.prepare('SELECT id, status FROM products WHERE id = ? AND status = ?').bind(item.item_id, 'approved').first();
+          exists = !!prod;
+        } else if (item.item_type === 'job') {
+          const job = await env.DB.prepare('SELECT id, status FROM job_listings WHERE id = ? AND status = ?').bind(item.item_id, 'approved').first();
+          exists = !!job;
+        }
+        if (exists) validItems.push(item);
+      } catch(e) {
+        // If check fails, skip this item
+      }
+    }
+
+    return new Response(JSON.stringify({ featured_items: validItems }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

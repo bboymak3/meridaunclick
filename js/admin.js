@@ -2139,17 +2139,18 @@
                 return;
             }
 
-            // Get currently featured businesses
-            const featuredData = await api.get('/businesses?status=approved&limit=3&featured=1');
-            const featured = featuredData.businesses || [];
-            const featuredIds = new Set(featured.map(b => b.id));
+            // Get currently featured businesses from featured_items table
+            const featuredData = await api.get('/featured-items?item_type=business');
+            const featured = featuredData.featured_items || [];
+            const featuredIds = new Set(featured.map(f => f.item_id));
 
             let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
 
             // Show currently featured
             html += '<div style="margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Negocios actualmente destacados:</div>';
 
-            featured.forEach(b => {
+            const featuredBusinesses = businesses.filter(b => featuredIds.has(b.id));
+            featuredBusinesses.forEach(b => {
                 html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #f59e0b;border-radius:10px;background:#fffbeb;cursor:pointer;">
                     <input type="checkbox" class="featured-checkbox" value="${b.id}" checked style="width:18px;height:18px;accent-color:#f59e0b;">
                     <img src="${b.cover_image || (b.images && b.images[0] && b.images[0].url) || ''}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">
@@ -2207,10 +2208,15 @@
         const selectedIds = Array.from(checked).map(cb => parseInt(cb.value));
 
         try {
-            // First, remove all featured flags
-            await api.put('/businesses/featured/clear', {});
+            // Remove existing business featured items from featured_items table
+            const existing = await api.get('/featured-items?item_type=business');
+            for (const item of (existing.featured_items || [])) {
+                try { await api.delete(`/featured-items?id=${item.id}`); } catch(e) {}
+            }
+            // Clear featured flag on all businesses
+            try { await api.put('/businesses/featured/clear', {}); } catch(e) {}
 
-            // Then, set featured for selected businesses
+            // Set featured for selected businesses
             for (const id of selectedIds) {
                 await api.put(`/businesses/${id}`, { featured: 1 });
             }

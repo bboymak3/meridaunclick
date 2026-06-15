@@ -987,20 +987,34 @@ async function loadFeaturedProperties() {
     if (!grid) return;
 
     try {
-        // Respect selected state
-        const selectedState = getSelectedState();
-        let endpoint = '/businesses?status=approved&limit=3&featured=1';
-        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+        // First try to get featured businesses from featured_items table
+        let businesses = [];
+        try {
+            const selectedState = getSelectedState();
+            const featuredData = await api.get('/featured-items?item_type=business');
+            const featuredItems = featuredData.featured_items || [];
+            if (featuredItems.length > 0) {
+                const bizIds = featuredItems.map(f => f.item_id);
+                // Fetch the actual business details
+                const bizPromises = bizIds.map(id => api.get(`/businesses/${id}`).catch(() => null));
+                const bizResults = await Promise.all(bizPromises);
+                businesses = bizResults.filter(b => b && b.status === 'approved');
+                // Filter by state if selected
+                if (selectedState) {
+                    businesses = businesses.filter(b => b.state === selectedState);
+                }
+            }
+        } catch (e) {
+            // If featured-items fails, try direct API with featured flag
+        }
 
-        const data = await api.get(endpoint);
-        let businesses = data.businesses || [];
-
-        // If no featured businesses, get latest approved
+        // Fallback: try direct API with featured=1 flag
         if (businesses.length === 0) {
-            let fallbackEndpoint = '/businesses?status=approved&limit=8';
-            if (selectedState) fallbackEndpoint += `&state=${encodeURIComponent(selectedState)}`;
-            const allData = await api.get(fallbackEndpoint);
-            businesses = allData.businesses || [];
+            const selectedState = getSelectedState();
+            let endpoint = '/businesses?status=approved&limit=3&featured=1';
+            if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+            const data = await api.get(endpoint);
+            businesses = data.businesses || [];
         }
 
         if (loading) loading.remove();
@@ -1011,6 +1025,7 @@ async function loadFeaturedProperties() {
         }
 
         if (emptyState) emptyState.style.display = 'none';
+        businesses = businesses.slice(0, 3);
         grid.innerHTML = businesses.map(p => createBusinessCard(p)).join('');
     } catch (error) {
         if (loading) loading.remove();
@@ -1027,12 +1042,26 @@ async function loadFeaturedPropertiesSection() {
     if (!grid) return;
 
     try {
-        const selectedState = getSelectedState();
-        let endpoint = '/properties?status=approved&limit=6';
-        if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
-
-        const data = await api.get(endpoint);
-        let properties = data.properties || [];
+        // First try to get featured properties from featured_items table
+        let properties = [];
+        try {
+            const selectedState = getSelectedState();
+            const featuredData = await api.get('/featured-items?item_type=property');
+            const featuredItems = featuredData.featured_items || [];
+            if (featuredItems.length > 0) {
+                const propIds = featuredItems.map(f => f.item_id);
+                // Fetch the actual property details
+                const propPromises = propIds.map(id => api.get(`/properties/${id}`).catch(() => null));
+                const propResults = await Promise.all(propPromises);
+                properties = propResults.filter(p => p && p.status === 'approved');
+                // Filter by state if selected
+                if (selectedState) {
+                    properties = properties.filter(p => p.state === selectedState);
+                }
+            }
+        } catch (e) {
+            // If featured-items fails, show nothing
+        }
 
         if (loading) loading.remove();
 
@@ -1042,6 +1071,7 @@ async function loadFeaturedPropertiesSection() {
         }
 
         if (emptyState) emptyState.style.display = 'none';
+        properties = properties.slice(0, 6);
         grid.innerHTML = properties.map(p => createPropertyCard(p)).join('');
     } catch (error) {
         if (loading) loading.remove();
@@ -1370,8 +1400,35 @@ async function loadFeaturedProducts() {
     if (!grid) return;
 
     try {
-        const data = await api.get('/marketplace?status=approved&limit=8&sort=newest');
-        const products = data.products || [];
+        // First try to get featured products from featured_items table
+        let products = [];
+        try {
+            const selectedState = getSelectedState();
+            const featuredData = await api.get('/featured-items?item_type=product');
+            const featuredItems = featuredData.featured_items || [];
+            if (featuredItems.length > 0) {
+                const prodIds = featuredItems.map(f => f.item_id);
+                // Fetch the actual product details
+                const prodPromises = prodIds.map(id => api.get(`/products/${id}`).catch(() => null));
+                const prodResults = await Promise.all(prodPromises);
+                products = prodResults.filter(p => p && p.status === 'approved');
+                // Filter by state if selected
+                if (selectedState) {
+                    products = products.filter(p => p.state === selectedState);
+                }
+            }
+        } catch (e) {
+            // If featured-items fails, try direct API
+        }
+
+        // Fallback: try direct API with featured=1 flag
+        if (products.length === 0) {
+            const selectedState = getSelectedState();
+            let endpoint = '/marketplace?status=approved&limit=8&featured=1&sort=newest';
+            if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+            const data = await api.get(endpoint);
+            products = data.products || [];
+        }
 
         if (loading) loading.remove();
 
@@ -1381,14 +1438,16 @@ async function loadFeaturedProducts() {
         }
 
         if (emptyState) emptyState.classList.add('hidden');
+        products = products.slice(0, 8);
         grid.innerHTML = products.map(p => {
             const img = p.image || '';
             const price = p.price > 0 ? '$' + Number(p.price).toLocaleString('es-VE') : 'Gratis';
             const bizName = p.business_name || '';
             const featuredBadge = p.featured ? '<span class="card-badge-featured"><i class="fas fa-star"></i></span>' : '';
+            const slug = p.slug || p.id;
 
             return `
-            <a href="marketplace.html" class="business-card">
+            <a href="/producto/${slug}" class="business-card">
                 ${featuredBadge}
                 <div class="business-card-img">
                     ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="this.style.display='none'">` : '<div class="card-img-placeholder"><i class="fas fa-box"></i></div>'}
@@ -1432,12 +1491,12 @@ async function loadFeaturedJobs() {
                 jobs = jobResults.filter(j => j && j.status === 'approved');
             }
         } catch (e) {
-            // Fallback: just get latest approved
+            // If featured-items fails, show nothing
         }
 
-        // Fallback: if no featured jobs, get latest 3 approved
+        // Fallback: try direct API with featured=1 flag
         if (jobs.length === 0) {
-            const data = await api.get('/jobs?status=approved&limit=3&sort=newest');
+            const data = await api.get('/jobs?status=approved&limit=3&featured=1&sort=newest');
             jobs = data.jobs || [];
         }
 
