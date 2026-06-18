@@ -555,3 +555,27 @@ Stage Summary:
 - Citas are read-only in calendar (not editable/draggable)
 - Detail modal shows complete cita information when clicked
 - Events merge seamlessly with existing agenda and OT events
+---
+Task ID: 1
+Agent: Main Agent
+Task: Update bot system prompt with numbered services list, dirección mandatory, summary box; Update admin panel with base services order + "Otro"
+
+Work Log:
+- Updated system prompt in src/index.ts: hardcoded 9 numbered services with prices, added "El cliente puede elegir por número o nombre"
+- Updated flow: TALLER/DOMICILIO first, then show service list, then ask ALL data including dirección for both taller and domicilio
+- Updated summary box format: now includes color, modelo, año, dirección, servicio with price, precio aproximado
+- Updated admin.html: added base services preview panel with check marks, "Cargar/Actualizar Servicios Base" button, "base" origen filter
+- Updated PUT /api/admin/servicios to use dynamic SET (not COALESCE) so seed function works properly
+- Updated POST /api/admin/servicios to accept `origen` field
+- Added GET /api/migrate endpoint for DB migrations (tipo_atencion, direccion, referencia_direccion, origen columns)
+- Seeded 9 base services in DB with correct order, prices, descriptions, and "base" origin
+- Added "Otro" service (id 21) as option 9
+- Deployed worker: https://globalpro-citas.estilosgrado33.workers.dev
+- Tested: bot correctly shows numbered service list with prices when asked
+
+Stage Summary:
+- Bot now shows numbered service list (1-9) with prices when client asks
+- Client can choose by number or name (partial or full)
+- Summary box includes: patente, marca/modelo/año/color, cliente, dirección, servicio+precio, tipo atención, fecha, requerimientos, precio aproximado
+- Admin panel at /admin shows base services preview, can seed/update services with one click
+- All 8 base services + "Otro" seeded in correct order in DB

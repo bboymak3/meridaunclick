@@ -20,6 +20,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#0a0f1
 .toolbar h2{font-size:18px;color:#fff}
 .btn{padding:10px 20px;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:#16a34a;color:#fff}.btn-primary:hover{background:#15803d}
+.btn-warning{background:#f59e0b;color:#fff}.btn-warning:hover{background:#d97706}
 .btn-sm{padding:6px 12px;font-size:12px;border-radius:6px}
 .btn-edit{background:#2563eb;color:#fff}.btn-edit:hover{background:#1d4ed8}
 .btn-delete{background:#dc2626;color:#fff}.btn-delete:hover{background:#b91c1c}
@@ -38,9 +39,11 @@ tr:hover td{background:#1a2438}
 .badge-blue{background:#2563eb22;color:#60a5fa}
 .badge-orange{background:#f59e0b22;color:#fbbf24}
 .badge-purple{background:#8b5cf622;color:#a78bfa}
+.badge-gold{background:#eab30822;color:#facc15}
 .precio{font-weight:700;color:#16a34a}
 .actions{display:flex;gap:6px;flex-wrap:wrap}
 .empty{text-align:center;padding:40px;color:#6b7280;font-size:15px}
+.numero-orden{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:#16a34a;color:#fff;font-weight:700;font-size:12px;margin-right:4px}
 
 /* Modal */
 .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;justify-content:center;align-items:center}
@@ -58,6 +61,13 @@ tr:hover td{background:#1a2438}
 .toast{position:fixed;bottom:20px;right:20px;background:#16a34a;color:#fff;padding:14px 24px;border-radius:10px;font-size:14px;font-weight:600;transform:translateY(100px);opacity:0;transition:.3s;z-index:2000}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.error{background:#dc2626}
+.toast.warning{background:#f59e0b;color:#000}
+
+/* Base services preview */
+.base-preview{background:#141b2d;border:1px solid #1e293b;border-radius:12px;padding:20px;margin-bottom:24px}
+.base-preview h3{color:#16a34a;font-size:16px;margin-bottom:12px}
+.base-preview table{margin-top:8px}
+.base-preview .precio{color:#facc15}
 
 @media(max-width:600px){
   table{font-size:12px}
@@ -79,9 +89,28 @@ tr:hover td{background:#1a2438}
   <!-- Stats -->
   <div class="stats" id="stats"></div>
 
+  <!-- Base Services Preview -->
+  <div class="base-preview">
+    <h3>📋 Servicios Base del Bot IA (numerados para el chat)</h3>
+    <table>
+      <thead><tr><th>#</th><th>Servicio</th><th>Precio Ref.</th><th>En BD</th></tr></thead>
+      <tbody>
+        <tr><td><span class="numero-orden">1</span></td><td>Cambio de Aceite</td><td class="precio">$15.000</td><td id="check1">—</td></tr>
+        <tr><td><span class="numero-orden">2</span></td><td>Revisión General</td><td class="precio">$25.000</td><td id="check2">—</td></tr>
+        <tr><td><span class="numero-orden">3</span></td><td>Scanner Diagnóstico</td><td class="precio">$20.000</td><td id="check3">—</td></tr>
+        <tr><td><span class="numero-orden">4</span></td><td>Frenos</td><td class="precio">$35.000</td><td id="check4">—</td></tr>
+        <tr><td><span class="numero-orden">5</span></td><td>Revisión Eléctrica</td><td class="precio">$20.000</td><td id="check5">—</td></tr>
+        <tr><td><span class="numero-orden">6</span></td><td>Aire Acondicionado</td><td class="precio">$25.000</td><td id="check6">—</td></tr>
+        <tr><td><span class="numero-orden">7</span></td><td>Revisión Técnica</td><td class="precio">$30.000</td><td id="check7">—</td></tr>
+        <tr><td><span class="numero-orden">8</span></td><td>Servicio a Domicilio</td><td class="precio">$50.000</td><td id="check8">—</td></tr>
+        <tr><td><span class="numero-orden">9</span></td><td>Otro</td><td class="precio">—</td><td id="check9">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <!-- Toolbar -->
   <div class="toolbar">
-    <h2>Servicios</h2>
+    <h2>Todos los Servicios</h2>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <select id="filterCat" onchange="loadServicios()"><option value="">Todas las categorías</option></select>
       <select id="filterOrigen" onchange="loadServicios()">
@@ -89,7 +118,9 @@ tr:hover td{background:#1a2438}
         <option value="citas">Opción 1 (Citas)</option>
         <option value="globalprov2">Opción 2 (Globalprov2)</option>
         <option value="manual">Manual</option>
+        <option value="base">Base (Bot IA)</option>
       </select>
+      <button class="btn btn-warning" onclick="seedBaseServices()">🔄 Cargar/Actualizar Servicios Base</button>
       <button class="btn btn-primary" onclick="openModal()">+ Nuevo Servicio</button>
     </div>
   </div>
@@ -156,6 +187,65 @@ tr:hover td{background:#1a2438}
 <script>
 const API = '/api/admin/servicios';
 
+const BASE_SERVICES = [
+  { nombre: 'Cambio de Aceite', descripcion: 'Cambio de aceite de motor y filtro', categoria: 'Mantenimiento', precio: 15000, duracion_minutos: 30, orden: 1 },
+  { nombre: 'Revisión General', descripcion: 'Revisión completa del vehículo', categoria: 'Mantenimiento', precio: 25000, duracion_minutos: 60, orden: 2 },
+  { nombre: 'Scanner Diagnóstico', descripcion: 'Diagnóstico computarizado de fallas', categoria: 'Diagnóstico', precio: 20000, duracion_minutos: 45, orden: 3 },
+  { nombre: 'Frenos', descripcion: 'Revisión y reparación de frenos', categoria: 'Reparación', precio: 35000, duracion_minutos: 90, orden: 4 },
+  { nombre: 'Revisión Eléctrica', descripcion: 'Diagnóstico del sistema eléctrico', categoria: 'Diagnóstico', precio: 20000, duracion_minutos: 60, orden: 5 },
+  { nombre: 'Aire Acondicionado', descripcion: 'Revisión y carga de aire acondicionado', categoria: 'Servicio Especial', precio: 25000, duracion_minutos: 60, orden: 6 },
+  { nombre: 'Revisión Técnica', descripcion: 'Inspección técnica del vehículo', categoria: 'Servicio Especial', precio: 30000, duracion_minutos: 45, orden: 7 },
+  { nombre: 'Servicio a Domicilio', descripcion: 'Traslado y atención a domicilio (costo fijo)', categoria: 'Servicio Especial', precio: 50000, duracion_minutos: 120, orden: 8 },
+  { nombre: 'Otro', descripcion: 'Otro servicio no listado (el cliente especifica)', categoria: 'General', precio: 0, duracion_minutos: 60, orden: 9 },
+];
+
+async function seedBaseServices() {
+  if (!confirm('Esto actualizará/creará los 9 servicios base del Bot IA en el orden correcto. ¿Continuar?')) return;
+  
+  try {
+    for (const s of BASE_SERVICES) {
+      // Check if service exists by name
+      const res = await fetch(API);
+      const data = await res.json();
+      const existing = data.servicios.find(x => x.nombre === s.nombre);
+      
+      if (existing) {
+        // Update existing service with base data
+        await fetch(`${API}/${existing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            nombre: s.nombre,
+            descripcion: s.descripcion,
+            categoria: s.categoria,
+            precio: s.precio,
+            duracion_minutos: s.duracion_minutos,
+            orden: s.orden,
+            activo: 1,
+          })
+        });
+      } else {
+        // Create new
+        await fetch(API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...s,
+            activo: 1,
+            origen: 'base',
+          })
+        });
+      }
+    }
+    
+    showToast('Servicios base actualizados correctamente');
+    loadServicios();
+  } catch (err) {
+    showToast('Error al actualizar servicios base', true);
+    console.error(err);
+  }
+}
+
 async function loadServicios() {
   const filterCat = document.getElementById('filterCat').value;
   const filterOrigen = document.getElementById('filterOrigen').value;
@@ -174,10 +264,30 @@ async function loadServicios() {
     renderStats(data.servicios || []);
     renderTable(servicios);
     populateFilterCats(data.servicios || []);
+    checkBaseServices(data.servicios || []);
   } catch (err) {
     console.error(err);
     document.getElementById('tableContainer').innerHTML = '<div class="empty">Error al cargar servicios</div>';
   }
+}
+
+function checkBaseServices(servicios) {
+  const baseNames = BASE_SERVICES.map(s => s.nombre);
+  baseNames.forEach((name, i) => {
+    const el = document.getElementById('check' + (i + 1));
+    if (!el) return;
+    const found = servicios.find(s => s.nombre === name && s.activo === 1);
+    if (found) {
+      el.innerHTML = '<span class="badge badge-green">✓ Activo</span>';
+    } else {
+      const inactive = servicios.find(s => s.nombre === name);
+      if (inactive) {
+        el.innerHTML = '<span class="badge badge-gray">Inactivo</span>';
+      } else {
+        el.innerHTML = '<span class="badge badge-orange">No existe</span>';
+      }
+    }
+  });
 }
 
 function renderStats(servicios) {
@@ -185,11 +295,12 @@ function renderStats(servicios) {
   const inactivos = servicios.filter(s => s.activo !== 1).length;
   const catSet = new Set(servicios.map(s => s.categoria));
   const totalPrecio = servicios.filter(s => s.activo === 1 && s.precio > 0).length;
+  const baseCount = servicios.filter(s => s.origen === 'base' && s.activo === 1).length;
 
   document.getElementById('stats').innerHTML = `
     <div class="stat-card"><div class="num">${servicios.length}</div><div class="label">Total servicios</div></div>
     <div class="stat-card"><div class="num">${activos}</div><div class="label">Activos</div></div>
-    <div class="stat-card"><div class="num">${inactivos}</div><div class="label">Inactivos</div></div>
+    <div class="stat-card"><div class="num">${baseCount}/9</div><div class="label">Base activos</div></div>
     <div class="stat-card"><div class="num">${catSet.size}</div><div class="label">Categorías</div></div>
     <div class="stat-card"><div class="num">${totalPrecio}</div><div class="label">Con precio publicado</div></div>
   `;
@@ -210,22 +321,24 @@ function renderTable(servicios) {
   }
 
   let html = `<table><thead><tr>
-    <th>#</th><th>Servicio</th><th>Categoría</th><th>Precio</th><th>Duración</th><th>Origen</th><th>Estado</th><th>Acciones</th>
+    <th>Orden</th><th>Servicio</th><th>Categoría</th><th>Precio</th><th>Duración</th><th>Origen</th><th>Estado</th><th>Acciones</th>
   </tr></thead><tbody>`;
 
   servicios.forEach((s, i) => {
     const precio = s.precio > 0 ? `$${Number(s.precio).toLocaleString('es-CL')}` : '<span style="color:#6b7280">Sin precio</span>';
     const catClass = {'Diagnóstico':'badge-blue','Mantenimiento':'badge-green','Reparación':'badge-orange','Servicio Especial':'badge-purple','General':'badge-gray'}[s.categoria] || 'badge-gray';
-    const origLabel = {'citas':'Citas','globalprov2':'Globalprov2','manual':'Manual'}[s.origen] || s.origen;
+    const origLabel = {'citas':'Citas','globalprov2':'Globalprov2','manual':'Manual','base':'Base'}[s.origen] || s.origen;
+    const origClass = {'base':'badge-gold','citas':'badge-green','globalprov2':'badge-blue','manual':'badge-gray'}[s.origen] || 'badge-gray';
     const estadoBadge = s.activo === 1 ? '<span class="badge badge-green">Activo</span>' : '<span class="badge badge-gray">Inactivo</span>';
+    const isBase = BASE_SERVICES.some(b => b.nombre === s.nombre);
 
-    html += `<tr>
-      <td>${s.id}</td>
+    html += `<tr style="${isBase ? 'border-left: 3px solid #16a34a;' : ''}">
+      <td><span class="numero-orden">${s.orden || i+1}</span></td>
       <td><strong>${s.nombre}</strong><br><small style="color:#6b7280">${s.descripcion || '—'}</small></td>
       <td><span class="badge ${catClass}">${s.categoria}</span></td>
       <td class="precio">${precio}</td>
       <td>${s.duracion_minutos} min</td>
-      <td>${origLabel}</td>
+      <td><span class="badge ${origClass}">${origLabel}</span></td>
       <td>${estadoBadge}</td>
       <td class="actions">
         <button class="btn btn-sm btn-edit" onclick="editServicio(${s.id})">Editar</button>

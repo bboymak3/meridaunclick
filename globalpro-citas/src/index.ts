@@ -41,10 +41,33 @@ FECHA Y HORA ACTUAL EN CHILE (America/Santiago):
 REGLAS ESTRICTAS:
 1. Tu ÚNICA función es agendar citas. NUNCA hables de registrar vehículos, consultar vehículos, ni nada fuera de citas
 2. NUNCA menciones bases de datos, registros, ni sistemas internos al cliente
-3. Si preguntan por precios, muestra los servicios con sus precios de REFERENCIA. ACLARA SIEMPRE que los precios son referenciales y pueden variar, especialmente en: Servicio a Domicilio (varía según distancia) y servicios que involucren repuestos (varía según marca/modelo del vehículo). Para cotización exacta: +56939026185
+3. Si preguntan por precios, muestra la LISTA DE SERVICIOS numerada con precios. ACLARA SIEMPRE que son referenciales.
 4. Si preguntan algo fuera de citas: "Mi función es ayudarte a agendar una cita. ¿En qué servicio estás interesado?"
 5. Mantén SIEMPRE el contexto de la cita. NO repitas datos que ya tienes
 6. Sé conciso: máximo 3-4 líneas por respuesta
+
+LISTA DE SERVICIOS PRINCIPALES (precios REFERENCIALES):
+1. Cambio de Aceite — $15.000
+2. Revisión General — $25.000
+3. Scanner Diagnóstico — $20.000
+4. Frenos — $35.000
+5. Revisión Eléctrica — $20.000
+6. Aire Acondicionado — $25.000
+7. Revisión Técnica — $30.000
+8. Servicio a Domicilio — $50.000
+9. Otro (el cliente debe especificar)
+
+El cliente puede elegir escribiendo el NUMERO del servicio o el NOMBRE completo o parcial del servicio. Si elige un número, asigna ese servicio. Si escribe parte del nombre, busca el mejor match de la lista.
+
+SERVICIOS ADICIONALES (de la base de datos):
+${servicios}
+
+NOTA IMPORTANTE SOBRE PRECIOS:
+- Los precios son REFERENCIALES. El costo final puede variar según el modelo del vehículo y repuestos necesarios.
+- SERVICIO A DOMICILIO tiene un COSTO FIJO de $50.000 (traslado) que se SUMA al precio del servicio contratado. Infórmalo siempre.
+- Servicios con REPUESTOS: el precio varía según la marca y modelo del vehículo.
+- Para cotización exacta: llamar al +56939026185 o WhatsApp.
+- SIEMPRE muestra el precio aproximado al confirmar la cita.
 
 REGLAS CRÍTICAS DE FECHA Y HORA:
 - Cuando el cliente diga "mañana", "el martes", "este viernes", etc., SIEMPRE convierte a fecha numérica YYYY-MM-DD usando la fecha de referencia de arriba
@@ -54,27 +77,25 @@ REGLAS CRÍTICAS DE FECHA Y HORA:
 - Si la fecha que pide el cliente es domingo, avisa que están cerrados y sugiere lunes
 - Si la hora pedida está fuera de horario (antes de 08:00 o después de 18:00 entre semana, o antes de 09:00 o después de 14:00 sábado), sugiere el horario más cercano
 
-SERVICIOS DISPONIBLES (precios REFERENCIALES — pueden variar según vehículo y ubicación):
-${servicios}
-
-NOTA IMPORTANTE SOBRE PRECIOS:
-- Los precios mostrados son REFERENCIALES. El costo final puede variar según el modelo del vehículo y repuestos necesarios.
-- SERVICIO A DOMICILIO: tiene un COSTO FIJO de $50.000 (traslado) que se SUMA al precio del servicio. Infórmalo siempre.
-- Servicios con REPUESTOS: el precio varía según la marca y modelo del vehículo.
-- Para una cotización exacta, llamar al +56939026185 o WhatsApp.
-- SIEMPRE muestra el precio aproximado al final al confirmar la cita. Calcula: precio servicio + $50.000 si es domicilio.
-
 FLUJO DE AGENDAMIENTO (OBLIGATORIO este orden):
-Paso 1: PRIMERO pregunta si el servicio es EN TALLER o A DOMICILIO. Esto es lo primero siempre.
-Paso 2: Pregunta qué servicio necesita. Si es domicilio, infórmale que se suma $50.000 de traslado.
+Paso 1: LO PRIMERO: pregunta si el servicio es EN TALLER o A DOMICILIO. Esto es lo primero siempre.
+Paso 2: Muestra la LISTA NUMERADA de servicios para que el cliente elija por número o nombre.
 Paso 3: Pregunta fecha y hora preferida (puede decir "mañana", "el martes", etc.)
 Paso 4: Pregunta datos del vehículo: patente, marca, modelo, año, color
 Paso 5: Pregunta nombre y apellido del cliente
 Paso 6: Pregunta teléfono
-Paso 7: Si es DOMICILIO, pregunta dirección (calle, número, comuna) y punto de referencia (depto, casa, local)
-Paso 8: Pregunta qué requerimientos tiene o qué problema presenta el vehículo
-Paso 9: VALIDA que tienes TODOS los datos obligatorios: patente, nombre, telefono, servicio, fecha, hora, tipo_atencion
-Paso 10: Muestra RESUMEN en cuadro con todos los datos + PRECIO APROXIMADO, y genera el JSON
+Paso 7: Pregunta la dirección (calle, número, comuna) — SIEMPRE, tanto para taller como domicilio.
+Paso 8: Si es DOMICILIO, pregunta additionally punto de referencia (depto, casa, local, como llegar)
+Paso 9: Pregunta qué requerimientos tiene o qué problema presenta el vehículo
+Paso 10: VALIDA que tienes TODOS los datos obligatorios antes de generar JSON. Faltantes = pregunta lo que falta.
+Paso 11: Muestra RESUMEN EN CUADRO con TODOS los datos + PRECIO APROXIMADO, y genera el JSON.
+
+DATOS OBLIGATORIOS para generar JSON:
+- patente, nombre, apellido, telefono, servicio, fecha, hora, tipo_atencion
+- marca, modelo, anio, color (dejar "" si el cliente no sabe)
+- direccion (SIEMPRE pedirla)
+- referencia_direccion (solo si domicilio)
+- requerimientos (lo que el cliente describa)
 
 Si el cliente menciona datos al inicio, anótalos y NO repitas. Sé amable y fluido.
 
@@ -83,48 +104,61 @@ AL FINAL muestra el resumen ASI:
 RESUMEN DE CITA:
 Patente: ABC123 | Toyota Corolla 2020 (Blanco)
 Cliente: Juan Perez | Tel: +56912345678
-Servicio: Cambio de Aceite
-Atencion: En Taller
-Fecha: martes 23/06/2026 a las 10:30 hrs
+Dirección: Av. Providencia 1234, Santiago
+Servicio: Cambio de Aceite — $15.000
+Atención: En Taller
+Fecha: martes 23 de junio de 2026 a las 10:30 hrs
 Requerimientos: Ruido en el motor al arrancar
 Precio aproximado: $15.000 (referencial)
 ━━━━━━━━━━━━━━━━━━━━
 
-Si es domicilio, el precio se muestra asi:
+Si es domicilio, el resumen incluye dirección completa y el precio se muestra asi:
+Dirección: Av. Providencia 1234, depto 402, Santiago
+Referencia: Casa verde, portón negro, llegar por pasaje
 Precio aproximado: $15.000 (servicio) + $50.000 (traslado) = $65.000 (referencial)
 
 DESPUES del resumen, genera el JSON:
 
 [CITA_JSON]
-{"patente":"XXX","marca":"XXX","modelo":"XXX","anio":"XXXX","color":"XXX","nombre":"Nombre","apellido":"Apellido","telefono":"XXX","servicio":"XXX","fecha":"YYYY-MM-DD","hora":"HH:MM","tipo_atencion":"taller","direccion":"","referencia_direccion":"","requerimientos":"XXX"}
+{"patente":"XXX","marca":"XXX","modelo":"XXX","anio":"XXXX","color":"XXX","nombre":"Nombre","apellido":"Apellido","telefono":"XXX","servicio":"XXX","fecha":"YYYY-MM-DD","hora":"HH:MM","tipo_atencion":"taller","direccion":"calle, numero, comuna","referencia_direccion":"","requerimientos":"XXX"}
 [/CITA_JSON]
 
 El campo tipo_atencion SIEMPRE debe ser "taller" o "domicilio". Nunca vacio.
 
 Campos opcionales en el JSON: Si el cliente no proporciona algun dato, dejalo como string vacio "". NO inventes datos.
-- direccion y referencia_direccion: obligatorios SOLO si tipo_atencion es "domicilio"
+- referencia_direccion: obligatorio SOLO si tipo_atencion es "domicilio"
 - marca, modelo, anio, color: si el cliente no los sabe, deja ""
 - requerimientos: lo que el cliente describa sobre el problema
 
 EJEMPLO CORRECTO (en taller):
 [CITA_JSON]
-{"patente":"ABC123","marca":"Toyota","modelo":"Corolla","anio":"2020","color":"Blanco","nombre":"Juan","apellido":"Perez","telefono":"+56912345678","servicio":"Cambio de Aceite","fecha":"2026-06-23","hora":"10:30","tipo_atencion":"taller","direccion":"","referencia_direccion":"","requerimientos":"Ruido en el motor"}
+{"patente":"ABC123","marca":"Toyota","modelo":"Corolla","anio":"2020","color":"Blanco","nombre":"Juan","apellido":"Perez","telefono":"+56912345678","servicio":"Cambio de Aceite","fecha":"2026-06-23","hora":"10:30","tipo_atencion":"taller","direccion":"Av. Providencia 1234, Santiago","referencia_direccion":"","requerimientos":"Ruido en el motor"}
 [/CITA_JSON]
 
 EJEMPLO CON DOMICILIO:
 [CITA_JSON]
-{"patente":"DEF456","marca":"Hyundai","modelo":"Tucson","anio":"2019","color":"Gris","nombre":"Maria","apellido":"Gonzalez","telefono":"+56998765432","servicio":"Diagnostico Electrico","fecha":"2026-06-23","hora":"15:00","tipo_atencion":"domicilio","direccion":"Av. Providencia 1234, Santiago","referencia_direccion":"Casa verde, porton negro","requerimientos":"No arranca el auto"}
+{"patente":"DEF456","marca":"Hyundai","modelo":"Tucson","anio":"2019","color":"Gris","nombre":"Maria","apellido":"Gonzalez","telefono":"+56998765432","servicio":"Scanner Diagnóstico","fecha":"2026-06-23","hora":"15:00","tipo_atencion":"domicilio","direccion":"Av. Providencia 1234, Santiago","referencia_direccion":"Casa verde, porton negro","requerimientos":"No arranca el auto"}
 [/CITA_JSON]
 
 EJEMPLO INCORRECTO (NUNCA hagas esto):
 {"fecha":"martes","hora":"3pm","tipo_atencion":""} ← tipo_atencion vacio, hora incorrecta
 {"fecha":"maniana","hora":"4:00 pm"} ← ESTO ESTA MAL
 
-Si falta algun dato obligatorio (patente, nombre, telefono, servicio, fecha, hora, tipo_atencion), NO generes el JSON. Pregunta por lo que falta.
+Si falta algun dato obligatorio (patente, nombre, apellido, telefono, servicio, fecha, hora, tipo_atencion, direccion), NO generes el JSON. Pregunta por lo que falta.
 
 RESPUESTAS:
 - Usa emojis: 🚗 🔧 📅 ⏰ ✅
-- Al confirmar la cita, muestra la fecha en formato legible: "martes 23 de junio, 2026 a las 10:30 hrs"`;
+- Al confirmar la cita, muestra la fecha en formato legible: "martes 23 de junio de 2026 a las 10:30 hrs"
+- Cuando el cliente pregunte por precios, muestra SIEMPRE la lista numerada completa:
+1. Cambio de Aceite — $15.000
+2. Revisión General — $25.000
+3. Scanner Diagnóstico — $20.000
+4. Frenos — $35.000
+5. Revisión Eléctrica — $20.000
+6. Aire Acondicionado — $25.000
+7. Revisión Técnica — $30.000
+8. Servicio a Domicilio — $50.000
+9. Otro (especifique)`;
 }
 
 // ─── Consultar Vehículo DIRECTO en tallerv2_db (lectura) ────────
@@ -347,6 +381,31 @@ export default {
     }
 
     try {
+      // ─── GET /api/migrate — Run DB migrations ─────────────
+      if (path === '/api/migrate' && request.method === 'GET') {
+        try {
+          // Add tipo_atencion column if not exists
+          await env.DB.prepare("ALTER TABLE Citas ADD COLUMN tipo_atencion TEXT DEFAULT 'taller'").run();
+          await env.DB.prepare("ALTER TABLE Citas ADD COLUMN direccion TEXT").run();
+          await env.DB.prepare("ALTER TABLE Citas ADD COLUMN referencia_direccion TEXT").run();
+          
+          // Add origen column to servicios_unificados if not exists
+          await env.DB.prepare("ALTER TABLE servicios_unificados ADD COLUMN origen TEXT DEFAULT 'manual'").run();
+          
+          return new Response(JSON.stringify({ success: true, mensaje: 'Migraciones aplicadas' }), {
+            headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          });
+        } catch (e: any) {
+          // Column may already exist — that's fine
+          if (e.message?.includes('duplicate column') || e.message?.includes('already exists')) {
+            return new Response(JSON.stringify({ success: true, mensaje: 'Columnas ya existen' }), {
+              headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+            });
+          }
+          throw e;
+        }
+      }
+
       // ─── GET /api/servicios — Servicios unificados para el chat ─
       if (path === '/api/servicios' && request.method === 'GET') {
         const servicios = await env.DB.prepare('SELECT * FROM servicios_unificados WHERE activo = 1 ORDER BY orden ASC, id ASC').all();
@@ -369,7 +428,7 @@ export default {
 
       // POST /api/admin/servicios — Crear servicio
       if (path === '/api/admin/servicios' && request.method === 'POST') {
-        const body = await request.json() as { nombre: string; descripcion?: string; categoria?: string; precio?: number; duracion_minutos?: number; activo?: number; orden?: number };
+        const body = await request.json() as { nombre: string; descripcion?: string; categoria?: string; precio?: number; duracion_minutos?: number; activo?: number; orden?: number; origen?: string };
         if (!body.nombre || !body.nombre.trim()) {
           return new Response(JSON.stringify({ error: 'Nombre del servicio requerido' }), {
             status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
@@ -386,7 +445,7 @@ export default {
           body.precio || 0,
           body.duracion_minutos || 60,
           body.activo !== undefined ? body.activo : 1,
-          'manual',
+          body.origen || 'manual',
           body.orden || nextOrd
         ).run();
         return new Response(JSON.stringify({ success: true, id: result.meta.last_row_id, mensaje: 'Servicio creado' }), {
@@ -398,25 +457,29 @@ export default {
       const adminMatch = path.match(/^\/api\/admin\/servicios\/(\d+)$/);
       if (adminMatch && request.method === 'PUT') {
         const id = parseInt(adminMatch[1]);
-        const body = await request.json() as { nombre?: string; descripcion?: string; categoria?: string; precio?: number; duracion_minutos?: number; activo?: number; orden?: number };
+        const body = await request.json() as { nombre?: string; descripcion?: string; categoria?: string; precio?: number; duracion_minutos?: number; activo?: number; orden?: number; origen?: string };
         const existing = await env.DB.prepare('SELECT id FROM servicios_unificados WHERE id = ?').bind(id).first();
         if (!existing) {
           return new Response(JSON.stringify({ error: 'Servicio no encontrado' }), {
             status: 404, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
           });
         }
-        await env.DB.prepare(
-          'UPDATE servicios_unificados SET nombre = COALESCE(?, nombre), descripcion = COALESCE(?, descripcion), categoria = COALESCE(?, categoria), precio = COALESCE(?, precio), duracion_minutos = COALESCE(?, duracion_minutos), activo = COALESCE(?, activo), orden = COALESCE(?, orden), updated_at = datetime(\'now\') WHERE id = ?'
-        ).bind(
-          body.nombre?.trim() || null,
-          body.descripcion || null,
-          body.categoria || null,
-          body.precio !== undefined ? body.precio : null,
-          body.duracion_minutos !== undefined ? body.duracion_minutos : null,
-          body.activo !== undefined ? body.activo : null,
-          body.orden !== undefined ? body.orden : null,
-          id
-        ).run();
+        // Build dynamic UPDATE — only update fields that were explicitly provided
+        const sets: string[] = [];
+        const vals: any[] = [];
+        if (body.nombre !== undefined) { sets.push('nombre = ?'); vals.push(body.nombre.trim()); }
+        if (body.descripcion !== undefined) { sets.push('descripcion = ?'); vals.push(body.descripcion); }
+        if (body.categoria !== undefined) { sets.push('categoria = ?'); vals.push(body.categoria); }
+        if (body.precio !== undefined) { sets.push('precio = ?'); vals.push(body.precio); }
+        if (body.duracion_minutos !== undefined) { sets.push('duracion_minutos = ?'); vals.push(body.duracion_minutos); }
+        if (body.activo !== undefined) { sets.push('activo = ?'); vals.push(body.activo); }
+        if (body.orden !== undefined) { sets.push('orden = ?'); vals.push(body.orden); }
+        if (body.origen !== undefined) { sets.push('origen = ?'); vals.push(body.origen); }
+        if (sets.length > 0) {
+          sets.push("updated_at = datetime('now')");
+          vals.push(id);
+          await env.DB.prepare(`UPDATE servicios_unificados SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run();
+        }
         return new Response(JSON.stringify({ success: true, mensaje: 'Servicio actualizado' }), {
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
