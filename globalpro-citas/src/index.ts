@@ -41,7 +41,7 @@ FECHA Y HORA ACTUAL EN CHILE (America/Santiago):
 REGLAS ESTRICTAS:
 1. NUNCA hables de registrar vehículos, crear cuentas, ni nada que no sea agendar o consultar citas
 2. Si la patente NO está en la base de datos, NO lo menciones. Continúa con la cita normalmente
-3. Si preguntan por precios: "Llámanos al +56939026185 o WhatsApp para información de precios."
+3. Si preguntan por precios, muestra la lista de SERVICIOS DISPONIBLES con sus precios. Si el servicio tiene precio $0, dile que consulte al +56939026185 para una cotización exacta
 4. Si preguntan algo fuera de citas: "Mi función es ayudarte a agendar o consultar citas. ¿Qué necesitas?"
 5. Mantén SIEMPRE el contexto de la cita. NO repitas datos que ya tienes
 6. NUNCA digas "¿Necesitas registrarlo?" ni menciones registros de vehículos
@@ -310,10 +310,86 @@ export default {
     }
 
     try {
-      // ─── GET /api/servicios ──────────────────────────────
+      // ─── GET /api/servicios — Servicios unificados para el chat ─
       if (path === '/api/servicios' && request.method === 'GET') {
-        const servicios = await env.DB.prepare('SELECT * FROM servicios WHERE activo = 1 ORDER BY orden ASC').all();
+        const servicios = await env.DB.prepare('SELECT * FROM servicios_unificados WHERE activo = 1 ORDER BY orden ASC, id ASC').all();
         return new Response(JSON.stringify({ servicios: servicios.results }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // ═══════════════════════════════════════════════════════
+      // ADMIN API — CRUD de Servicios Unificados
+      // ═══════════════════════════════════════════════════════
+
+      // GET /api/admin/servicios — Listar todos (incluye inactivos)
+      if (path === '/api/admin/servicios' && request.method === 'GET') {
+        const servicios = await env.DB.prepare('SELECT * FROM servicios_unificados ORDER BY orden ASC, id ASC').all();
+        return new Response(JSON.stringify({ success: true, servicios: servicios.results, total: servicios.results.length }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // POST /api/admin/servicios — Crear servicio
+      if (path === '/api/admin/servicios' && request.method === 'POST') {
+        const body = await request.json() as { nombre: string; descripcion?: string; categoria?: string; precio?: number; duracion_minutos?: number; activo?: number; orden?: number };
+        if (!body.nombre || !body.nombre.trim()) {
+          return new Response(JSON.stringify({ error: 'Nombre del servicio requerido' }), {
+            status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          });
+        }
+        const maxOrd = await env.DB.prepare('SELECT MAX(orden) as m FROM servicios_unificados').first() as any;
+        const nextOrd = (maxOrd?.m || 0) + 1;
+        const result = await env.DB.prepare(
+          'INSERT INTO servicios_unificados (nombre, descripcion, categoria, precio, duracion_minutos, activo, origen, orden) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(
+          body.nombre.trim(),
+          body.descripcion || '',
+          body.categoria || 'General',
+          body.precio || 0,
+          body.duracion_minutos || 60,
+          body.activo !== undefined ? body.activo : 1,
+          'manual',
+          body.orden || nextOrd
+        ).run();
+        return new Response(JSON.stringify({ success: true, id: result.meta.last_row_id, mensaje: 'Servicio creado' }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // PUT /api/admin/servicios/:id — Editar servicio
+      const adminMatch = path.match(/^\/api\/admin\/servicios\/(\d+)$/);
+      if (adminMatch && request.method === 'PUT') {
+        const id = parseInt(adminMatch[1]);
+        const body = await request.json() as { nombre?: string; descripcion?: string; categoria?: string; precio?: number; duracion_minutos?: number; activo?: number; orden?: number };
+        const existing = await env.DB.prepare('SELECT id FROM servicios_unificados WHERE id = ?').bind(id).first();
+        if (!existing) {
+          return new Response(JSON.stringify({ error: 'Servicio no encontrado' }), {
+            status: 404, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          });
+        }
+        await env.DB.prepare(
+          'UPDATE servicios_unificados SET nombre = COALESCE(?, nombre), descripcion = COALESCE(?, descripcion), categoria = COALESCE(?, categoria), precio = COALESCE(?, precio), duracion_minutos = COALESCE(?, duracion_minutos), activo = COALESCE(?, activo), orden = COALESCE(?, orden), updated_at = datetime(\'now\') WHERE id = ?'
+        ).bind(
+          body.nombre?.trim() || null,
+          body.descripcion || null,
+          body.categoria || null,
+          body.precio !== undefined ? body.precio : null,
+          body.duracion_minutos !== undefined ? body.duracion_minutos : null,
+          body.activo !== undefined ? body.activo : null,
+          body.orden !== undefined ? body.orden : null,
+          id
+        ).run();
+        return new Response(JSON.stringify({ success: true, mensaje: 'Servicio actualizado' }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // DELETE /api/admin/servicios/:id — Eliminar servicio
+      if (adminMatch && request.method === 'DELETE') {
+        const id = parseInt(adminMatch[1]);
+        await env.DB.prepare('DELETE FROM servicios_unificados WHERE id = ?').bind(id).run();
+        return new Response(JSON.stringify({ success: true, mensaje: 'Servicio eliminado' }), {
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
       }
@@ -402,8 +478,8 @@ export default {
           });
         }
 
-        // Get service duration
-        const servicio = await env.DB.prepare('SELECT duracion_minutos FROM servicios WHERE nombre = ?').bind(body.servicio).first() as any;
+        // Get service duration from unified table
+        const servicio = await env.DB.prepare('SELECT duracion_minutos FROM servicios_unificados WHERE nombre = ? AND activo = 1').bind(body.servicio).first() as any;
         const duracion = servicio ? servicio.duracion_minutos : 60;
 
         // Consultar vehículo en tallerv2_db para enriquecer datos
@@ -482,10 +558,11 @@ export default {
         }
 
         // Get servicios from own DB
-        const serviciosResult = await env.DB.prepare('SELECT nombre, descripcion, duracion_minutos FROM servicios WHERE activo = 1 ORDER BY orden').all();
-        const serviciosText = (serviciosResult.results as any[]).map((s, i) =>
-          `${i + 1}. ${s.nombre} — ${s.descripcion || 'Servicio profesional'}`
-        ).join('\n');
+        const serviciosResult = await env.DB.prepare('SELECT nombre, descripcion, duracion_minutos, precio, categoria FROM servicios_unificados WHERE activo = 1 ORDER BY orden ASC, id ASC').all();
+        const serviciosText = (serviciosResult.results as any[]).map((s, i) => {
+          const precioStr = s.precio > 0 ? `$${(s.precio as number).toLocaleString('es-CL')}` : 'Consultar precio';
+          return `${i + 1}. ${s.nombre} — ${s.descripcion || 'Servicio profesional'} — ${precioStr} (${s.categoria || 'General'}, ~${s.duracion_minutos} min)`;
+        }).join('\n');
 
         let systemPrompt = getSystemPrompt(env.BUSINESS_NAME, serviciosText);
 
