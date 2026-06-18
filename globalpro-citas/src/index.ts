@@ -39,13 +39,14 @@ FECHA Y HORA ACTUAL EN CHILE (America/Santiago):
 - USA SIEMPRE la fecha de Chile como referencia. Si la hora actual en Chile es pasada las 18:00 (entre semana) o 14:00 (sábado), cualquier cita para "hoy" debe rechazarse
 
 REGLAS ESTRICTAS:
-1. NUNCA hables de registrar vehículos, crear cuentas, ni nada que no sea agendar citas
+1. NUNCA hables de registrar vehículos, crear cuentas, ni nada que no sea agendar o consultar citas
 2. Si la patente NO está en la base de datos, NO lo menciones. Continúa con la cita normalmente
 3. Si preguntan por precios: "Llámanos al +56939026185 o WhatsApp para información de precios."
-4. Si preguntan algo fuera de citas: "Mi función es ayudarte a agendar. ¿En qué fecha y hora te gustaría traer tu vehículo?"
+4. Si preguntan algo fuera de citas: "Mi función es ayudarte a agendar o consultar citas. ¿Qué necesitas?"
 5. Mantén SIEMPRE el contexto de la cita. NO repitas datos que ya tienes
 6. NUNCA digas "¿Necesitas registrarlo?" ni menciones registros de vehículos
 7. Sé conciso: máximo 3-4 líneas por respuesta
+8. Si el cliente pregunta por una CITA EXISTENTE ("tengo cita", "cuándo es mi cita", "quiero ver mi cita"), busca en la sección "CITAS EXISTENTES" del contexto y responde con la info. Si no hay citas, dile que no tiene citas pendientes
 
 REGLAS CRÍTICAS DE FECHA Y HORA:
 - Cuando el cliente diga "mañana", "el martes", "este viernes", etc., SIEMPRE convierte a fecha numérica YYYY-MM-DD usando la fecha de referencia de arriba
@@ -61,10 +62,11 @@ ${servicios}
 FLUJO DE AGENDAMIENTO:
 Paso 1: Pregunta la patente del vehículo
 Paso 2: Si tienes info del vehículo, menciónala brevemente. Si NO, continúa sin comentar
-Paso 3: Pregunta qué servicio necesita
-Paso 4: Pregunta fecha y hora preferida (el cliente puede decir "mañana", "el martes", etc.)
-Paso 5: Pregunta nombre y teléfono de contacto
-Paso 6: Confirma todos los datos con la fecha en NUMÉROS (DD/MM/YYYY) y genera el JSON
+Paso 3: Si el cliente pregunta por citas existentes, responde con la info de la sección CITAS EXISTENTES
+Paso 4: Si quiere agendar, pregunta qué servicio necesita
+Paso 5: Pregunta fecha y hora preferida (el cliente puede decir "mañana", "el martes", etc.)
+Paso 6: Pregunta nombre y teléfono de contacto
+Paso 7: Confirma todos los datos con la fecha en NUMÉROS (DD/MM/YYYY) y genera el JSON
 
 CUANDO tengas TODOS los datos, responde con este formato ESPECIAL al final:
 [CITA_JSON]
@@ -148,6 +150,35 @@ async function consultarVehiculoEnTaller(env: Env, patente: string): Promise<{
   } catch (error: any) {
     console.error('Error consultando vehículo en tallerv2_db:', error);
     return { success: false, error: 'Error al consultar el vehículo: ' + error.message };
+  }
+}
+
+// ─── Consultar Citas Existentes (por patente o teléfono) ─────
+async function consultarCitas(env: Env, filtro: { patente?: string; telefono?: string }): Promise<any[]> {
+  try {
+    let query = "SELECT id, patente, nombre_cliente, telefono, servicio, fecha_cita, hora_cita, estado, observaciones, canal FROM Citas WHERE estado NOT IN ('cancelada', 'no_asistio') AND fecha_cita >= ?";
+    const now = new Date();
+    const chileStr = now.toLocaleString('es-CL', { timeZone: 'America/Santiago' });
+    const chile = new Date(chileStr);
+    const hoyChile = `${chile.getFullYear()}-${String(chile.getMonth() + 1).padStart(2, '0')}-${String(chile.getDate()).padStart(2, '0')}`;
+    const params: any[] = [hoyChile];
+
+    if (filtro.patente) {
+      query += ' AND UPPER(patente) = ?';
+      params.push(filtro.patente.toUpperCase().trim());
+    } else if (filtro.telefono) {
+      query += ' AND telefono = ?';
+      params.push(filtro.telefono.trim());
+    }
+
+    query += ' ORDER BY fecha_cita ASC, hora_cita ASC LIMIT 10';
+
+    const stmt = env.DB.prepare(query);
+    const result = await stmt.bind(...params).all();
+    return (result.results as any[]) || [];
+  } catch (error: any) {
+    console.error('Error consultando citas:', error);
+    return [];
   }
 }
 
@@ -316,6 +347,21 @@ export default {
         });
       }
 
+      // ─── GET /api/consultar-citas ──────────────────────────
+      if (path === '/api/consultar-citas' && request.method === 'GET') {
+        const patente = url.searchParams.get('patente');
+        const telefono = url.searchParams.get('telefono');
+        if (!patente && !telefono) {
+          return new Response(JSON.stringify({ error: 'Se requiere patente o teléfono' }), {
+            status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          });
+        }
+        const citas = await consultarCitas(env, { patente: patente || undefined, telefono: telefono || undefined });
+        return new Response(JSON.stringify({ success: true, citas }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
       // ─── POST /api/agendar ────────────────────────────────
       // Crea cita en DB propia + envía orden a Globalprov2
       if (path === '/api/agendar' && request.method === 'POST') {
@@ -443,7 +489,7 @@ export default {
 
         let systemPrompt = getSystemPrompt(env.BUSINESS_NAME, serviciosText);
 
-        // If patente provided, lookup DIRECTLY in tallerv2_db
+        // If patente provided, lookup DIRECTLY in tallerv2_db + consult existing citas
         if (patente) {
           const vehiculoData = await consultarVehiculoEnTaller(env, patente);
           if (vehiculoData.success && vehiculoData.vehiculo) {
@@ -457,6 +503,21 @@ export default {
           } else {
             // Vehículo no encontrado — NO mencionar registro, simplemente continuar con la cita
             systemPrompt += `\n\nLa patente "${patente.toUpperCase()}" no tiene historial en nuestro sistema. Continúa normalmente con el agendamiento sin mencionar esto al cliente. NO preguntes sobre registrar el vehículo.`;
+          }
+
+          // Consultar citas existentes para esta patente
+          const citasExistentes = await consultarCitas(env, { patente });
+          if (citasExistentes.length > 0) {
+            systemPrompt += `\n\nCITAS EXISTENTES (patente ${patente.toUpperCase()}):\nEl cliente tiene ${citasExistentes.length} cita(s) pendiente(s). Información para el cliente si pregunta:`;
+            for (const c of citasExistentes) {
+              // Convertir fecha YYYY-MM-DD a formato legible DD/MM/YYYY
+              const parts = c.fecha_cita.split('-');
+              const fechaLegible = `${parts[2]}/${parts[1]}/${parts[0]}`;
+              systemPrompt += `\n- 📅 Cita: ${fechaLegible} a las ${c.hora_cita} hrs | Servicio: ${c.servicio} | Estado: ${c.estado} | Cliente: ${c.nombre_cliente} | Tel: ${c.telefono}`;
+            }
+            systemPrompt += `\nSi el cliente pregunta por su cita, muéstrale esta información. Si quiere agendar otra, verifica que no choque con estas fechas.`;
+          } else {
+            systemPrompt += `\n\nCITAS EXISTENTES: No hay citas pendientes o futuras para esta patente.`;
           }
         }
 
