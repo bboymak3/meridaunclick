@@ -1,0 +1,24 @@
+name = "globalpro-citas"
+main = "src/index.ts"
+compatibility_date = "2025-10-08"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+binding = "ASSETS"
+directory = "./static"
+
+[observability]
+enabled = true
+
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "globalpro_citas"
+database_id = "678b4adc-232d-43db-86ec-230828268161"
+
+[vars]
+BUSINESS_PHONE = "56939026185"
+BUSINESS_NAME = "Global Pro Automotriz"
+VEHICULO_API = "https://llm-chat-app-template.estilosgrado33.workers.dev/api/consultar"
