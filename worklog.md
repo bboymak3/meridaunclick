@@ -601,3 +601,25 @@ Stage Summary:
 - On reject: cita marked as "cancelada", WhatsApp sent with rejection + Globalpro phone for info
 - Stats dashboard filters by pending/approved/rejected
 - Navigation between all 3 pages (chat, admin, ordenes)
+---
+Task ID: 3
+Agent: Main Agent
+Task: Move approve/reject panel to Globalprov2 calendar, fix syntax error in ordenes.html
+
+Work Log:
+- Fixed syntax error in ordenes.html: rewrote using var instead of const/let, avoided template literals (used string concatenation), removed nested template expressions
+- Added "Ordenes del Bot IA" panel inside Globalprov2's calendar section (index.html) with collapsible card, stats badges, filter, order list
+- Added reject modal with Bootstrap 5 modal (modalRechazarCitaBot) inside Globalprov2
+- Added all JS functions in app.js: toggleOrdenesBot, cargarOrdenesBot, renderOrdenesBotStats, renderOrdenesBotList, aprobarCitaBot, abrirModalRechazarCitaBot, confirmarRechazarCitaBot, auto-refresh every 45s
+- Hooked into inicializarCalendario() to load orders when calendar section opens and auto-refresh
+- On approve/reject, calendar refetchEvents() is called to update green/blue event status
+- API calls go directly to citas worker (https://globalpro-citas.estilosgrado33.workers.dev/api/citas-admin) with CORS support
+- Deployed both workers: citas + Globalprov2
+
+Stage Summary:
+- Panel visible in Globalprov2's calendar section at globalprov2.pages.dev
+- Shows all bot IA orders with approve/reject buttons
+- Auto-refresh every 45 seconds
+- On approve: updates DB + sends WhatsApp + refreshes calendar
+- On reject: modal with reason + updates DB + sends WhatsApp with +56939026185 + refreshes calendar
+- ordenes.html on citas worker also fixed and working
