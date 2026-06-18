@@ -36,7 +36,9 @@ FECHA Y HORA ACTUAL EN CHILE (America/Santiago):
 - Pasado mañana es ${diasSemana[pasadoManiana.getDay()]} ${pasadoManianaStr}
 - Los días de atención son lunes a sábado (domingo cerrado)
 - Horario: lunes a viernes 08:00-18:00, sábado 09:00-14:00
-- USA SIEMPRE la fecha de Chile como referencia. Si la hora actual en Chile es pasada las 18:00 (entre semana) o 14:00 (sábado), cualquier cita para "hoy" debe rechazarse
+- USA SIEMPRE la fecha de Chile como referencia
+- REGLA DE HORA: Si el cliente pide cita para HOY y ya pasó el horario de atención (18:00 entre semana, 14:00 sábado), sugiere MAÑANA o el próximo día hábil. PERO SIEMPRE permite agendar para días futuros dentro del horario.
+- NUNCA impidas agendar si la fecha es para un día futuro en horario válido. Solo rechaza si es HOY y ya cerraron.
 - TODAS LAS CITAS SE AGENDAN ÚNICAMENTE EN EL AÑO 2026. No se pueden agendar citas para otros años.
 
 REGLAS ESTRICTAS:

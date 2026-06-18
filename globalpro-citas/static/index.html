@@ -492,7 +492,16 @@ function checkForCitaJson(text, msgDiv) {
   const match = text.match(/\[CITA_JSON\]\s*([\s\S]*?)\s*\[\/CITA_JSON\]/);
   if (match) {
     try {
-      const cita = JSON.parse(match[1]);
+      // Limpiar posibles caracteres basura antes del JSON
+      let jsonStr = match[1].trim();
+      // Si el bot puso texto antes del {, buscar el primer {
+      const braceIdx = jsonStr.indexOf('{');
+      if (braceIdx > 0) jsonStr = jsonStr.substring(braceIdx);
+      // Remover texto después del último }
+      const lastBrace = jsonStr.lastIndexOf('}');
+      if (lastBrace >= 0 && lastBrace < jsonStr.length - 1) jsonStr = jsonStr.substring(0, lastBrace + 1);
+
+      const cita = JSON.parse(jsonStr);
       // Normalizar fecha y hora si la IA no puso formato correcto
       const fechaNorm = normalizarFecha(cita.fecha);
       const horaNorm = normalizarHora(cita.hora);
@@ -504,14 +513,28 @@ function checkForCitaJson(text, msgDiv) {
         console.log('Hora normalizada:', cita.hora, '→', horaNorm);
         cita.hora = horaNorm;
       }
+      // Asegurar formato final de hora (padStart)
+      if (cita.hora && /^\d:\d{2}$/.test(cita.hora)) cita.hora = '0' + cita.hora;
+
       // Validar que ambos sean válidos antes de mostrar confirmación
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(cita.fecha) || !/^\d{1,2}:\d{2}$/.test(cita.hora)) {
-        addBotMessage('❌ Error en el formato de fecha u hora. Por favor intenta de nuevo diciendo la fecha y hora específicas, como "martes 23 a las 10:30".');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(cita.fecha) || !/^\d{2}:\d{2}$/.test(cita.hora)) {
+        console.warn('Formato inválido - fecha:', cita.fecha, 'hora:', cita.hora);
+        // Intentar auto-corregir: si la hora tiene "hrs" o texto extra, limpiar
+        cita.hora = String(cita.hora).replace(/[^\d:]/g, '').trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(cita.fecha) || !/^\d{2}:\d{2}$/.test(cita.hora)) {
+          addBotMessage('❌ Error en el formato de fecha u hora. Por favor intenta de nuevo diciendo la fecha y hora específicas, como "mañana a las 10:30".');
+          return;
+        }
+      }
+      // Validar campos mínimos
+      if (!cita.patente && !cita.nombre && !cita.telefono && !cita.servicio) {
+        console.error('Cita JSON sin campos mínimos:', cita);
+        addBotMessage('❌ Faltan datos de la cita. Por favor ingresa patente, nombre, teléfono y servicio.');
         return;
       }
       showCitaConfirmation(cita, msgDiv);
     } catch (e) {
-      console.error('Error parsing CITA_JSON:', e);
+      console.error('Error parsing CITA_JSON:', e, match[1]);
     }
   }
 }
@@ -522,14 +545,24 @@ function showCitaConfirmation(cita, msgDiv) {
   // Formatear fecha YYYY-MM-DD → DD/MM/YYYY para mostrar
   const fechaParts = cita.fecha.split('-');
   const fechaLegible = fechaParts.length === 3 ? `${fechaParts[2]}/${fechaParts[1]}/${fechaParts[0]}` : cita.fecha;
+  const vehiculo = [cita.marca, cita.modelo, cita.anio, cita.color ? '('+cita.color+')' : ''].filter(Boolean).join(' ');
+  const tipoLabel = cita.tipo_atencion === 'domicilio' ? '🏠 Domicilio' : '🔧 En Taller';
+
+  let fields = '';
+  fields += `<div class="field"><span class="label">🚗 Patente</span><span class="value">${cita.patente}</span></div>`;
+  if (vehiculo) fields += `<div class="field"><span class="label">🚘 Vehículo</span><span class="value">${vehiculo}</span></div>`;
+  fields += `<div class="field"><span class="label">👤 Nombre</span><span class="value">${cita.nombre}${cita.apellido ? ' ' + cita.apellido : ''}</span></div>`;
+  fields += `<div class="field"><span class="label">📞 Teléfono</span><span class="value">${cita.telefono}</span></div>`;
+  fields += `<div class="field"><span class="label">🔧 Servicio</span><span class="value">${cita.servicio}</span></div>`;
+  fields += `<div class="field"><span class="label">📍 Atención</span><span class="value">${tipoLabel}</span></div>`;
+  fields += `<div class="field"><span class="label">📅 Fecha</span><span class="value">${fechaLegible}</span></div>`;
+  fields += `<div class="field"><span class="label">⏰ Hora</span><span class="value">${cita.hora} hrs</span></div>`;
+  if (cita.direccion) fields += `<div class="field"><span class="label">🏠 Dirección</span><span class="value">${cita.direccion}</span></div>`;
+  if (cita.requerimientos) fields += `<div class="field"><span class="label">📝 Requerimientos</span><span class="value">${cita.requerimientos}</span></div>`;
+
   cleanText += `
     <div class="cita-json">
-      <div class="field"><span class="label">🚗 Patente</span><span class="value">${cita.patente}</span></div>
-      <div class="field"><span class="label">👤 Nombre</span><span class="value">${cita.nombre}</span></div>
-      <div class="field"><span class="label">📞 Teléfono</span><span class="value">${cita.telefono}</span></div>
-      <div class="field"><span class="label">🔧 Servicio</span><span class="value">${cita.servicio}</span></div>
-      <div class="field"><span class="label">📅 Fecha</span><span class="value">${fechaLegible}</span></div>
-      <div class="field"><span class="label">⏰ Hora</span><span class="value">${cita.hora} hrs</span></div>
+      ${fields}
     </div>
     <button class="btn-confirm" onclick="confirmarCita('${encodeURIComponent(JSON.stringify(cita))}')">
       <i class="fas fa-check"></i> Confirmar Cita
@@ -553,13 +586,22 @@ async function confirmarCita(encodedCita) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        patente: cita.patente,
-        nombre: cita.nombre,
-        telefono: cita.telefono,
-        servicio: cita.servicio,
-        fecha: cita.fecha,
-        hora: cita.hora,
-        observaciones: cita.observaciones || '',
+        patente: cita.patente || '',
+        nombre: cita.nombre || '',
+        apellido: cita.apellido || '',
+        telefono: cita.telefono || '',
+        servicio: cita.servicio || '',
+        fecha: cita.fecha || '',
+        hora: cita.hora || '',
+        marca: cita.marca || '',
+        modelo: cita.modelo || '',
+        anio: cita.anio || '',
+        color: cita.color || '',
+        tipo_atencion: cita.tipo_atencion || 'taller',
+        direccion: cita.direccion || '',
+        referencia_direccion: cita.referencia_direccion || '',
+        requerimientos: cita.requerimientos || cita.observaciones || '',
+        observaciones: cita.requerimientos || cita.observaciones || '',
         canal: 'chat',
       }),
     });
