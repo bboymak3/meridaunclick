@@ -27,6 +27,10 @@ REGLAS IMPORTANTES:
 SERVICIOS DISPONIBLES:
 ${servicios}
 
+IMPORTANTE SOBRE PRECIOS:
+- NUNCA menciones precios ni rangos de precios
+- Si el cliente pregunta por precios, responde: "Para información detallada de precios te invitamos a llamarnos al +56939026185 o escribirnos por WhatsApp. Estaremos encantados de ayudarte."
+
 FLUJO DE AGENDAMIENTO:
 Paso 1: Pregunta la patente del vehículo
 Paso 2: Muestra info del vehículo (si está en la base de datos)
@@ -45,7 +49,8 @@ Si falta algún dato, NO generes el JSON. Pregunta amablemente por lo que falta.
 RESPUESTAS CORTAS:
 - Mantén respuestas de máximo 3-4 líneas
 - Usa emojis relevantes: 🚗 🔧 📅 ⏰ ✅
-- Si preguntan por precios, da rangos aproximados`;
+- NUNCA des rangos de precios ni montos específicos
+- Si preguntan por precios, deriva a llamar al +56939026185`;
 }
 
 // ─── Consultar Vehículo DIRECTO en tallerv2_db (lectura) ────────
@@ -398,7 +403,7 @@ export default {
         // Get servicios from own DB
         const serviciosResult = await env.DB.prepare('SELECT nombre, descripcion, duracion_minutos, precio_min FROM servicios WHERE activo = 1 ORDER BY orden').all();
         const serviciosText = (serviciosResult.results as any[]).map((s, i) =>
-          `${i + 1}. ${s.nombre}${s.precio_min ? ' (desde ' + s.precio_min + ')' : ''} — ${s.descripcion || 'Servicio profesional'}`
+          `${i + 1}. ${s.nombre} — ${s.descripcion || 'Servicio profesional'}`
         ).join('\n');
 
         let systemPrompt = getSystemPrompt(env.BUSINESS_NAME, serviciosText);
