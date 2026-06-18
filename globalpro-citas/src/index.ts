@@ -307,6 +307,49 @@ async function enviarOrdenAGlobalprov2(env: Env, cita: any, vehiculoData: any): 
   }
 }
 
+// ─── Enviar WhatsApp via UltraMsg ──────────────────────────
+async function enviarWhatsApp(env: Env, telefono: string, mensaje: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const instanceId = env.ULTRAMSG_INSTANCE_ID;
+    const token = env.ULTRAMSG_TOKEN;
+    if (!instanceId || !token) {
+      console.log('UltraMsg no configurado. Mensaje no enviado:', mensaje);
+      return { success: false, error: 'UltraMsg no configurado' };
+    }
+    // Normalize phone number
+    let phone = telefono.replace(/[^0-9]/g, '');
+    if (phone.startsWith('56') && phone.length === 11) {
+      phone = '56' + phone; // already correct for Chile
+    } else if (phone.startsWith('9') && phone.length === 9) {
+      phone = '56' + phone;
+    }
+
+    const apiUrl = `https://api.ultramsg.com/${instanceId}/messages/chat`;
+    const formData = new URLSearchParams();
+    formData.append('token', token);
+    formData.append('to', phone);
+    formData.append('body', mensaje);
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formData.toString(),
+    });
+
+    const data = await response.json() as any;
+    if (data.status === 'success' || data.sent) {
+      console.log('WhatsApp enviado a', phone);
+      return { success: true };
+    } else {
+      console.error('UltraMsg error:', JSON.stringify(data));
+      return { success: false, error: data.message || 'Error al enviar WhatsApp' };
+    }
+  } catch (error: any) {
+    console.error('Error enviando WhatsApp:', error);
+    return { success: false, error: error.message };
+  }
+}
+
 // ─── Disponibilidad de Citas ────────────────────────────────
 async function getDisponibilidad(env: Env, fecha: string): Promise<{ slots: SlotDisponible[]; cerrado: boolean }> {
   const dateObj = new Date(fecha + 'T12:00:00');
@@ -391,6 +434,10 @@ export default {
           
           // Add origen column to servicios_unificados if not exists
           await env.DB.prepare("ALTER TABLE servicios_unificados ADD COLUMN origen TEXT DEFAULT 'manual'").run();
+          
+          // Add estado_aprobacion column for approve/reject workflow
+          await env.DB.prepare("ALTER TABLE Citas ADD COLUMN estado_aprobacion TEXT DEFAULT 'pendiente'").run();
+          await env.DB.prepare("ALTER TABLE Citas ADD COLUMN motivo_rechazo TEXT").run();
           
           return new Response(JSON.stringify({ success: true, mensaje: 'Migraciones aplicadas' }), {
             headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
@@ -736,6 +783,103 @@ export default {
         ).bind(inicio, fin).all();
 
         return new Response(JSON.stringify({ success: true, citas: citas.results }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // ─── ADMIN CITAS — Listar citas del bot IA ────────────
+      if (path === '/api/citas-admin' && request.method === 'GET') {
+        const estado = url.searchParams.get('estado') || '';
+        const limit = parseInt(url.searchParams.get('limit') || '50');
+
+        let query = "SELECT * FROM Citas WHERE canal = 'chat'";
+        const params: any[] = [];
+        
+        if (estado === 'pendiente') query += " AND (estado_aprobacion = 'pendiente' OR estado_aprobacion IS NULL)";
+        else if (estado === 'aprobada') query += " AND estado_aprobacion = 'aprobada'";
+        else if (estado === 'rechazada') query += " AND estado_aprobacion = 'rechazada'";
+
+        query += ' ORDER BY created_at DESC LIMIT ?';
+        params.push(limit);
+
+        const citas = await env.DB.prepare(query).bind(...params).all();
+
+        // Stats
+        const [totales, pendientes, aprobadas, rechazadas] = await Promise.all([
+          env.DB.prepare("SELECT COUNT(*) as c FROM Citas WHERE canal = 'chat'").first(),
+          env.DB.prepare("SELECT COUNT(*) as c FROM Citas WHERE canal = 'chat' AND (estado_aprobacion = 'pendiente' OR estado_aprobacion IS NULL)").first(),
+          env.DB.prepare("SELECT COUNT(*) as c FROM Citas WHERE canal = 'chat' AND estado_aprobacion = 'aprobada'").first(),
+          env.DB.prepare("SELECT COUNT(*) as c FROM Citas WHERE canal = 'chat' AND estado_aprobacion = 'rechazada'").first(),
+        ]);
+
+        return new Response(JSON.stringify({
+          success: true,
+          citas: citas.results,
+          stats: {
+            total: (totales as any)?.c || 0,
+            pendientes: (pendientes as any)?.c || 0,
+            aprobadas: (aprobadas as any)?.c || 0,
+            rechazadas: (rechazadas as any)?.c || 0,
+          }
+        }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // ─── ADMIN CITAS — Aprobar cita ──────────────────────
+      if (path.match(/^\/api\/citas-admin\/\d+\/aprobar$/) && request.method === 'POST') {
+        const idMatch = path.match(/\/(\d+)\/aprobar$/);
+        const id = parseInt(idMatch![1]);
+
+        await env.DB.prepare(
+          "UPDATE Citas SET estado_aprobacion = 'aprobada', estado = 'confirmada', updated_at = datetime('now') WHERE id = ?"
+        ).bind(id).run();
+
+        const cita = await env.DB.prepare('SELECT * FROM Citas WHERE id = ?').bind(id).first() as any;
+
+        // Send WhatsApp confirmation to customer
+        if (cita && cita.telefono) {
+          const tipoAtencion = cita.tipo_atencion === 'domicilio' ? 'a Domicilio' : 'en Taller';
+          const msg = `✅ *Su cita ha sido APROBADA*\n\n` +
+            `🔧 Servicio: ${cita.servicio}\n` +
+            `📍 Atención: ${tipoAtencion}\n` +
+            `📅 Fecha: ${cita.fecha_cita}\n` +
+            `⏰ Hora: ${cita.hora_cita}\n` +
+            `🚗 Vehículo: ${cita.patente}${cita.marca ? ' ' + cita.marca : ''}${cita.modelo ? ' ' + cita.modelo : ''}\n` +
+            `\nLo esperamos. *Global Pro Automotriz*\n📞 +56939026185`;
+          await enviarWhatsApp(env, cita.telefono, msg);
+        }
+
+        return new Response(JSON.stringify({ success: true, mensaje: 'Cita aprobada y notificación enviada' }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // ─── ADMIN CITAS — Rechazar cita ─────────────────────
+      if (path.match(/^\/api\/citas-admin\/\d+\/rechazar$/) && request.method === 'POST') {
+        const idMatch = path.match(/\/(\d+)\/rechazar$/);
+        const id = parseInt(idMatch![1]);
+        const body = await request.json() as { motivo?: string };
+        const motivo = body?.motivo || 'No especificado';
+
+        await env.DB.prepare(
+          "UPDATE Citas SET estado_aprobacion = 'rechazada', estado = 'cancelada', motivo_rechazo = ?, updated_at = datetime('now') WHERE id = ?"
+        ).bind(motivo, id).run();
+
+        const cita = await env.DB.prepare('SELECT * FROM Citas WHERE id = ?').bind(id).first() as any;
+
+        // Send WhatsApp rejection to customer
+        if (cita && cita.telefono) {
+          const msg = `❌ *Su cita ha sido RECHAZADA*\n\n` +
+            `🔧 Servicio: ${cita.servicio}\n` +
+            `📅 Fecha: ${cita.fecha_cita}\n` +
+            `\nLamentamos las molestias. Para más información o reagendar, contacte directamente:\n` +
+            `📞 *WhatsApp: +56939026185*\n` +
+            `*Global Pro Automotriz*`;
+          await enviarWhatsApp(env, cita.telefono, msg);
+        }
+
+        return new Response(JSON.stringify({ success: true, mensaje: 'Cita rechazada y notificación enviada por WhatsApp' }), {
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
       }

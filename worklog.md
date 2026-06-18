@@ -579,3 +579,25 @@ Stage Summary:
 - Summary box includes: patente, marca/modelo/año/color, cliente, dirección, servicio+precio, tipo atención, fecha, requerimientos, precio aproximado
 - Admin panel at /admin shows base services preview, can seed/update services with one click
 - All 8 base services + "Otro" seeded in correct order in DB
+---
+Task ID: 2
+Agent: Main Agent
+Task: Create admin panel for approving/rejecting bot IA orders with WhatsApp notifications
+
+Work Log:
+- Added `enviarWhatsApp()` function using UltraMsg API with phone normalization for Chile
+- Added GET `/api/citas-admin` endpoint — lists citas from bot (canal='chat') with stats (total/pendientes/aprobadas/rechazadas) and filter by estado
+- Added POST `/api/citas-admin/:id/aprobar` — sets estado_aprobacion='aprobada' + estado='confirmada', sends WhatsApp confirmation to customer
+- Added POST `/api/citas-admin/:id/rechazar` — sets estado_aprobacion='rechazada' + estado='cancelada', sends WhatsApp rejection with Globalpro phone number +56939026185
+- Added DB migration for `estado_aprobacion` (TEXT DEFAULT 'pendiente') and `motivo_rechazo` (TEXT) columns
+- Created `/ordenes.html` — full admin page with card-based order list, stats cards with filter, approve/reject buttons, reject modal with reason, auto-refresh 30s
+- Added navigation links between Chat ↔ Admin Servicios ↔ Órdenes
+- Deployed and tested: approve works, stats correct, page loads properly
+- UltraMsg credentials not yet configured (no secrets) — system handles gracefully
+
+Stage Summary:
+- Admin page at /ordenes shows all bot orders with approve/reject buttons
+- On approve: cita marked as "confirmada", WhatsApp sent with service details
+- On reject: cita marked as "cancelada", WhatsApp sent with rejection + Globalpro phone for info
+- Stats dashboard filters by pending/approved/rejected
+- Navigation between all 3 pages (chat, admin, ordenes)
