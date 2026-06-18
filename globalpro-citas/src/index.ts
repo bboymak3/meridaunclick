@@ -59,50 +59,70 @@ ${servicios}
 
 NOTA IMPORTANTE SOBRE PRECIOS:
 - Los precios mostrados son REFERENCIALES. El costo final puede variar según el modelo del vehículo y repuestos necesarios.
-- SERVICIO A DOMICILIO: tiene un COSTO FIJO de $50.000 (traslado) + el valor del diagnóstico/repuesto según el caso. Infórmalo siempre así.
+- SERVICIO A DOMICILIO: tiene un COSTO FIJO de $50.000 (traslado) que se SUMA al precio del servicio. Infórmalo siempre.
 - Servicios con REPUESTOS: el precio varía según la marca y modelo del vehículo.
-- Para una cotización exacta, el cliente debe llamar al +56939026185 o contactar por WhatsApp.
+- Para una cotización exacta, llamar al +56939026185 o WhatsApp.
+- SIEMPRE muestra el precio aproximado al final al confirmar la cita. Calcula: precio servicio + $50.000 si es domicilio.
 
-FLUJO DE AGENDAMIENTO (recopila todos estos datos del cliente):
-Paso 1: Pregunta qué servicio necesita
-Paso 2: Pregunta fecha y hora preferida (el cliente puede decir "mañana", "el martes", etc.)
-Paso 3: Pregunta los datos del vehículo: patente, marca, modelo, año, color
-Paso 4: Pregunta nombre y apellido del cliente
-Paso 5: Pregunta teléfono
-Paso 6: Si es servicio a domicilio, pregunta dirección (calle, número, comuna, ciudad) y punto de referencia (depto, casa, local)
-Paso 7: Pregunta qué requerimientos específicos tiene o qué problema presenta el vehículo
-Paso 8: Confirma todos los datos con la fecha en NUMÉROS (DD/MM/YYYY) y genera el JSON
+FLUJO DE AGENDAMIENTO (OBLIGATORIO este orden):
+Paso 1: PRIMERO pregunta si el servicio es EN TALLER o A DOMICILIO. Esto es lo primero siempre.
+Paso 2: Pregunta qué servicio necesita. Si es domicilio, infórmale que se suma $50.000 de traslado.
+Paso 3: Pregunta fecha y hora preferida (puede decir "mañana", "el martes", etc.)
+Paso 4: Pregunta datos del vehículo: patente, marca, modelo, año, color
+Paso 5: Pregunta nombre y apellido del cliente
+Paso 6: Pregunta teléfono
+Paso 7: Si es DOMICILIO, pregunta dirección (calle, número, comuna) y punto de referencia (depto, casa, local)
+Paso 8: Pregunta qué requerimientos tiene o qué problema presenta el vehículo
+Paso 9: VALIDA que tienes TODOS los datos obligatorios: patente, nombre, telefono, servicio, fecha, hora, tipo_atencion
+Paso 10: Muestra RESUMEN en cuadro con todos los datos + PRECIO APROXIMADO, y genera el JSON
 
-Si el cliente menciona datos al inicio, anótalos y continúa. NO repitas preguntas sobre datos que ya tienes. Sé amable y fluido.
+Si el cliente menciona datos al inicio, anótalos y NO repitas. Sé amable y fluido.
 
-CUANDO tengas TODOS los datos (patente, nombre, apellido, teléfono, servicio, fecha, hora), responde con este formato ESPECIAL al final:
+AL FINAL muestra el resumen ASI:
+━━━━━━━━━━━━━━━━━━━━
+RESUMEN DE CITA:
+Patente: ABC123 | Toyota Corolla 2020 (Blanco)
+Cliente: Juan Perez | Tel: +56912345678
+Servicio: Cambio de Aceite
+Atencion: En Taller
+Fecha: martes 23/06/2026 a las 10:30 hrs
+Requerimientos: Ruido en el motor al arrancar
+Precio aproximado: $15.000 (referencial)
+━━━━━━━━━━━━━━━━━━━━
+
+Si es domicilio, el precio se muestra asi:
+Precio aproximado: $15.000 (servicio) + $50.000 (traslado) = $65.000 (referencial)
+
+DESPUES del resumen, genera el JSON:
+
 [CITA_JSON]
-{"patente":"XXX","marca":"XXX","modelo":"XXX","anio":"XXXX","color":"XXX","nombre":"Nombre","apellido":"Apellido","telefono":"XXX","servicio":"XXX","fecha":"YYYY-MM-DD","hora":"HH:MM","direccion":"XXX","referencia_direccion":"XXX","requerimientos":"XXX"}
+{"patente":"XXX","marca":"XXX","modelo":"XXX","anio":"XXXX","color":"XXX","nombre":"Nombre","apellido":"Apellido","telefono":"XXX","servicio":"XXX","fecha":"YYYY-MM-DD","hora":"HH:MM","tipo_atencion":"taller","direccion":"","referencia_direccion":"","requerimientos":"XXX"}
 [/CITA_JSON]
 
-Campos opcionales en el JSON: Si el cliente no proporciona algún dato, déjalo como string vacío "". NO inventes datos.
-- direccion y referencia_direccion: obligatorios SOLO si es servicio a domicilio
+El campo tipo_atencion SIEMPRE debe ser "taller" o "domicilio". Nunca vacio.
+
+Campos opcionales en el JSON: Si el cliente no proporciona algun dato, dejalo como string vacio "". NO inventes datos.
+- direccion y referencia_direccion: obligatorios SOLO si tipo_atencion es "domicilio"
 - marca, modelo, anio, color: si el cliente no los sabe, deja ""
 - requerimientos: lo que el cliente describa sobre el problema
 
-EJEMPLO CORRECTO del JSON:
+EJEMPLO CORRECTO (en taller):
 [CITA_JSON]
-{"patente":"ABC123","marca":"Toyota","modelo":"Corolla","anio":"2020","color":"Blanco","nombre":"Juan","apellido":"Pérez","telefono":"+56912345678","servicio":"Cambio de Aceite","fecha":"2026-06-23","hora":"10:30","direccion":"","referencia_direccion":"","requerimientos":"El auto tiene ruido en el motor al arrancar"}
+{"patente":"ABC123","marca":"Toyota","modelo":"Corolla","anio":"2020","color":"Blanco","nombre":"Juan","apellido":"Perez","telefono":"+56912345678","servicio":"Cambio de Aceite","fecha":"2026-06-23","hora":"10:30","tipo_atencion":"taller","direccion":"","referencia_direccion":"","requerimientos":"Ruido en el motor"}
 [/CITA_JSON]
 
 EJEMPLO CON DOMICILIO:
 [CITA_JSON]
-{"patente":"DEF456","marca":"Hyundai","modelo":"Tucson","anio":"2019","color":"Gris","nombre":"María","apellido":"González","telefono":"+56998765432","servicio":"Servicio a Domicilio","fecha":"2026-06-23","hora":"15:00","direccion":"Av. Providencia 1234, Santiago","referencia_direccion":"Casa verde, portón negro","requerimientos":"No arranca el auto"}
+{"patente":"DEF456","marca":"Hyundai","modelo":"Tucson","anio":"2019","color":"Gris","nombre":"Maria","apellido":"Gonzalez","telefono":"+56998765432","servicio":"Diagnostico Electrico","fecha":"2026-06-23","hora":"15:00","tipo_atencion":"domicilio","direccion":"Av. Providencia 1234, Santiago","referencia_direccion":"Casa verde, porton negro","requerimientos":"No arranca el auto"}
 [/CITA_JSON]
 
 EJEMPLO INCORRECTO (NUNCA hagas esto):
-{"fecha":"martes","hora":"3pm"} ← ESTO ESTA MAL
-{"fecha":"mañana","hora":"4:00 pm"} ← ESTO ESTA MAL
+{"fecha":"martes","hora":"3pm","tipo_atencion":""} ← tipo_atencion vacio, hora incorrecta
+{"fecha":"maniana","hora":"4:00 pm"} ← ESTO ESTA MAL
 
-Si falta algún dato obligatorio (patente, nombre, teléfono, servicio, fecha, hora), NO generes el JSON. Pregunta amablemente por lo que falta.
+Si falta algun dato obligatorio (patente, nombre, telefono, servicio, fecha, hora, tipo_atencion), NO generes el JSON. Pregunta por lo que falta.
 
 RESPUESTAS:
-- Habla SIEMPRE sobre citas, fechas, servicios, horarios
 - Usa emojis: 🚗 🔧 📅 ⏰ ✅
 - Al confirmar la cita, muestra la fecha en formato legible: "martes 23 de junio, 2026 a las 10:30 hrs"`;
 }
@@ -510,8 +530,8 @@ export default {
 
         // Insert appointment in own DB
         const result = await env.DB.prepare(`
-          INSERT INTO Citas (patente, marca, modelo, anio, color, nombre_cliente, telefono, email, servicio, fecha_cita, hora_cita, duracion_minutos, observaciones, canal, direccion, referencia_direccion)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO Citas (patente, marca, modelo, anio, color, nombre_cliente, telefono, email, servicio, fecha_cita, hora_cita, duracion_minutos, observaciones, canal, direccion, referencia_direccion, tipo_atencion)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           body.patente.toUpperCase().trim(),
           marcaAuto,
@@ -528,7 +548,8 @@ export default {
           body.requerimientos || body.observaciones || null,
           body.canal || 'chat',
           body.direccion || null,
-          body.referencia_direccion || null
+          body.referencia_direccion || null,
+          body.tipo_atencion || 'taller'
         ).run();
 
         const citaId = result.meta.last_row_id;
@@ -648,7 +669,7 @@ export default {
           });
         }
         const citas = await env.DB.prepare(
-          "SELECT id, patente, nombre_cliente, telefono, servicio, fecha_cita, hora_cita, estado, observaciones, canal, duracion_minutos, created_at FROM Citas WHERE fecha_cita >= ? AND fecha_cita <= ? AND estado NOT IN ('cancelada', 'no_asistio') ORDER BY fecha_cita, hora_cita"
+          "SELECT id, patente, marca, modelo, anio, color, nombre_cliente, telefono, servicio, fecha_cita, hora_cita, estado, observaciones, canal, duracion_minutos, tipo_atencion, direccion, referencia_direccion, created_at FROM Citas WHERE fecha_cita >= ? AND fecha_cita <= ? AND estado NOT IN ('cancelada', 'no_asistio') ORDER BY fecha_cita, hora_cita"
         ).bind(inicio, fin).all();
 
         return new Response(JSON.stringify({ success: true, citas: citas.results }), {

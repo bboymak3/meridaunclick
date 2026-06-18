@@ -31,6 +31,7 @@ export interface CitaRequest {
   modelo?: string;
   anio?: number;
   color?: string;
+  tipo_atencion?: string;
   canal?: string;
   direccion?: string;
   referencia_direccion?: string;
