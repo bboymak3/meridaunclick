@@ -39,14 +39,12 @@ FECHA Y HORA ACTUAL EN CHILE (America/Santiago):
 - USA SIEMPRE la fecha de Chile como referencia. Si la hora actual en Chile es pasada las 18:00 (entre semana) o 14:00 (sábado), cualquier cita para "hoy" debe rechazarse
 
 REGLAS ESTRICTAS:
-1. NUNCA hables de registrar vehículos, crear cuentas, ni nada que no sea agendar o consultar citas
-2. Si la patente NO está en la base de datos, NO lo menciones. Continúa con la cita normalmente
-3. Si preguntan por precios, muestra la lista de SERVICIOS DISPONIBLES con sus precios. Si el servicio tiene precio $0, dile que consulte al +56939026185 para una cotización exacta
-4. Si preguntan algo fuera de citas: "Mi función es ayudarte a agendar o consultar citas. ¿Qué necesitas?"
+1. Tu ÚNICA función es agendar citas. NUNCA hables de registrar vehículos, consultar vehículos, ni nada fuera de citas
+2. NUNCA menciones bases de datos, registros, ni sistemas internos al cliente
+3. Si preguntan por precios, muestra los servicios con sus precios de REFERENCIA. ACLARA SIEMPRE que los precios son referenciales y pueden variar, especialmente en: Servicio a Domicilio (varía según distancia) y servicios que involucren repuestos (varía según marca/modelo del vehículo). Para cotización exacta: +56939026185
+4. Si preguntan algo fuera de citas: "Mi función es ayudarte a agendar una cita. ¿En qué servicio estás interesado?"
 5. Mantén SIEMPRE el contexto de la cita. NO repitas datos que ya tienes
-6. NUNCA digas "¿Necesitas registrarlo?" ni menciones registros de vehículos
-7. Sé conciso: máximo 3-4 líneas por respuesta
-8. Si el cliente pregunta por una CITA EXISTENTE ("tengo cita", "cuándo es mi cita", "quiero ver mi cita"), busca en la sección "CITAS EXISTENTES" del contexto y responde con la info. Si no hay citas, dile que no tiene citas pendientes
+6. Sé conciso: máximo 3-4 líneas por respuesta
 
 REGLAS CRÍTICAS DE FECHA Y HORA:
 - Cuando el cliente diga "mañana", "el martes", "este viernes", etc., SIEMPRE convierte a fecha numérica YYYY-MM-DD usando la fecha de referencia de arriba
@@ -56,17 +54,23 @@ REGLAS CRÍTICAS DE FECHA Y HORA:
 - Si la fecha que pide el cliente es domingo, avisa que están cerrados y sugiere lunes
 - Si la hora pedida está fuera de horario (antes de 08:00 o después de 18:00 entre semana, o antes de 09:00 o después de 14:00 sábado), sugiere el horario más cercano
 
-SERVICIOS DISPONIBLES:
+SERVICIOS DISPONIBLES (precios REFERENCIALES — pueden variar según vehículo y ubicación):
 ${servicios}
 
-FLUJO DE AGENDAMIENTO:
-Paso 1: Pregunta la patente del vehículo
-Paso 2: Si tienes info del vehículo, menciónala brevemente. Si NO, continúa sin comentar
-Paso 3: Si el cliente pregunta por citas existentes, responde con la info de la sección CITAS EXISTENTES
-Paso 4: Si quiere agendar, pregunta qué servicio necesita
-Paso 5: Pregunta fecha y hora preferida (el cliente puede decir "mañana", "el martes", etc.)
-Paso 6: Pregunta nombre y teléfono de contacto
-Paso 7: Confirma todos los datos con la fecha en NUMÉROS (DD/MM/YYYY) y genera el JSON
+NOTA IMPORTANTE SOBRE PRECIOS:
+- Los precios mostrados son REFERENCIALES. El costo final puede variar según el modelo del vehículo, repuestos necesarios y ubicación.
+- Servicios a DOMICILIO: el precio varía según la distancia al taller.
+- Servicios con REPUESTOS: el precio varía según la marca y modelo del vehículo.
+- Para una cotización exacta, el cliente debe llamar al +56939026185 o contactar por WhatsApp.
+
+FLUJO DE AGENDAMIENTO (simple, sin complicaciones):
+Paso 1: Pregunta qué servicio necesita
+Paso 2: Pregunta fecha y hora preferida (el cliente puede decir "mañana", "el martes", etc.)
+Paso 3: Pregunta la patente del vehículo (solo para identificar, no es obligatorio validarla)
+Paso 4: Pregunta nombre y teléfono de contacto
+Paso 5: Confirma todos los datos con la fecha en NUMÉROS (DD/MM/YYYY) y genera el JSON
+
+Si el cliente menciona la patente al inicio, anótala y continúa preguntando el servicio. NO busques validar la patente ni consultes sistemas externos.
 
 CUANDO tengas TODOS los datos, responde con este formato ESPECIAL al final:
 [CITA_JSON]
@@ -549,7 +553,7 @@ export default {
 
       // ─── POST /api/chat — LLM Chat con contexto de tallerv2_db
       if (path === '/api/chat' && request.method === 'POST') {
-        const { messages, patente } = await request.json() as { messages: ChatMessage[]; patente?: string };
+        const { messages } = await request.json() as { messages: ChatMessage[] };
 
         if (!messages || messages.length === 0) {
           return new Response(JSON.stringify({ error: 'No se proporcionaron mensajes' }), {
@@ -560,43 +564,11 @@ export default {
         // Get servicios from own DB
         const serviciosResult = await env.DB.prepare('SELECT nombre, descripcion, duracion_minutos, precio, categoria FROM servicios_unificados WHERE activo = 1 ORDER BY orden ASC, id ASC').all();
         const serviciosText = (serviciosResult.results as any[]).map((s, i) => {
-          const precioStr = s.precio > 0 ? `$${(s.precio as number).toLocaleString('es-CL')}` : 'Consultar precio';
+          const precioStr = s.precio > 0 ? `$${(s.precio as number).toLocaleString('es-CL')} (ref.)` : 'Consultar precio';
           return `${i + 1}. ${s.nombre} — ${s.descripcion || 'Servicio profesional'} — ${precioStr} (${s.categoria || 'General'}, ~${s.duracion_minutos} min)`;
         }).join('\n');
 
-        let systemPrompt = getSystemPrompt(env.BUSINESS_NAME, serviciosText);
-
-        // If patente provided, lookup DIRECTLY in tallerv2_db + consult existing citas
-        if (patente) {
-          const vehiculoData = await consultarVehiculoEnTaller(env, patente);
-          if (vehiculoData.success && vehiculoData.vehiculo) {
-            const v = vehiculoData.vehiculo;
-            systemPrompt += `\n\nCONTEXTO DEL VEHÍCULO ACTUAL:\n- Patente: ${v.patente_placa}\n- Vehículo: ${v.marca} ${v.modelo} ${v.anio || 'N/A'}\n- Kilometraje: ${v.kilometraje || 'N/A'}\n- Combustible: ${v.combustible || 'N/A'}\n- Dueño: ${v.cliente_nombre || 'N/A'}\n- Teléfono dueño: ${v.cliente_telefono || 'N/A'}\n- Total órdenes en taller: ${v.total_ordenes || 0}`;
-
-            if (v.ultima_orden) {
-              const lo = v.ultima_orden;
-              systemPrompt += `\n\nÚLTIMO SERVICIO EN TALLER:\n- OT N°: ${lo.numero_orden}\n- Fecha: ${lo.fecha_ingreso}\n- Servicios: ${lo.servicios_seleccionados || 'N/A'}\n- Estado: ${lo.estado}\n- Monto: $${(lo.monto_total || 0).toLocaleString()}`;
-            }
-          } else {
-            // Vehículo no encontrado — NO mencionar registro, simplemente continuar con la cita
-            systemPrompt += `\n\nLa patente "${patente.toUpperCase()}" no tiene historial en nuestro sistema. Continúa normalmente con el agendamiento sin mencionar esto al cliente. NO preguntes sobre registrar el vehículo.`;
-          }
-
-          // Consultar citas existentes para esta patente
-          const citasExistentes = await consultarCitas(env, { patente });
-          if (citasExistentes.length > 0) {
-            systemPrompt += `\n\nCITAS EXISTENTES (patente ${patente.toUpperCase()}):\nEl cliente tiene ${citasExistentes.length} cita(s) pendiente(s). Información para el cliente si pregunta:`;
-            for (const c of citasExistentes) {
-              // Convertir fecha YYYY-MM-DD a formato legible DD/MM/YYYY
-              const parts = c.fecha_cita.split('-');
-              const fechaLegible = `${parts[2]}/${parts[1]}/${parts[0]}`;
-              systemPrompt += `\n- 📅 Cita: ${fechaLegible} a las ${c.hora_cita} hrs | Servicio: ${c.servicio} | Estado: ${c.estado} | Cliente: ${c.nombre_cliente} | Tel: ${c.telefono}`;
-            }
-            systemPrompt += `\nSi el cliente pregunta por su cita, muéstrale esta información. Si quiere agendar otra, verifica que no choque con estas fechas.`;
-          } else {
-            systemPrompt += `\n\nCITAS EXISTENTES: No hay citas pendientes o futuras para esta patente.`;
-          }
-        }
+        const systemPrompt = getSystemPrompt(env.BUSINESS_NAME, serviciosText);
 
         const chatMessages: ChatMessage[] = [
           { role: 'system', content: systemPrompt },
