@@ -141,17 +141,26 @@ async function enviarOrdenAGlobalprov2(env: Env, cita: any, vehiculoData: any): 
       body: JSON.stringify(body),
     });
 
-    const data = await response.json() as any;
+    const responseText = await response.text();
+    console.log('Globalprov2 response status:', response.status, 'body:', responseText);
+
+    let data: any;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseErr: any) {
+      console.error('Failed to parse Globalprov2 response:', parseErr);
+      return { success: false, error: 'Respuesta inválida de Globalprov2: ' + responseText.substring(0, 200) };
+    }
 
     if (data.success && data.numero_orden) {
       console.log('Orden creada en Globalprov2, número:', data.numero_orden);
       return { success: true, numero_orden: data.numero_orden };
     } else {
-      console.error('Globalprov2 rechazó la orden:', data);
+      console.error('Globalprov2 rechazó la orden:', JSON.stringify(data));
       return { success: false, error: data.error || 'Error al crear orden en Globalprov2' };
     }
   } catch (error: any) {
-    console.error('Error enviando orden a Globalprov2:', error);
+    console.error('Error enviando orden a Globalprov2:', error.message, error.stack);
     return { success: false, error: 'Error de conexión con Globalprov2: ' + error.message };
   }
 }
