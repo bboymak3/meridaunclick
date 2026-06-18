@@ -58,35 +58,48 @@ SERVICIOS DISPONIBLES (precios REFERENCIALES — pueden variar según vehículo 
 ${servicios}
 
 NOTA IMPORTANTE SOBRE PRECIOS:
-- Los precios mostrados son REFERENCIALES. El costo final puede variar según el modelo del vehículo, repuestos necesarios y ubicación.
-- Servicios a DOMICILIO: el precio varía según la distancia al taller.
+- Los precios mostrados son REFERENCIALES. El costo final puede variar según el modelo del vehículo y repuestos necesarios.
+- SERVICIO A DOMICILIO: tiene un COSTO FIJO de $50.000 (traslado) + el valor del diagnóstico/repuesto según el caso. Infórmalo siempre así.
 - Servicios con REPUESTOS: el precio varía según la marca y modelo del vehículo.
 - Para una cotización exacta, el cliente debe llamar al +56939026185 o contactar por WhatsApp.
 
-FLUJO DE AGENDAMIENTO (simple, sin complicaciones):
+FLUJO DE AGENDAMIENTO (recopila todos estos datos del cliente):
 Paso 1: Pregunta qué servicio necesita
 Paso 2: Pregunta fecha y hora preferida (el cliente puede decir "mañana", "el martes", etc.)
-Paso 3: Pregunta la patente del vehículo (solo para identificar, no es obligatorio validarla)
-Paso 4: Pregunta nombre y teléfono de contacto
-Paso 5: Confirma todos los datos con la fecha en NUMÉROS (DD/MM/YYYY) y genera el JSON
+Paso 3: Pregunta los datos del vehículo: patente, marca, modelo, año, color
+Paso 4: Pregunta nombre y apellido del cliente
+Paso 5: Pregunta teléfono
+Paso 6: Si es servicio a domicilio, pregunta dirección (calle, número, comuna, ciudad) y punto de referencia (depto, casa, local)
+Paso 7: Pregunta qué requerimientos específicos tiene o qué problema presenta el vehículo
+Paso 8: Confirma todos los datos con la fecha en NUMÉROS (DD/MM/YYYY) y genera el JSON
 
-Si el cliente menciona la patente al inicio, anótala y continúa preguntando el servicio. NO busques validar la patente ni consultes sistemas externos.
+Si el cliente menciona datos al inicio, anótalos y continúa. NO repitas preguntas sobre datos que ya tienes. Sé amable y fluido.
 
-CUANDO tengas TODOS los datos, responde con este formato ESPECIAL al final:
+CUANDO tengas TODOS los datos (patente, nombre, apellido, teléfono, servicio, fecha, hora), responde con este formato ESPECIAL al final:
 [CITA_JSON]
-{"patente":"XXX","nombre":"XXX","telefono":"XXX","servicio":"XXX","fecha":"YYYY-MM-DD","hora":"HH:MM","observaciones":""}
+{"patente":"XXX","marca":"XXX","modelo":"XXX","anio":"XXXX","color":"XXX","nombre":"Nombre","apellido":"Apellido","telefono":"XXX","servicio":"XXX","fecha":"YYYY-MM-DD","hora":"HH:MM","direccion":"XXX","referencia_direccion":"XXX","requerimientos":"XXX"}
 [/CITA_JSON]
+
+Campos opcionales en el JSON: Si el cliente no proporciona algún dato, déjalo como string vacío "". NO inventes datos.
+- direccion y referencia_direccion: obligatorios SOLO si es servicio a domicilio
+- marca, modelo, anio, color: si el cliente no los sabe, deja ""
+- requerimientos: lo que el cliente describa sobre el problema
 
 EJEMPLO CORRECTO del JSON:
 [CITA_JSON]
-{"patente":"ABC123","nombre":"Juan Pérez","telefono":"+56912345678","servicio":"Cambio de Aceite","fecha":"2026-06-23","hora":"10:30","observaciones":""}
+{"patente":"ABC123","marca":"Toyota","modelo":"Corolla","anio":"2020","color":"Blanco","nombre":"Juan","apellido":"Pérez","telefono":"+56912345678","servicio":"Cambio de Aceite","fecha":"2026-06-23","hora":"10:30","direccion":"","referencia_direccion":"","requerimientos":"El auto tiene ruido en el motor al arrancar"}
+[/CITA_JSON]
+
+EJEMPLO CON DOMICILIO:
+[CITA_JSON]
+{"patente":"DEF456","marca":"Hyundai","modelo":"Tucson","anio":"2019","color":"Gris","nombre":"María","apellido":"González","telefono":"+56998765432","servicio":"Servicio a Domicilio","fecha":"2026-06-23","hora":"15:00","direccion":"Av. Providencia 1234, Santiago","referencia_direccion":"Casa verde, portón negro","requerimientos":"No arranca el auto"}
 [/CITA_JSON]
 
 EJEMPLO INCORRECTO (NUNCA hagas esto):
 {"fecha":"martes","hora":"3pm"} ← ESTO ESTA MAL
 {"fecha":"mañana","hora":"4:00 pm"} ← ESTO ESTA MAL
 
-Si falta algún dato, NO generes el JSON. Pregunta amablemente por lo que falta.
+Si falta algún dato obligatorio (patente, nombre, teléfono, servicio, fecha, hora), NO generes el JSON. Pregunta amablemente por lo que falta.
 
 RESPUESTAS:
 - Habla SIEMPRE sobre citas, fechas, servicios, horarios
@@ -486,30 +499,36 @@ export default {
         const servicio = await env.DB.prepare('SELECT duracion_minutos FROM servicios_unificados WHERE nombre = ? AND activo = 1').bind(body.servicio).first() as any;
         const duracion = servicio ? servicio.duracion_minutos : 60;
 
-        // Consultar vehículo en tallerv2_db para enriquecer datos
+        // Consultar vehículo en tallerv2_db para enriquecer datos (solo lectura)
         const vehiculoResult = await consultarVehiculoEnTaller(env, body.patente);
         const marcaAuto = vehiculoResult.vehiculo?.marca || body.marca || null;
         const modeloAuto = vehiculoResult.vehiculo?.modelo || body.modelo || null;
         const anioAuto = vehiculoResult.vehiculo?.anio || body.anio || null;
 
+        // Combinar nombre completo (nombre + apellido)
+        const nombreCompleto = [body.nombre.trim(), body.apellido?.trim()].filter(Boolean).join(' ');
+
         // Insert appointment in own DB
         const result = await env.DB.prepare(`
-          INSERT INTO Citas (patente, marca, modelo, anio, nombre_cliente, telefono, email, servicio, fecha_cita, hora_cita, duracion_minutos, observaciones, canal)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO Citas (patente, marca, modelo, anio, color, nombre_cliente, telefono, email, servicio, fecha_cita, hora_cita, duracion_minutos, observaciones, canal, direccion, referencia_direccion)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           body.patente.toUpperCase().trim(),
           marcaAuto,
           modeloAuto,
           anioAuto,
-          body.nombre.trim(),
+          body.color || null,
+          nombreCompleto,
           body.telefono.trim(),
           body.email || null,
           body.servicio,
           body.fecha,
           body.hora,
           duracion,
-          body.observaciones || null,
-          body.canal || 'chat'
+          body.requerimientos || body.observaciones || null,
+          body.canal || 'chat',
+          body.direccion || null,
+          body.referencia_direccion || null
         ).run();
 
         const citaId = result.meta.last_row_id;

@@ -20,6 +20,7 @@ export interface ChatMessage {
 export interface CitaRequest {
   patente: string;
   nombre: string;
+  apellido?: string;
   telefono: string;
   email?: string;
   servicio: string;
@@ -29,9 +30,11 @@ export interface CitaRequest {
   marca?: string;
   modelo?: string;
   anio?: number;
+  color?: string;
   canal?: string;
   direccion?: string;
   referencia_direccion?: string;
+  requerimientos?: string;
 }
 
 export interface CitaRecord {
