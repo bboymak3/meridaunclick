@@ -1,7 +1,7 @@
-// src/index.ts — GlobalPro Citas Worker
-// Chat con LLM + Agendamiento automático + WhatsApp (UltraMsg)
+// src/index.ts — GlobalPro Citas Worker v2
+// Chat con LLM + Agendamiento automático + Puente a Globalprov2
 
-import { Env, ChatMessage, CitaRequest, SlotDisponible } from './types';
+import { Env, ChatMessage, CitaRequest, SlotDisponible, VehiculoTaller } from './types';
 
 const MODEL_ID = '@cf/meta/llama-3.1-8b-instruct-fp8';
 
@@ -48,114 +48,136 @@ RESPUESTAS CORTAS:
 - Si preguntan por precios, da rangos aproximados`;
 }
 
-// ─── WhatsApp via UltraMsg ────────────────────────────────────
-async function sendWhatsApp(env: Env, to: string, body: string): Promise<boolean> {
-  const instanceId = env.ULTRAMSG_INSTANCE_ID;
-  const token = env.ULTRAMSG_TOKEN;
-  if (!instanceId || !token) {
-    console.log('UltraMsg not configured, skipping WhatsApp');
-    return false;
-  }
-
+// ─── Consultar Vehículo DIRECTO en tallerv2_db (lectura) ────────
+async function consultarVehiculoEnTaller(env: Env, patente: string): Promise<{
+  success: boolean;
+  vehiculo?: VehiculoTaller;
+  error?: string;
+}> {
   try {
-    const phone = to.startsWith('+') ? to : `+${to}`;
-    const whatsAppTo = phone.replace(/[^0-9]/g, '') + '@c.us';
-    const url = `https://api.ultramsg.com/${instanceId}/messages/chat`;
+    const pat = patente.toUpperCase().trim();
+
+    // Buscar vehículo en tallerv2_db
+    const vehiculo = await env.TALLER_DB.prepare(
+      'SELECT v.*, c.nombre as cliente_nombre, c.telefono as cliente_telefono, c.rut as cliente_rut ' +
+      'FROM Vehiculos v LEFT JOIN Clientes c ON v.cliente_id = c.id ' +
+      'WHERE UPPER(v.patente_placa) = ? LIMIT 1'
+    ).bind(pat).first() as any;
+
+    if (!vehiculo) {
+      return { success: false, error: 'Vehículo no encontrado en nuestra base de datos' };
+    }
+
+    // Buscar última orden de trabajo
+    const ultimaOrden = await env.TALLER_DB.prepare(
+      'SELECT numero_orden, fecha_ingreso, servicios_seleccionados, estado, monto_total ' +
+      'FROM OrdenesTrabajo WHERE patente_placa = ? ORDER BY id DESC LIMIT 1'
+    ).bind(pat).first() as any;
+
+    // Contar total de órdenes
+    const totalOrd = await env.TALLER_DB.prepare(
+      'SELECT COUNT(*) as cnt FROM OrdenesTrabajo WHERE patente_placa = ?'
+    ).bind(pat).first() as any;
+
+    const result: VehiculoTaller = {
+      id: vehiculo.id,
+      patente_placa: vehiculo.patente_placa,
+      marca: vehiculo.marca,
+      modelo: vehiculo.modelo,
+      anio: vehiculo.anio,
+      cilindrada: vehiculo.cilindrada,
+      combustible: vehiculo.combustible,
+      kilometraje: vehiculo.kilometraje,
+      color: vehiculo.color,
+      cliente_id: vehiculo.cliente_id,
+      fecha_registro: vehiculo.fecha_registro,
+      cliente_nombre: vehiculo.cliente_nombre,
+      cliente_telefono: vehiculo.cliente_telefono,
+      cliente_rut: vehiculo.cliente_rut,
+      total_ordenes: totalOrd?.cnt || 0,
+      ultima_orden: ultimaOrden ? {
+        numero_orden: ultimaOrden.numero_orden,
+        fecha_ingreso: ultimaOrden.fecha_ingreso,
+        servicios_seleccionados: ultimaOrden.servicios_seleccionados,
+        estado: ultimaOrden.estado,
+        monto_total: ultimaOrden.monto_total || 0,
+      } : undefined,
+    };
+
+    return { success: true, vehiculo: result };
+  } catch (error: any) {
+    console.error('Error consultando vehículo en tallerv2_db:', error);
+    return { success: false, error: 'Error al consultar el vehículo: ' + error.message };
+  }
+}
+
+// ─── Enviar Orden a Globalprov2 (como orden express) ─────────
+async function enviarOrdenAGlobalprov2(env: Env, cita: any, vehiculoData: any): Promise<{
+  success: boolean;
+  numero_orden?: number;
+  error?: string;
+}> {
+  try {
+    const url = `${env.GLOBALPROV2_URL}/api/public/crear-orden-express`;
+    console.log('Enviando orden a Globalprov2:', url);
+
+    const body = {
+      patente: cita.patente,
+      marca: vehiculoData?.marca || cita.marca || '',
+      modelo: vehiculoData?.modelo || cita.modelo || '',
+      cliente: cita.nombre_cliente,
+      telefono: cita.telefono,
+      direccion: cita.direccion || '',
+      referencia_direccion: cita.referencia_direccion || '',
+      notas_diagnostico: `Cita agendada via Chat IA\nServicio: ${cita.servicio}\nFecha: ${cita.fecha_cita} ${cita.hora_cita}\n${cita.observaciones || ''}`.trim(),
+      express: true,
+      fecha_ingreso: new Date().toISOString().split('T')[0],
+      origen: 'chat_ia',
+    };
 
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        token: token,
-        to: whatsAppTo,
-        body: body,
-      }),
+      body: JSON.stringify(body),
     });
 
-    const result = await response.json() as any;
-    return result.status === 'success' || result.sent === true;
-  } catch (error) {
-    console.error('WhatsApp send error:', error);
-    return false;
-  }
-}
+    const data = await response.json() as any;
 
-async function notifyNewCita(env: Env, cita: any): Promise<{ negocio: boolean; cliente: boolean }> {
-  const negocioMsg = `🔧 *NUEVA CITA AGENDADA* 🔧
-
-📅 Fecha: ${cita.fecha_cita}
-⏰ Hora: ${cita.hora_cita}
-👤 Cliente: ${cita.nombre_cliente}
-📞 Teléfono: ${cita.telefono}
-🚗 Patente: ${cita.patente}${cita.marca ? ' (' + cita.marca + ' ' + cita.modelo + ')' : ''}
-🔧 Servicio: ${cita.servicio}
-${cita.observaciones ? '📝 Notas: ' + cita.observaciones : ''}
----
-Canal: ${cita.canal || 'chat'}`;
-
-  const clienteMsg = `✅ *Tu cita ha sido agendada!*
-
-🗓️ ${env.BUSINESS_NAME}
-📅 Fecha: ${cita.fecha_cita}
-⏰ Hora: ${cita.hora_cita}
-🔧 Servicio: ${cita.servicio}
-
-📍 Te esperamos en nuestras instalaciones.
-📞 Si necesitas cambiar o cancelar, contáctanos al ${env.BUSINESS_PHONE}
-
-¡Gracias por confiar en nosotros! 🚗`;
-
-  const [negocioResult, clienteResult] = await Promise.all([
-    sendWhatsApp(env, env.BUSINESS_PHONE, negocioMsg),
-    sendWhatsApp(env, cita.telefono, clienteMsg),
-  ]);
-
-  return { negocio: negocioResult, cliente: clienteResult };
-}
-
-// ─── Consultar Vehículo en API externa ──────────────────────
-async function consultarVehiculo(env: Env, patente: string): Promise<any> {
-  try {
-    const response = await fetch(env.VEHICULO_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ patente: patente.toUpperCase().trim() }),
-    });
-    return await response.json() as any;
-  } catch (error) {
-    console.error('Error consultando vehículo:', error);
-    return { success: false, error: 'No se pudo consultar el vehículo' };
+    if (data.success && data.numero_orden) {
+      console.log('Orden creada en Globalprov2, número:', data.numero_orden);
+      return { success: true, numero_orden: data.numero_orden };
+    } else {
+      console.error('Globalprov2 rechazó la orden:', data);
+      return { success: false, error: data.error || 'Error al crear orden en Globalprov2' };
+    }
+  } catch (error: any) {
+    console.error('Error enviando orden a Globalprov2:', error);
+    return { success: false, error: 'Error de conexión con Globalprov2: ' + error.message };
   }
 }
 
 // ─── Disponibilidad de Citas ────────────────────────────────
 async function getDisponibilidad(env: Env, fecha: string): Promise<{ slots: SlotDisponible[]; cerrado: boolean }> {
-  // Get day of week in Spanish
   const dateObj = new Date(fecha + 'T12:00:00');
   const dias = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
   const diaSemana = dias[dateObj.getDay()];
 
-  // Check horario
   const horario = await env.DB.prepare('SELECT * FROM horarios WHERE dia_semana = ?').bind(diaSemana).first() as any;
   if (!horario || !horario.activo) {
     return { slots: [], cerrado: true };
   }
 
-  // Check bloqueos
   const bloqueo = await env.DB.prepare('SELECT * FROM bloqueos WHERE fecha = ?').bind(fecha).first();
   if (bloqueo) {
     return { slots: [], cerrado: true };
   }
 
-  // Get max citas por dia
   const configMax = await env.DB.prepare("SELECT valor FROM config WHERE clave = 'max_citas_por_dia'").first() as any;
   const maxCitas = configMax ? parseInt(configMax.valor) : 20;
 
-  // Get existing citas for that date
   const citasExistentes = await env.DB.prepare("SELECT hora_cita FROM Citas WHERE fecha_cita = ? AND estado NOT IN ('cancelada')").bind(fecha).all();
   const horasOcupadas = new Set((citasExistentes.results as any[]).map(c => c.hora_cita));
 
-  // Generate time slots
   const slots: SlotDisponible[] = [];
   const [aperturaH, aperturaM] = horario.hora_apertura.split(':').map(Number);
   const [cierreH, cierreM] = horario.hora_cierre.split(':').map(Number);
@@ -164,16 +186,14 @@ async function getDisponibilidad(env: Env, fecha: string): Promise<{ slots: Slot
   let currentMinutes = aperturaH * 60 + aperturaM;
   const endMinutes = cierreH * 60 + cierreM;
 
-  // Check minimum advance time (2 hours from now)
   const now = new Date();
   const fechaMinima = new Date(now.getTime() + 2 * 60 * 60 * 1000);
 
-  while (currentMinutes + 60 <= endMinutes) { // Reserve at least 60 min before closing
+  while (currentMinutes + 60 <= endMinutes) {
     const h = Math.floor(currentMinutes / 60);
     const m = currentMinutes % 60;
     const horaStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 
-    // Check if slot is in the past
     const slotTime = new Date(fecha + 'T' + horaStr + ':00');
     if (slotTime > fechaMinima) {
       const ocupadasEnSlot = Array.from(horasOcupadas).filter(oh => {
@@ -205,15 +225,12 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // CORS preflight
     if (request.method === 'OPTIONS') {
       return handleCors();
     }
 
     try {
-      // ─── API Routes ─────────────────────────────────────────
-
-      // GET /api/servicios — List available services
+      // ─── GET /api/servicios ──────────────────────────────
       if (path === '/api/servicios' && request.method === 'GET') {
         const servicios = await env.DB.prepare('SELECT * FROM servicios WHERE activo = 1 ORDER BY orden ASC').all();
         return new Response(JSON.stringify({ servicios: servicios.results }), {
@@ -221,7 +238,7 @@ export default {
         });
       }
 
-      // GET /api/disponibilidad — Check available slots
+      // ─── GET /api/disponibilidad ──────────────────────────
       if (path === '/api/disponibilidad' && request.method === 'GET') {
         const fecha = url.searchParams.get('fecha');
         if (!fecha) {
@@ -235,7 +252,8 @@ export default {
         });
       }
 
-      // POST /api/consultar-vehiculo — Query vehicle info
+      // ─── POST /api/consultar-vehiculo ──────────────────────
+      // Ahora consulta DIRECTO tallerv2_db (lectura)
       if (path === '/api/consultar-vehiculo' && request.method === 'POST') {
         const body = await request.json() as { patente: string };
         if (!body.patente) {
@@ -243,17 +261,17 @@ export default {
             status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
           });
         }
-        const vehiculoData = await consultarVehiculo(env, body.patente);
-        return new Response(JSON.stringify(vehiculoData), {
+        const result = await consultarVehiculoEnTaller(env, body.patente);
+        return new Response(JSON.stringify(result), {
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
       }
 
-      // POST /api/agendar — Create appointment
+      // ─── POST /api/agendar ────────────────────────────────
+      // Crea cita en DB propia + envía orden a Globalprov2
       if (path === '/api/agendar' && request.method === 'POST') {
         const body = await request.json() as CitaRequest;
 
-        // Validate required fields
         if (!body.patente || !body.nombre || !body.telefono || !body.servicio || !body.fecha || !body.hora) {
           return new Response(JSON.stringify({
             error: 'Faltan campos requeridos',
@@ -278,7 +296,7 @@ export default {
           });
         }
 
-        // Check for duplicate appointment
+        // Check for duplicate
         const existente = await env.DB.prepare(
           "SELECT id FROM Citas WHERE patente = ? AND fecha_cita = ? AND hora_cita = ? AND estado NOT IN ('cancelada', 'no_asistio')"
         ).bind(body.patente.toUpperCase().trim(), body.fecha, body.hora).first();
@@ -293,15 +311,21 @@ export default {
         const servicio = await env.DB.prepare('SELECT duracion_minutos FROM servicios WHERE nombre = ?').bind(body.servicio).first() as any;
         const duracion = servicio ? servicio.duracion_minutos : 60;
 
-        // Insert appointment
+        // Consultar vehículo en tallerv2_db para enriquecer datos
+        const vehiculoResult = await consultarVehiculoEnTaller(env, body.patente);
+        const marcaAuto = vehiculoResult.vehiculo?.marca || body.marca || null;
+        const modeloAuto = vehiculoResult.vehiculo?.modelo || body.modelo || null;
+        const anioAuto = vehiculoResult.vehiculo?.anio || body.anio || null;
+
+        // Insert appointment in own DB
         const result = await env.DB.prepare(`
           INSERT INTO Citas (patente, marca, modelo, anio, nombre_cliente, telefono, email, servicio, fecha_cita, hora_cita, duracion_minutos, observaciones, canal)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           body.patente.toUpperCase().trim(),
-          body.marca || null,
-          body.modelo || null,
-          body.anio || null,
+          marcaAuto,
+          modeloAuto,
+          anioAuto,
           body.nombre.trim(),
           body.telefono.trim(),
           body.email || null,
@@ -318,17 +342,20 @@ export default {
         // Get the created appointment
         const cita = await env.DB.prepare('SELECT * FROM Citas WHERE id = ?').bind(citaId).first() as any;
 
-        // Send WhatsApp notifications
-        const notifResult = await notifyNewCita(env, cita);
+        // ─── ENVIAR ORDEN A GLOBALPROV2 ─────────────────────
+        const ordenResult = await enviarOrdenAGlobalprov2(env, cita, vehiculoResult.vehiculo);
 
-        // Update notification status
+        // Update cita with orden status
+        const numOrden = ordenResult.numero_orden ? String(ordenResult.numero_orden) : null;
         await env.DB.prepare(
-          "UPDATE Citas SET notificada_negocio = ?, notificada_cliente = ?, updated_at = datetime('now') WHERE id = ?"
-        ).bind(notifResult.negocio ? 1 : 0, notifResult.cliente ? 1 : 0, citaId).run();
+          "UPDATE Citas SET orden_enviada = ?, numero_orden_globalprov2 = ?, updated_at = datetime('now') WHERE id = ?"
+        ).bind(ordenResult.success ? 1 : 0, numOrden, citaId).run();
 
         return new Response(JSON.stringify({
           success: true,
-          mensaje: 'Cita agendada exitosamente',
+          mensaje: ordenResult.success
+            ? 'Cita agendada y orden creada exitosamente'
+            : 'Cita agendada (la orden se enviará en breve)',
           cita: {
             id: citaId,
             patente: cita.patente,
@@ -339,13 +366,17 @@ export default {
             hora: cita.hora_cita,
             estado: cita.estado,
           },
-          notificaciones: notifResult,
+          orden_globalprov2: ordenResult.success ? {
+            numero: ordenResult.numero_orden,
+            formato: 'EXP' + String(ordenResult.numero_orden).padStart(6, '0'),
+          } : null,
+          orden_error: ordenResult.error || null,
         }), {
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
       }
 
-      // POST /api/chat — LLM Chat
+      // ─── POST /api/chat — LLM Chat con contexto de tallerv2_db
       if (path === '/api/chat' && request.method === 'POST') {
         const { messages, patente } = await request.json() as { messages: ChatMessage[]; patente?: string };
 
@@ -355,49 +386,46 @@ export default {
           });
         }
 
-        // Get servicios for system prompt
+        // Get servicios from own DB
         const serviciosResult = await env.DB.prepare('SELECT nombre, descripcion, duracion_minutos, precio_min FROM servicios WHERE activo = 1 ORDER BY orden').all();
         const serviciosText = (serviciosResult.results as any[]).map((s, i) =>
           `${i + 1}. ${s.nombre}${s.precio_min ? ' (desde ' + s.precio_min + ')' : ''} — ${s.descripcion || 'Servicio profesional'}`
         ).join('\n');
 
-        // Build system prompt
         let systemPrompt = getSystemPrompt(env.BUSINESS_NAME, serviciosText);
 
-        // If patente was provided, lookup vehicle and add context
+        // If patente provided, lookup DIRECTLY in tallerv2_db
         if (patente) {
-          const vehiculo = await consultarVehiculo(env, patente);
-          if (vehiculo.success && vehiculo.vehiculo) {
-            const v = vehiculo.vehiculo;
-            systemPrompt += `\n\nCONTEXTO DEL VEHÍCULO ACTUAL:\n- Patente: ${v.patente_placa}\n- Vehículo: ${v.marca} ${v.modelo} ${v.anio}\n- Kilometraje: ${v.kilometraje || 'N/A'}\n- Combustible: ${v.combustible || 'N/A'}\n- Dueño: ${v.cliente?.nombre || 'N/A'}\n- Total órdenes: ${v.total_ordenes || 0}`;
+          const vehiculoData = await consultarVehiculoEnTaller(env, patente);
+          if (vehiculoData.success && vehiculoData.vehiculo) {
+            const v = vehiculoData.vehiculo;
+            systemPrompt += `\n\nCONTEXTO DEL VEHÍCULO ACTUAL:\n- Patente: ${v.patente_placa}\n- Vehículo: ${v.marca} ${v.modelo} ${v.anio || 'N/A'}\n- Kilometraje: ${v.kilometraje || 'N/A'}\n- Combustible: ${v.combustible || 'N/A'}\n- Dueño: ${v.cliente_nombre || 'N/A'}\n- Teléfono dueño: ${v.cliente_telefono || 'N/A'}\n- Total órdenes en taller: ${v.total_ordenes || 0}`;
 
-            if (v.ordenes && v.ordenes.length > 0) {
-              const lastOrder = v.ordenes[0];
-              systemPrompt += `\n\nÚLTIMO SERVICIO:\n- OT: ${lastOrder.numero_orden || 'N/A'}\n- Fecha: ${lastOrder.fecha || 'N/A'}\n- Servicio: ${lastOrder.servicios || 'N/A'}\n- Técnico: ${lastOrder.tecnico || 'N/A'}\n- Monto: $${(lastOrder.monto_total || 0).toLocaleString()}`;
+            if (v.ultima_orden) {
+              const lo = v.ultima_orden;
+              systemPrompt += `\n\nÚLTIMO SERVICIO EN TALLER:\n- OT N°: ${lo.numero_orden}\n- Fecha: ${lo.fecha_ingreso}\n- Servicios: ${lo.servicios_seleccionados || 'N/A'}\n- Estado: ${lo.estado}\n- Monto: $${(lo.monto_total || 0).toLocaleString()}`;
             }
+          } else {
+            systemPrompt += `\n\nEl vehículo con patente "${patente.toUpperCase()}" NO está registrado en nuestra base de datos del taller. Pregunta al cliente si desea registrarlo.`;
           }
         }
 
-        // Ensure system prompt is first
         const chatMessages: ChatMessage[] = [
           { role: 'system', content: systemPrompt },
         ];
 
-        // Add user/assistant messages (skip any existing system prompts)
         for (const msg of messages) {
           if (msg.role !== 'system') {
             chatMessages.push(msg);
           }
         }
 
-        // Call Workers AI
         const aiResponse = await env.AI.run(MODEL_ID, {
           messages: chatMessages,
           max_tokens: 1024,
           stream: true,
         });
 
-        // Return SSE stream
         return new Response(aiResponse as ReadableStream, {
           headers: {
             ...CORS_HEADERS,
@@ -408,36 +436,27 @@ export default {
         });
       }
 
-      // GET /api/citas/stats — Simple stats (for admin)
+      // ─── GET /api/citas/stats ─────────────────────────────
       if (path === '/api/citas/stats' && request.method === 'GET') {
         const hoy = new Date().toISOString().split('T')[0];
-        const [totalCitas, citasHoy, citasPendientes] = await Promise.all([
+        const [totalCitas, citasHoy, citasPendientes, ordenesEnviadas] = await Promise.all([
           env.DB.prepare('SELECT COUNT(*) as total FROM Citas').first(),
           env.DB.prepare('SELECT COUNT(*) as total FROM Citas WHERE fecha_cita = ?').bind(hoy).first(),
           env.DB.prepare("SELECT COUNT(*) as total FROM Citas WHERE estado = 'pendiente'").first(),
+          env.DB.prepare('SELECT COUNT(*) as total FROM Citas WHERE orden_enviada = 1').first(),
         ]);
 
         return new Response(JSON.stringify({
           total: (totalCitas as any).total,
           hoy: (citasHoy as any).total,
           pendientes: (citasPendientes as any).total,
+          ordenes_enviadas_globalprov2: (ordenesEnviadas as any).total,
         }), {
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
       }
 
-      // POST /api/notificar-test — Test WhatsApp notification
-      if (path === '/api/notificar-test' && request.method === 'POST') {
-        const body = await request.json() as { telefono?: string };
-        const to = body.telefono || env.BUSINESS_PHONE;
-        const sent = await sendWhatsApp(env, to, '🔧 *Test Global Pro Citas*\n\nEste es un mensaje de prueba del sistema de agendamiento.\n✅ Funcionando correctamente.');
-        return new Response(JSON.stringify({ success: sent, to }), {
-          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-        });
-      }
-
       // ─── Static Assets (Chat UI) ────────────────────────────
-      // If no API route matched, serve static assets
       return env.ASSETS.fetch(request);
 
     } catch (error: any) {

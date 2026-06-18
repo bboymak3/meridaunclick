@@ -2,11 +2,12 @@
 
 export interface Env {
   AI: Ai;
-  DB: D1Database;
+  DB: D1Database;           // DB propia del chat (citas) — lectura/escritura
+  TALLER_DB: D1Database;     // tallerv2_db — SOLO LECTURA
   ASSETS: Fetcher;
   BUSINESS_PHONE: string;
   BUSINESS_NAME: string;
-  VEHICULO_API: string;
+  GLOBALPROV2_URL: string;   // URL de Globalprov2 para enviar órdenes
   ULTRAMSG_INSTANCE_ID?: string;
   ULTRAMSG_TOKEN?: string;
 }
@@ -29,6 +30,8 @@ export interface CitaRequest {
   modelo?: string;
   anio?: number;
   canal?: string;
+  direccion?: string;
+  referencia_direccion?: string;
 }
 
 export interface CitaRecord {
@@ -51,6 +54,8 @@ export interface CitaRecord {
   notificada_negocio: number;
   notificada_cliente: number;
   recordatorio_enviado: number;
+  orden_enviada: number;      // 1 si se envió a Globalprov2
+  numero_orden_globalprov2: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -80,23 +85,29 @@ export interface SlotDisponible {
   maximo: number;
 }
 
-export interface VehiculoData {
-  success: boolean;
-  vehiculo?: {
-    marca: string;
-    modelo: string;
-    anio: number;
-    patente_placa: string;
-    cilindrada?: string;
-    combustible?: string;
-    kilometraje?: string;
-    cliente?: {
-      nombre: string;
-      rut: string;
-      telefono: string;
-      email?: string;
-    };
-    total_ordenes?: number;
-    ordenes?: any[];
+export interface VehiculoTaller {
+  id: number;
+  patente_placa: string;
+  marca: string;
+  modelo: string;
+  anio: number;
+  cilindrada: string | null;
+  combustible: string | null;
+  kilometraje: string | null;
+  color: string | null;
+  cliente_id: number;
+  fecha_registro: string;
+  // Cliente asociado
+  cliente_nombre?: string;
+  cliente_telefono?: string;
+  cliente_rut?: string;
+  // Órdenes recientes
+  total_ordenes?: number;
+  ultima_orden?: {
+    numero_orden: number;
+    fecha_ingreso: string;
+    servicios_seleccionados: string | null;
+    estado: string;
+    monto_total: number;
   };
 }

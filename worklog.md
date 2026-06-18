@@ -480,3 +480,27 @@ Stage Summary:
 - New "Negocios Populares" carousel section with 20 businesses sorted by popularity
 - Carousel is fully responsive with swipe on mobile and arrow buttons on desktop
 - Deployed to: https://aunclick.pages.dev
+---
+Task ID: 1
+Agent: main
+Task: Implementar Chat IA + Agendamiento para Globalpro con integración a Globalprov2
+
+Work Log:
+- Analizó 3 repos (Globalpro, llm-chat-app-template, Globalprov2) y tallerv2_db
+- Actualizó wrangler.toml: agregó binding TALLER_DB (tallerv2_db) + var GLOBALPROV2_URL
+- Actualizó types.ts: agregó TALLER_DB, GLOBALPROV2_URL, VehiculoTaller interface
+- Reescribió src/index.ts: consultarVehiculoEnTaller() lee directo de tallerv2_db, enviarOrdenAGlobalprov2() usa endpoint existente
+- Actualizó static/index.html: nuevo chat UI con tema verde, SSE streaming, confirmación de cita, quick actions
+- Agregó columnas orden_enviada y numero_orden_globalprov2 a Citas en DB citas
+- Agregó botón VERDE (float-btn-chat-agenda) + modal con iframe en Globalpro index.html
+- Registró modal-chat-agenda-ia en todas las listas de cierre de modales + popstate + Escape
+- Deployó Worker globalpro-citas con 2 bindings D1 (citas + tallerv2_db)
+- Push a Globalpro repo (commit b040a7c)
+
+Stage Summary:
+- Worker deployado en https://globalpro-citas.estilosgrado33.workers.dev
+- Consulta vehículos directo de tallerv2_db (SOLO LECTURA)
+- Al agendar cita, envía orden express a Globalprov2 (/api/public/crear-orden-express)
+- Botón verde con icono calendar-check visible en mecanico247.com
+- 4 botones flotantes: amarillo IA, rojo campana, naranja express, verde chat+agenda
+- NO se modificó funcionalidad existente en Globalpro ni Globalprov2
