@@ -532,3 +532,26 @@ Stage Summary:
 - Green button iframe now loads correctly on mecanico247.com
 - /api/agendar creates cita and sends order to Globalprov2 (no more 500)
 - UI simplified: no prices shown in chat, no user registration flow
+
+---
+Task ID: 2
+Agent: main
+Task: Integrar citas IA del chat en el calendario de Globalprov2
+
+Work Log:
+- Explored Globalprov2 calendar implementation (FullCalendar v6 in index.html + app.js)
+- Added GET /api/citas/rango endpoint to globalpro-citas Worker for calendar integration
+- Modified cargarEventosCalendario() in app.js to fetch citas from Worker and merge as green events
+- Added "Cita IA (Chat)" legend item in calendar (green #16a34a)
+- Added read-only detail modal for cita IA events (shows patente, cliente, telefono, servicio, fecha, hora)
+- Added restaurarModalCalendario() function to restore modal HTML after viewing cita details
+- Deployed Worker (v b5dcb885) and Globalprov2 (commit 305ef9c)
+- Verified: 3 citas appear as green events in June 2026 calendar
+- Verified: click on green event shows detail modal with all cita information
+- Verified: legend includes "Cita IA (Chat)" with green dot
+
+Stage Summary:
+- Calendar in Globalprov2 now displays all citas from the chat IA as green events
+- Citas are read-only in calendar (not editable/draggable)
+- Detail modal shows complete cita information when clicked
+- Events merge seamlessly with existing agenda and OT events

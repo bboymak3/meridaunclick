@@ -470,6 +470,24 @@ export default {
         });
       }
 
+      // ─── GET /api/citas/rango — Para calendario Globalprov2 ────
+      if (path === '/api/citas/rango' && request.method === 'GET') {
+        const inicio = url.searchParams.get('inicio');
+        const fin = url.searchParams.get('fin');
+        if (!inicio || !fin) {
+          return new Response(JSON.stringify({ error: 'Parámetros inicio y fin requeridos (YYYY-MM-DD)' }), {
+            status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+          });
+        }
+        const citas = await env.DB.prepare(
+          "SELECT id, patente, nombre_cliente, telefono, servicio, fecha_cita, hora_cita, estado, observaciones, canal, duracion_minutos, created_at FROM Citas WHERE fecha_cita >= ? AND fecha_cita <= ? AND estado NOT IN ('cancelada', 'no_asistio') ORDER BY fecha_cita, hora_cita"
+        ).bind(inicio, fin).all();
+
+        return new Response(JSON.stringify({ success: true, citas: citas.results }), {
+          headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+        });
+      }
+
       // ─── Static Assets (Chat UI) ────────────────────────────
       return env.ASSETS.fetch(request);
 
