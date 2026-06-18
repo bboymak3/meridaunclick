@@ -504,3 +504,31 @@ Stage Summary:
 - Botón verde con icono calendar-check visible en mecanico247.com
 - 4 botones flotantes: amarillo IA, rojo campana, naranja express, verde chat+agenda
 - NO se modificó funcionalidad existente en Globalpro ni Globalprov2
+
+---
+Task ID: 1
+Agent: main
+Task: Fix 3 bugs - green button iframe, 500 error on /api/agendar, simplify UI
+
+Work Log:
+- Analyzed green button click behavior on mecanico247.com using agent-browser
+- Found MutationObserver bug: `!iframe.src` returns false when src="" (property resolves to parent URL) - iframe chat never loads
+- Fixed by changing `!iframe.src` to `!iframe.getAttribute('src')` and `iframe.src = ''` to `iframe.removeAttribute('src')`
+- Pushed fix to Globalpro repo (commit 3d44384)
+- Analyzed Globalprov2 crear-orden-express endpoint payload format
+- Verified Citas table schema in D1 (678b4adc) - all columns match INSERT statement
+- Tested /api/agendar endpoint - citas create OK but Globalprov2 returns 500
+- Used wrangler tail to capture logs - found Globalprov2 response: 500 "Error interno"
+- Isolated root cause: newlines in notas_diagnostico break SQL string concatenation in crear-orden-express
+- Fixed esc() function in Globalprov2 to escape \n and \r characters (commit ba1e753)
+- Applied workaround in Worker: replaced \n with | in notas_diagnostico
+- Removed precio_min from servicios query in Worker chat handler
+- Deployed Worker (version 81e87369) and Globalprov2 (Pages auto-deploy)
+- End-to-end test: Cita created + Orden EXP000255 sent to Globalprov2 successfully
+- Cleaned test data from Citas DB
+
+Stage Summary:
+- 3 bugs fixed and deployed
+- Green button iframe now loads correctly on mecanico247.com
+- /api/agendar creates cita and sends order to Globalprov2 (no more 500)
+- UI simplified: no prices shown in chat, no user registration flow

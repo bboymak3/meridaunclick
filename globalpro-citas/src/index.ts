@@ -134,7 +134,7 @@ async function enviarOrdenAGlobalprov2(env: Env, cita: any, vehiculoData: any): 
       telefono: cita.telefono,
       direccion: cita.direccion || '',
       referencia_direccion: cita.referencia_direccion || '',
-      notas_diagnostico: `Cita agendada via Chat IA\nServicio: ${cita.servicio}\nFecha: ${cita.fecha_cita} ${cita.hora_cita}\n${cita.observaciones || ''}`.trim(),
+      notas_diagnostico: `Cita agendada via Chat IA | Servicio: ${cita.servicio} | Fecha: ${cita.fecha_cita} ${cita.hora_cita} | ${cita.observaciones || ''}`.trim(),
       express: true,
       fecha_ingreso: new Date().toISOString().split('T')[0],
       origen: 'chat_ia',
@@ -401,7 +401,7 @@ export default {
         }
 
         // Get servicios from own DB
-        const serviciosResult = await env.DB.prepare('SELECT nombre, descripcion, duracion_minutos, precio_min FROM servicios WHERE activo = 1 ORDER BY orden').all();
+        const serviciosResult = await env.DB.prepare('SELECT nombre, descripcion, duracion_minutos FROM servicios WHERE activo = 1 ORDER BY orden').all();
         const serviciosText = (serviciosResult.results as any[]).map((s, i) =>
           `${i + 1}. ${s.nombre} — ${s.descripcion || 'Servicio profesional'}`
         ).join('\n');
