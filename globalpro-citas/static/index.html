@@ -272,6 +272,74 @@ let chatHistory = [];
 let isStreaming = false;
 let currentPatente = null;
 
+// ─── Normalizar fecha: convierte "mañana", "martes", etc. a YYYY-MM-DD ───
+function normalizarFecha(fechaStr) {
+  if (!fechaStr) return null;
+  // Ya está en formato YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(fechaStr.trim())) return fechaStr.trim();
+  // Formato DD/MM/YYYY
+  const dmy = fechaStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,'0')}-${dmy[1].padStart(2,'0')}`;
+  // Texto relativo - calcular desde la fecha actual (Chile UTC-3)
+  const now = new Date();
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  const chile = new Date(utcMs + (-3) * 3600000);
+  const hoy = chile.toISOString().split('T')[0];
+  const diaSem = chile.getDay(); // 0=dom
+  const texto = fechaStr.toLowerCase().trim();
+  let offset = 0;
+  if (texto === 'hoy' || texto === 'hoy mismo') offset = 0;
+  else if (texto === 'mañana' || texto === 'manana') offset = 1;
+  else if (texto === 'pasado mañana' || texto === 'pasado manana') offset = 2;
+  else {
+    const diasMap = {'domingo':0,'lunes':1,'martes':2,'miercoles':3,'jueves':4,'viernes':5,'sabado':6,'sábado':6};
+ const diaNum = diasMap[texto];
+    if (diaNum !== undefined) {
+      offset = ((diaNum - diaSem + 7) % 7) || 7;
+      if (offset === 0) offset = 7;
+    }
+  }
+  if (offset > 0) {
+    const target = new Date(chile);
+    target.setDate(target.getDate() + offset);
+    return target.toISOString().split('T')[0];
+  }
+  return null;
+}
+
+// ─── Normalizar hora: convierte "3pm", "4:00 pm", "10", etc. a HH:MM ───
+function normalizarHora(horaStr) {
+  if (!horaStr) return null;
+  if (/^\d{1,2}:\d{2}$/.test(horaStr.trim())) {
+    const [h, m] = horaStr.trim().split(':').map(Number);
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+  const texto = horaStr.toLowerCase().trim();
+  // "3pm", "4:00pm", "3 pm"
+  let match = texto.match(/^(\d{1,2})(?::(\d{2}))?\s*(pm|p\.m\.)/);
+  if (match) {
+    let h = parseInt(match[1]); if (h === 12) h = 0; else if (h < 12) h += 12;
+    const m = match[2] ? parseInt(match[2]) : 0;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+  // "10am", "9:00am", "10 am"
+  match = texto.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|a\.m\.)/);
+  if (match) {
+    let h = parseInt(match[1]); if (h === 12) h = 0;
+    const m = match[2] ? parseInt(match[2]) : 0;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  }
+  // Solo número: "3" → 15:00 (PM), "10" → 10:00 (AM)
+  match = texto.match(/^(\d{1,2})$/);
+  if (match) {
+    let h = parseInt(match[1]);
+    if (h >= 1 && h <= 6) h += 12; // 1-6 → PM (13-18)
+    if (h > 23) h = 23;
+    return `${String(h).padStart(2,'0')}:00`;
+  }
+  return null;
+}
+
 function getEmbeddedParam() {
   const params = new URLSearchParams(window.location.search);
   return params.get('embedded') === 'true';
@@ -421,6 +489,22 @@ function checkForCitaJson(text, msgDiv) {
   if (match) {
     try {
       const cita = JSON.parse(match[1]);
+      // Normalizar fecha y hora si la IA no puso formato correcto
+      const fechaNorm = normalizarFecha(cita.fecha);
+      const horaNorm = normalizarHora(cita.hora);
+      if (fechaNorm && fechaNorm !== cita.fecha) {
+        console.log('Fecha normalizada:', cita.fecha, '→', fechaNorm);
+        cita.fecha = fechaNorm;
+      }
+      if (horaNorm && horaNorm !== cita.hora) {
+        console.log('Hora normalizada:', cita.hora, '→', horaNorm);
+        cita.hora = horaNorm;
+      }
+      // Validar que ambos sean válidos antes de mostrar confirmación
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(cita.fecha) || !/^\d{1,2}:\d{2}$/.test(cita.hora)) {
+        addBotMessage('❌ Error en el formato de fecha u hora. Por favor intenta de nuevo diciendo la fecha y hora específicas, como "martes 23 a las 10:30".');
+        return;
+      }
       showCitaConfirmation(cita, msgDiv);
     } catch (e) {
       console.error('Error parsing CITA_JSON:', e);
@@ -431,14 +515,17 @@ function checkForCitaJson(text, msgDiv) {
 function showCitaConfirmation(cita, msgDiv) {
   // Remove the raw JSON from display
   let cleanText = msgDiv.innerHTML.replace(/\[CITA_JSON\][\s\S]*?\[\/CITA_JSON\]/g, '');
+  // Formatear fecha YYYY-MM-DD → DD/MM/YYYY para mostrar
+  const fechaParts = cita.fecha.split('-');
+  const fechaLegible = fechaParts.length === 3 ? `${fechaParts[2]}/${fechaParts[1]}/${fechaParts[0]}` : cita.fecha;
   cleanText += `
     <div class="cita-json">
       <div class="field"><span class="label">🚗 Patente</span><span class="value">${cita.patente}</span></div>
       <div class="field"><span class="label">👤 Nombre</span><span class="value">${cita.nombre}</span></div>
       <div class="field"><span class="label">📞 Teléfono</span><span class="value">${cita.telefono}</span></div>
       <div class="field"><span class="label">🔧 Servicio</span><span class="value">${cita.servicio}</span></div>
-      <div class="field"><span class="label">📅 Fecha</span><span class="value">${cita.fecha}</span></div>
-      <div class="field"><span class="label">⏰ Hora</span><span class="value">${cita.hora}</span></div>
+      <div class="field"><span class="label">📅 Fecha</span><span class="value">${fechaLegible}</span></div>
+      <div class="field"><span class="label">⏰ Hora</span><span class="value">${cita.hora} hrs</span></div>
     </div>
     <button class="btn-confirm" onclick="confirmarCita('${encodeURIComponent(JSON.stringify(cita))}')">
       <i class="fas fa-check"></i> Confirmar Cita
