@@ -859,20 +859,44 @@ export default {
 
         const cita = await env.DB.prepare('SELECT * FROM Citas WHERE id = ?').bind(id).first() as any;
 
+        // ─── CREAR ORDEN EN GLOBALPROV2 si no tiene una ────
+        let ordenCreada = false;
+        if (cita && !cita.numero_orden_globalprov2) {
+          console.log('Cita sin OT, creando orden en Globalprov2 para cita:', id);
+          const vehiculoData = await consultarVehiculoEnTaller(env, cita.patente);
+          const ordenResult = await enviarOrdenAGlobalprov2(env, cita, vehiculoData.vehiculo);
+          if (ordenResult.success) {
+            const numOrden = ordenResult.numero_orden ? String(ordenResult.numero_orden) : null;
+            await env.DB.prepare(
+              "UPDATE Citas SET orden_enviada = 1, numero_orden_globalprov2 = ?, updated_at = datetime('now') WHERE id = ?"
+            ).bind(numOrden, id).run();
+            ordenCreada = true;
+            console.log('Orden creada al aprobar cita:', id, '-> OT:', numOrden);
+          } else {
+            console.error('Error creando orden al aprobar cita:', id, ordenResult.error);
+          }
+        }
+
         // Send WhatsApp confirmation to customer
         if (cita && cita.telefono) {
           const tipoAtencion = cita.tipo_atencion === 'domicilio' ? 'a Domicilio' : 'en Taller';
+          const otLine = ordenCreada ? `\n📋 Orden de Trabajo: EXP${String(cita.numero_orden_globalprov2 || '').padStart(6, '0')}` : '';
           const msg = `✅ *Su cita ha sido APROBADA*\n\n` +
             `🔧 Servicio: ${cita.servicio}\n` +
             `📍 Atención: ${tipoAtencion}\n` +
             `📅 Fecha: ${cita.fecha_cita}\n` +
             `⏰ Hora: ${cita.hora_cita}\n` +
-            `🚗 Vehículo: ${cita.patente}${cita.marca ? ' ' + cita.marca : ''}${cita.modelo ? ' ' + cita.modelo : ''}\n` +
-            `\nLo esperamos. *Global Pro Automotriz*\n📞 +56939026185`;
+            `🚗 Vehículo: ${cita.patente}${cita.marca ? ' ' + cita.marca : ''}${cita.modelo ? ' ' + cita.modelo : ''}` +
+            otLine +
+            `\n\nLo esperamos. *Global Pro Automotriz*\n📞 +56939026185`;
           await enviarWhatsApp(env, cita.telefono, msg);
         }
 
-        return new Response(JSON.stringify({ success: true, mensaje: 'Cita aprobada y notificación enviada' }), {
+        return new Response(JSON.stringify({
+          success: true,
+          mensaje: ordenCreada ? 'Cita aprobada, orden de trabajo creada y notificación enviada' : 'Cita aprobada y notificación enviada',
+          orden_creada: ordenCreada
+        }), {
           headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
         });
       }
