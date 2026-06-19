@@ -13,30 +13,51 @@ const CORS_HEADERS = {
 
 // ─── System Prompt para el Chat de Agendamiento ────────────────
 function getSystemPrompt(businessName: string, servicios: string): string {
-  // Calcular fecha de hoy y próximos días en Chile (America/Santiago) con soporte automático de horario de verano
+  // Calcular fecha/hora en Chile (America/Santiago) usando Intl para evitar problemas de parseo
   const now = new Date();
-  const chileTimeStr = now.toLocaleString('es-CL', { timeZone: 'America/Santiago' });
-  const chileTime = new Date(chileTimeStr);
-  const hoyStr = `${chileTime.getFullYear()}-${String(chileTime.getMonth() + 1).padStart(2, '0')}-${String(chileTime.getDate()).padStart(2, '0')}`;
+  const tz = 'America/Santiago';
+  const fmtDate = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
+  const fmtTime = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false });
+  const fmtWeekday = new Intl.DateTimeFormat('es-CL', { timeZone: tz, weekday: 'long' });
+  
+  const hoyStr = fmtDate.format(now);
+  const horaChile = fmtTime.format(now);
+  const diaHoy = fmtWeekday.format(now);
+  
+  // Calcular mañana y pasado mañana usando offsets UTC relativos
+  const tzOffset = new Date(now.toLocaleString('en-US', { timeZone: tz })).getTime() - now.getTime();
+  const chileNow = new Date(now.getTime() + tzOffset);
+  
+  const maniana = new Date(chileNow); maniana.setDate(maniana.getDate() + 1);
+  const manianaDate = new Date(maniana.getTime() - tzOffset + now.getTimezoneOffset() * 60000);
+  const manianaStr = fmtDate.format(manianaDate);
+  const manianaDia = fmtWeekday.format(manianaDate);
+  
+  const pasadoManianaDate = new Date(chileNow); pasadoManianaDate.setDate(pasadoManianaDate.getDate() + 2);
+  const pasadoManianaFmt = new Date(pasadoManianaDate.getTime() - tzOffset + now.getTimezoneOffset() * 60000);
+  const pasadoManianaStr = fmtDate.format(pasadoManianaFmt);
+  const pasadoManianaDia = fmtWeekday.format(pasadoManianaFmt);
+  
   const diasSemana = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  const diaHoy = diasSemana[chileTime.getDay()];
-  const maniana = new Date(chileTime); maniana.setDate(maniana.getDate() + 1);
-  const manianaStr = `${maniana.getFullYear()}-${String(maniana.getMonth() + 1).padStart(2, '0')}-${String(maniana.getDate()).padStart(2, '0')}`;
-  const pasadoManiana = new Date(chileTime); pasadoManiana.setDate(pasadoManiana.getDate() + 2);
-  const pasadoManianaStr = `${pasadoManiana.getFullYear()}-${String(pasadoManiana.getMonth() + 1).padStart(2, '0')}-${String(pasadoManiana.getDate()).padStart(2, '0')}`;
-  // Hora actual en Chile
-  const horaChile = `${String(chileTime.getHours()).padStart(2, '0')}:${String(chileTime.getMinutes()).padStart(2, '0')}`;
+  const mesNombres = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const [hoyAnio, hoyMes, hoyDia] = hoyStr.split('-').map(Number);
+  const hoyLegible = `${hoyDia} de ${mesNombres[hoyMes - 1]} de ${hoyAnio}`;
+  const [manAnio, manMes, manDia] = manianaStr.split('-').map(Number);
+  const manianaLegible = `${manDia} de ${mesNombres[manMes - 1]} de ${manAnio}`;
 
   return `Eres un asistente de AGENDAMIENTO de CITAS de "${businessName}". Tu ÚNICA función es ayudar a los clientes a agendar citas. NADA más.
 
 FECHA Y HORA ACTUAL EN CHILE (America/Santiago):
-- Hoy es ${diaHoy} ${hoyStr}
-- La hora actual en Chile es ${horaChile}
-- Mañana es ${diasSemana[maniana.getDay()]} ${manianaStr}
-- Pasado mañana es ${diasSemana[pasadoManiana.getDay()]} ${pasadoManianaStr}
+- Hoy es ${diaHoy} ${hoyDia} de ${mesNombres[hoyMes - 1]} de ${hoyAnio} (${hoyStr})
+- La hora actual en Chile es ${horaChile} hrs
+- Mañana es ${manianaDia} ${manianaLegible} (${manianaStr})
+- Pasado mañana es ${pasadoManianaDia} (${pasadoManianaStr})
 - Los días de atención son lunes a sábado (domingo cerrado)
 - Horario: lunes a viernes 08:00-18:00, sábado 09:00-14:00
-- USA SIEMPRE la fecha de Chile como referencia. Si la hora actual en Chile es pasada las 18:00 (entre semana) o 14:00 (sábado), cualquier cita para "hoy" debe rechazarse
+- USA SIEMPRE la fecha de Chile como referencia
+- REGLA DE HORA: Si el cliente pide cita para HOY y ya pasó el horario de atención (18:00 entre semana, 14:00 sábado), sugiere MAÑANA o el próximo día hábil.
+- NUNCA impidas agendar si la fecha es para un día futuro en horario válido. Solo rechaza si es HOY y ya cerraron.
+- TODAS LAS CITAS SE AGENDAN ÚNICAMENTE EN EL AÑO 2026.
 
 REGLAS ESTRICTAS:
 1. Tu ÚNICA función es agendar citas. NUNCA hables de registrar vehículos, consultar vehículos, ni nada fuera de citas
