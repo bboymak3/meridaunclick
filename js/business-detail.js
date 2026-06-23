@@ -653,9 +653,4 @@ async function loadBusinessServices(businessId) {
 }
 
 // ─── Utility ────────────────────────────────────────────────
-function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+// escapeHtml is defined in app.js (common module)

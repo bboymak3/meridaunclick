@@ -1,28 +1,12 @@
 /**
  * Un Click - Property Detail Page Loader
  * Loads property data from API and populates property-detail.html
+ *
+ * NOTE: PROPERTY_TYPE_LABELS, OPERATION_TYPE_LABELS, CURRENCY_SYMBOLS,
+ * and escapeHtml are defined in app.js (common module). Do NOT redeclare here.
  */
 
-// ─── Label Mappings ────────────────────────────────────────────
-const PROPERTY_TYPE_LABELS = {
-    'casa': 'Casa',
-    'apartamento': 'Apartamento',
-    'terreno': 'Terreno',
-    'local_comercial': 'Local Comercial',
-    'oficina': 'Oficina',
-    'hotel': 'Hotel',
-    'finca': 'Finca',
-    'galpon': 'Galpón',
-    'estacionamiento': 'Estacionamiento',
-    'otro': 'Otro',
-};
-
-const OPERATION_TYPE_LABELS = {
-    'venta': 'Venta',
-    'alquiler': 'Alquiler',
-    'venta_alquiler': 'Venta y Alquiler',
-};
-
+// ─── Unique Label Mappings (not in app.js) ─────────────────────
 const PROPERTY_STATUS_LABELS = {
     'pending': 'Pendiente',
     'approved': 'Publicado',
@@ -31,11 +15,7 @@ const PROPERTY_STATUS_LABELS = {
     'rented': 'Alquilado',
 };
 
-const CURRENCY_SYMBOLS = {
-    'USD': '$',
-    'EUR': '€',
-    'Bs': 'Bs',
-};
+// CURRENCY_SYMBOLS is in app.js
 
 const PROPERTY_FEATURES_MAP = {
     'piscina': 'Piscina',
@@ -109,12 +89,7 @@ function getPropertyStatusBadge(status) {
     return `<span class="${cls}">${getPropertyStatusLabel(status)}</span>`;
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+// escapeHtml is defined in app.js
 
 // ─── Placeholder Image ──────────────────────────────────────────
 function getPlaceholderImg(w, h, text) {
@@ -124,7 +99,10 @@ function getPlaceholderImg(w, h, text) {
 }
 
 // ─── Property Card HTML Generator (for similar properties) ──────
-function createPropertyCard(property) {
+// createPropertyCard is defined in app.js (used on index/search pages)
+// For similar properties on this page, we use a local version inside the IIFE
+
+function createPropertyCardDetail(property) {
     if (!property) return '';
 
     const coverImage = property.cover_image || property.images?.[0]?.url || '';
@@ -816,7 +794,7 @@ const PropertyDetail = (function () {
             let properties = (data.properties || data.data || []).filter(p => p.id !== currentProperty.id);
 
             if (properties.length > 0) {
-                similarGrid.innerHTML = properties.slice(0, 4).map(p => createPropertyCard(p)).join('');
+                similarGrid.innerHTML = properties.slice(0, 4).map(p => createPropertyCardDetail(p)).join('');
                 similarSection.classList.remove('hidden');
             }
         } catch (error) {
