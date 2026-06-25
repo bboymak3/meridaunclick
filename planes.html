@@ -120,6 +120,17 @@
             margin-top: 3px;
             flex-shrink: 0;
         }
+        .plan-features li i.fa-xmark {
+            color: #d1d5db;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        .plan-features li.disabled-feature {
+            color: #aaa;
+        }
+        .plan-features li.disabled-feature span {
+            text-decoration: line-through;
+        }
         .premium-card .plan-features li i.fa-check {
             color: var(--color-primary, #1a73e8);
         }
@@ -272,6 +283,7 @@
                         <li><i class="fas fa-check"></i> <span>Para renovar debes volver a publicar</span></li>
                         <li><i class="fas fa-check"></i> <span>Acceso al panel de usuario</span></li>
                         <li><i class="fas fa-check"></i> <span>Soporte por email</span></li>
+                        <li class="disabled-feature"><i class="fas fa-xmark"></i> <span><i class="fab fa-whatsapp"></i> <strong>WhatsApp</strong> en publicaciones</span></li>
                     </ul>
                     <a href="#" class="plan-cta btn-disabled">Plan Actual</a>
                 </div>
@@ -288,6 +300,7 @@
                         <li><i class="fas fa-check"></i> <span>Las publicaciones <strong>NUNCA caducan</strong></span></li>
                         <li><i class="fas fa-check"></i> <span><strong>Prioridad</strong> en búsquedas</span></li>
                         <li><i class="fas fa-check"></i> <span>Badge de verificación <strong>Premium</strong></span></li>
+                        <li><i class="fas fa-check"></i> <span><i class="fab fa-whatsapp" style="color:#25D366;"></i> <strong>WhatsApp</strong> en todas tus publicaciones</span></li>
                         <li><i class="fas fa-check"></i> <span>Soporte <strong>prioritario</strong></span></li>
                         <li><i class="fas fa-check"></i> <span>Acceso anticipado a nuevas funciones</span></li>
                     </ul>
