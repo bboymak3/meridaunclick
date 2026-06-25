@@ -630,7 +630,7 @@
         try {
             // 1. Get user's businesses
             const myBiz = await api.get('/user/my-businesses');
-            const businesses = myBiz.data || [];
+            const businesses = myBiz.businesses || myBiz.data || [];
 
             if (businesses.length === 0) {
                 container.innerHTML = `
@@ -1478,7 +1478,7 @@
         try {
             // Get user's businesses first
             const myBiz = await api.get('/user/my-businesses');
-            const businesses = myBiz.data || [];
+            const businesses = myBiz.businesses || myBiz.data || [];
 
             if (businesses.length === 0) {
                 const body = document.getElementById('statsPerBusinessBody');
