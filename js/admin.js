@@ -189,6 +189,8 @@
             case 'messages':
                 msgsPage = 1;
                 loadMessages();
+                loadAdminMsgUserDropdown();
+                setupAdminSendMsg();
                 break;
             case 'facebook':
                 loadFacebookConfig();
@@ -3029,6 +3031,67 @@
             modal.classList.add('hidden');
             document.body.style.overflow = '';
         }
+    }
+
+    // ─── Admin Send Message ──────────────────────────────────
+    let msgDropdownLoaded = false;
+    let sendMsgSetupDone = false;
+
+    async function loadAdminMsgUserDropdown() {
+        const select = document.getElementById('adminMsgUserSelect');
+        if (!select) return;
+
+        if (!msgDropdownLoaded) {
+            select.innerHTML = '<option value="">Cargando usuarios...</option>';
+            try {
+                const data = await api.get('/users?limit=200');
+                const users = data.users || [];
+                select.innerHTML = '<option value="">-- Seleccionar usuario --</option>' +
+                    users.map(u => `<option value="${u.id}">${escHtml(u.name || 'Sin nombre')} (${escHtml(u.email || '')}) - ${u.role || 'user'}</option>`).join('');
+                msgDropdownLoaded = true;
+            } catch (err) {
+                select.innerHTML = '<option value="">Error al cargar usuarios</option>';
+            }
+        }
+    }
+
+    function setupAdminSendMsg() {
+        if (sendMsgSetupDone) return;
+        sendMsgSetupDone = true;
+
+        const btn = document.getElementById('adminSendMsgBtn');
+        if (!btn) return;
+
+        btn.addEventListener('click', async () => {
+            const userId = document.getElementById('adminMsgUserSelect')?.value;
+            const subject = document.getElementById('adminMsgSubject')?.value.trim();
+            const body = document.getElementById('adminMsgBody')?.value.trim();
+            const errDiv = document.getElementById('adminMsgSendError');
+
+            if (errDiv) errDiv.style.display = 'none';
+
+            if (!userId) { if (errDiv) { errDiv.textContent = 'Selecciona un usuario.'; errDiv.style.display = 'block'; } return; }
+            if (!subject) { if (errDiv) { errDiv.textContent = 'El asunto es obligatorio.'; errDiv.style.display = 'block'; } return; }
+            if (!body) { if (errDiv) { errDiv.textContent = 'El mensaje es obligatorio.'; errDiv.style.display = 'block'; } return; }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+            try {
+                // Save as a contact/message record
+                await api.post('/contacts/admin-message', { user_id: userId, subject, message: body });
+                document.getElementById('adminMsgSubject').value = '';
+                document.getElementById('adminMsgBody').value = '';
+                document.getElementById('adminMsgUserSelect').value = '';
+                showToast('Mensaje enviado correctamente', 'success');
+                loadMessages();
+            } catch (err) {
+                if (errDiv) { errDiv.textContent = err.message || 'Error al enviar el mensaje.'; errDiv.style.display = 'block'; }
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Mensaje';
+            }
+        });
     }
 
     // ─── Sellers Panel ──────────────────────────────────────────
