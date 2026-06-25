@@ -650,16 +650,34 @@ const PropertyDetail = (function () {
         }
 
         // ─── Contact Actions ────────────────────────────────────
+        const isOwnerPremium = p.owner_plan_type === 'premium';
         const mainWhatsApp = document.getElementById('mainWhatsApp');
+        const emailContactBtn = document.getElementById('emailContactBtn');
+
         if (mainWhatsApp) {
             const waNumber = p.whatsapp || p.phone || p.owner_whatsapp || '';
-            if (waNumber) {
+            if (waNumber && isOwnerPremium) {
                 const cleanNumber = waNumber.replace(/[^0-9+]/g, '');
-                const msg = encodeURIComponent(`Hola, vi tu propiedad "${p.title || ''}" en Un Click y me interesa saber más.`);
+                const msg = encodeURIComponent(`Hola, vi tu propiedad "${p.title || ''}" en HOLAX y me interesa saber más.`);
                 mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
                 mainWhatsApp.style.display = '';
             } else {
                 mainWhatsApp.style.display = 'none';
+            }
+        }
+
+        // Email contact for Basic plan
+        if (emailContactBtn) {
+            const emailAddr = p.email_contact || p.owner_email || '';
+            if (emailAddr) {
+                if (isOwnerPremium) {
+                    emailContactBtn.style.display = 'none';
+                } else {
+                    emailContactBtn.href = `mailto:${emailAddr}?subject=Consulta sobre propiedad ${encodeURIComponent(p.title || '')}`;
+                    emailContactBtn.style.display = '';
+                }
+            } else {
+                emailContactBtn.style.display = 'none';
             }
         }
 

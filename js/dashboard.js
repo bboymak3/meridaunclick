@@ -628,96 +628,50 @@
         if (!container) return;
 
         try {
-            // 1. Get user's businesses
-            const myBiz = await api.get('/user/my-businesses');
-            const businesses = myBiz.businesses || myBiz.data || [];
+            // Fetch all products belonging to this user (by user_id)
+            const data = await api.get('/marketplace?limit=200&all=true&user_id=' + currentUser.id);
+            const products = data.products || [];
 
-            if (businesses.length === 0) {
+            if (products.length === 0) {
                 container.innerHTML = `
                     <div class="dash-card">
                         <div style="text-align:center;padding:32px 0;color:#94a3b8;">
-                            <i class="fas fa-store" style="font-size:2.5rem;color:#cbd5e1;"></i>
-                            <p style="margin-top:12px;">Necesitas tener al menos un negocio registrado para ver productos.</p>
-                            <a href="new-business.html" class="btn btn-primary btn-sm" style="display:inline-block;margin-top:12px;"><i class="fas fa-plus"></i> Registrar Negocio</a>
+                            <i class="fas fa-box-open" style="font-size:2.5rem;color:#cbd5e1;"></i>
+                            <p style="margin-top:12px;">No tienes productos publicados.</p>
+                            <button class="btn btn-primary btn-sm" onclick="openProductModal()" style="display:inline-block;margin-top:12px;"><i class="fas fa-plus"></i> Publicar Producto</button>
                         </div>
                     </div>`;
                 return;
             }
 
-            // 2. Fetch products for each business
-            let totalProducts = 0;
+            // Group products by business
+            const grouped = {};
+            let orphanProducts = [];
+            products.forEach(p => {
+                if (p.business_id && p.business_name) {
+                    if (!grouped[p.business_id]) {
+                        grouped[p.business_id] = { title: p.business_name, slug: p.business_slug, products: [] };
+                    }
+                    grouped[p.business_id].products.push(p);
+                } else {
+                    orphanProducts.push(p);
+                }
+            });
+
             let html = '';
 
-            for (const biz of businesses) {
-                try {
-                    const data = await api.get(`/marketplace?limit=100&all=true&business_id=${biz.id}`);
-                    const products = data.products || [];
-
-                    if (products.length === 0) continue;
-                    totalProducts += products.length;
-
-                    html += `
-                        <div class="dash-card" style="margin-bottom:16px;">
-                            <div class="dash-card-header">
-                                <h3 style="display:flex;align-items:center;gap:8px;">
-                                    <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;">
-                                        <i class="fas fa-store" style="color:#fff;font-size:0.8rem;"></i>
-                                    </div>
-                                    <a href="/negocio/${biz.slug || biz.id}" style="color:#059669;text-decoration:none;font-weight:700;">${biz.title || 'Sin nombre'}</a>
-                                </h3>
-                                <span style="font-size:0.75rem;color:#94a3b8;background:#f1f5f9;padding:4px 10px;border-radius:12px;">${products.length} producto${products.length > 1 ? 's' : ''}</span>
-                            </div>
-                            <div class="dash-table-responsive">
-                                <table class="dash-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Producto</th>
-                                            <th>Categoría</th>
-                                            <th>Precio</th>
-                                            <th>Estatus</th>
-                                            <th>Fecha</th>
-                                            <th>Acciones</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-
-                    products.forEach(p => {
-                        const statusLabel = p.status === 'approved' ? '<span class="status-badge status-approved">Activo</span>' : p.status === 'pending' ? '<span class="status-badge status-pending">Pendiente</span>' : p.status === 'rejected' ? '<span class="status-badge status-rejected">Rechazado</span>' : '<span class="status-badge">' + (p.status || '-') + '</span>';
-                        html += `
-                                        <tr>
-                                            <td><div class="dash-prop-name">${p.image ? `<img src="${p.image}" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}<span>${p.name || 'Sin nombre'}</span></div></td>
-                                            <td>${p.category || 'General'}</td>
-                                            <td class="dash-price">$${Number(p.price || 0).toLocaleString('es-VE')}</td>
-                                            <td>${statusLabel}</td>
-                                            <td>${formatDate(p.created_at)}</td>
-                                            <td class="dash-actions">
-                                                <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
-                                            </td>
-                                        </tr>`;
-                    });
-
-                    html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>`;
-                } catch(e) {
-                    console.error('Error loading products for business', biz.id, e);
-                }
+            // Render products grouped by business
+            for (const bizId in grouped) {
+                const biz = grouped[bizId];
+                html += buildProductTable(biz.title, biz.slug, biz.products, bizId);
             }
 
-            if (totalProducts === 0) {
-                container.innerHTML = `
-                    <div class="dash-card">
-                        <div style="text-align:center;padding:32px 0;color:#94a3b8;">
-                            <i class="fas fa-box-open" style="font-size:2.5rem;color:#cbd5e1;"></i>
-                            <p style="margin-top:12px;">No tienes productos publicados en tus negocios.</p>
-                            <button class="btn btn-primary btn-sm" onclick="openProductModal()" style="display:inline-block;margin-top:12px;"><i class="fas fa-plus"></i> Publicar Producto</button>
-                        </div>
-                    </div>`;
-            } else {
-                container.innerHTML = html;
+            // Render orphan products (no business)
+            if (orphanProducts.length > 0) {
+                html += buildProductTable('Productos sin negocio asociado', null, orphanProducts, null);
             }
+
+            container.innerHTML = html;
         } catch (error) {
             console.error('Error loading products:', error);
             container.innerHTML = `
@@ -728,6 +682,55 @@
                     </div>
                 </div>`;
         }
+    }
+
+    function buildProductTable(title, slug, products, bizId) {
+        let html = `
+            <div class="dash-card" style="margin-bottom:16px;">
+                <div class="dash-card-header">
+                    <h3 style="display:flex;align-items:center;gap:8px;">
+                        <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-store" style="color:#fff;font-size:0.8rem;"></i>
+                        </div>
+                        ${slug ? `<a href="/negocio/${slug}" style="color:#059669;text-decoration:none;font-weight:700;">${title}</a>` : `<span style="color:#059669;font-weight:700;">${title}</span>`}
+                    </h3>
+                    <span style="font-size:0.75rem;color:#94a3b8;background:#f1f5f9;padding:4px 10px;border-radius:12px;">${products.length} producto${products.length > 1 ? 's' : ''}</span>
+                </div>
+                <div class="dash-table-responsive">
+                    <table class="dash-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Categoría</th>
+                                <th>Precio</th>
+                                <th>Estatus</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+        products.forEach(p => {
+            const statusLabel = p.status === 'approved' ? '<span class="status-badge status-approved">Activo</span>' : p.status === 'pending' ? '<span class="status-badge status-pending">Pendiente</span>' : p.status === 'rejected' ? '<span class="status-badge status-rejected">Rechazado</span>' : '<span class="status-badge">' + (p.status || '-') + '</span>';
+            html += `
+                                <tr>
+                                    <td><div class="dash-prop-name">${p.image ? `<img src="${p.image}" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}<span>${p.name || 'Sin nombre'}</span></div></td>
+                                    <td>${p.category || 'General'}</td>
+                                    <td class="dash-price">$${Number(p.price || 0).toLocaleString('es-VE')}</td>
+                                    <td>${statusLabel}</td>
+                                    <td>${formatDate(p.created_at)}</td>
+                                    <td class="dash-actions">
+                                        <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>`;
+        });
+
+        html += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>`;
+        return html;
     }
 
     // Product Modal
@@ -1183,12 +1186,14 @@
             const statNormal = document.getElementById('statNormalUsers');
             if (statTotal) statTotal.textContent = users.length;
             if (statAdmin) statAdmin.textContent = users.filter(u => u.role === 'admin').length;
-            if (statNormal) statNormal.textContent = users.filter(u => u.role !== 'admin').length;
+            if (statNormal) statNormal.textContent = users.filter(u => u.role !== 'admin' && u.plan_type !== 'premium').length;
+            const statPremium = document.getElementById('statPremiumUsers');
+            if (statPremium) statPremium.textContent = users.filter(u => u.plan_type === 'premium').length;
 
             if (users.length === 0) {
                 adminUsersBody.innerHTML = `
                     <tr class="empty-row">
-                        <td colspan="7">
+                        <td colspan="8">
                             <div class="empty-state">
                                 <i class="fas fa-users"></i>
                                 <p>${search ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}</p>
@@ -1220,6 +1225,14 @@
 
                 const selfLabel = isSelf ? ' <span style="color:#aaa;font-size:0.7rem">(Tú)</span>' : '';
 
+                const planBadge = user.plan_type === 'premium'
+                    ? '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;border:1px solid #fbbf24;"><i class="fas fa-crown"></i> Premium</span>'
+                    : '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;"><i class="fas fa-user"></i> Regular</span>';
+
+                const activateBtn = (!isSelf && user.plan_type !== 'premium')
+                    ? `<button class="btn-approve-premium" style="margin-top:4px;" onclick="window._openManualPremium(${user.id}, '${(user.name||'').replace(/'/g, "'")}', '${user.email||''}')"><i class="fas fa-crown"></i> Premium</button>`
+                    : '';
+
                 return `
                     <tr>
                         <td>
@@ -1238,6 +1251,7 @@
                                 ${roleLabels[currentRole] || 'Usuario'}
                             </span>
                         </td>
+                        <td>${planBadge}${activateBtn}</td>
                         <td style="text-align:center; font-weight:600;">${user.business_count || 0}</td>
                         <td><span class="admin-user-date">${date}</span></td>
                         <td>${toggleHTML}</td>
@@ -1261,7 +1275,7 @@
         } catch (error) {
             adminUsersBody.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="7">
+                    <td colspan="8">
                         <div class="empty-state">
                             <i class="fas fa-exclamation-circle"></i>
                             <p>Error al cargar usuarios</p>
@@ -2196,6 +2210,124 @@
             }).catch(() => {});
         }
     })();
+
+    // ─── Admin: Manual Premium Activation ──────────────────
+    let manualPremiumSelectedUser = null;
+    const manualModal = document.getElementById('manualPremiumModal');
+    const btnManualPremium = document.getElementById('btnManualPremium');
+
+    function openManualPremiumModal(userId, userName, userEmail) {
+        if (!manualModal) return;
+        manualModal.style.display = 'flex';
+        const searchInput = document.getElementById('manualPremiumSearch');
+        const resultDiv = document.getElementById('manualPremiumUserResult');
+        const actionsDiv = document.getElementById('manualPremiumActions');
+        const activateBtn = document.getElementById('manualPremiumActivateBtn');
+        const errDiv = document.getElementById('manualPremiumError');
+
+        errDiv.style.display = 'none';
+
+        if (userId) {
+            // Called from user row button - pre-fill
+            searchInput.value = userEmail || userName || '';
+            manualPremiumSelectedUser = { id: userId, name: userName, email: userEmail };
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#059669;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">${(userName||'U')[0].toUpperCase()}</div><div><strong>${userName}</strong><br><span style="font-size:0.82rem;color:#64748b;">${userEmail}</span></div></div>`;
+            actionsDiv.style.display = 'block';
+            activateBtn.disabled = false;
+        } else {
+            searchInput.value = '';
+            resultDiv.style.display = 'none';
+            actionsDiv.style.display = 'none';
+            activateBtn.disabled = true;
+            searchInput.focus();
+        }
+    }
+
+    window._openManualPremium = function(userId, userName, userEmail) {
+        openManualPremiumModal(userId, userName, userEmail);
+    };
+
+    if (btnManualPremium) {
+        btnManualPremium.addEventListener('click', () => openManualPremiumModal());
+    }
+
+    // Close handlers
+    const manualClose = document.getElementById('manualPremiumClose');
+    const manualCancel = document.getElementById('manualPremiumCancelBtn');
+    const manualOverlay = document.getElementById('manualPremiumOverlay');
+    if (manualClose) manualClose.addEventListener('click', () => { manualModal.style.display = 'none'; });
+    if (manualCancel) manualCancel.addEventListener('click', () => { manualModal.style.display = 'none'; });
+    if (manualOverlay) manualOverlay.addEventListener('click', () => { manualModal.style.display = 'none'; });
+
+    // Search user
+    const manualSearchBtn = document.getElementById('manualPremiumSearchBtn');
+    if (manualSearchBtn) {
+        manualSearchBtn.addEventListener('click', async () => {
+            const query = document.getElementById('manualPremiumSearch').value.trim();
+            if (!query) return;
+            const resultDiv = document.getElementById('manualPremiumUserResult');
+            const actionsDiv = document.getElementById('manualPremiumActions');
+            const activateBtn = document.getElementById('manualPremiumActivateBtn');
+            const errDiv = document.getElementById('manualPremiumError');
+            errDiv.style.display = 'none';
+
+            try {
+                const data = await api.get('/users?search=' + encodeURIComponent(query) + '&limit=5');
+                const users = data.users || [];
+                if (users.length === 0) {
+                    resultDiv.style.display = 'block';
+                    resultDiv.innerHTML = '<p style="color:#ef4444;font-size:0.85rem;">No se encontro ningun usuario.</p>';
+                    actionsDiv.style.display = 'none';
+                    activateBtn.disabled = true;
+                    manualPremiumSelectedUser = null;
+                    return;
+                }
+                // Pick first result
+                const u = users[0];
+                manualPremiumSelectedUser = { id: u.id, name: u.name, email: u.email };
+                resultDiv.style.display = 'block';
+                const planInfo = u.plan_type === 'premium' ? ' <span style="color:#f59e0b;font-weight:700;">(YA ES PREMIUM)</span>' : '';
+                resultDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#059669;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">${(u.name||'U')[0].toUpperCase()}</div><div><strong>${u.name}</strong>${planInfo}<br><span style="font-size:0.82rem;color:#64748b;">${u.email}</span></div></div>`;
+                actionsDiv.style.display = u.plan_type !== 'premium' ? 'block' : 'none';
+                activateBtn.disabled = u.plan_type === 'premium';
+            } catch (e) {
+                errDiv.textContent = 'Error al buscar usuario.';
+                errDiv.style.display = 'block';
+            }
+        });
+    }
+
+    // Activate premium
+    const manualActivateBtn = document.getElementById('manualPremiumActivateBtn');
+    if (manualActivateBtn) {
+        manualActivateBtn.addEventListener('click', async () => {
+            if (!manualPremiumSelectedUser) return;
+            if (!confirm(`Activar plan Premium para ${manualPremiumSelectedUser.name}?`)) return;
+
+            manualActivateBtn.disabled = true;
+            manualActivateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Activando...';
+
+            try {
+                const duration = document.getElementById('manualPremiumDuration').value;
+                const notes = document.getElementById('manualPremiumNotes').value;
+                await api.post('/users/activate-premium', {
+                    user_id: manualPremiumSelectedUser.id,
+                    duration: duration,
+                    admin_notes: notes,
+                });
+                showToast(`Premium activado para ${manualPremiumSelectedUser.name}`, 'success');
+                manualModal.style.display = 'none';
+                loadAdminUsers(); // Refresh user list
+            } catch (e) {
+                const errDiv = document.getElementById('manualPremiumError');
+                if (errDiv) { errDiv.textContent = e.message || 'Error al activar Premium'; errDiv.style.display = 'block'; }
+            } finally {
+                manualActivateBtn.disabled = false;
+                manualActivateBtn.innerHTML = '<i class="fas fa-crown"></i> Activar Premium';
+            }
+        });
+    }
 
 
 })();

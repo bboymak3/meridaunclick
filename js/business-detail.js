@@ -347,16 +347,36 @@ function populateBusinessDetail(b) {
     }
 
     // ─── Contact Actions ──────────────────────────────────────
+    const isOwnerPremium = b.owner_plan_type === 'premium';
     const mainWhatsApp = document.getElementById('mainWhatsApp');
+    const emailContactBtn = document.getElementById('emailContactBtn');
+
     if (mainWhatsApp) {
         const waNumber = b.whatsapp || b.phone || b.owner_whatsapp || '';
-        if (waNumber) {
+        if (waNumber && isOwnerPremium) {
             const cleanNumber = waNumber.replace(/[^0-9+]/g, '');
-            const msg = encodeURIComponent(`Hola, vi tu negocio "${b.title}" en Un Click y me interesa saber más.`);
+            const msg = encodeURIComponent(`Hola, vi tu negocio "${b.title}" en HOLAX y me interesa saber más.`);
             mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
             mainWhatsApp.style.display = '';
         } else {
             mainWhatsApp.style.display = 'none';
+        }
+    }
+
+    // Show email contact button for Basic plan owners (or as fallback)
+    if (emailContactBtn) {
+        const emailAddr = b.email_contact || b.owner_email || '';
+        if (emailAddr) {
+            if (isOwnerPremium) {
+                // Premium: hide email, WhatsApp is shown
+                emailContactBtn.style.display = 'none';
+            } else {
+                // Basic: show email contact
+                emailContactBtn.href = `mailto:${emailAddr}?subject=Consulta sobre ${encodeURIComponent(b.title || 'tu negocio')}`;
+                emailContactBtn.style.display = '';
+            }
+        } else {
+            emailContactBtn.style.display = 'none';
         }
     }
 
