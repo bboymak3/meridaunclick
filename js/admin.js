@@ -18,6 +18,9 @@
     let jobsPage = 1;
     let inmueblesPage = 1;
     let productsPage = 1;
+    let premiumPage = 1;
+    let premiumFilter = 'pending';
+    let premiumActivateUserId = null;
     const PAGE_LIMIT = 15;
 
     // ─── DOM Elements ───────────────────────────────────────────
@@ -35,6 +38,7 @@
     const tabJobs = document.getElementById('tabJobs');
     const tabInmuebles = document.getElementById('tabInmuebles');
     const tabSettings = document.getElementById('tabSettings');
+    const tabPremium = document.getElementById('tabPremium');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -56,6 +60,10 @@
     const adminRejectCancel = document.getElementById('adminRejectCancel');
     const adminRejectModalClose = document.getElementById('adminRejectModalClose');
     const rejectReason = document.getElementById('rejectReason');
+
+    // Premium modals
+    const premiumVoucherModal = document.getElementById('premiumVoucherModal');
+    const premiumActivateModal = document.getElementById('premiumActivateModal');
 
     const adminUserModal = document.getElementById('adminUserModal');
     const adminUserModalSave = document.getElementById('adminUserModalSave');
@@ -114,6 +122,7 @@
         setupBusinessEditModal();
         setupInmueblesListeners();
         loadBusinessesForJobSelect();
+        setupPremiumListeners();
 
         // Load initial data
         loadDashboardTab();
@@ -150,7 +159,7 @@
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -158,7 +167,7 @@
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -198,6 +207,10 @@
                 break;
             case 'settings':
                 loadSettings();
+                break;
+            case 'premium':
+                premiumPage = 1;
+                loadPremiumTab();
                 break;
         }
 
@@ -2678,6 +2691,343 @@
         }
     }
     window._adminSaveFeaturedJobs = saveFeaturedJobs;
+
+    // ═══════════════════════════════════════════════════════════════
+    // ─── PREMIUM PAYMENTS TAB ────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+
+    function setupPremiumListeners() {
+        // Filter buttons
+        document.querySelectorAll('.premium-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.premium-filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                premiumFilter = btn.dataset.filter;
+                premiumPage = 1;
+                loadPremiumRequests();
+            });
+        });
+
+        // Refresh button
+        const refreshBtn = document.getElementById('btnRefreshPremium');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                premiumPage = 1;
+                loadPremiumTab();
+            });
+        }
+
+        // Voucher modal close
+        const voucherClose = document.getElementById('premiumVoucherClose');
+        const voucherCloseBtn = document.getElementById('premiumVoucherCloseBtn');
+        if (voucherClose) voucherClose.addEventListener('click', () => toggleModal(premiumVoucherModal, false));
+        if (voucherCloseBtn) voucherCloseBtn.addEventListener('click', () => toggleModal(premiumVoucherModal, false));
+
+        // Activate modal
+        const activateClose = document.getElementById('premiumActivateClose');
+        const activateCancel = document.getElementById('premiumActivateCancel');
+        const activateConfirm = document.getElementById('premiumActivateConfirm');
+        if (activateClose) activateClose.addEventListener('click', () => toggleModal(premiumActivateModal, false));
+        if (activateCancel) activateCancel.addEventListener('click', () => toggleModal(premiumActivateModal, false));
+        if (activateConfirm) activateConfirm.addEventListener('click', confirmManualActivate);
+
+        // Search users
+        const searchBtn = document.getElementById('premiumUserSearchBtn');
+        const searchInput = document.getElementById('premiumUserSearch');
+        if (searchBtn) searchBtn.addEventListener('click', searchUsersForPremium);
+        if (searchInput) searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchUsersForPremium(); });
+    }
+
+    async function loadPremiumTab() {
+        await Promise.all([loadPremiumRequests(), loadPremiumStats()]);
+    }
+
+    async function loadPremiumStats() {
+        try {
+            const pendingRes = await api.get('/premium-requests?status=pending&limit=1');
+            const approvedRes = await api.get('/premium-requests?status=approved&limit=1');
+            const usersRes = await api.get('/users?limit=1000');
+
+            const pendingCount = pendingRes.pagination?.total || 0;
+            const approvedCount = approvedRes.pagination?.total || 0;
+            const premiumUsers = (usersRes.users || []).filter(u => u.plan_type === 'premium').length;
+
+            const el = (id) => document.getElementById(id);
+            if (el('adminPremiumPending')) el('adminPremiumPending').textContent = pendingCount;
+            if (el('adminPremiumApproved')) el('adminPremiumApproved').textContent = approvedCount;
+            if (el('adminPremiumTotalUsers')) el('adminPremiumTotalUsers').textContent = premiumUsers;
+            if (el('adminPremiumBadge')) el('adminPremiumBadge').textContent = pendingCount;
+        } catch (err) {
+            console.error('Error loading premium stats:', err);
+        }
+    }
+
+    async function loadPremiumRequests() {
+        const loadingEl = document.getElementById('premiumRequestsLoading');
+        const listEl = document.getElementById('premiumRequestsList');
+        const emptyEl = document.getElementById('premiumRequestsEmpty');
+        const paginationEl = document.getElementById('premiumRequestsPagination');
+
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (listEl) listEl.innerHTML = '';
+        if (emptyEl) emptyEl.style.display = 'none';
+
+        try {
+            const params = `?status=${premiumFilter}&page=${premiumPage}&limit=${PAGE_LIMIT}`;
+            const data = await api.get(`/premium-requests${params}`);
+            const requests = data.requests || [];
+
+            if (loadingEl) loadingEl.style.display = 'none';
+
+            if (requests.length === 0) {
+                if (emptyEl) emptyEl.style.display = 'block';
+                return;
+            }
+
+            let html = '';
+            requests.forEach(req => {
+                const statusLabel = { pending: 'Pendiente', approved: 'Aprobada', rejected: 'Rechazada' };
+                const durationLabel = { '3_months': '3 Meses', '1_year': '1 Ano' };
+                const userName = req.user_name || 'Usuario #' + req.user_id;
+                const userEmail = req.user_email || '';
+                const initials = userName.substring(0, 2).toUpperCase();
+                const dateCreated = req.created_at ? new Date(req.created_at).toLocaleDateString('es-VE') : '';
+                const paymentPhone = req.payment_phone || 'No indicado';
+
+                let actionsHtml = '';
+                if (req.status === 'pending') {
+                    actionsHtml = `
+                        <button class="btn btn-sm btn-premium-view" onclick="window._adminViewVoucher(${req.id}, '${(req.voucher_url || '').replace(/'/g, "\\'")}')">
+                            <i class="fas fa-receipt"></i> Ver Comprobante
+                        </button>
+                        <button class="btn btn-sm btn-premium-approve" onclick="window._adminApprovePremium(${req.id})">
+                            <i class="fas fa-check"></i> Aprobar
+                        </button>
+                        <button class="btn btn-sm btn-premium-reject" onclick="window._adminRejectPremiumPrompt(${req.id})">
+                            <i class="fas fa-times"></i> Rechazar
+                        </button>
+                    `;
+                }
+
+                html += `
+                    <div class="premium-request-card status-${req.status}">
+                        <div class="premium-request-header">
+                            <div class="premium-request-user">
+                                <div class="premium-request-avatar">${initials}</div>
+                                <div class="premium-request-info">
+                                    <h4>${userName}</h4>
+                                    <p>${userEmail} &bull; ID: ${req.user_id}</p>
+                                </div>
+                            </div>
+                            <span class="premium-status-badge ${req.status}">${statusLabel[req.status] || req.status}</span>
+                        </div>
+                        <div class="premium-request-details">
+                            <span><i class="fas fa-calendar"></i> ${dateCreated}</span>
+                            <span><i class="fas fa-clock"></i> Plan: ${durationLabel[req.plan_duration] || req.plan_duration}</span>
+                            <span><i class="fas fa-mobile-alt"></i> Pago desde: ${paymentPhone}</span>
+                            ${req.user_plan ? `<span><i class="fas fa-tag"></i> Plan actual: ${req.user_plan}</span>` : ''}
+                        </div>
+                        <div class="premium-request-actions">
+                            ${actionsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (listEl) listEl.innerHTML = html;
+
+            // Pagination
+            if (paginationEl && data.pagination) {
+                renderAdminPagination(paginationEl, data.pagination, (page) => {
+                    premiumPage = page;
+                    loadPremiumRequests();
+                });
+            }
+        } catch (err) {
+            console.error('Error loading premium requests:', err);
+            if (loadingEl) loadingEl.style.display = 'none';
+            if (listEl) listEl.innerHTML = `<p style="color:#dc3545;text-align:center;padding:20px;">Error al cargar solicitudes: ${err.message}</p>`;
+        }
+    }
+
+    // View voucher image
+    window._adminViewVoucher = function(requestId, voucherUrl) {
+        const body = document.getElementById('premiumVoucherBody');
+        if (!body) return;
+        if (!voucherUrl) {
+            body.innerHTML = '<p style="color:#6b7280;"><i class="fas fa-exclamation-circle"></i> No hay comprobante adjunto.</p>';
+        } else {
+            const fullUrl = voucherUrl.startsWith('http') ? voucherUrl : (window.location.origin + voucherUrl);
+            body.innerHTML = `
+                <img src="${fullUrl}" alt="Comprobante de pago" style="max-width:100%;max-height:70vh;border-radius:8px;border:1px solid #e5e7eb;" onerror="this.outerHTML='<p style=\\'color:#dc3545;\\'>Error al cargar la imagen del comprobante.</p>'">
+                <p style="margin-top:12px;font-size:0.85rem;color:#6b7280;">Solicitud #${requestId}</p>
+            `;
+        }
+        toggleModal(premiumVoucherModal, true);
+    };
+
+    // Approve premium request
+    window._adminApprovePremium = async function(requestId) {
+        if (!confirm('Aprobar esta solicitud de Premium? El usuario sera actualizado inmediatamente.')) return;
+        try {
+            await api.post(`/premium-requests/${requestId}/approve`);
+            showToast('Solicitud aprobada exitosamente. Usuario ahora es Premium.', 'success');
+            loadPremiumTab();
+        } catch (err) {
+            showToast('Error al aprobar: ' + (err.message || 'Error desconocido'), 'error');
+        }
+    };
+
+    // Reject premium request (uses simple prompt)
+    window._adminRejectPremium = async function(requestId) {
+        const notes = prompt('Motivo del rechazo (opcional):');
+        if (notes === null) return; // cancelled
+        try {
+            await api.post(`/premium-requests/${requestId}/reject`, { admin_notes: notes });
+            showToast('Solicitud rechazada.', 'success');
+            loadPremiumRequests();
+            loadPremiumStats();
+        } catch (err) {
+            showToast('Error al rechazar: ' + (err.message || 'Error desconocido'), 'error');
+        }
+    };
+
+    window._adminRejectPremiumPrompt = function(requestId) {
+        window._adminRejectPremium(requestId);
+    };
+
+    // ─── Manual Premium Activation ───────────────────────────────
+
+    async function searchUsersForPremium() {
+        const input = document.getElementById('premiumUserSearch');
+        const resultsDiv = document.getElementById('premiumSearchResults');
+        const emptyDiv = document.getElementById('premiumSearchEmpty');
+        const tbody = document.getElementById('premiumSearchResultsBody');
+
+        const query = input ? input.value.trim() : '';
+        if (!query) {
+            if (resultsDiv) resultsDiv.style.display = 'none';
+            if (emptyDiv) emptyDiv.style.display = 'none';
+            return;
+        }
+
+        try {
+            const data = await api.get(`/users?search=${encodeURIComponent(query)}&limit=20`);
+            const users = data.users || [];
+
+            if (users.length === 0) {
+                if (resultsDiv) resultsDiv.style.display = 'none';
+                if (emptyDiv) emptyDiv.style.display = 'block';
+                return;
+            }
+
+            if (emptyDiv) emptyDiv.style.display = 'none';
+            if (resultsDiv) resultsDiv.style.display = 'block';
+
+            let html = '';
+            users.forEach(u => {
+                const planBadge = u.plan_type === 'premium'
+                    ? '<span style="background:#FFD700;color:#333;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;">PREMIUM</span>'
+                    : '<span style="background:#e5e7eb;color:#374151;padding:2px 10px;border-radius:12px;font-size:0.75rem;">Basico</span>';
+                const created = u.created_at ? new Date(u.created_at).toLocaleDateString('es-VE') : '';
+
+                const actionBtn = u.plan_type === 'premium'
+                    ? '<span style="color:#28a745;font-size:0.85rem;"><i class="fas fa-check-circle"></i> Ya es Premium</span>'
+                    : `<button class="btn btn-sm" onclick="window._adminOpenActivateModal(${u.id}, '${(u.name || '').replace(/'/g, "\\'")}', '${(u.email || '').replace(/'/g, "\\'")}')" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#333;font-weight:700;">
+                        <i class="fas fa-crown"></i> Activar
+                       </button>`;
+
+                html += `<tr>
+                    <td><strong>${u.name || 'Sin nombre'}</strong></td>
+                    <td>${u.email || ''}</td>
+                    <td>${planBadge}</td>
+                    <td>${created}</td>
+                    <td>${actionBtn}</td>
+                </tr>`;
+            });
+
+            if (tbody) tbody.innerHTML = html;
+        } catch (err) {
+            showToast('Error al buscar usuarios: ' + err.message, 'error');
+        }
+    }
+
+    window._adminOpenActivateModal = function(userId, userName, userEmail) {
+        premiumActivateUserId = userId;
+        const nameEl = document.getElementById('premiumActivateUserName');
+        const emailEl = document.getElementById('premiumActivateUserEmail');
+        const durationEl = document.getElementById('premiumActivateDuration');
+        const notesEl = document.getElementById('premiumActivateNotes');
+
+        if (nameEl) nameEl.textContent = userName;
+        if (emailEl) emailEl.textContent = userEmail;
+        if (durationEl) durationEl.value = '1_year';
+        if (notesEl) notesEl.value = '';
+
+        toggleModal(premiumActivateModal, true);
+    };
+
+    async function confirmManualActivate() {
+        if (!premiumActivateUserId) return;
+        const duration = document.getElementById('premiumActivateDuration');
+        const notes = document.getElementById('premiumActivateNotes');
+        const selectedDuration = duration ? duration.value : '1_year';
+
+        try {
+            const result = await api.post('/users/activate-premium', {
+                user_id: premiumActivateUserId,
+                duration: selectedDuration,
+                admin_notes: notes ? notes.value : ''
+            });
+            showToast(result.message || 'Premium activado exitosamente', 'success');
+            toggleModal(premiumActivateModal, false);
+            premiumActivateUserId = null;
+            // Refresh search results
+            searchUsersForPremium();
+            loadPremiumStats();
+        } catch (err) {
+            showToast('Error al activar Premium: ' + (err.message || err.error || 'Error desconocido'), 'error');
+        }
+    }
+
+    // Helper: render pagination (reuse pattern from existing admin)
+    function renderAdminPagination(container, pagination, onPageChange) {
+        if (!container || !pagination) return;
+        const { page, totalPages, total } = pagination;
+        if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+        let html = '';
+        if (page > 1) {
+            html += `<button class="btn btn-sm btn-secondary" data-page="${page - 1}"><i class="fas fa-chevron-left"></i></button>`;
+        }
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
+                html += `<button class="btn btn-sm ${i === page ? 'btn-primary' : 'btn-secondary'}" data-page="${i}">${i}</button>`;
+            } else if (i === page - 2 || i === page + 2) {
+                html += '<span style="padding:0 4px;">...</span>';
+            }
+        }
+        if (page < totalPages) {
+            html += `<button class="btn btn-sm btn-secondary" data-page="${page + 1}"><i class="fas fa-chevron-right"></i></button>`;
+        }
+
+        container.innerHTML = html;
+        container.querySelectorAll('button[data-page]').forEach(btn => {
+            btn.addEventListener('click', () => onPageChange(parseInt(btn.dataset.page)));
+        });
+    }
+
+    // Helper: toggle modal visibility
+    function toggleModal(modal, show) {
+        if (!modal) return;
+        if (show) {
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        } else {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {

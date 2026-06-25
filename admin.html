@@ -103,6 +103,11 @@
                         <i class="fab fa-facebook"></i>
                         <span>Facebook Import</span>
                     </a>
+                    <a href="#" class="admin-nav-link admin-nav-link-premium" data-tab="premium">
+                        <i class="fas fa-crown"></i>
+                        <span>Pagos Premium</span>
+                        <span class="badge badge-gold" id="adminPremiumBadge">0</span>
+                    </a>
                     <a href="#" class="admin-nav-link" data-tab="settings">
                         <i class="fas fa-sliders-h"></i>
                         <span>Configuración</span>
@@ -641,9 +646,175 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ==================== PREMIUM TAB ==================== -->
+                <div class="admin-tab hidden" id="tabPremium">
+                    <!-- Premium Stats -->
+                    <div class="admin-stats-grid" style="margin-bottom:20px;">
+                        <div class="admin-stat-card" style="border-left:4px solid #FFD700;">
+                            <div class="admin-stat-icon" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#fff;">
+                                <i class="fas fa-crown"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-number" id="adminPremiumPending">0</div>
+                                <div class="admin-stat-label">Solicitudes Pendientes</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card" style="border-left:4px solid #28a745;">
+                            <div class="admin-stat-icon" style="background:#e8f5e9;color:#28a745;">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-number" id="adminPremiumApproved">0</div>
+                                <div class="admin-stat-label">Aprobadas</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card" style="border-left:4px solid #6366f1;">
+                            <div class="admin-stat-icon" style="background:#eef2ff;color:#6366f1;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-number" id="adminPremiumTotalUsers">0</div>
+                                <div class="admin-stat-label">Usuarios Premium Activos</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filter Tabs -->
+                    <div class="admin-card" style="margin-bottom:20px;">
+                        <div class="admin-card-body" style="padding:12px 16px;">
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                <button class="btn btn-sm premium-filter-btn active" data-filter="pending" style="background:#FFD700;color:#333;font-weight:600;">
+                                    <i class="fas fa-clock"></i> Pendientes
+                                </button>
+                                <button class="btn btn-sm premium-filter-btn" data-filter="approved" style="background:#e8f5e9;color:#28a745;">
+                                    <i class="fas fa-check"></i> Aprobadas
+                                </button>
+                                <button class="btn btn-sm premium-filter-btn" data-filter="rejected" style="background:#fce4ec;color:#e91e63;">
+                                    <i class="fas fa-times"></i> Rechazadas
+                                </button>
+                                <button class="btn btn-sm premium-filter-btn" data-filter="all">
+                                    <i class="fas fa-list"></i> Todas
+                                </button>
+                                <div style="flex:1;"></div>
+                                <button class="btn btn-sm" id="btnRefreshPremium" style="background:var(--color-primary);color:#fff;">
+                                    <i class="fas fa-sync-alt"></i> Actualizar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Premium Requests List -->
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-crown" style="color:#FFD700;"></i> Solicitudes de Plan Premium</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div id="premiumRequestsLoading" style="text-align:center;padding:30px;color:#9ca3af;">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p style="margin-top:8px;">Cargando solicitudes...</p>
+                            </div>
+                            <div id="premiumRequestsList"></div>
+                            <div id="premiumRequestsEmpty" class="empty-state-sm" style="display:none;">
+                                <i class="fas fa-inbox" style="font-size:2rem;color:#d1d5db;"></i>
+                                <p>No hay solicitudes en esta categoria.</p>
+                            </div>
+                            <div class="admin-pagination" id="premiumRequestsPagination"></div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Upgrade Section -->
+                    <div class="admin-card" style="margin-top:20px;">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-user-plus" style="color:#FFD700;"></i> Activar Premium Manualmente</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <p style="font-size:0.9rem;color:#6b7280;margin-bottom:16px;">Busca un usuario por nombre o email y activa su plan Premium despues de verificar el pago movil.</p>
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+                                <input type="text" id="premiumUserSearch" class="form-control" placeholder="Buscar por nombre o email..." style="flex:1;min-width:200px;">
+                                <button class="btn btn-primary btn-sm" id="premiumUserSearchBtn">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                            <div id="premiumSearchResults" style="display:none;">
+                                <div class="admin-table-responsive">
+                                    <table class="admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Usuario</th>
+                                                <th>Email</th>
+                                                <th>Plan Actual</th>
+                                                <th>Registro</th>
+                                                <th>Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="premiumSearchResultsBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div id="premiumSearchEmpty" class="empty-state-sm" style="display:none;">
+                                <p>No se encontraron usuarios.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
+
+    <!-- Premium Voucher Modal -->
+    <div class="modal hidden" id="premiumVoucherModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width:560px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-receipt" style="color:#FFD700;"></i> Comprobante de Pago</h3>
+                <button class="modal-close" id="premiumVoucherClose">&times;</button>
+            </div>
+            <div class="modal-body" id="premiumVoucherBody" style="text-align:center;">
+                <!-- Voucher image loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="premiumVoucherCloseBtn">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Manual Activate Modal -->
+    <div class="modal hidden" id="premiumActivateModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-crown" style="color:#FFD700;"></i> Activar Plan Premium</h3>
+                <button class="modal-close" id="premiumActivateClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="text-align:center;margin-bottom:16px;">
+                    <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#FFD700,#FFA500);display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;">
+                        <i class="fas fa-user" style="color:#fff;font-size:1.4rem;"></i>
+                    </div>
+                    <h4 id="premiumActivateUserName" style="margin:4px 0 2px;"></h4>
+                    <p id="premiumActivateUserEmail" style="color:#6b7280;font-size:0.85rem;margin:0;"></p>
+                </div>
+                <div class="form-group">
+                    <label for="premiumActivateDuration"><i class="fas fa-calendar"></i> Duracion del Plan</label>
+                    <select id="premiumActivateDuration" class="form-control">
+                        <option value="3_months">3 Meses (90 dias)</option>
+                        <option value="1_year" selected>1 Ano (365 dias)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="premiumActivateNotes"><i class="fas fa-sticky-note"></i> Notas del Admin</label>
+                    <textarea id="premiumActivateNotes" class="form-control" rows="2" placeholder="Ej: Pago verificado por movil el 26/06..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="premiumActivateCancel">Cancelar</button>
+                <button class="btn" id="premiumActivateConfirm" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#333;font-weight:700;">
+                    <i class="fas fa-crown"></i> Activar Premium
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Business Detail Modal -->
     <div class="modal hidden" id="adminBusinessModal">
@@ -1104,6 +1275,158 @@
     <style>
         .modal-xl { max-width: 95vw; max-height: 92vh; }
         .modal-xl .modal-body { max-height: calc(92vh - 140px); overflow-y: auto; }
+
+        /* Premium Gold Sidebar Button */
+        .admin-nav-link-premium {
+            background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+            color: #333 !important;
+            font-weight: 700 !important;
+            border-radius: 10px !important;
+            margin: 4px 6px !important;
+            padding: 10px 14px !important;
+            box-shadow: 0 2px 12px rgba(255, 215, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.3);
+            transition: all 0.2s ease;
+        }
+        .admin-nav-link-premium:hover {
+            background: linear-gradient(135deg, #FFC107, #FF8F00) !important;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+        .admin-nav-link-premium i { color: #333 !important; }
+        .admin-nav-link-premium .badge-gold {
+            background: #b8860b;
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .admin-nav-link-premium.active {
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.3), 0 0 0 2px #b8860b;
+        }
+
+        /* Premium Request Cards */
+        .premium-request-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            background: #fff;
+            transition: box-shadow 0.2s;
+        }
+        .premium-request-card:hover {
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        .premium-request-card.status-pending {
+            border-left: 4px solid #FFD700;
+        }
+        .premium-request-card.status-approved {
+            border-left: 4px solid #28a745;
+        }
+        .premium-request-card.status-rejected {
+            border-left: 4px solid #dc3545;
+        }
+        .premium-request-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .premium-request-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .premium-request-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .premium-request-info h4 {
+            margin: 0;
+            font-size: 0.95rem;
+            color: #111827;
+        }
+        .premium-request-info p {
+            margin: 0;
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+        .premium-status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .premium-status-badge.pending {
+            background: #fff8e1;
+            color: #f57f17;
+        }
+        .premium-status-badge.approved {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .premium-status-badge.rejected {
+            background: #fce4ec;
+            color: #c62828;
+        }
+        .premium-request-details {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            color: #4b5563;
+        }
+        .premium-request-details span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .premium-request-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .premium-filter-btn {
+            border-radius: 20px !important;
+            padding: 6px 16px !important;
+            font-size: 0.82rem !important;
+            border: 2px solid transparent !important;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: all 0.2s;
+        }
+        .premium-filter-btn.active {
+            opacity: 1;
+            border-color: currentColor !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .btn-premium-approve {
+            background: linear-gradient(135deg, #28a745, #218838) !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+        .btn-premium-reject {
+            background: linear-gradient(135deg, #dc3545, #c82333) !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+        .btn-premium-view {
+            background: linear-gradient(135deg, #FFD700, #FFA500) !important;
+            color: #333 !important;
+            font-weight: 600;
+        }
     </style>
 
     <!-- Productos B2 Modal -->
