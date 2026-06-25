@@ -58,6 +58,6 @@ rsync -a \
 
 echo "=== Deploying to Cloudflare Pages ==="
 cd "$BUILD_PARENT"
-npx wrangler pages deploy . --project-name=aunclick --branch=main --commit-dirty=true
+npx wrangler pages deploy build --project-name=aunclick --branch=main --commit-dirty=true
 
 echo "=== Deployment complete ==="
