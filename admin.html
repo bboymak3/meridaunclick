@@ -608,6 +608,102 @@
 
                 <!-- ==================== SETTINGS TAB ==================== -->
                 <div class="admin-tab hidden" id="tabSettings">
+
+                    <!-- Panel de Vendedores -->
+                    <div class="admin-card" style="margin-bottom:20px;">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-store" style="color:#2563eb;"></i> Panel de Vendedores</h3>
+                            <div class="admin-card-actions">
+                                <button class="btn btn-sm" id="btnRefreshSellers" style="background:var(--color-primary);color:#fff;">
+                                    <i class="fas fa-sync-alt"></i> Actualizar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <p style="font-size:0.88rem;color:#6b7280;margin-bottom:14px;">Vista de todos los perfiles de vendedores registrados en la plataforma.</p>
+                            <div id="sellersLoading" style="text-align:center;padding:20px;color:#9ca3af;">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p style="margin-top:8px;">Cargando vendedores...</p>
+                            </div>
+                            <div class="admin-table-responsive">
+                                <table class="admin-table" id="sellersTable" style="display:none;">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Vendedor</th>
+                                            <th>Tienda</th>
+                                            <th>Ciudad / Estado</th>
+                                            <th>Teléfono</th>
+                                            <th>WhatsApp</th>
+                                            <th>Ventas</th>
+                                            <th>Plan</th>
+                                            <th>Registro</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sellersTableBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="sellersEmpty" class="empty-state-sm" style="display:none;">
+                                <p>No hay vendedores registrados.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Crear Nueva Cuenta -->
+                    <div class="admin-card" style="margin-bottom:20px;">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-user-plus" style="color:#059669;"></i> Crear Nueva Cuenta</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <p style="font-size:0.88rem;color:#6b7280;margin-bottom:16px;">Crea una nueva cuenta de usuario directamente desde el panel de administración.</p>
+                            <div style="max-width:500px;">
+                                <div class="form-row" style="margin-bottom:12px;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Nombre Completo <span style="color:#dc2626;">*</span></label>
+                                        <input type="text" id="newUserName" class="form-control" placeholder="Ej: Juan Pérez">
+                                    </div>
+                                </div>
+                                <div class="form-row" style="margin-bottom:12px;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Email <span style="color:#dc2626;">*</span></label>
+                                        <input type="email" id="newUserEmail" class="form-control" placeholder="Ej: juan@email.com">
+                                    </div>
+                                </div>
+                                <div class="form-row" style="margin-bottom:12px;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Teléfono (opcional)</label>
+                                        <input type="text" id="newUserPhone" class="form-control" placeholder="Ej: 0414-123-4567">
+                                    </div>
+                                </div>
+                                <div class="form-row" style="margin-bottom:12px;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Contraseña <span style="color:#dc2626;">*</span></label>
+                                        <div style="position:relative;">
+                                            <input type="password" id="newUserPassword" class="form-control" placeholder="Mínimo 6 caracteres">
+                                            <button type="button" id="toggleNewUserPwd" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#6b7280;cursor:pointer;font-size:0.9rem;"><i class="fas fa-eye"></i></button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-row" style="margin-bottom:16px;">
+                                    <div class="form-group" style="flex:1;">
+                                        <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Rol</label>
+                                        <select id="newUserRole" class="form-control">
+                                            <option value="user">Usuario</option>
+                                            <option value="agent">Agente</option>
+                                            <option value="admin">Administrador</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div id="createUserError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:#dc2626;"></div>
+                                <div id="createUserSuccess" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:#059669;"></div>
+                                <button class="btn btn-primary" id="btnCreateUser" style="background:linear-gradient(135deg,#059669,#10b981);">
+                                    <i class="fas fa-user-plus"></i> Crear Cuenta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuración del Sitio -->
                     <div class="admin-card">
                         <div class="admin-card-header">
                             <h3><i class="fas fa-sliders-h"></i> Configuración del Sitio</h3>

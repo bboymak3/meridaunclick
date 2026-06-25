@@ -208,6 +208,8 @@
                 break;
             case 'settings':
                 loadSettings();
+                loadSellersPanel();
+                setupCreateUserForm();
                 break;
             case 'premium':
                 premiumPage = 1;
@@ -3026,6 +3028,140 @@
         } else {
             modal.classList.add('hidden');
             document.body.style.overflow = '';
+        }
+    }
+
+    // ─── Sellers Panel ──────────────────────────────────────────
+    async function loadSellersPanel() {
+        const loading = document.getElementById('sellersLoading');
+        const table = document.getElementById('sellersTable');
+        const tbody = document.getElementById('sellersTableBody');
+        const empty = document.getElementById('sellersEmpty');
+        if (!tbody) return;
+
+        if (loading) loading.style.display = 'block';
+        if (table) table.style.display = 'none';
+        if (empty) empty.style.display = 'none';
+
+        try {
+            const data = await api.get('/admin/sellers');
+            const sellers = data.sellers || [];
+
+            if (loading) loading.style.display = 'none';
+
+            if (sellers.length === 0) {
+                if (empty) empty.style.display = 'block';
+                return;
+            }
+
+            if (table) table.style.display = 'table';
+
+            tbody.innerHTML = sellers.map(s => {
+                const avatarHTML = s.avatar
+                    ? `<img src="${s.avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">`
+                    : `<div style="width:32px;height:32px;border-radius:50%;background:#e0e7ff;color:#4338ca;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;">${(s.user_name || 'V')[0].toUpperCase()}</div>`;
+                const planBadge = s.plan_type === 'premium'
+                    ? '<span style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;padding:2px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;">Premium</span>'
+                    : '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:12px;font-size:0.72rem;">Básico</span>';
+                const date = s.created_at ? new Date(s.created_at).toLocaleDateString('es-VE') : '-';
+
+                return `<tr>
+                    <td>${s.user_id}</td>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            ${avatarHTML}
+                            <div>
+                                <div style="font-weight:600;font-size:0.85rem;">${escHtml(s.user_name || 'Sin nombre')}</div>
+                                <div style="font-size:0.72rem;color:#94a3b8;">${escHtml(s.user_email || '')}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-weight:600;">${escHtml(s.store_name || '-')}</td>
+                    <td>${escHtml(s.city || '')} / ${escHtml(s.state || '')}</td>
+                    <td>${escHtml(s.phone || '-')}</td>
+                    <td>${s.whatsapp ? `<span style="color:#25D366;"><i class="fab fa-whatsapp"></i> ${escHtml(s.whatsapp)}</span>` : '<span style="color:#d1d5db;">-</span>'}</td>
+                    <td>${s.total_sales || 0}</td>
+                    <td>${planBadge}</td>
+                    <td style="font-size:0.78rem;color:#94a3b8;">${date}</td>
+                </tr>`;
+            }).join('');
+        } catch (err) {
+            if (loading) loading.style.display = 'none';
+            console.error('Error loading sellers:', err);
+            if (tbody) tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state-sm"><p style="color:#dc2626;">Error al cargar vendedores: ${escHtml(err.message)}</p></div></td></tr>`;
+            if (table) table.style.display = 'table';
+        }
+    }
+
+    // Refresh sellers button
+    const btnRefreshSellers = document.getElementById('btnRefreshSellers');
+    if (btnRefreshSellers) {
+        btnRefreshSellers.addEventListener('click', loadSellersPanel);
+    }
+
+    // ─── Create User Form ─────────────────────────────────────
+    let createUserSetupDone = false;
+
+    function setupCreateUserForm() {
+        if (createUserSetupDone) return;
+        createUserSetupDone = true;
+
+        const btn = document.getElementById('btnCreateUser');
+        const errDiv = document.getElementById('createUserError');
+        const successDiv = document.getElementById('createUserSuccess');
+        const togglePwd = document.getElementById('toggleNewUserPwd');
+        const pwdInput = document.getElementById('newUserPassword');
+
+        if (togglePwd && pwdInput) {
+            togglePwd.addEventListener('click', () => {
+                const isPassword = pwdInput.type === 'password';
+                pwdInput.type = isPassword ? 'text' : 'password';
+                togglePwd.innerHTML = isPassword ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+            });
+        }
+
+        if (btn) {
+            btn.addEventListener('click', async () => {
+                const name = document.getElementById('newUserName')?.value.trim();
+                const email = document.getElementById('newUserEmail')?.value.trim();
+                const phone = document.getElementById('newUserPhone')?.value.trim();
+                const password = document.getElementById('newUserPassword')?.value;
+                const role = document.getElementById('newUserRole')?.value || 'user';
+
+                if (errDiv) errDiv.style.display = 'none';
+                if (successDiv) successDiv.style.display = 'none';
+
+                if (!name || !email || !password) {
+                    if (errDiv) { errDiv.textContent = 'Nombre, email y contraseña son obligatorios.'; errDiv.style.display = 'block'; }
+                    return;
+                }
+                if (password.length < 6) {
+                    if (errDiv) { errDiv.textContent = 'La contraseña debe tener al menos 6 caracteres.'; errDiv.style.display = 'block'; }
+                    return;
+                }
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+
+                try {
+                    const result = await api.post('/admin/create-user', { name, email, phone, password, role });
+                    if (successDiv) { successDiv.textContent = result.message || `Usuario "${name}" creado correctamente.`; successDiv.style.display = 'block'; }
+                    // Clear form
+                    document.getElementById('newUserName').value = '';
+                    document.getElementById('newUserEmail').value = '';
+                    document.getElementById('newUserPhone').value = '';
+                    document.getElementById('newUserPassword').value = '';
+                    document.getElementById('newUserRole').value = 'user';
+                    showToast('Cuenta creada exitosamente', 'success');
+                    // Refresh users list if loaded
+                    loadUsers();
+                } catch (err) {
+                    if (errDiv) { errDiv.textContent = err.message || 'Error al crear la cuenta.'; errDiv.style.display = 'block'; }
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-user-plus"></i> Crear Cuenta';
+                }
+            });
         }
     }
 
