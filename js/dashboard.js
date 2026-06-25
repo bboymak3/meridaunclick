@@ -94,6 +94,7 @@
         // Show admin section if user is admin
         if (currentUser.role === 'admin') {
             setupAdminSection();
+            if (typeof setupPremiumAdminTab === 'function') setupPremiumAdminTab();
         }
 
         // Setup sidebar navigation
@@ -111,8 +112,22 @@
         // Setup profile form
         setupProfileForm();
 
+        // Setup premium plan display (badge + buttons)
+        setupPremiumModal();
+        updatePlanDisplay();
+
         // Load data for overview section
         await loadOverviewData();
+
+        // Load premium badge count for admin
+        if (currentUser.role === 'admin' && adminPremiumBadge) {
+            try {
+                const pData = await api.get('/premium-requests?status=pending&limit=1');
+                const count = pData.pagination?.total || (pData.requests || []).length;
+                adminPremiumBadge.textContent = count;
+                adminPremiumBadge.style.display = count > 0 ? 'inline' : 'none';
+            } catch (e) {}
+        }
     }
 
     // ─── User Display ──────────────────────────────────────────
@@ -214,17 +229,20 @@
     async function loadOverviewData() {
         try {
             const userId = currentUser?.id;
+            if (!userId) {
+                console.error('loadOverviewData: no userId');
+                return;
+            }
 
-            // Get user's approved businesses
-            const approvedData = await api.get(`/businesses?limit=100&user_id=${userId}&status=approved`);
+            // Load all 3 status groups in parallel for speed
+            const [approvedData, pendingData, rejectedData] = await Promise.all([
+                api.get(`/businesses?limit=100&user_id=${userId}&status=approved`).catch(e => { console.warn('approved fetch failed:', e); return { businesses: [] }; }),
+                api.get(`/businesses?limit=100&user_id=${userId}&status=pending`).catch(e => { console.warn('pending fetch failed:', e); return { businesses: [] }; }),
+                api.get(`/businesses?limit=100&user_id=${userId}&status=rejected`).catch(e => { console.warn('rejected fetch failed:', e); return { businesses: [] }; }),
+            ]);
+
             const approvedProps = approvedData.businesses || [];
-
-            // Get user's pending businesses
-            const pendingData = await api.get(`/businesses?limit=100&user_id=${userId}&status=pending`);
             const pendingProps = pendingData.businesses || [];
-
-            // Get user's rejected businesses
-            const rejectedData = await api.get(`/businesses?limit=100&user_id=${userId}&status=rejected`);
             const rejectedProps = rejectedData.businesses || [];
 
             userProperties = [...approvedProps, ...pendingProps, ...rejectedProps];
@@ -2254,25 +2272,7 @@
         }
     };
 
-    // Initialize premium features
-    updatePlanDisplay();
-    setupPremiumModal();
-    if (currentUser && currentUser.role === 'admin') {
-        setupPremiumAdminTab();
-    }
-
-    // Also load premium badge count when admin section loads
-    const origLoadAdminData = typeof loadAdminData === 'function' ? loadAdminData : null;
-    // We hook into loadAdminData to also load premium requests count
-    (function() {
-        if (adminPremiumBadge && currentUser && currentUser.role === 'admin') {
-            api.get('/premium-requests?status=pending&limit=1').then(data => {
-                const count = data.pagination?.total || (data.requests || []).length;
-                adminPremiumBadge.textContent = count;
-                adminPremiumBadge.style.display = count > 0 ? 'inline' : 'none';
-            }).catch(() => {});
-        }
-    })();
+    // Premium admin tab is now initialized inside initDashboard() when user is admin
 
     // ─── Admin: Manual Premium Activation ──────────────────
     let manualPremiumSelectedUser = null;
