@@ -1231,7 +1231,7 @@
 
     // ─── Pagination Helper ──────────────────────────────────────
     function renderAdminPagination(containerId, pagination, onPageChange) {
-        const container = document.getElementById(containerId);
+        const container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
         if (!container || !pagination) return;
 
         const { page, totalPages, total } = pagination;
@@ -3015,33 +3015,6 @@
         } catch (err) {
             showToast('Error al activar Premium: ' + (err.message || err.error || 'Error desconocido'), 'error');
         }
-    }
-
-    // Helper: render pagination (reuse pattern from existing admin)
-    function renderAdminPagination(container, pagination, onPageChange) {
-        if (!container || !pagination) return;
-        const { page, totalPages, total } = pagination;
-        if (totalPages <= 1) { container.innerHTML = ''; return; }
-
-        let html = '';
-        if (page > 1) {
-            html += `<button class="btn btn-sm btn-secondary" data-page="${page - 1}"><i class="fas fa-chevron-left"></i></button>`;
-        }
-        for (let i = 1; i <= totalPages; i++) {
-            if (i === 1 || i === totalPages || (i >= page - 1 && i <= page + 1)) {
-                html += `<button class="btn btn-sm ${i === page ? 'btn-primary' : 'btn-secondary'}" data-page="${i}">${i}</button>`;
-            } else if (i === page - 2 || i === page + 2) {
-                html += '<span style="padding:0 4px;">...</span>';
-            }
-        }
-        if (page < totalPages) {
-            html += `<button class="btn btn-sm btn-secondary" data-page="${page + 1}"><i class="fas fa-chevron-right"></i></button>`;
-        }
-
-        container.innerHTML = html;
-        container.querySelectorAll('button[data-page]').forEach(btn => {
-            btn.addEventListener('click', () => onPageChange(parseInt(btn.dataset.page)));
-        });
     }
 
     // Helper: toggle modal visibility
