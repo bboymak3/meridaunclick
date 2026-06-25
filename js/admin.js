@@ -39,6 +39,7 @@
     const tabInmuebles = document.getElementById('tabInmuebles');
     const tabSettings = document.getElementById('tabSettings');
     const tabPremium = document.getElementById('tabPremium');
+    const tabProducts = document.getElementById('tabProducts');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -159,7 +160,7 @@
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);

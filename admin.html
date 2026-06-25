@@ -84,7 +84,7 @@
                         <span>Mensajes</span>
                         <span class="badge" id="adminMsgBadge">0</span>
                     </a>
-                    <a href="#" class="admin-nav-link" id="adminNavProductsB2">
+                    <a href="#" class="admin-nav-link" id="adminNavProductsB2" data-tab="products">
                         <i class="fas fa-boxes-stacked"></i>
                         <span>Productos B2</span>
                         <span class="badge" id="adminProductsBadge">0</span>
@@ -563,6 +563,45 @@
                                 </table>
                             </div>
                             <div class="admin-pagination" id="propertiesPagination"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== PRODUCTS TAB ==================== -->
+                <div class="admin-tab hidden" id="tabProducts">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-boxes-stacked"></i> Productos</h3>
+                            <div class="admin-card-actions">
+                                <select id="adminProductStatusFilter" class="form-control" style="width:auto;min-width:140px;font-size:0.82rem;padding:6px 10px;">
+                                    <option value="">Todos</option>
+                                    <option value="pending">Pendientes</option>
+                                    <option value="approved">Aprobados</option>
+                                    <option value="rejected">Rechazados</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="admin-table-responsive">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Producto</th>
+                                            <th>Categoría</th>
+                                            <th>Precio</th>
+                                            <th>Vendedor</th>
+                                            <th>Estado</th>
+                                            <th>Fecha</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminProductsTableBody">
+                                        <tr class="empty-row"><td colspan="8"><div class="empty-state-sm"><i class="fas fa-spinner fa-spin"></i> Cargando...</div></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="admin-pagination" id="adminProductsPagination"></div>
                         </div>
                     </div>
                 </div>
