@@ -1900,7 +1900,6 @@
 
     // ─── Premium Plan System ──────────────────────────────────
     const planBadge = document.getElementById('planBadge');
-    const btnUpgradePremium = document.getElementById('btnUpgradePremium');
     const premiumModal = document.getElementById('premiumModal');
     const premiumModalClose = document.getElementById('premiumModalClose');
     const premiumModalCancel = document.getElementById('premiumModalCancel');
@@ -1912,6 +1911,7 @@
     const premiumVoucherImg = document.getElementById('premiumVoucherImg');
     const premiumVoucherPlaceholder = document.getElementById('premiumVoucherPlaceholder');
     const premiumSubmitError = document.getElementById('premiumSubmitError');
+    const premiumRefNumber = document.getElementById('premiumRefNumber');
     const planExpiryInfo = document.getElementById('planExpiryInfo');
     const quickActionProduct = document.getElementById('quickActionProduct');
     const adminTabPremium = document.getElementById('adminTabPremium');
@@ -1931,12 +1931,41 @@
                 planBadge.innerHTML = '<i class="fas fa-crown"></i> Premium';
             } else {
                 planBadge.className = 'plan-badge plan-badge-basic';
-                planBadge.innerHTML = '<i class="fas fa-user"></i> Regular';
+                planBadge.innerHTML = '<i class="fas fa-user"></i> Basico';
             }
         }
 
-        if (btnUpgradePremium) {
-            btnUpgradePremium.style.display = isPremium ? 'none' : 'inline-flex';
+        // Render action buttons dynamically
+        const btnsContainer = document.getElementById('planActionBtns');
+        if (btnsContainer) {
+            if (isPremium) {
+                btnsContainer.innerHTML = `
+                    <span style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;font-weight:700;font-size:0.82rem;border:1px solid #fbbf24;">
+                        <i class="fas fa-crown"></i> Plan Premium Activo
+                    </span>`;
+            } else {
+                btnsContainer.innerHTML = `
+                    <button class="btn" id="btnUpgradePremium" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#333;font-weight:700;font-size:0.85rem;padding:8px 18px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                        <i class="fas fa-crown"></i> Solicitar Premium
+                    </button>
+                    <a href="planes.html" class="btn" style="background:#f1f5f9;color:#475569;font-weight:600;font-size:0.85rem;padding:8px 18px;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+                        <i class="fas fa-star"></i> Ver Ventajas Premium
+                    </a>`;
+                // Re-bind the premium button
+                const newBtn = document.getElementById('btnUpgradePremium');
+                if (newBtn && premiumModal) {
+                    newBtn.addEventListener('click', () => {
+                        premiumModal.style.display = 'flex';
+                        selectedVoucherFile = null;
+                        if (premiumVoucherPreview) premiumVoucherPreview.style.display = 'none';
+                        if (premiumVoucherPlaceholder) premiumVoucherPlaceholder.style.display = 'block';
+                        if (premiumSubmitError) premiumSubmitError.style.display = 'none';
+                        if (premiumVoucherInput) premiumVoucherInput.value = '';
+                        if (premiumRefNumber) premiumRefNumber.value = '';
+                        if (premiumPaymentPhone) premiumPaymentPhone.value = '';
+                    });
+                }
+            }
         }
 
         if (planExpiryInfo) {
@@ -1954,7 +1983,7 @@
                     planExpiryInfo.style.color = '#d97706';
                 }
             } else if (!isPremium) {
-                planExpiryInfo.querySelector('span').textContent = 'Con el plan Regular, tus publicaciones caducan a los 20 dias. Mejora a Premium para que nunca caduquen.';
+                planExpiryInfo.querySelector('span').textContent = 'Con el plan Basico, tus publicaciones caducan a los 20 dias. Mejora a Premium para que nunca caduquen.';
                 planExpiryInfo.style.display = 'block';
                 planExpiryInfo.style.color = '#64748b';
             }
@@ -1962,26 +1991,55 @@
     }
 
     function setupPremiumModal() {
-        if (!btnUpgradePremium || !premiumModal) return;
+        if (!premiumModal) return;
 
         function openModal() {
             premiumModal.style.display = 'flex';
             selectedVoucherFile = null;
-            premiumVoucherPreview.style.display = 'none';
-            premiumVoucherPlaceholder.style.display = 'block';
-            premiumSubmitError.style.display = 'none';
+            if (premiumVoucherPreview) premiumVoucherPreview.style.display = 'none';
+            if (premiumVoucherPlaceholder) premiumVoucherPlaceholder.style.display = 'block';
+            if (premiumSubmitError) premiumSubmitError.style.display = 'none';
             if (premiumVoucherInput) premiumVoucherInput.value = '';
+            if (premiumRefNumber) premiumRefNumber.value = '';
+            if (premiumPaymentPhone) premiumPaymentPhone.value = '';
         }
         function closeModal() {
             premiumModal.style.display = 'none';
         }
 
-        btnUpgradePremium.addEventListener('click', openModal);
+        // Close handlers
         if (premiumModalClose) premiumModalClose.addEventListener('click', closeModal);
         if (premiumModalCancel) premiumModalCancel.addEventListener('click', closeModal);
         if (premiumModalOverlay) premiumModalOverlay.addEventListener('click', closeModal);
 
-        // Voucher upload
+        // Upload from gallery button
+        const voucherBtn = document.getElementById('premiumVoucherBtn');
+        const cameraBtn = document.getElementById('premiumCameraBtn');
+        const cameraInput = document.getElementById('premiumCameraInput');
+        const voucherRemove = document.getElementById('premiumVoucherRemove');
+
+        if (voucherBtn && premiumVoucherInput) {
+            voucherBtn.addEventListener('click', () => premiumVoucherInput.click());
+        }
+        if (cameraBtn && cameraInput) {
+            cameraBtn.addEventListener('click', () => cameraInput.click());
+            cameraInput.addEventListener('change', () => {
+                const file = cameraInput.files[0];
+                if (file) handleVoucherFile(file);
+            });
+        }
+        if (voucherRemove) {
+            voucherRemove.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedVoucherFile = null;
+                if (premiumVoucherPreview) premiumVoucherPreview.style.display = 'none';
+                if (premiumVoucherPlaceholder) premiumVoucherPlaceholder.style.display = 'block';
+                if (premiumVoucherInput) premiumVoucherInput.value = '';
+                if (cameraInput) cameraInput.value = '';
+            });
+        }
+
+        // Voucher upload (drag & drop + click on drop zone)
         if (premiumVoucherDrop && premiumVoucherInput) {
             premiumVoucherDrop.addEventListener('click', () => premiumVoucherInput.click());
             premiumVoucherDrop.addEventListener('dragover', (e) => {
@@ -2027,6 +2085,11 @@
             premiumSubmitBtn.addEventListener('click', async () => {
                 if (!selectedVoucherFile) {
                     showError('Debes adjuntar el comprobante de pago.');
+                    return;
+                }
+                const refNumber = document.getElementById('premiumRefNumber');
+                if (refNumber && !refNumber.value.trim()) {
+                    showError('Debes ingresar el numero de referencia del pago.');
                     return;
                 }
 

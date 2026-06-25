@@ -2736,10 +2736,17 @@
         const searchInput = document.getElementById('premiumUserSearch');
         if (searchBtn) searchBtn.addEventListener('click', searchUsersForPremium);
         if (searchInput) searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchUsersForPremium(); });
+
+        // Refresh non-premium list
+        const refreshNonPremium = document.getElementById('btnRefreshNonPremium');
+        if (refreshNonPremium) refreshNonPremium.addEventListener('click', () => {
+            premiumUsersPage = 1;
+            loadNonPremiumUsers();
+        });
     }
 
     async function loadPremiumTab() {
-        await Promise.all([loadPremiumRequests(), loadPremiumStats()]);
+        await Promise.all([loadPremiumRequests(), loadPremiumStats(), loadNonPremiumUsers()]);
     }
 
     async function loadPremiumStats() {
@@ -2898,25 +2905,32 @@
 
     // ─── Manual Premium Activation ───────────────────────────────
 
-    async function searchUsersForPremium() {
-        const input = document.getElementById('premiumUserSearch');
+    let premiumUsersPage = 1;
+    let premiumUsersTotalPages = 1;
+
+    async function loadNonPremiumUsers(searchQuery) {
+        const loadingEl = document.getElementById('premiumNonPremiumLoading');
         const resultsDiv = document.getElementById('premiumSearchResults');
         const emptyDiv = document.getElementById('premiumSearchEmpty');
         const tbody = document.getElementById('premiumSearchResultsBody');
+        const paginationEl = document.getElementById('premiumUsersPagination');
 
-        const query = input ? input.value.trim() : '';
-        if (!query) {
-            if (resultsDiv) resultsDiv.style.display = 'none';
-            if (emptyDiv) emptyDiv.style.display = 'none';
-            return;
-        }
+        if (loadingEl) loadingEl.style.display = 'block';
+        if (resultsDiv) resultsDiv.style.display = 'none';
+        if (emptyDiv) emptyDiv.style.display = 'none';
 
         try {
-            const data = await api.get(`/users?search=${encodeURIComponent(query)}&limit=20`);
-            const users = data.users || [];
+            let url = `/users?limit=50&page=${premiumUsersPage}`;
+            if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
+            const data = await api.get(url);
+            const allUsers = data.users || [];
+
+            // Filter to only non-premium, non-admin users
+            const users = allUsers.filter(u => u.plan_type !== 'premium' && u.role !== 'admin');
+
+            if (loadingEl) loadingEl.style.display = 'none';
 
             if (users.length === 0) {
-                if (resultsDiv) resultsDiv.style.display = 'none';
                 if (emptyDiv) emptyDiv.style.display = 'block';
                 return;
             }
@@ -2926,30 +2940,42 @@
 
             let html = '';
             users.forEach(u => {
-                const planBadge = u.plan_type === 'premium'
-                    ? '<span style="background:#FFD700;color:#333;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;">PREMIUM</span>'
-                    : '<span style="background:#e5e7eb;color:#374151;padding:2px 10px;border-radius:12px;font-size:0.75rem;">Basico</span>';
                 const created = u.created_at ? new Date(u.created_at).toLocaleDateString('es-VE') : '';
-
-                const actionBtn = u.plan_type === 'premium'
-                    ? '<span style="color:#28a745;font-size:0.85rem;"><i class="fas fa-check-circle"></i> Ya es Premium</span>'
-                    : `<button class="btn btn-sm" onclick="window._adminOpenActivateModal(${u.id}, '${(u.name || '').replace(/'/g, "\\'")}', '${(u.email || '').replace(/'/g, "\\'")}')" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#333;font-weight:700;">
+                const activateBtn = `<button class="btn btn-sm" onclick="window._adminOpenActivateModal(${u.id}, '${(u.name || '').replace(/'/g, "\\'")}', '${(u.email || '').replace(/'/g, "\\'")}')" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#333;font-weight:700;">
                         <i class="fas fa-crown"></i> Activar
                        </button>`;
 
                 html += `<tr>
                     <td><strong>${u.name || 'Sin nombre'}</strong></td>
                     <td>${u.email || ''}</td>
-                    <td>${planBadge}</td>
+                    <td><span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:12px;font-size:0.75rem;">Basico</span></td>
                     <td>${created}</td>
-                    <td>${actionBtn}</td>
+                    <td>${activateBtn}</td>
                 </tr>`;
             });
 
             if (tbody) tbody.innerHTML = html;
+
+            // Pagination
+            if (data.pagination) {
+                premiumUsersTotalPages = data.pagination.totalPages || 1;
+                if (paginationEl) {
+                    renderAdminPagination(paginationEl, data.pagination, (page) => {
+                        premiumUsersPage = page;
+                        loadNonPremiumUsers(document.getElementById('premiumUserSearch')?.value?.trim());
+                    });
+                }
+            }
         } catch (err) {
-            showToast('Error al buscar usuarios: ' + err.message, 'error');
+            if (loadingEl) loadingEl.style.display = 'none';
+            showToast('Error al cargar usuarios: ' + err.message, 'error');
         }
+    }
+
+    async function searchUsersForPremium() {
+        premiumUsersPage = 1;
+        const query = document.getElementById('premiumUserSearch')?.value?.trim() || '';
+        await loadNonPremiumUsers(query);
     }
 
     window._adminOpenActivateModal = function(userId, userName, userEmail) {

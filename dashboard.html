@@ -316,14 +316,14 @@
                     <div class="dash-card" style="margin-bottom:20px;">
                         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
                             <div style="display:flex;align-items:center;gap:12px;">
-                                <h3 style="margin:0;">Acciones Rapidas</h3>
+                                <h3 style="margin:0;">Mi Panel</h3>
                                 <span id="planBadge" class="plan-badge plan-badge-basic">
-                                    <i class="fas fa-user"></i> Regular
+                                    <i class="fas fa-user"></i> Basico
                                 </span>
                             </div>
-                            <button class="btn" id="btnUpgradePremium" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:600;font-size:0.85rem;padding:8px 18px;border-radius:8px;border:none;cursor:pointer;display:none;">
-                                <i class="fas fa-crown"></i> Mejorar a Premium
-                            </button>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;" id="planActionBtns">
+                                <!-- Filled dynamically by JS -->
+                            </div>
                         </div>
                         <div class="quick-actions-grid">
                             <a href="new-business.html" class="quick-action-card qa-negocio">
@@ -1602,19 +1602,35 @@
                     <input type="text" id="premiumPaymentPhone" placeholder="Ej: 0412-123-4567" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;">
                 </div>
 
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:6px;">Numero de Referencia del Pago <span style="color:#dc2626;">*</span></label>
+                    <input type="text" id="premiumRefNumber" placeholder="Ej: 12345678901234567890" style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:0.9rem;font-family:inherit;box-sizing:border-box;">
+                    <p style="margin:4px 0 0;font-size:0.75rem;color:#94a3b8;">Ingresa el numero de referencia que te dio el banco al hacer el pago movil.</p>
+                </div>
+
                 <div style="margin-bottom:20px;">
                     <label style="display:block;font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:6px;">Comprobante de Pago (Voucher) <span style="color:#dc2626;">*</span></label>
-                    <div id="premiumVoucherDrop" style="border:2px dashed #d1d5db;border-radius:10px;padding:30px 20px;text-align:center;cursor:pointer;transition:border-color 0.2s;">
-                        <div id="premiumVoucherPreview" style="display:none;margin-bottom:12px;">
+                    <div style="display:flex;gap:8px;margin-bottom:10px;">
+                        <button type="button" id="premiumVoucherBtn" style="flex:1;padding:10px;border-radius:8px;border:2px solid #d1d5db;background:#f9fafb;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;color:#475569;transition:all 0.2s;">
+                            <i class="fas fa-image"></i> Subir Imagen
+                        </button>
+                        <button type="button" id="premiumCameraBtn" style="flex:1;padding:10px;border-radius:8px;border:2px solid #d1d5db;background:#f9fafb;cursor:pointer;font-size:0.85rem;font-weight:600;font-family:inherit;color:#475569;transition:all 0.2s;">
+                            <i class="fas fa-camera"></i> Tomar Foto
+                        </button>
+                    </div>
+                    <input type="file" id="premiumVoucherInput" accept="image/*" style="display:none;">
+                    <input type="file" id="premiumCameraInput" accept="image/*" capture="environment" style="display:none;">
+                    <div id="premiumVoucherDrop" style="border:2px dashed #d1d5db;border-radius:10px;padding:24px 20px;text-align:center;cursor:pointer;transition:border-color 0.2s;">
+                        <div id="premiumVoucherPreview" style="display:none;margin-bottom:12px;position:relative;">
                             <img id="premiumVoucherImg" src="" alt="Voucher" style="max-width:100%;max-height:200px;border-radius:8px;">
+                            <button type="button" id="premiumVoucherRemove" style="position:absolute;top:4px;right:4px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(220,38,38,0.9);color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">&times;</button>
                         </div>
                         <div id="premiumVoucherPlaceholder">
                             <i class="fas fa-cloud-upload-alt" style="font-size:2rem;color:#94a3b8;"></i>
-                            <p style="margin:8px 0 0;font-size:0.88rem;color:#64748b;">Haz clic o arrastra tu comprobante aqui</p>
+                            <p style="margin:8px 0 0;font-size:0.88rem;color:#64748b;">O arrastra tu comprobante aqui</p>
                             <p style="margin:4px 0 0;font-size:0.75rem;color:#94a3b8;">JPG, PNG - Max 5MB</p>
                         </div>
                     </div>
-                    <input type="file" id="premiumVoucherInput" accept="image/*" style="display:none;">
                 </div>
 
                 <div id="premiumSubmitError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:#dc2626;"></div>
