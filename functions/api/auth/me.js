@@ -74,6 +74,8 @@ export async function onRequestGet(context) {
     // Ensure new columns exist (auto-migration)
     try { await env.DB.prepare('ALTER TABLE users ADD COLUMN whatsapp TEXT').run(); } catch (e) { /* column may exist */ }
     try { await env.DB.prepare('ALTER TABLE users ADD COLUMN bio TEXT').run(); } catch (e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE users ADD COLUMN plan_type TEXT DEFAULT 'basic'").run(); } catch (e) { /* column may exist */ }
+    try { await env.DB.prepare('ALTER TABLE users ADD COLUMN plan_expires_at TEXT').run(); } catch (e) { /* column may exist */ }
 
     // Fetch user from DB (include plan fields)
     const user = await env.DB.prepare(

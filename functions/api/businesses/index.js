@@ -51,6 +51,10 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Auto-migrate: ensure expires_at column exists
+    try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN expires_at TEXT').run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE users ADD COLUMN plan_type TEXT DEFAULT 'basic'").run(); } catch(e) { /* column may exist */ }
+
     const url = new URL(request.url);
     const params = url.searchParams;
 
