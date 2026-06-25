@@ -84,6 +84,10 @@ export async function onRequestGet(context) {
       conditions.push('(p.featured = 1 OR EXISTS(SELECT 1 FROM featured_items fi WHERE fi.item_id = p.id AND fi.item_type = ? AND fi.is_active = 1))');
       bindings.push('property');
     }
+    // Filter expired posts for public views
+    if (status === 'approved') {
+      conditions.push("(p.expires_at IS NULL OR p.expires_at > datetime('now'))");
+    }
     if (propertyType) {
       conditions.push('p.property_type = ?');
       bindings.push(propertyType);
@@ -248,6 +252,17 @@ export async function onRequestPost(context) {
     ).run();
 
     const propertyId = result.meta.last_row_id;
+
+    // Set expiration for basic users (20 days)
+    try {
+      const userRow = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(payload.id).first();
+      if (userRow && userRow.plan_type !== 'premium') {
+        const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString();
+        await env.DB.prepare('UPDATE properties SET expires_at = ? WHERE id = ?').bind(expiresAt, propertyId).run();
+      }
+    } catch (expErr) {
+      console.error('Error setting property expiration:', expErr);
+    }
 
     return new Response(JSON.stringify({
       message: 'Propiedad creada exitosamente. Está pendiente de aprobación.',

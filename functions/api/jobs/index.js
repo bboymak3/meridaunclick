@@ -77,6 +77,10 @@ export async function onRequestGet(context) {
       conditions.push('status = ?');
       bindings.push(status);
     }
+    // Filter expired posts for public views
+    if (status === 'approved') {
+      conditions.push("(expires_at IS NULL OR expires_at > datetime('now'))");
+    }
 
     if (userId) {
       conditions.push('user_id = ?');
@@ -262,6 +266,17 @@ export async function onRequestPost(context) {
     ).run();
 
     const jobId = result.meta.last_row_id;
+
+    // Set expiration for basic users (20 days)
+    try {
+      const userRow = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(payload.id).first();
+      if (userRow && userRow.plan_type !== 'premium') {
+        const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString();
+        await env.DB.prepare('UPDATE job_listings SET expires_at = ? WHERE id = ?').bind(expiresAt, jobId).run();
+      }
+    } catch (expErr) {
+      console.error('Error setting job expiration:', expErr);
+    }
 
     return new Response(JSON.stringify({
       message: 'Oferta de empleo registrada exitosamente. Está pendiente de aprobación.',

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'unclick-v42';
+const CACHE_NAME = 'unclick-v43';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -17,6 +17,13 @@ const STATIC_ASSETS = [
   '/properties.html',
   '/property-detail.html',
   '/new-property.html',
+  '/planes.html',
+  '/quienes-somos.html',
+  '/mision-vision.html',
+  '/contacto.html',
+  '/clientes-satisfechos.html',
+  '/privacidad.html',
+  '/eliminacion-datos.html',
   '/css/styles.css',
   '/js/app.js',
   '/js/business-detail.js',

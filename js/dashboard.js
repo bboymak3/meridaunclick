@@ -1884,5 +1884,318 @@
         });
     }
 
+    // ─── Premium Plan System ──────────────────────────────────
+    const planBadge = document.getElementById('planBadge');
+    const btnUpgradePremium = document.getElementById('btnUpgradePremium');
+    const premiumModal = document.getElementById('premiumModal');
+    const premiumModalClose = document.getElementById('premiumModalClose');
+    const premiumModalCancel = document.getElementById('premiumModalCancel');
+    const premiumModalOverlay = document.getElementById('premiumModalOverlay');
+    const premiumSubmitBtn = document.getElementById('premiumSubmitBtn');
+    const premiumVoucherDrop = document.getElementById('premiumVoucherDrop');
+    const premiumVoucherInput = document.getElementById('premiumVoucherInput');
+    const premiumVoucherPreview = document.getElementById('premiumVoucherPreview');
+    const premiumVoucherImg = document.getElementById('premiumVoucherImg');
+    const premiumVoucherPlaceholder = document.getElementById('premiumVoucherPlaceholder');
+    const premiumSubmitError = document.getElementById('premiumSubmitError');
+    const planExpiryInfo = document.getElementById('planExpiryInfo');
+    const quickActionProduct = document.getElementById('quickActionProduct');
+    const adminTabPremium = document.getElementById('adminTabPremium');
+    const adminPremiumBody = document.getElementById('adminPremiumBody');
+    const adminPremiumBadge = document.getElementById('adminPremiumBadge');
+
+    let selectedVoucherFile = null;
+
+    function updatePlanDisplay() {
+        if (!currentUser) return;
+        const planType = currentUser.plan_type || 'basic';
+        const isPremium = planType === 'premium';
+
+        if (planBadge) {
+            if (isPremium) {
+                planBadge.className = 'plan-badge plan-badge-premium';
+                planBadge.innerHTML = '<i class="fas fa-crown"></i> Premium';
+            } else {
+                planBadge.className = 'plan-badge plan-badge-basic';
+                planBadge.innerHTML = '<i class="fas fa-user"></i> Regular';
+            }
+        }
+
+        if (btnUpgradePremium) {
+            btnUpgradePremium.style.display = isPremium ? 'none' : 'inline-flex';
+        }
+
+        if (planExpiryInfo) {
+            if (isPremium && currentUser.plan_expires_at) {
+                const expDate = new Date(currentUser.plan_expires_at);
+                const now = new Date();
+                if (expDate > now) {
+                    const daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+                    planExpiryInfo.querySelector('span').textContent = `Tu plan Premium esta vigente. Expira en ${daysLeft} dias (${expDate.toLocaleDateString('es-VE')}). Tus publicaciones nunca caducan.`;
+                    planExpiryInfo.style.display = 'block';
+                    planExpiryInfo.style.color = '#059669';
+                } else {
+                    planExpiryInfo.querySelector('span').textContent = 'Tu plan Premium ha expirado. Tus proximas publicaciones caducaran a los 20 dias.';
+                    planExpiryInfo.style.display = 'block';
+                    planExpiryInfo.style.color = '#d97706';
+                }
+            } else if (!isPremium) {
+                planExpiryInfo.querySelector('span').textContent = 'Con el plan Regular, tus publicaciones caducan a los 20 dias. Mejora a Premium para que nunca caduquen.';
+                planExpiryInfo.style.display = 'block';
+                planExpiryInfo.style.color = '#64748b';
+            }
+        }
+    }
+
+    function setupPremiumModal() {
+        if (!btnUpgradePremium || !premiumModal) return;
+
+        function openModal() {
+            premiumModal.style.display = 'flex';
+            selectedVoucherFile = null;
+            premiumVoucherPreview.style.display = 'none';
+            premiumVoucherPlaceholder.style.display = 'block';
+            premiumSubmitError.style.display = 'none';
+            if (premiumVoucherInput) premiumVoucherInput.value = '';
+        }
+        function closeModal() {
+            premiumModal.style.display = 'none';
+        }
+
+        btnUpgradePremium.addEventListener('click', openModal);
+        if (premiumModalClose) premiumModalClose.addEventListener('click', closeModal);
+        if (premiumModalCancel) premiumModalCancel.addEventListener('click', closeModal);
+        if (premiumModalOverlay) premiumModalOverlay.addEventListener('click', closeModal);
+
+        // Voucher upload
+        if (premiumVoucherDrop && premiumVoucherInput) {
+            premiumVoucherDrop.addEventListener('click', () => premiumVoucherInput.click());
+            premiumVoucherDrop.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                premiumVoucherDrop.style.borderColor = '#059669';
+            });
+            premiumVoucherDrop.addEventListener('dragleave', () => {
+                premiumVoucherDrop.style.borderColor = '#d1d5db';
+            });
+            premiumVoucherDrop.addEventListener('drop', (e) => {
+                e.preventDefault();
+                premiumVoucherDrop.style.borderColor = '#d1d5db';
+                const file = e.dataTransfer.files[0];
+                if (file) handleVoucherFile(file);
+            });
+            premiumVoucherInput.addEventListener('change', () => {
+                const file = premiumVoucherInput.files[0];
+                if (file) handleVoucherFile(file);
+            });
+        }
+
+        function handleVoucherFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showError('Solo se permiten imagenes (JPG, PNG).');
+                return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                showError('La imagen no debe superar 5MB.');
+                return;
+            }
+            selectedVoucherFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                premiumVoucherImg.src = e.target.result;
+                premiumVoucherPreview.style.display = 'block';
+                premiumVoucherPlaceholder.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Submit
+        if (premiumSubmitBtn) {
+            premiumSubmitBtn.addEventListener('click', async () => {
+                if (!selectedVoucherFile) {
+                    showError('Debes adjuntar el comprobante de pago.');
+                    return;
+                }
+
+                premiumSubmitBtn.disabled = true;
+                premiumSubmitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+                premiumSubmitError.style.display = 'none';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('voucher', selectedVoucherFile);
+                    formData.append('plan_duration', document.getElementById('premiumPlanDuration')?.value || '3_months');
+                    formData.append('payment_phone', document.getElementById('premiumPaymentPhone')?.value || '');
+
+                    const token = getToken();
+                    const response = await fetch('/api/plans/request-upgrade', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData,
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        showError(data.error || 'Error al enviar la solicitud.');
+                        return;
+                    }
+
+                    closeModal();
+                    showToast(data.message || 'Solicitud enviada. Espera la aprobacion del administrador.', 'success');
+                } catch (err) {
+                    showError('Error de conexion. Intenta de nuevo.');
+                } finally {
+                    premiumSubmitBtn.disabled = false;
+                    premiumSubmitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Solicitud';
+                }
+            });
+        }
+
+        function showError(msg) {
+            if (premiumSubmitError) {
+                premiumSubmitError.textContent = msg;
+                premiumSubmitError.style.display = 'block';
+            }
+        }
+    }
+
+    // Quick action: open product modal
+    if (quickActionProduct) {
+        quickActionProduct.addEventListener('click', (e) => {
+            e.preventDefault();
+            const productModal = document.getElementById('productModal');
+            if (productModal) {
+                productModal.style.display = 'flex';
+                const closeBtn = document.getElementById('productModalClose');
+                if (closeBtn) closeBtn.click(); // reset
+                productModal.style.display = 'flex';
+            }
+        });
+    }
+
+    // Admin: Premium Requests Tab
+    function setupPremiumAdminTab() {
+        if (!adminTabPremium) return;
+
+        adminTabPremium.addEventListener('click', () => {
+            // Deactivate other tabs
+            [adminTabPending, adminTabAll, adminTabUsers, adminTabPremium].forEach(t => {
+                if (t) t.classList.remove('active');
+            });
+            adminTabPremium.classList.add('active');
+
+            // Hide other panels
+            ['Pending', 'All', 'Users'].forEach(p => {
+                const panel = document.getElementById('adminPanel' + p);
+                if (panel) panel.classList.add('hidden');
+            });
+            const premiumPanel = document.getElementById('adminPanelPremium');
+            if (premiumPanel) premiumPanel.classList.remove('hidden');
+
+            loadPremiumRequests();
+        });
+    }
+
+    async function loadPremiumRequests() {
+        if (!adminPremiumBody) return;
+
+        try {
+            const data = await api.get('/premium-requests?status=pending&limit=50');
+            const requests = data.requests || [];
+
+            // Update badge
+            if (adminPremiumBadge) {
+                adminPremiumBadge.textContent = requests.length;
+                adminPremiumBadge.style.display = requests.length > 0 ? 'inline' : 'none';
+            }
+
+            if (requests.length === 0) {
+                adminPremiumBody.innerHTML = `
+                    <tr class="empty-row"><td colspan="6">
+                        <div class="empty-state">
+                            <i class="fas fa-crown" style="color:#d97706;"></i>
+                            <p>No hay solicitudes Premium pendientes.</p>
+                        </div>
+                    </td></tr>`;
+                return;
+            }
+
+            adminPremiumBody.innerHTML = requests.map(r => {
+                const durationLabel = r.plan_duration === '1_year' ? '1 Anio ($90)' : '3 Meses ($30)';
+                const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('es-VE') : '--';
+                return `
+                    <tr>
+                        <td><strong>${escapeHtml(r.user_name || 'Usuario')}</strong></td>
+                        <td style="font-size:0.82rem;color:#64748b;">${escapeHtml(r.user_email || '')}</td>
+                        <td><span class="badge" style="background:#fef3c7;color:#92400e;">${durationLabel}</span></td>
+                        <td>
+                            ${r.voucher_url ? `<img src="${r.voucher_url}" class="voucher-thumb" onclick="window._openVoucherLightbox('${r.voucher_url}')" alt="Voucher" onerror="this.style.display='none'">` : '<span style="color:#94a3b8;">Sin voucher</span>'}
+                        </td>
+                        <td style="font-size:0.82rem;">${dateStr}</td>
+                        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+                            ${r.voucher_url ? `<button class="btn-view-voucher" onclick="window._openVoucherLightbox('${r.voucher_url}')"><i class="fas fa-eye"></i></button>` : ''}
+                            <button class="btn-approve-premium" onclick="window._approvePremium(${r.id})"><i class="fas fa-check"></i> Aprobar</button>
+                            <button class="btn-reject-premium" onclick="window._rejectPremium(${r.id})"><i class="fas fa-times"></i> Rechazar</button>
+                        </td>
+                    </tr>`;
+            }).join('');
+        } catch (error) {
+            console.error('Error loading premium requests:', error);
+            adminPremiumBody.innerHTML = `<tr class="empty-row"><td colspan="6"><div class="empty-state"><i class="fas fa-exclamation-circle"></i><p>Error al cargar solicitudes.</p></div></td></tr>`;
+        }
+    }
+
+    // Global functions for admin premium actions
+    window._openVoucherLightbox = function(url) {
+        const lb = document.createElement('div');
+        lb.className = 'voucher-lightbox';
+        lb.innerHTML = `<button class="voucher-lightbox-close" onclick="this.parentElement.remove()">&times;</button><img src="${url}" alt="Voucher">`;
+        lb.addEventListener('click', (e) => { if (e.target === lb) lb.remove(); });
+        document.body.appendChild(lb);
+    };
+
+    window._approvePremium = async function(id) {
+        if (!confirm('¿Aprobar esta solicitud Premium? El usuario tendra acceso inmediato a los beneficios Premium.')) return;
+        try {
+            await api.post(`/premium-requests/${id}/approve`);
+            showToast('Solicitud aprobada. El usuario ahora es Premium.', 'success');
+            loadPremiumRequests();
+        } catch (err) {
+            showToast(err.message || 'Error al aprobar', 'error');
+        }
+    };
+
+    window._rejectPremium = async function(id) {
+        const notes = prompt('Motivo del rechazo (opcional):');
+        if (notes === null) return; // cancelled
+        try {
+            await api.post(`/premium-requests/${id}/reject`, { admin_notes: notes });
+            showToast('Solicitud rechazada.', 'info');
+            loadPremiumRequests();
+        } catch (err) {
+            showToast(err.message || 'Error al rechazar', 'error');
+        }
+    };
+
+    // Initialize premium features
+    updatePlanDisplay();
+    setupPremiumModal();
+    if (currentUser && currentUser.role === 'admin') {
+        setupPremiumAdminTab();
+    }
+
+    // Also load premium badge count when admin section loads
+    const origLoadAdminData = typeof loadAdminData === 'function' ? loadAdminData : null;
+    // We hook into loadAdminData to also load premium requests count
+    (function() {
+        if (adminPremiumBadge && currentUser && currentUser.role === 'admin') {
+            api.get('/premium-requests?status=pending&limit=1').then(data => {
+                const count = data.pagination?.total || (data.requests || []).length;
+                adminPremiumBadge.textContent = count;
+                adminPremiumBadge.style.display = count > 0 ? 'inline' : 'none';
+            }).catch(() => {});
+        }
+    })();
+
 
 })();

@@ -1,21 +1,33 @@
 ---
 Task ID: 1
-Agent: main
-Task: Fix inmuebles not opening when clicked on index page
+Agent: Main Agent
+Task: Implementar sistema Premium + rebranding HOLAX + nuevas páginas informativas
 
 Work Log:
-- Investigated why clicking inmueble cards on the index page resulted in infinite loading
-- Used agent-browser to discover that property-detail.js was not executing at all
-- Found root cause: `app.js` and `property-detail.js` both declare `const PROPERTY_TYPE_LABELS`, `const OPERATION_TYPE_LABELS`, `const CURRENCY_SYMBOLS`, and `function escapeHtml` at the global scope. When both scripts load on the same page, the second `const` declaration causes a silent SyntaxError that prevents the entire script from executing.
-- Fixed `property-detail.js`: Removed duplicate declarations (kept only unique ones: PROPERTY_STATUS_LABELS, PROPERTY_FEATURES_MAP). Renamed `createPropertyCard` to `createPropertyCardDetail` to avoid conflict with app.js version.
-- Fixed `business-detail.js`: Removed duplicate `function escapeHtml`.
-- Updated Service Worker cache version from v41 to v42.
-- During deployment, discovered that wrangler v4 ignores `wrangler.toml` when it's inside the `pages_build_output_dir` ("."). Moving it outside the deploy directory restored D1/R2 bindings.
-- Created `/home/z/my-project/scripts/deploy.sh` for future deployments.
+- Fixed negocio creation SQL error (28 vs 29 columns) - marked as resolved by user
+- Created migration: functions/api/migrate/schema-premium.js (plan_type, plan_expires_at en users; expires_at en businesses, properties, products, job_listings; tabla premium_requests)
+- Created endpoint: functions/api/plans/request-upgrade.js (POST con FormData + subida voucher a R2)
+- Created endpoint: functions/api/premium-requests/index.js (GET admin list)
+- Created endpoint: functions/api/premium-requests/[id]/approve.js (POST admin approve)
+- Created endpoint: functions/api/premium-requests/[id]/reject.js (POST admin reject)
+- Modified 4 POST endpoints (businesses, properties, marketplace, jobs) to set expires_at = +20 days for basic users
+- Modified 4 GET endpoints to filter expired posts (expires_at IS NULL OR expires_at > now)
+- Modified functions/api/auth/me.js to include plan_type, plan_expires_at in user response
+- Rebranded 20 HTML files: "Un Click" → "HOLAX" (navbar, footer, titles, meta tags)
+- Modified dashboard.html: added quick actions grid (4 publish buttons), plan badge, premium upgrade modal with voucher upload, admin premium requests tab
+- Modified dashboard.js: added premium plan system (badge display, modal logic, voucher upload, admin premium requests management with lightbox)
+- Updated index.html navigation (dropdown: Nuestros Planes, Quiénes Somos, Contacto, Privacidad) and footer (Información column, HOLAX branding)
+- Updated privacidad.html: branding + navigation + footer
+- Updated new-business.html: branding
+- Created 5 new pages: planes.html, quienes-somos.html, mision-vision.html, contacto.html, clientes-satisfechos.html
+- Updated sw.js cache (v43) with new pages
+- Ran migration successfully: all columns added, premium_requests table created
+- Deployed to Cloudflare Pages
 
 Stage Summary:
-- Bug fixed: Inmuebles now open correctly when clicked
-- Root cause: Duplicate const/function declarations causing silent SyntaxError
-- Also fixed: Same issue in business-detail.js
-- Deployment lesson: wrangler.toml must NOT be inside the deploy directory for Pages
-- Deploy script created at /home/z/my-project/scripts/deploy.sh
+- Complete Premium plan system implemented (backend + frontend)
+- Two plans: Básico (free, 20-day expiry) and Premium ($10/mes or $90/año)
+- Premium upgrade flow: user requests with voucher → admin approves/rejects
+- Full rebranding from "Un Click" to "HOLAX" across all visible text
+- 5 new informational pages created with updated navigation
+- Migration run successfully, deployment live at aunclick.pages.dev

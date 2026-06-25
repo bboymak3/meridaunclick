@@ -103,6 +103,10 @@ export async function onRequestGet(context) {
     if (featured === '1') {
       conditions.push('p.featured = 1');
     }
+    // Filter expired posts for public views
+    if (status === 'approved') {
+      conditions.push("(p.expires_at IS NULL OR p.expires_at > datetime('now'))");
+    }
     if (search) {
       conditions.push('(p.title LIKE ? OR p.description LIKE ? OR p.address LIKE ?)');
       bindings.push(`%${search}%`, `%${search}%`, `%${search}%`);
@@ -303,6 +307,17 @@ export async function onRequestPost(context) {
     ).run();
 
     const businessId = result.meta.last_row_id;
+
+    // Set expiration for basic users (20 days)
+    try {
+      const userRow = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(payload.id).first();
+      if (userRow && userRow.plan_type !== 'premium') {
+        const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString();
+        await env.DB.prepare('UPDATE businesses SET expires_at = ? WHERE id = ?').bind(expiresAt, businessId).run();
+      }
+    } catch (expErr) {
+      console.error('Error setting business expiration:', expErr);
+    }
 
     return new Response(JSON.stringify({
       message: 'Negocio registrado exitosamente. Está pendiente de aprobación.',

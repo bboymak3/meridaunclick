@@ -89,6 +89,8 @@ export async function onRequestGet(context) {
     // Only show approved products to public (unless admin mode)
     if (!allProducts) {
       conditions.push("(p.status = 'approved' OR p.status IS NULL)");
+      // Filter expired posts
+      conditions.push("(p.expires_at IS NULL OR p.expires_at > datetime('now'))");
     } else if (statusFilter) {
       conditions.push('p.status = ?');
       bindings.push(statusFilter);
@@ -264,6 +266,17 @@ export async function onRequestPost(context) {
     ).run();
 
     const productId = result.meta.last_row_id;
+
+    // Set expiration for basic users (20 days)
+    try {
+      const userRow = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(user.id).first();
+      if (userRow && userRow.plan_type !== 'premium') {
+        const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString();
+        await env.DB.prepare('UPDATE products SET expires_at = ? WHERE id = ?').bind(expiresAt, productId).run();
+      }
+    } catch (expErr) {
+      console.error('Error setting product expiration:', expErr);
+    }
 
     return new Response(JSON.stringify({
       message: 'Producto creado exitosamente',
