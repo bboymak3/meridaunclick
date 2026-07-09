@@ -40,6 +40,7 @@
     const tabSettings = document.getElementById('tabSettings');
     const tabPremium = document.getElementById('tabPremium');
     const tabProducts = document.getElementById('tabProducts');
+    const tabEditBiz = document.getElementById('tabEditBiz');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -160,7 +161,7 @@
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -168,7 +169,7 @@
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -216,6 +217,9 @@
             case 'premium':
                 premiumPage = 1;
                 loadPremiumTab();
+                break;
+            case 'editbiz':
+                loadEditBizList();
                 break;
         }
 
@@ -3279,6 +3283,275 @@
             if (icon) icon.style.display = 'none';
             if (btn) btn.style.display = 'inline-flex';
         }
+    };
+
+    // ─── Editar Negocios Tab ────────────────────────────────
+    let editBizList = [];
+    let editBizCurrent = null;
+
+    async function loadEditBizList() {
+        const sel = document.getElementById('adminEditBizSelect');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Cargando negocios...</option>';
+        try {
+            const data = await api.get('/businesses?limit=500&status=approved,pending,rejected');
+            editBizList = data.businesses || [];
+            sel.innerHTML = '<option value="">-- Selecciona un negocio (' + editBizList.length + ') --</option>';
+            editBizList.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.title + ' (' + (b.status || '?') + ') - ' + (b.city || '');
+                sel.appendChild(opt);
+            });
+            // If already had a selection, keep it
+            if (editBizCurrent) {
+                sel.value = editBizCurrent.id;
+            }
+        } catch(e) {
+            sel.innerHTML = '<option value="">Error al cargar</option>';
+            showToast('Error al cargar negocios: ' + e.message, 'error');
+        }
+    }
+
+    // Setup dropdown change listener
+    (function() {
+        const sel = document.getElementById('adminEditBizSelect');
+        if (sel) {
+            sel.addEventListener('change', () => {
+                const id = sel.value;
+                if (id) loadEditBizDetail(id);
+                else {
+                    document.getElementById('adminEditBizContainer').style.display = 'none';
+                    editBizCurrent = null;
+                }
+            });
+        }
+    })();
+
+    async function loadEditBizDetail(id) {
+        const container = document.getElementById('adminEditBizContainer');
+        if (!container) return;
+        container.style.display = 'block';
+        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#059669;"></i><p style="margin-top:8px;color:#64748b;">Cargando datos...</p></div>';
+        try {
+            const data = await api.get('/businesses/' + id);
+            editBizCurrent = data.business || data;
+            renderEditBizForm(editBizCurrent);
+        } catch(e) {
+            container.innerHTML = '<p style="color:#dc2626;">Error: ' + e.message + '</p>';
+        }
+    }
+
+    function escH(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    function renderEditBizForm(b) {
+        const container = document.getElementById('adminEditBizContainer');
+        if (!container) return;
+        const statusColors = { approved: '#059669', pending: '#d97706', rejected: '#dc2626' };
+        const statusLabels = { approved: 'Aprobado', pending: 'Pendiente', rejected: 'Rechazado' };
+        const images = b.images || [];
+        container.innerHTML = `
+        <div class="aeb-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <h4 style="margin:0;"><i class="fas fa-building" style="color:#059669;"></i> ${escH(b.title)}</h4>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <span style="padding:3px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;background:${statusColors[b.status]||'#64748b'};color:#fff;">${statusLabels[b.status]||b.status}</span>
+                    <a href="/negocio/${b.slug||b.id}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-external-link-alt"></i> Ver</a>
+                    <button class="btn btn-danger btn-sm" onclick="adminDeleteBiz(${b.id})"><i class="fas fa-trash"></i> Eliminar</button>
+                </div>
+            </div>
+            <p style="font-size:0.78rem;color:#94a3b8;margin:4px 0 0;">ID: ${b.id} | Dueño: ${escH(b.owner_name||b.user_id||'?')} | Vistas: ${b.views||0}</p>
+        </div>
+        <div class="aeb-card">
+            <h4><i class="fas fa-image" style="color:#059669;"></i> Logo</h4>
+            <div class="aeb-logo-area">
+                <div class="aeb-logo-preview" id="aebLogoPreview">
+                    ${b.logo ? '<img src="'+escH(b.logo)+'" alt="Logo" onerror="this.style.display=\'none\'">' : '<i class="fas fa-store" style="font-size:1.5rem;color:#94a3b8;"></i>'}
+                </div>
+                <div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('aebLogoInput').click()"><i class="fas fa-upload"></i> Subir Logo</button>
+                    ${b.logo ? '<button type="button" class="btn btn-secondary btn-sm" onclick="adminEditBizRemoveLogo()"><i class="fas fa-trash"></i> Quitar</button>' : ''}
+                    <input type="file" id="aebLogoInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="adminEditBizHandleLogo(this)">
+                    <input type="hidden" id="aebLogoUrl" value="${escH(b.logo||'')}">
+                    <p style="font-size:0.72rem;color:#9ca3af;margin-top:4px;">JPG, PNG, WebP - Max 5MB</p>
+                </div>
+            </div>
+        </div>
+        <div class="aeb-card">
+            <h4><i class="fas fa-info-circle" style="color:#2563eb;"></i> Informacion Basica</h4>
+            <div class="aeb-grid">
+                <div class="aeb-field"><label>Nombre *</label><input type="text" class="eb-input" id="aebTitle" value="${escH(b.title||'')}" maxlength="150"></div>
+                <div class="aeb-field"><label>Categoria</label><input type="text" class="eb-input" id="aebCategory" value="${escH(b.category_name||'')}"></div>
+                <div class="aeb-field"><label>Descripcion</label><textarea class="eb-input eb-textarea" id="aebDesc" rows="3">${escH(b.description||'')}</textarea></div>
+                <div class="aeb-field"><label>Tipo</label><input type="text" class="eb-input" id="aebType" value="${escH(b.business_type||'')}"></div>
+            </div>
+        </div>
+        <div class="aeb-card">
+            <h4><i class="fas fa-phone" style="color:#059669;"></i> Contacto</h4>
+            <div class="aeb-grid">
+                <div class="aeb-field"><label>Telefono</label><input type="tel" class="eb-input" id="aebPhone" value="${escH(b.phone||'')}"></div>
+                <div class="aeb-field"><label>WhatsApp</label><input type="tel" class="eb-input" id="aebWhatsapp" value="${escH(b.whatsapp||'')}"></div>
+                <div class="aeb-field"><label>Email</label><input type="email" class="eb-input" id="aebEmail" value="${escH(b.email_contact||b.email||'')}"></div>
+                <div class="aeb-field"><label>Website</label><input type="url" class="eb-input" id="aebWebsite" value="${escH(b.website||'')}"></div>
+                <div class="aeb-field"><label>Instagram</label><input type="text" class="eb-input" id="aebInstagram" value="${escH(b.instagram||'')}"></div>
+                <div class="aeb-field"><label>Facebook</label><input type="text" class="eb-input" id="aebFacebook" value="${escH(b.facebook||'')}"></div>
+                <div class="aeb-field"><label>TikTok</label><input type="text" class="eb-input" id="aebTiktok" value="${escH(b.tiktok||'')}"></div>
+                <div class="aeb-field"><label>YouTube</label><input type="text" class="eb-input" id="aebYoutube" value="${escH(b.youtube||'')}"></div>
+            </div>
+        </div>
+        <div class="aeb-card">
+            <h4><i class="fas fa-map-marker-alt" style="color:#dc2626;"></i> Ubicacion</h4>
+            <div class="aeb-grid">
+                <div class="aeb-field"><label>Direccion</label><input type="text" class="eb-input" id="aebAddress" value="${escH(b.address||'')}"></div>
+                <div class="aeb-field"><label>Ciudad</label><input type="text" class="eb-input" id="aebCity" value="${escH(b.city||'')}"></div>
+                <div class="aeb-field"><label>Estado</label><input type="text" class="eb-input" id="aebState" value="${escH(b.state||'')}"></div>
+                <div class="aeb-field"><label>Horario</label><input type="text" class="eb-input" id="aebSchedule" value="${escH(b.schedule||'')}" placeholder="Lun-Vie 8:00-17:00"></div>
+            </div>
+        </div>
+        <div class="aeb-card">
+            <h4><i class="fas fa-images" style="color:#7c3aed;"></i> Imagenes (${images.length})</h4>
+            ${images.length > 0 ? '<div class="aeb-images-grid" id="aebImagesGrid">' +
+                images.map((img, i) => '<div class="aeb-img-thumb">' +
+                    '<img src="'+escH(img.url)+'" alt="" onerror="this.parentElement.style.display=\'none\'">' +
+                    '<button class="aeb-img-remove" onclick="adminEditBizRemoveImage('+(img.id||img.business_id)+',\''+escH(img.url).replace(/'/g,"\\'")+'\')" title="Eliminar">&times;</button>' +
+                    (img.is_cover ? '<span class="aeb-img-cover">Portada</span>' : '<button class="aeb-img-cover" onclick="adminEditBizSetCover('+img.id+')" style="cursor:pointer;">Portada</button>') +
+                    '</div>').join('') +
+                '</div>' : '<p style="color:#94a3b8;font-size:0.85rem;">No hay imagenes.</p>'}
+            <div style="margin-top:12px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('aebNewImageInput').click()"><i class="fas fa-plus"></i> Agregar Imagen</button>
+                <input type="file" id="aebNewImageInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="adminEditBizAddImage(this)">
+            </div>
+        </div>
+        <div class="aeb-card">
+            <h4><i class="fas fa-toggle-on" style="color:#f59e0b;"></i> Estado</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-sm ${b.status==='approved'?'btn-primary':'btn-secondary'}" onclick="adminEditBizChangeStatus(${b.id},'approved')" style="${b.status==='approved'?'background:#059669;':''}"><i class="fas fa-check"></i> Aprobar</button>
+                <button class="btn btn-sm ${b.status==='pending'?'btn-primary':'btn-secondary'}" onclick="adminEditBizChangeStatus(${b.id},'pending')" style="${b.status==='pending'?'background:#d97706;':''}"><i class="fas fa-clock"></i> Pendiente</button>
+                <button class="btn btn-sm ${b.status==='rejected'?'btn-primary':'btn-secondary'}" onclick="adminEditBizChangeStatus(${b.id},'rejected')" style="${b.status==='rejected'?'background:#dc2626;color:#fff;':''}"><i class="fas fa-times"></i> Rechazar</button>
+            </div>
+        </div>
+        <div style="text-align:right;margin-top:8px;">
+            <button class="btn" onclick="adminEditBizSave(${b.id})" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;font-weight:600;padding:12px 32px;border-radius:10px;border:none;cursor:pointer;font-size:0.95rem;">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>`;
+    }
+
+    window.adminEditBizHandleLogo = async function(input) {
+        const file = input.files[0]; if (!file) return;
+        if (file.size > 5*1024*1024) { showToast('Max 5MB para logo','error'); input.value=''; return; }
+        try {
+            showToast('Subiendo logo...','info');
+            const fd = new FormData(); fd.append('file',file); fd.append('product_type','logo');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                document.getElementById('aebLogoUrl').value = result.url;
+                document.getElementById('aebLogoPreview').innerHTML = '<img src="'+result.url+'" alt="Logo">';
+                showToast('Logo subido correctamente','success');
+            }
+        } catch(e) { showToast('Error al subir logo: '+e.message,'error'); }
+        input.value = '';
+    };
+
+    window.adminEditBizRemoveLogo = function() {
+        document.getElementById('aebLogoUrl').value = '';
+        document.getElementById('aebLogoPreview').innerHTML = '<i class="fas fa-store" style="font-size:1.5rem;color:#94a3b8;"></i>';
+        if (editBizCurrent) editBizCurrent.logo = null;
+    };
+
+    window.adminEditBizAddImage = async function(input) {
+        const file = input.files[0]; if (!file) return;
+        if (!editBizCurrent) return;
+        try {
+            showToast('Subiendo imagen...','info');
+            const fd = new FormData(); fd.append('file',file); fd.append('business_id',editBizCurrent.id); fd.append('product_type','business');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                await api.post('/images/' + editBizCurrent.id, { url: result.url, is_cover: 0 });
+                showToast('Imagen agregada','success');
+                loadEditBizDetail(editBizCurrent.id);
+            }
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+        input.value = '';
+    };
+
+    window.adminEditBizRemoveImage = async function(imgId, url) {
+        if (!confirm('Eliminar esta imagen?')) return;
+        if (!editBizCurrent) return;
+        try {
+            await api.delete('/images/' + editBizCurrent.id + '?image_id=' + imgId);
+            showToast('Imagen eliminada','success');
+            loadEditBizDetail(editBizCurrent.id);
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+    };
+
+    window.adminEditBizSetCover = async function(imgId) {
+        if (!editBizCurrent) return;
+        try {
+            const token = localStorage.getItem('token');
+            const resp = await fetch('/api/images/' + editBizCurrent.id + '/set-cover', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ image_id: imgId })
+            });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.error || 'Error al cambiar portada');
+            }
+            showToast('Portada actualizada','success');
+            loadEditBizDetail(editBizCurrent.id);
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+    };
+
+    window.adminEditBizChangeStatus = async function(id, status) {
+        try {
+            await api.put('/businesses/' + id, { status });
+            showToast('Estado actualizado','success');
+            if (editBizCurrent) loadEditBizDetail(id);
+            loadEditBizList();
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+    };
+
+    window.adminDeleteBiz = async function(id) {
+        if (!confirm('ELIMINAR este negocio permanentemente? No se puede deshacer.')) return;
+        try {
+            await api.delete('/businesses/' + id);
+            showToast('Negocio eliminado','success');
+            document.getElementById('adminEditBizContainer').style.display = 'none';
+            document.getElementById('adminEditBizSelect').value = '';
+            editBizCurrent = null;
+            loadEditBizList();
+            loadDashboardTab();
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+    };
+
+    window.adminEditBizSave = async function(id) {
+        const btn = event.target.closest('button');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        try {
+            const payload = {
+                title: document.getElementById('aebTitle').value,
+                description: document.getElementById('aebDesc').value,
+                business_type: document.getElementById('aebType').value,
+                phone: document.getElementById('aebPhone').value,
+                whatsapp: document.getElementById('aebWhatsapp').value,
+                email_contact: document.getElementById('aebEmail').value,
+                website: document.getElementById('aebWebsite').value,
+                instagram: document.getElementById('aebInstagram').value,
+                facebook: document.getElementById('aebFacebook').value,
+                tiktok: document.getElementById('aebTiktok').value,
+                youtube: document.getElementById('aebYoutube').value,
+                address: document.getElementById('aebAddress').value,
+                city: document.getElementById('aebCity').value,
+                state: document.getElementById('aebState').value,
+                schedule: document.getElementById('aebSchedule').value,
+                logo: document.getElementById('aebLogoUrl').value || null,
+            };
+            await api.put('/businesses/' + id, payload);
+            showToast('Negocio actualizado exitosamente','success');
+            loadEditBizList();
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; }
     };
 
     // ─── Initialize on DOM Ready ────────────────────────────────
