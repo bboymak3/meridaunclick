@@ -477,7 +477,10 @@ export async function onRequestGet(context) {
 
             <div class="business-content hidden" id="businessContent">
                 <div class="compact-info-card">
-                    ${business.logo ? `<div style="text-align:center;margin-bottom:16px;"><img src="${escapeHtml(business.logo)}" alt="${escapeHtml(title)} Logo" style="max-height:100px;max-width:220px;object-fit:contain;border-radius:12px;" onerror="this.parentElement.style.display='none'"></div>` : ''}
+                    <!-- Logo -->
+                <div id="businessLogoWrap" style="display:none;margin-bottom:24px;text-align:center;padding:24px 0 8px;">
+                    <img id="businessLogo" src="" alt="Logo" style="max-height:200px;max-width:420px;object-fit:contain;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,0.10);">
+                </div>
                     <div class="compact-top-row">
                         <div class="compact-price-row"><span id="propDetailBadges"></span></div>
                         <button class="btn-favorite" id="btnFavorite" aria-label="Agregar a favoritos" data-business-id=""><i class="far fa-heart"></i></button>
@@ -532,6 +535,7 @@ export async function onRequestGet(context) {
                     <h2 class="business-section-title">Contactar al Negocio</h2>
                     <div class="contact-actions" id="contactActions">
                         <a href="#" class="btn btn-whatsapp btn-full btn-lg" id="mainWhatsApp" style="display:none;" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Contactar por WhatsApp</a>
+                        <a href="#" class="btn btn-full btn-lg" id="emailContactBtn" style="display:none;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;font-weight:600;border-radius:12px;text-align:center;text-decoration:none;padding:14px 24px;font-size:1rem;"><i class="fas fa-envelope"></i> Contactar por Email</a>
                         <button class="btn btn-primary btn-full btn-lg" id="openChatBtn" style="margin-top:8px;"><i class="fas fa-comment-dots"></i> Enviar Mensaje</button>
                         <button class="btn btn-share-wa btn-full btn-lg" id="shareWhatsAppBtn" style="margin-top:8px;"><i class="fab fa-whatsapp"></i> Compartir por WhatsApp</button>
                     </div>
@@ -573,9 +577,12 @@ export async function onRequestGet(context) {
                 <section class="business-section" id="jobsSection" style="display:none;">
                     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                         <h2 class="business-section-title"><i class="fas fa-briefcase" style="color:#1a73e8;"></i> Empleo</h2>
-                        <a href="/empleo.html" class="section-link" id="viewAllJobs">Ver más <i class="fas fa-arrow-right"></i></a>
+                        <a href="/empleo.html" class="section-link" id="viewAllJobs" style="display:none;">Ver más <i class="fas fa-arrow-right"></i></a>
                     </div>
                     <div class="jobs-list" id="businessJobsList"></div>
+                    <div id="businessJobsEmpty" style="display:none;text-align:center;padding:24px 16px;">
+                        <a href="/empleo.html" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;font-size:1rem;border-radius:10px;text-decoration:none;"><i class="fas fa-briefcase"></i> Ver Empleos</a>
+                    </div>
                 </section>
 
                 <section class="business-section" id="servicesSection" style="display:none;">
@@ -616,12 +623,12 @@ export async function onRequestGet(context) {
     <span id="statAreaLabel" class="hidden"></span>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/js/app.js"></script>
+    <script src="/js/app.js?v=3"></script>
     <script>window.__BUSINESS_ID = ${business.id}; window.__BUSINESS_SLUG = '${escapeJs(business.slug)}';</script>
-    <script src="/js/business-detail.js"></script>
-    <script src="/js/chat.js"></script>
-    <script src="/js/review-widget.js"></script>
-    <script src="/js/ai-chatbot.js"></script>
+    <script src="/js/business-detail.js?v=3"></script>
+    <script src="/js/chat.js?v=3"></script>
+    <script src="/js/review-widget.js?v=3"></script>
+    <script src="/js/ai-chatbot.js?v=3"></script>
     <script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${business.id},event_type:'view',source:'ficha'})}).catch(function(){})},0);</script>
 </body>
 </html>`;
@@ -630,7 +637,7 @@ export async function onRequestGet(context) {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'no-store',
         'Link': `<${canonicalUrl}>; rel="canonical"`,
       },
     });

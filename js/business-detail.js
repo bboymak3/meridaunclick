@@ -759,3 +759,4 @@ async function loadBusinessServices(businessId) {
 
 // ─── Utility ────────────────────────────────────────────────
 // escapeHtml is defined in app.js (common module)
+
