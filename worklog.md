@@ -50,3 +50,22 @@ Stage Summary:
 - GitHub: commit 9bd7ad6 en main
 - Cloudflare: deploy exitoso, 9 archivos nuevos + Functions bundle
 - 3 features completas: (1) logo en crear negocio, (2) logo en editar negocio, (3) banner admin en dashboard
+
+---
+Task ID: 2
+Agent: Super Z (main)
+Task: Fix logo en perfil, banner admin, submódulos CF, sellers error
+
+Work Log:
+- Removidos 4 submódulos del repo (Globalpro, Globalprov2, llanocar, llm-chat-app-template) que causaban "fatal: No url found for submodule path" en CF deploy
+- Agregado logo visible en business.html (contenedor img junto al título)
+- Agregada lógica en business-detail.js para mostrar b.logo
+- Agregado logo en landing page /negocio/slug (functions/web/[slug].js hero)
+- Fix sellers endpoint: auto-crea tabla sellers_profiles si no existe
+- Commit 439d749 subido a GitHub (sin submódulos)
+- Deploy manual a Cloudflare Pages exitoso
+
+Stage Summary:
+- GitHub: commit 439d749, repo limpio sin submódulos
+- CF Pages: deploy exitoso en https://7032bb31.aunclick.pages.dev
+- 6 archivos modificados: dashboard.html, dashboard.js, business.html, business-detail.js, [slug].js, sellers/index.js
