@@ -3,6 +3,10 @@ abogadosenbarinas/
 abogadosvalencia/
 cachama/
 globalpro/
+Globalpro/
+Globalprov2/
+llanocar/
+llm-chat-app-template/
 mono/
 skills/
 upload/
@@ -10,4 +14,15 @@ download/
 meridaunclick/
 tool-results/
 casasbarinas/
-meridaunclick/
+*.json.bak
+*.bak
+.env
+worklog.md
+schema*.sql
+html_part1.txt
+globalpro-*.json
+globalprov2-*.json
+llm-chat-*.json
+llm-*.json
+repo_main.json
+_trigger
