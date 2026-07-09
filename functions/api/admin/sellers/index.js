@@ -38,11 +38,24 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Safe query: use COALESCE in case columns don't exist
     const sellers = await env.DB.prepare(`
-      SELECT sp.user_id, sp.store_name, sp.description, sp.avatar, sp.city, sp.state,
-             sp.phone, sp.whatsapp, sp.instagram, sp.facebook, sp.tiktok,
-             sp.rating, sp.total_sales, sp.created_at, sp.updated_at,
-             u.name as user_name, u.email as user_email, u.role as user_role, u.plan_type
+      SELECT sp.user_id,
+             COALESCE(sp.store_name, (SELECT b.title FROM businesses b WHERE b.user_id = sp.user_id LIMIT 1), u.name, 'Sin nombre') as store_name,
+             COALESCE(sp.description, '') as description,
+             COALESCE(sp.avatar, '') as avatar,
+             COALESCE(sp.city, '') as city,
+             COALESCE(sp.state, '') as state,
+             COALESCE(sp.phone, '') as phone,
+             COALESCE(sp.whatsapp, '') as whatsapp,
+             COALESCE(sp.instagram, '') as instagram,
+             COALESCE(sp.facebook, '') as facebook,
+             COALESCE(sp.tiktok, '') as tiktok,
+             COALESCE(sp.rating, 0) as rating,
+             COALESCE(sp.total_sales, 0) as total_sales,
+             sp.created_at, sp.updated_at,
+             u.name as user_name, u.email as user_email, u.role as user_role,
+             COALESCE(u.plan_type, 'basic') as plan_type
       FROM sellers_profiles sp
       LEFT JOIN users u ON sp.user_id = u.id
       ORDER BY sp.created_at DESC

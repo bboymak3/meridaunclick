@@ -76,6 +76,16 @@ function populateBusinessDetail(b) {
         breadcrumbTitle.textContent = b.title || 'Negocio';
     }
 
+    // ─── Logo ──────────────────────────────────────────────
+    const logoWrap = document.getElementById('businessLogoWrap');
+    const logoImg = document.getElementById('businessLogo');
+    if (b.logo && logoWrap && logoImg) {
+        logoImg.src = b.logo;
+        logoImg.alt = (b.title || 'Logo') + ' logo';
+        logoImg.onerror = function() { logoWrap.style.display = 'none'; };
+        logoWrap.style.display = 'block';
+    }
+
     // ─── Gallery ──────────────────────────────────────────────
     const images = b.images || [];
     const mainImage = document.getElementById('mainImage');
