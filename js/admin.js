@@ -3430,6 +3430,22 @@
                 <button class="btn btn-sm ${b.status==='rejected'?'btn-primary':'btn-secondary'}" onclick="adminEditBizChangeStatus(${b.id},'rejected')" style="${b.status==='rejected'?'background:#dc2626;color:#fff;':''}"><i class="fas fa-times"></i> Rechazar</button>
             </div>
         </div>
+
+        <!-- HTML de Pagina Personalizada -->
+        <div class="aeb-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                <h4 style="margin:0;"><i class="fas fa-code" style="color:#8b5cf6;"></i> HTML de Pagina del Negocio</h4>
+                <div style="display:flex;gap:6px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="adminEditBizPreviewHtml()"><i class="fas fa-eye"></i> Vista Previa</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="adminEditBizLoadCurrentHtml()"><i class="fas fa-download"></i> Cargar HTML Actual</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="if(confirm('Eliminar el HTML personalizado? Se mostrara la pagina por defecto.')){document.getElementById('aebCustomHtml').value='';showToast('HTML personalizado eliminado','info');}" style="color:#dc2626;"><i class="fas fa-trash"></i> Resetear</button>
+                </div>
+            </div>
+            <p style="font-size:0.82rem;color:#6b7280;margin:0 0 8px;">Edita el codigo HTML que se mostrara en la pagina de perfil de este negocio. Si se deja vacio, se usara la plantilla por defecto. Puedes usar CSS inline y JavaScript basico.</p>
+            <textarea id="aebCustomHtml" class="eb-input" style="width:100%;min-height:300px;font-family:monospace;font-size:0.82rem;line-height:1.5;resize:vertical;tab-size:2;" placeholder="Escribe o pega aqui el HTML personalizado para la pagina de este negocio...">${escH(b.custom_html||'')}</textarea>
+            <p style="font-size:0.72rem;color:#9ca3af;margin:6px 0 0;">Nota: El HTML se guarda con el boton 'Guardar Cambios' de abajo. Para ver la pagina publicada, haz clic en 'Ver' arriba.</p>
+        </div>
+
         <div style="text-align:right;margin-top:8px;">
             <button class="btn" onclick="adminEditBizSave(${b.id})" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;font-weight:600;padding:12px 32px;border-radius:10px;border:none;cursor:pointer;font-size:0.95rem;">
                 <i class="fas fa-save"></i> Guardar Cambios
@@ -3529,6 +3545,7 @@
         const btn = event.target.closest('button');
         btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         try {
+            const customHtmlEl = document.getElementById('aebCustomHtml');
             const payload = {
                 title: document.getElementById('aebTitle').value,
                 description: document.getElementById('aebDesc').value,
@@ -3546,12 +3563,53 @@
                 state: document.getElementById('aebState').value,
                 schedule: document.getElementById('aebSchedule').value,
                 logo: document.getElementById('aebLogoUrl').value || null,
+                custom_html: customHtmlEl ? customHtmlEl.value || null : null,
             };
             await api.put('/businesses/' + id, payload);
             showToast('Negocio actualizado exitosamente','success');
             loadEditBizList();
         } catch(e) { showToast('Error: '+e.message,'error'); }
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; }
+    };
+
+    // ─── HTML Editor Helpers ────────────────────────────────────
+    window.adminEditBizPreviewHtml = function() {
+        const html = document.getElementById('aebCustomHtml')?.value;
+        if (!html || !html.trim()) {
+            showToast('No hay HTML personalizado para previsualizar. Escribe algo primero.','info');
+            return;
+        }
+        const win = window.open('', '_blank', 'width=1200,height=800');
+        if (win) {
+            win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Vista Previa</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"><style>body{margin:0;font-family:system-ui,-apple-system,sans-serif;}</style></head><body>' + html + '</body></html>');
+            win.document.close();
+        } else {
+            showToast('Permite ventanas emergentes para ver la vista previa','error');
+        }
+    };
+
+    window.adminEditBizLoadCurrentHtml = async function() {
+        if (!editBizCurrent) return;
+        const textarea = document.getElementById('aebCustomHtml');
+        if (!textarea) return;
+        // Fetch the business page as rendered
+        try {
+            const resp = await fetch('/negocio/' + (editBizCurrent.slug || editBizCurrent.id));
+            if (!resp.ok) throw new Error('No se pudo cargar la pagina');
+            const html = await resp.text();
+            // Extract body content
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const body = doc.body;
+            if (body) {
+                // Get the main content area, excluding nav/footer
+                const main = body.querySelector('.business-detail') || body.querySelector('main') || body.querySelector('.container') || body;
+                textarea.value = main.innerHTML.trim();
+                showToast('HTML de la pagina cargado en el editor','success');
+            }
+        } catch(e) {
+            showToast('Error al cargar HTML: ' + e.message,'error');
+        }
     };
 
     // ─── Initialize on DOM Ready ────────────────────────────────

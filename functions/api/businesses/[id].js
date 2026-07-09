@@ -131,7 +131,7 @@ export async function onRequestPut(context) {
       'twitter', 'tiktok', 'youtube', 'video_url', 'logo',
       'email_contact', 'schedule',
       'has_parking', 'has_wifi', 'has_card', 'has_delivery', 'has_outdoor',
-      'featured', 'status',
+      'featured', 'status', 'custom_html',
     ];
 
     const setClauses = [];

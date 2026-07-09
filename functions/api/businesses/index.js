@@ -55,6 +55,7 @@ export async function onRequestGet(context) {
     try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN expires_at TEXT').run(); } catch(e) { /* column may exist */ }
     try { await env.DB.prepare("ALTER TABLE users ADD COLUMN plan_type TEXT DEFAULT 'basic'").run(); } catch(e) { /* column may exist */ }
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN logo TEXT").run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN custom_html TEXT").run(); } catch(e) { /* column may exist */ }
 
     const url = new URL(request.url);
     const params = url.searchParams;
@@ -63,9 +64,9 @@ export async function onRequestGet(context) {
     const categorySlug = params.get('categoria');
     const city = params.get('city');
     const state = params.get('state');
-    const status = params.get('status') || 'approved';
+    let status = params.get('status') || 'approved';
     const page = parseInt(params.get('page')) || 1;
-    const limit = parseInt(params.get('limit')) || 12;
+    const limit = Math.min(parseInt(params.get('limit')) || 12, 500);
     const offset = (page - 1) * limit;
     const search = params.get('search');
     const sort = params.get('sort') || 'newest';
@@ -75,8 +76,16 @@ export async function onRequestGet(context) {
     const conditions = [];
     const bindings = [];
 
-    conditions.push('p.status = ?');
-    bindings.push(status);
+    // Support comma-separated statuses (e.g. status=approved,pending,rejected)
+    if (status.includes(',')) {
+      const statusList = status.split(',').map(s => s.trim()).filter(Boolean);
+      const placeholders = statusList.map(() => '?').join(', ');
+      conditions.push(`p.status IN (${placeholders})`);
+      bindings.push(...statusList);
+    } else {
+      conditions.push('p.status = ?');
+      bindings.push(status);
+    }
 
     if (userId) {
       conditions.push('p.user_id = ?');

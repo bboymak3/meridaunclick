@@ -70,6 +70,51 @@
 })();
 
 function populateBusinessDetail(b) {
+    // ─── Custom HTML Override ──────────────────────────────
+    // If the business has custom_html set by admin, use it instead of default layout
+    if (b.custom_html && b.custom_html.trim()) {
+        const contentEl = document.getElementById('businessContent');
+        if (contentEl) {
+            // Keep the logo display
+            const logoWrap = document.getElementById('businessLogoWrap');
+            const logoImg = document.getElementById('businessLogo');
+            if (b.logo && logoWrap && logoImg) {
+                logoImg.src = b.logo;
+                logoImg.alt = (b.title || 'Logo') + ' logo';
+                logoImg.onerror = function() { logoWrap.style.display = 'none'; };
+                logoWrap.style.display = 'block';
+            }
+            // Replace everything after logo with custom HTML
+            const logoSection = document.getElementById('businessLogoWrap');
+            let insertPoint = logoSection ? logoSection.nextSibling : contentEl.firstChild;
+            // Clear existing content
+            while (contentEl.lastChild !== insertPoint && contentEl.lastChild !== (logoSection || null)) {
+                contentEl.removeChild(contentEl.lastChild);
+            }
+            if (insertPoint && insertPoint !== logoSection) {
+                contentEl.removeChild(insertPoint);
+            }
+            // Insert custom HTML
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = b.custom_html;
+            while (wrapper.firstChild) {
+                contentEl.appendChild(wrapper.firstChild);
+            }
+            // Execute any scripts in the custom HTML
+            wrapper.querySelectorAll('script').forEach(oldScript => {
+                const newScript = document.createElement('script');
+                if (oldScript.src) newScript.src = oldScript.src;
+                else newScript.textContent = oldScript.textContent;
+                document.body.appendChild(newScript);
+            });
+            // Update breadcrumb
+            const breadcrumbTitle = document.getElementById('breadcrumbTitle');
+            if (breadcrumbTitle) breadcrumbTitle.textContent = b.title || 'Negocio';
+            document.title = (b.title || 'Negocio') + ' - HOLAX';
+            return; // Skip default rendering
+        }
+    }
+
     // ─── Breadcrumb ──────────────────────────────────────────
     const breadcrumbTitle = document.getElementById('breadcrumbTitle');
     if (breadcrumbTitle) {
