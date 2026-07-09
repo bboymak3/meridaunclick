@@ -75,7 +75,7 @@ function populateBusinessDetail(b) {
     if (b.custom_html && b.custom_html.trim()) {
         const contentEl = document.getElementById('businessContent');
         if (contentEl) {
-            // Show logo if exists
+            // Show logo if exists (bigger, prominent)
             const logoWrap = document.getElementById('businessLogoWrap');
             const logoImg = document.getElementById('businessLogo');
             if (b.logo && logoWrap && logoImg) {
@@ -117,7 +117,7 @@ function populateBusinessDetail(b) {
         breadcrumbTitle.textContent = b.title || 'Negocio';
     }
 
-    // ─── Logo ──────────────────────────────────────────────
+    // ─── Logo (bigger, prominent) ─────────────────────────
     const logoWrap = document.getElementById('businessLogoWrap');
     const logoImg = document.getElementById('businessLogo');
     if (b.logo && logoWrap && logoImg) {
@@ -675,6 +675,7 @@ async function loadBusinessJobs(businessId) {
     const list = document.getElementById('businessJobsList');
     const emptyDiv = document.getElementById('businessJobsEmpty');
     const viewAll = document.getElementById('viewAllJobs');
+    const sectionHeader = section ? section.querySelector('.section-header') : null;
     if (!section) return;
 
     // Always show the jobs section
@@ -685,9 +686,10 @@ async function loadBusinessJobs(businessId) {
         const jobs = data.jobs || [];
 
         if (jobs.length === 0) {
-            // No jobs — show "Ver Empleos" button
+            // No jobs — hide list and header title, show only "Ver Empleos" button
             if (list) list.style.display = 'none';
             if (viewAll) viewAll.style.display = 'none';
+            if (sectionHeader) sectionHeader.style.display = 'none';
             if (emptyDiv) emptyDiv.style.display = '';
             return;
         }
@@ -695,6 +697,7 @@ async function loadBusinessJobs(businessId) {
         // Has jobs — show list and "Ver más" link
         if (list) list.style.display = '';
         if (emptyDiv) emptyDiv.style.display = 'none';
+        if (sectionHeader) sectionHeader.style.display = '';
         if (viewAll) { viewAll.style.display = ''; viewAll.href = `empleo.html?business_id=${businessId}`; }
 
         list.innerHTML = jobs.map(j => `
@@ -707,8 +710,9 @@ async function loadBusinessJobs(businessId) {
             </a>
         `).join('');
     } catch (err) {
-        // On error, show the section with "Ver Empleos" link
+        // On error, show only "Ver Empleos" button
         if (list) list.style.display = 'none';
+        if (sectionHeader) sectionHeader.style.display = 'none';
         if (emptyDiv) emptyDiv.style.display = '';
         console.warn('Error loading business jobs:', err);
     }
