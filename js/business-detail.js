@@ -194,13 +194,16 @@ function populateBusinessDetail(b) {
         galleryBadges.innerHTML = badges;
     }
 
-    // ─── Title ────────────────────────────────────────────────
+    // ─── Title + Plan Badge ─────────────────────────────────
     const titleEl = document.getElementById('propDetailTitle');
     if (titleEl) {
         titleEl.textContent = b.title || 'Sin título';
-        // Add Premium badge next to title if owner is premium
-        if (b.owner_plan_type === 'premium') {
-            titleEl.innerHTML += ' <span style="display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:10px;vertical-align:middle;margin-left:6px;"><i class="fas fa-crown" style="font-size:0.6rem;"></i> Premium</span>';
+        // Plan badge next to business name
+        const isOwnerPremium = b.owner_plan_type === 'premium';
+        if (isOwnerPremium) {
+            titleEl.innerHTML += ' <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:10px;vertical-align:middle;margin-left:8px;letter-spacing:0.3px;text-transform:uppercase;"><i class="fas fa-crown" style="font-size:0.65rem;"></i> Premium</span>';
+        } else {
+            titleEl.innerHTML += ' <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;vertical-align:middle;margin-left:8px;"><i class="fas fa-check-circle" style="font-size:0.65rem;"></i> OLAX</span>';
         }
     }
 
@@ -413,7 +416,7 @@ function populateBusinessDetail(b) {
     }
 
     // ─── Contact Actions ──────────────────────────────────────
-    const isOwnerPremium = b.owner_plan_type === 'premium';
+    // isOwnerPremium already declared above in Title section
     const mainWhatsApp = document.getElementById('mainWhatsApp');
     const emailContactBtn = document.getElementById('emailContactBtn');
 
