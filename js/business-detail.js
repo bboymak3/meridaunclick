@@ -110,7 +110,7 @@ function populateBusinessDetail(b) {
             // Update breadcrumb
             const breadcrumbTitle = document.getElementById('breadcrumbTitle');
             if (breadcrumbTitle) breadcrumbTitle.textContent = b.title || 'Negocio';
-            document.title = (b.title || 'Negocio') + ' - HOLAX';
+            document.title = (b.title || 'Negocio') + ' - OLAX';
             return; // Skip default rendering
         }
     }
@@ -410,7 +410,7 @@ function populateBusinessDetail(b) {
         const waNumber = b.whatsapp || b.phone || b.owner_whatsapp || '';
         if (waNumber && isOwnerPremium) {
             const cleanNumber = waNumber.replace(/[^0-9+]/g, '');
-            const msg = encodeURIComponent(`Hola, vi tu negocio "${b.title}" en HOLAX y me interesa saber más.`);
+            const msg = encodeURIComponent(`Hola, vi tu negocio "${b.title}" en OLAX y me interesa saber más.`);
             mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
             mainWhatsApp.style.display = '';
         } else {

@@ -658,7 +658,7 @@ const PropertyDetail = (function () {
             const waNumber = p.whatsapp || p.phone || p.owner_whatsapp || '';
             if (waNumber && isOwnerPremium) {
                 const cleanNumber = waNumber.replace(/[^0-9+]/g, '');
-                const msg = encodeURIComponent(`Hola, vi tu propiedad "${p.title || ''}" en HOLAX y me interesa saber más.`);
+                const msg = encodeURIComponent(`Hola, vi tu propiedad "${p.title || ''}" en OLAX y me interesa saber más.`);
                 mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
                 mainWhatsApp.style.display = '';
             } else {
