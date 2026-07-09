@@ -730,7 +730,8 @@ function getStatusBadge(status) {
 function createBusinessCard(business) {
     if (!business) return '';
 
-    const coverImage = business.cover_image || business.images?.[0]?.url || '';
+    // Use logo first, then cover_image, then first uploaded image
+    const coverImage = business.logo || business.cover_image || business.images?.[0]?.url || '';
     const placeholderImg = 'data:image/svg+xml,' + encodeURIComponent(
         '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" fill="%23e0e0e0"><rect width="400" height="300"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="16" font-family="sans-serif">Sin imagen</text></svg>'
     );

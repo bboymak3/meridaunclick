@@ -128,7 +128,16 @@ function populateBusinessDetail(b) {
     }
 
     // ─── Gallery ──────────────────────────────────────────────
-    const images = b.images || [];
+    let images = b.images || [];
+
+    // If business has a logo, inject it as the first gallery image
+    if (b.logo) {
+        const hasLogoInImages = images.some(img => img.url === b.logo);
+        if (!hasLogoInImages) {
+            images.unshift({ url: b.logo, is_logo: true });
+        }
+    }
+
     const mainImage = document.getElementById('mainImage');
     const galleryThumbnails = document.getElementById('galleryThumbnails');
     const galleryCurrent = document.getElementById('galleryCurrent');
