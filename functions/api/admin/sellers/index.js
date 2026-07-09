@@ -29,6 +29,15 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Check if sellers_profiles table exists
+    const tableCheck = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='sellers_profiles'").first();
+    if (!tableCheck) {
+      // Table doesn't exist - return empty array instead of 500
+      return new Response(JSON.stringify({ sellers: [] }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const sellers = await env.DB.prepare(`
       SELECT sp.user_id, sp.store_name, sp.description, sp.avatar, sp.city, sp.state,
              sp.phone, sp.whatsapp, sp.instagram, sp.facebook, sp.tiktok,

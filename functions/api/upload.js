@@ -130,6 +130,8 @@ export async function onRequestPost(context) {
     // Verify ownership based on product_type
     if (productType === 'marketplace' || productType === 'video') {
       // Marketplace/video uploads - any authenticated user can upload
+    } else if (productType === 'logo' || productType === 'banner') {
+      // Logo/banner uploads - any authenticated user (admin) can upload, no business_id required
     } else if (productType === 'property' || propertyId) {
       // Property uploads - verify property ownership
       const property = await env.DB.prepare('SELECT * FROM properties WHERE id = ?').bind(propertyId).first();
@@ -145,7 +147,7 @@ export async function onRequestPost(context) {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-    } else {
+    } else if (businessId) {
       // Business uploads
       const business = await env.DB.prepare('SELECT * FROM businesses WHERE id = ?').bind(businessId).first();
       if (!business) {

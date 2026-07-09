@@ -2560,8 +2560,360 @@
         if (icon) icon.style.display = '';
         if (btn) btn.style.display = 'none';
     };
-    const _origSetupAdmin = setupAdminSection;
-    setupAdminSection = function() { _origSetupAdmin(); setupAdminSettingsTab(); };
+
+    // ─── Admin Edit Businesses Tab (NEW) ─────────────────────
+    let adminEditBizList = [];
+    let adminEditBizCurrent = null;
+    let adminEditBizLogoFile = null;
+
+    function setupAdminEditBizTab() {
+        const tab = document.getElementById('adminTabEditBiz');
+        if (!tab) return;
+        tab.addEventListener('click', () => {
+            activateAdminTab('EditBiz');
+            loadAdminEditBizList();
+        });
+        const sel = document.getElementById('adminEditBizSelect');
+        if (sel) {
+            sel.addEventListener('change', () => {
+                const id = sel.value;
+                if (id) loadAdminEditBizDetail(id);
+                else document.getElementById('adminEditBizContainer').style.display = 'none';
+            });
+        }
+    }
+
+    async function loadAdminEditBizList() {
+        const sel = document.getElementById('adminEditBizSelect');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Cargando negocios...</option>';
+        try {
+            const data = await api.get('/businesses?limit=500&status=approved,pending,rejected');
+            adminEditBizList = data.businesses || [];
+            sel.innerHTML = '<option value="">-- Selecciona un negocio (' + adminEditBizList.length + ') --</option>';
+            adminEditBizList.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.title + ' (' + (b.status || '?') + ') — ' + (b.city || '');
+                sel.appendChild(opt);
+            });
+        } catch(e) {
+            sel.innerHTML = '<option value="">Error al cargar</option>';
+            showToast('Error al cargar negocios', 'error');
+        }
+    }
+
+    async function loadAdminEditBizDetail(id) {
+        const container = document.getElementById('adminEditBizContainer');
+        if (!container) return;
+        container.style.display = 'block';
+        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#059669;"></i><p style="margin-top:8px;color:#64748b;">Cargando datos...</p></div>';
+        try {
+            const data = await api.get('/businesses/' + id);
+            adminEditBizCurrent = data.business || data;
+            renderAdminEditBizForm(adminEditBizCurrent);
+        } catch(e) {
+            container.innerHTML = '<p style="color:#dc2626;">Error: ' + e.message + '</p>';
+        }
+    }
+
+    function renderAdminEditBizForm(b) {
+        const container = document.getElementById('adminEditBizContainer');
+        if (!container) return;
+        const statusColors = { approved: '#059669', pending: '#d97706', rejected: '#dc2626' };
+        const statusLabels = { approved: 'Aprobado', pending: 'Pendiente', rejected: 'Rechazado' };
+        const images = b.images || [];
+        container.innerHTML = `
+        <div class="aeb-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <h4 style="margin:0;"><i class="fas fa-building" style="color:#059669;"></i> ${escH(b.title)}</h4>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <span style="padding:3px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;background:${statusColors[b.status]||'#64748b'};color:#fff;">${statusLabels[b.status]||b.status}</span>
+                    <a href="/negocio/${b.slug||b.id}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-external-link-alt"></i> Ver</a>
+                    <button class="btn btn-danger btn-sm" onclick="adminDeleteBiz(${b.id})"><i class="fas fa-trash"></i> Eliminar</button>
+                </div>
+            </div>
+            <p style="font-size:0.78rem;color:#94a3b8;margin:4px 0 0;">ID: ${b.id} | Dueño: ${b.owner_name||b.user_id||'?'} | Vistas: ${b.views||0}</p>
+        </div>
+
+        <!-- Logo -->
+        <div class="aeb-card">
+            <h4><i class="fas fa-image" style="color:#059669;"></i> Logo</h4>
+            <div class="aeb-logo-area">
+                <div class="aeb-logo-preview" id="aebLogoPreview">
+                    ${b.logo ? `<img src="${escH(b.logo)}" alt="Logo" onerror="this.style.display='none'">` : '<i class="fas fa-store" style="font-size:1.5rem;color:#94a3b8;"></i>'}
+                </div>
+                <div>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('aebLogoInput').click()"><i class="fas fa-upload"></i> Subir Logo</button>
+                    ${b.logo ? `<button type="button" class="btn btn-secondary btn-sm" onclick="adminRemoveLogo()"><i class="fas fa-trash"></i> Quitar</button>` : ''}
+                    <input type="file" id="aebLogoInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="adminHandleLogoSelect(this)">
+                    <input type="hidden" id="aebLogoUrl" value="${escH(b.logo||'')}">
+                    <p style="font-size:0.72rem;color:#9ca3af;margin-top:4px;">JPG, PNG, WebP - Max 5MB</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="aeb-card">
+            <h4><i class="fas fa-info-circle" style="color:#2563eb;"></i> Informacion Basica</h4>
+            <div class="aeb-grid">
+                <div class="aeb-field"><label>Nombre *</label><input type="text" class="eb-input" id="aebTitle" value="${escH(b.title||'')}" maxlength="150"></div>
+                <div class="aeb-field"><label>Categoria</label><input type="text" class="eb-input" id="aebCategory" value="${escH(b.category_name||b.category||'')}"></div>
+                <div class="aeb-field"><label>Descripcion</label><textarea class="eb-input eb-textarea" id="aebDesc" rows="3">${escH(b.description||'')}</textarea></div>
+                <div class="aeb-field"><label>Tipo</label><input type="text" class="eb-input" id="aebType" value="${escH(b.business_type||'')}"></div>
+            </div>
+        </div>
+
+        <!-- Contact -->
+        <div class="aeb-card">
+            <h4><i class="fas fa-phone" style="color:#059669;"></i> Contacto</h4>
+            <div class="aeb-grid">
+                <div class="aeb-field"><label>Telefono</label><input type="tel" class="eb-input" id="aebPhone" value="${escH(b.phone||'')}"></div>
+                <div class="aeb-field"><label>WhatsApp</label><input type="tel" class="eb-input" id="aebWhatsapp" value="${escH(b.whatsapp||'')}"></div>
+                <div class="aeb-field"><label>Email</label><input type="email" class="eb-input" id="aebEmail" value="${escH(b.email_contact||b.email||'')}"></div>
+                <div class="aeb-field"><label>Website</label><input type="url" class="eb-input" id="aebWebsite" value="${escH(b.website||'')}"></div>
+                <div class="aeb-field"><label>Instagram</label><input type="text" class="eb-input" id="aebInstagram" value="${escH(b.instagram||'')}"></div>
+                <div class="aeb-field"><label>Facebook</label><input type="text" class="eb-input" id="aebFacebook" value="${escH(b.facebook||'')}"></div>
+                <div class="aeb-field"><label>TikTok</label><input type="text" class="eb-input" id="aebTiktok" value="${escH(b.tiktok||'')}"></div>
+                <div class="aeb-field"><label>YouTube</label><input type="text" class="eb-input" id="aebYoutube" value="${escH(b.youtube||'')}"></div>
+            </div>
+        </div>
+
+        <!-- Location -->
+        <div class="aeb-card">
+            <h4><i class="fas fa-map-marker-alt" style="color:#dc2626;"></i> Ubicacion</h4>
+            <div class="aeb-grid">
+                <div class="aeb-field"><label>Direccion</label><input type="text" class="eb-input" id="aebAddress" value="${escH(b.address||'')}"></div>
+                <div class="aeb-field"><label>Ciudad</label><input type="text" class="eb-input" id="aebCity" value="${escH(b.city||'')}"></div>
+                <div class="aeb-field"><label>Estado</label><input type="text" class="eb-input" id="aebState" value="${escH(b.state||'')}"></div>
+                <div class="aeb-field"><label>Horario</label><input type="text" class="eb-input" id="aebSchedule" value="${escH(b.schedule||'')}" placeholder="Lun-Vie 8:00-17:00"></div>
+            </div>
+        </div>
+
+        <!-- Images -->
+        <div class="aeb-card">
+            <h4><i class="fas fa-images" style="color:#7c3aed;"></i> Imagenes (${images.length})</h4>
+            ${images.length > 0 ? `<div class="aeb-images-grid" id="aebImagesGrid">
+                ${images.map((img, i) => `
+                    <div class="aeb-img-thumb">
+                        <img src="${escH(img.url)}" alt="" onerror="this.parentElement.style.display='none'">
+                        <button class="aeb-img-remove" onclick="adminRemoveImage(${img.id||img.business_id},'${escH(img.url)}')" title="Eliminar">&times;</button>
+                        ${img.is_cover ? '<span class="aeb-img-cover">Portada</span>' : `<button class="aeb-img-cover" onclick="adminSetCover(${img.id})" style="cursor:pointer;">Portada</button>`}
+                    </div>
+                `).join('')}
+            </div>` : '<p style="color:#94a3b8;font-size:0.85rem;">No hay imagenes.</p>'}
+            <div style="margin-top:12px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('aebNewImageInput').click()"><i class="fas fa-plus"></i> Agregar Imagen</button>
+                <input type="file" id="aebNewImageInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="adminAddImage(this)">
+            </div>
+        </div>
+
+        <!-- Status Change -->
+        <div class="aeb-card">
+            <h4><i class="fas fa-toggle-on" style="color:#f59e0b;"></i> Estado</h4>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="btn btn-sm ${b.status==='approved'?'btn-primary':'btn-secondary'}" onclick="adminChangeStatus(${b.id},'approved')" style="${b.status==='approved'?'background:#059669;':''}"><i class="fas fa-check"></i> Aprobar</button>
+                <button class="btn btn-sm ${b.status==='pending'?'btn-primary':'btn-secondary'}" onclick="adminChangeStatus(${b.id},'pending')" style="${b.status==='pending'?'background:#d97706;':''}"><i class="fas fa-clock"></i> Pendiente</button>
+                <button class="btn btn-sm ${b.status==='rejected'?'btn-primary':'btn-secondary'}" onclick="adminChangeStatus(${b.id},'rejected')" style="${b.status==='rejected'?'background:#dc2626;color:#fff;':''}"><i class="fas fa-times"></i> Rechazar</button>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <div style="text-align:right;margin-top:8px;">
+            <button class="btn" onclick="adminSaveBizEdit(${b.id})" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;font-weight:600;padding:12px 32px;border-radius:10px;border:none;cursor:pointer;font-size:0.95rem;">
+                <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+        </div>`;
+    }
+
+    function escH(s) { if (!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+    window.adminHandleLogoSelect = async function(input) {
+        const file = input.files[0]; if (!file) return;
+        if (file.size > 5*1024*1024) { showToast('Max 5MB para logo','error'); input.value=''; return; }
+        try {
+            showToast('Subiendo logo...','info');
+            const fd = new FormData(); fd.append('file',file); fd.append('product_type','logo');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                document.getElementById('aebLogoUrl').value = result.url;
+                const preview = document.getElementById('aebLogoPreview');
+                preview.innerHTML = `<img src="${result.url}" alt="Logo">`;
+                adminEditBizLogoFile = null;
+                showToast('Logo subido correctamente','success');
+            }
+        } catch(e) { showToast('Error al subir logo: '+e.message,'error'); }
+        input.value = '';
+    };
+
+    window.adminRemoveLogo = function() {
+        document.getElementById('aebLogoUrl').value = '';
+        document.getElementById('aebLogoPreview').innerHTML = '<i class="fas fa-store" style="font-size:1.5rem;color:#94a3b8;"></i>';
+        if (adminEditBizCurrent) { adminEditBizCurrent.logo = null; }
+    };
+
+    window.adminAddImage = async function(input) {
+        const file = input.files[0]; if (!file) return;
+        if (!adminEditBizCurrent) return;
+        try {
+            showToast('Subiendo imagen...','info');
+            const fd = new FormData(); fd.append('file',file); fd.append('business_id',adminEditBizCurrent.id); fd.append('product_type','business');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                await api.post('/images/' + adminEditBizCurrent.id, { url: result.url, is_cover: 0 });
+                showToast('Imagen agregada','success');
+                loadAdminEditBizDetail(adminEditBizCurrent.id);
+            }
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+        input.value = '';
+    };
+
+    window.adminRemoveImage = async function(imgId, url) {
+        if (!confirm('Eliminar esta imagen?')) return;
+        if (!adminEditBizCurrent) return;
+        try {
+            await api.delete('/images/' + adminEditBizCurrent.id + '?image_id=' + imgId);
+            showToast('Imagen eliminada','success');
+            loadAdminEditBizDetail(adminEditBizCurrent.id);
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+    };
+
+    window.adminSetCover = async function(imgId) {
+        if (!adminEditBizCurrent) return;
+        try {
+            // POST to images endpoint with is_cover=1 will unset previous cover and this sets new one
+            // But we don't have the URL. Use a simpler approach: upload a dummy then set cover via DB
+            // Actually, let's just call the businesses/[id] endpoint with a special field
+            // The simplest: we fetch the image data, then use the images POST to re-register it as cover
+            // Even simpler: create a minimal set-cover function endpoint
+            const token = getToken();
+            const resp = await fetch('/api/images/' + adminEditBizCurrent.id + '/set-cover', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify({ image_id: imgId })
+            });
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({}));
+                throw new Error(err.error || 'Error al cambiar portada');
+            }
+            showToast('Portada actualizada','success');
+            loadAdminEditBizDetail(adminEditBizCurrent.id);
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+    };
+
+    window.adminChangeStatus = async function(id, status) {
+        try {
+            await api.put('/businesses/' + id, { status });
+            showToast('Estado actualizado','success');
+            if (adminEditBizCurrent) loadAdminEditBizDetail(id);
+            loadAdminEditBizList();
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+    };
+
+    window.adminDeleteBiz = async function(id) {
+        if (!confirm('ELIMINAR este negocio permanentemente? No se puede deshacer.')) return;
+        try {
+            await api.delete('/businesses/' + id);
+            showToast('Negocio eliminado','success');
+            document.getElementById('adminEditBizContainer').style.display = 'none';
+            document.getElementById('adminEditBizSelect').value = '';
+            loadAdminEditBizList();
+            loadAdminData();
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+    };
+
+    window.adminSaveBizEdit = async function(id) {
+        const btn = event.target.closest('button');
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        try {
+            const payload = {
+                title: document.getElementById('aebTitle').value,
+                description: document.getElementById('aebDesc').value,
+                business_type: document.getElementById('aebType').value,
+                phone: document.getElementById('aebPhone').value,
+                whatsapp: document.getElementById('aebWhatsapp').value,
+                email_contact: document.getElementById('aebEmail').value,
+                website: document.getElementById('aebWebsite').value,
+                instagram: document.getElementById('aebInstagram').value,
+                facebook: document.getElementById('aebFacebook').value,
+                tiktok: document.getElementById('aebTiktok').value,
+                youtube: document.getElementById('aebYoutube').value,
+                address: document.getElementById('aebAddress').value,
+                city: document.getElementById('aebCity').value,
+                state: document.getElementById('aebState').value,
+                schedule: document.getElementById('aebSchedule').value,
+                logo: document.getElementById('aebLogoUrl').value || null,
+            };
+            await api.put('/businesses/' + id, payload);
+            showToast('Negocio actualizado exitosamente','success');
+        } catch(e) { showToast('Error: '+e.message,'error'); }
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; }
+    };
+
+    // Wire up the new tab into activateAdminTab
+    const _origActivateAdminTab = activateAdminTab;
+    activateAdminTab = function(name) {
+        _origActivateAdminTab(name);
+        const panel = document.getElementById('adminPanel' + name);
+        if (panel) panel.classList.remove('hidden');
+    };
+
+    const _origSetupAdmin2 = setupAdminSection;
+    setupAdminSection = function() {
+        _origSetupAdmin2();
+        setupAdminSettingsTab();
+        setupAdminEditBizTab();
+    };
     if (document.getElementById('adminTabSettings')) setupAdminSettingsTab();
+    if (document.getElementById('adminTabEditBiz')) setupAdminEditBizTab();
+
+    // ─── Fix logo upload in old edit modal ──────────────────────
+    // Setup logo file input listener for the old modal
+    document.querySelectorAll('.edit-biz-logo-input').forEach(input => {
+        input.addEventListener('change', function() {
+            const file = this.files[0]; if (!file) return;
+            if (file.size > 5*1024*1024) { showToast('Max 5MB','error'); this.value=''; return; }
+            editBizLogoFile = file;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const section = input.closest('.eb-logo-section');
+                if (!section) return;
+                section.querySelector('.edit-biz-logo-img').src = e.target.result;
+                section.querySelector('.edit-biz-logo-img').style.display = 'block';
+                section.querySelector('.edit-biz-logo-icon').style.display = 'none';
+                section.querySelector('.edit-biz-logo-remove-btn').style.display = 'inline-flex';
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+    // Setup logo remove for the old modal
+    document.querySelectorAll('.edit-biz-logo-remove-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            editBizLogoFile = null;
+            const section = this.closest('.eb-logo-section');
+            if (!section) return;
+            section.querySelector('.edit-biz-logo-img').src = '';
+            section.querySelector('.edit-biz-logo-img').style.display = 'none';
+            section.querySelector('.edit-biz-logo-icon').style.display = '';
+            this.style.display = 'none';
+            const inp = section.querySelector('.edit-biz-logo-input');
+            if (inp) inp.value = '';
+            const urlInp = section.querySelector('.edit-biz-logo-url');
+            if (urlInp) urlInp.value = '';
+        });
+    });
+    window._removeEditBizLogo = function() {
+        editBizLogoFile = null;
+        const section = document.querySelector('.eb-logo-section');
+        if (!section) return;
+        section.querySelector('.edit-biz-logo-img').src = '';
+        section.querySelector('.edit-biz-logo-img').style.display = 'none';
+        section.querySelector('.edit-biz-logo-icon').style.display = '';
+        section.querySelector('.edit-biz-logo-remove-btn').style.display = 'none';
+        const inp = section.querySelector('.edit-biz-logo-input');
+        if (inp) inp.value = '';
+        const urlInp = section.querySelector('.edit-biz-logo-url');
+        if (urlInp) urlInp.value = '';
+    };
 
 })();

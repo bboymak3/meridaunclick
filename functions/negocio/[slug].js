@@ -477,6 +477,7 @@ export async function onRequestGet(context) {
 
             <div class="business-content hidden" id="businessContent">
                 <div class="compact-info-card">
+                    ${business.logo ? `<div style="text-align:center;margin-bottom:16px;"><img src="${escapeHtml(business.logo)}" alt="${escapeHtml(title)}" style="max-height:100px;max-width:200px;object-fit:contain;border-radius:12px;" onerror="this.style.display='none'"></div>` : ''}
                     <div class="compact-top-row">
                         <div class="compact-price-row"><span id="propDetailBadges"></span></div>
                         <button class="btn-favorite" id="btnFavorite" aria-label="Agregar a favoritos" data-business-id=""><i class="far fa-heart"></i></button>
