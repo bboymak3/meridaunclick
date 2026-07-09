@@ -128,13 +128,13 @@ export async function onRequestGet(context) {
 
     const whereClause = conditions.join(' AND ');
 
-    // Sort options
+    // Sort options — premium businesses get priority (shown first) in default/newest sort
     let orderBy = 'p.created_at DESC';
     if (sort === 'views_desc') orderBy = 'p.views DESC';
     else if (sort === 'price_asc') orderBy = 'p.price ASC';
     else if (sort === 'price_desc') orderBy = 'p.price DESC';
     else if (sort === 'oldest') orderBy = 'p.created_at ASC';
-    else orderBy = 'p.created_at DESC';
+    else orderBy = "(SELECT CASE WHEN u.plan_type = 'premium' THEN 0 ELSE 1 END FROM users u WHERE u.id = p.user_id), p.created_at DESC";
 
     // Count total matching businesses
     const countQuery = `SELECT COUNT(*) as total FROM businesses p WHERE ${whereClause}`;
@@ -221,6 +221,27 @@ export async function onRequestPost(context) {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Check user plan type for business limits
+    const userRow = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(payload.id).first();
+    const isPremium = userRow && userRow.plan_type === 'premium';
+
+    // Basic users: max 10 businesses
+    if (!isPremium) {
+      const countResult = await env.DB.prepare('SELECT COUNT(*) as cnt FROM businesses WHERE user_id = ?').bind(payload.id).first();
+      if (countResult && countResult.cnt >= 10) {
+        return new Response(JSON.stringify({
+          error: 'Has alcanzado el límite de 10 negocios para el plan Básico. Mejora a Premium para publicaciones ilimitadas.',
+          code: 'LIMIT_REACHED',
+          current: countResult.cnt,
+          limit: 10,
+          upgrade_url: '/planes.html'
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
     }
 
     const body = await request.json();
@@ -323,20 +344,24 @@ export async function onRequestPost(context) {
 
     const businessId = result.meta.last_row_id;
 
-    // Set expiration for basic users (20 days)
+    // Apply plan-based rules
+    // Basic: 20-day expiration
+    // Premium: no expiration
     try {
-      const userRow = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(payload.id).first();
-      if (userRow && userRow.plan_type !== 'premium') {
+      if (!isPremium) {
         const expiresAt = new Date(Date.now() + 20 * 24 * 60 * 60 * 1000).toISOString();
         await env.DB.prepare('UPDATE businesses SET expires_at = ? WHERE id = ?').bind(expiresAt, businessId).run();
       }
+      // Premium: expires_at stays NULL (never expires)
     } catch (expErr) {
       console.error('Error setting business expiration:', expErr);
     }
 
     return new Response(JSON.stringify({
-      message: 'Negocio registrado exitosamente. Está pendiente de aprobación.',
+      message: 'Negocio registrado exitosamente. Está pendiente de aprobación.' + (isPremium ? '' : ' Tu plan Básico tiene una duración de 20 días. Renueva publicando nuevamente o mejora a Premium para que nunca caduque.'),
       business_id: businessId,
+      plan: isPremium ? 'premium' : 'basic',
+      expires_in_days: isPremium ? null : 20,
     }), {
       status: 201,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

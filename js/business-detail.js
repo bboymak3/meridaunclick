@@ -671,20 +671,29 @@ async function loadBusinessProducts(businessId) {
 async function loadBusinessJobs(businessId) {
     const section = document.getElementById('jobsSection');
     const list = document.getElementById('businessJobsList');
+    const emptyDiv = document.getElementById('businessJobsEmpty');
     const viewAll = document.getElementById('viewAllJobs');
-    if (!section || !list) return;
+    if (!section) return;
+
+    // Always show the jobs section
+    section.style.display = '';
 
     try {
         const data = await api.get(`/jobs?business_id=${businessId}&limit=10`);
         const jobs = data.jobs || [];
 
         if (jobs.length === 0) {
-            section.style.display = 'none';
+            // No jobs — show "Ver Empleos" button
+            if (list) list.style.display = 'none';
+            if (viewAll) viewAll.style.display = 'none';
+            if (emptyDiv) emptyDiv.style.display = '';
             return;
         }
 
-        section.style.display = '';
-        if (viewAll) viewAll.href = `empleo.html?business_id=${businessId}`;
+        // Has jobs — show list and "Ver más" link
+        if (list) list.style.display = '';
+        if (emptyDiv) emptyDiv.style.display = 'none';
+        if (viewAll) { viewAll.style.display = ''; viewAll.href = `empleo.html?business_id=${businessId}`; }
 
         list.innerHTML = jobs.map(j => `
             <a href="empleo.html" class="job-item" style="text-decoration:none;color:inherit;">
@@ -696,6 +705,9 @@ async function loadBusinessJobs(businessId) {
             </a>
         `).join('');
     } catch (err) {
+        // On error, show the section with "Ver Empleos" link
+        if (list) list.style.display = 'none';
+        if (emptyDiv) emptyDiv.style.display = '';
         console.warn('Error loading business jobs:', err);
     }
 }
