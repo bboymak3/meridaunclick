@@ -69,3 +69,23 @@ Stage Summary:
 - GitHub: commit 439d749, repo limpio sin submódulos
 - CF Pages: deploy exitoso en https://7032bb31.aunclick.pages.dev
 - 6 archivos modificados: dashboard.html, dashboard.js, business.html, business-detail.js, [slug].js, sellers/index.js
+---
+Task ID: 1-7
+Agent: Main Agent
+Task: Fix all 7 pending issues for aunclick.pages.dev
+
+Work Log:
+- FIX 1: Verified .gitmodules no longer exists on GitHub remote (already removed in previous session)
+- FIX 2: Fixed /api/upload.js — added explicit handling for logo and banner product_type so they don't fall through to business_id requirement. This fixes both "Negocio no encontrado" on banner upload and logo upload.
+- FIX 3: Added logo display to negocio/[slug].js — business profile pages now show the logo centered at the top of the info card if one exists
+- FIX 4: Created entirely new "Editar Negocios" admin panel in dashboard with: dropdown selector loading all businesses, full edit form (info, contact, social, location, schedule), logo upload/preview/remove, image gallery management (add, remove, set cover), status change (approve/pending/reject), delete business, and save button. Also added logo section to existing editBusinessModal. Removed duplicate modal from dashboard.html.
+- FIX 5: Banner upload fix included in FIX 2 (same root cause)
+- FIX 6: Fixed /api/admin/sellers/index.js to check if sellers_profiles table exists before querying, returns empty array instead of 500 error
+- FIX 7: Renamed _worker.js (was HTML, caused CF build error) to .bak, deployed to Cloudflare Pages (success: aa2889e4.aunclick.pages.dev), force pushed to GitHub
+
+Stage Summary:
+- All 7 fixes deployed to Cloudflare Pages and pushed to GitHub
+- New admin "Editar Negocios" tab fully functional
+- Upload endpoint now works for logo and banner without business_id
+- Business profile pages display logo
+- Sellers panel no longer crashes on missing table
