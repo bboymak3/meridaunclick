@@ -85,7 +85,7 @@ export async function onRequestPost(context) {
     const file = formData.get('file');
     const businessId = formData.get('business_id');
     const propertyId = formData.get('property_id');
-    const productType = formData.get('product_type'); // 'marketplace', 'business', 'property', 'video'
+    const productType = formData.get('product_type'); // 'marketplace', 'business', 'property', 'video', 'logo', 'banner'
 
     if (!file) {
       return new Response(JSON.stringify({ error: 'No se proporcionó ningún archivo' }), {
@@ -94,8 +94,8 @@ export async function onRequestPost(context) {
       });
     }
 
-    if (!businessId && !propertyId && productType !== 'marketplace' && productType !== 'video') {
-      return new Response(JSON.stringify({ error: 'business_id, property_id es requerido o product_type debe ser marketplace/video' }), {
+    if (!businessId && !propertyId && productType !== 'marketplace' && productType !== 'video' && productType !== 'logo' && productType !== 'banner') {
+      return new Response(JSON.stringify({ error: 'business_id, property_id es requerido o product_type debe ser marketplace/video/logo/banner' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -174,6 +174,10 @@ export async function onRequestPost(context) {
       key = `${r2Folder}/marketplace/${user.id}/${timestamp}_${sanitizedName}`;
     } else if (productType === 'video') {
       key = `${r2Folder}/videos/${user.id}/${timestamp}_${sanitizedName}`;
+    } else if (productType === 'logo') {
+      key = `${r2Folder}/logos/${businessId || user.id}/${timestamp}_${sanitizedName}`;
+    } else if (productType === 'banner') {
+      key = `${r2Folder}/banners/${timestamp}_${sanitizedName}`;
     } else if (productType === 'property' || propertyId) {
       key = `${r2Folder}/properties/${propertyId}/${timestamp}_${sanitizedName}`;
     } else {

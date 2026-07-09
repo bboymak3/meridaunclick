@@ -457,6 +457,40 @@
                     </div>
                 </div>
 
+                <!-- Section 4.5: Logo -->
+                <div class="pf-section" data-section="4.5">
+                    <div class="pf-section-header">
+                        <div class="pf-section-icon" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8);">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="pf-section-text">
+                            <h2>Logo del Negocio</h2>
+                            <p>La imagen que representa tu marca</p>
+                        </div>
+                    </div>
+                    <div class="pf-section-body">
+                        <div class="pf-field">
+                            <label class="pf-label"><i class="fas fa-image"></i> Logo del negocio</label>
+                            <div style="display:flex;align-items:center;gap:16px;margin-top:8px;">
+                                <div id="logoPreviewContainer" style="width:100px;height:100px;border-radius:12px;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f9fafb;flex-shrink:0;">
+                                    <i class="fas fa-building" id="logoPlaceholderIcon" style="font-size:1.8rem;color:#94a3b8;"></i>
+                                    <img id="logoPreviewImg" src="" alt="Logo" style="width:100%;height:100%;object-fit:contain;display:none;">
+                                </div>
+                                <div>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('logoInput').click()" style="margin-bottom:6px;">
+                                        <i class="fas fa-upload"></i> Seleccionar Logo
+                                    </button>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="removeLogoBtn" onclick="removeLogo()" style="display:none;">
+                                        <i class="fas fa-times"></i> Quitar
+                                    </button>
+                                    <input type="file" id="logoInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleLogoSelect(this)">
+                                    <p style="font-size:0.75rem;color:#94a3b8;margin:4px 0 0;">JPG, PNG, WebP - Máx 2MB</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Section 5: Photos -->
                 <div class="pf-section" data-section="5">
                     <div class="pf-section-header">

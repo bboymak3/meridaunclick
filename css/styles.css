@@ -1069,7 +1069,14 @@ strong {
         radial-gradient(ellipse at 20% 50%, rgba(26, 115, 232, 0.12) 0%, transparent 60%),
         radial-gradient(ellipse at 80% 20%, rgba(111, 66, 193, 0.08) 0%, transparent 50%),
         radial-gradient(ellipse at 60% 80%, rgba(255, 107, 53, 0.06) 0%, transparent 50%);
+    background-size: auto, auto;
     z-index: 0;
+    transition: opacity 0.5s ease;
+}
+
+/* When a banner image is set, add dark overlay for text readability */
+.idx-hero-bg[style*="background-image"] {
+    background-color: rgba(0, 0, 0, 0.35);
 }
 
 .idx-hero-bg::before {

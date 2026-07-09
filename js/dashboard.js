@@ -1593,6 +1593,66 @@
 
     // ─── Edit Business Modal ─────────────────────────────
     let editBizVideoMode = 'file';
+    let editBizLogoFile = null;
+
+    // Inject logo field into edit business form (both modals)
+    document.querySelectorAll('#editBizForm').forEach(form => {
+        const firstField = form.querySelector('.eb-field');
+        if (firstField && !form.querySelector('.eb-logo-section')) {
+            const logoDiv = document.createElement('div');
+            logoDiv.className = 'eb-field eb-logo-section';
+            logoDiv.style.marginBottom = '16px';
+            logoDiv.innerHTML = `
+                <label>Logo del Negocio</label>
+                <div style="display:flex;align-items:center;gap:12px;margin-top:6px;">
+                    <div class="edit-biz-logo-preview" style="width:64px;height:64px;border-radius:10px;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f9fafb;flex-shrink:0;">
+                        <i class="fas fa-building edit-biz-logo-icon" style="font-size:1.2rem;color:#94a3b8;"></i>
+                        <img class="edit-biz-logo-img" src="" alt="Logo" style="width:100%;height:100%;object-fit:contain;display:none;">
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary btn-sm edit-biz-logo-upload-btn">
+                            <i class="fas fa-upload"></i> Subir Logo
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm edit-biz-logo-remove-btn" style="display:none;margin-left:4px;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                        <input type="file" class="edit-biz-logo-input" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                    </div>
+                </div>
+                <input type="hidden" class="edit-biz-logo-url">
+            `;
+            form.insertBefore(logoDiv, firstField);
+
+            // Bind events
+            const section = logoDiv;
+            section.querySelector('.edit-biz-logo-upload-btn').addEventListener('click', () => {
+                section.querySelector('.edit-biz-logo-input').click();
+            });
+            section.querySelector('.edit-biz-logo-input').addEventListener('change', function() {
+                const file = this.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) { showToast('Logo max 2MB', 'error'); return; }
+                editBizLogoFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    section.querySelector('.edit-biz-logo-img').src = e.target.result;
+                    section.querySelector('.edit-biz-logo-img').style.display = 'block';
+                    section.querySelector('.edit-biz-logo-icon').style.display = 'none';
+                    section.querySelector('.edit-biz-logo-remove-btn').style.display = 'inline-flex';
+                };
+                reader.readAsDataURL(file);
+            });
+            section.querySelector('.edit-biz-logo-remove-btn').addEventListener('click', function() {
+                editBizLogoFile = null;
+                section.querySelector('.edit-biz-logo-img').src = '';
+                section.querySelector('.edit-biz-logo-img').style.display = 'none';
+                section.querySelector('.edit-biz-logo-icon').style.display = '';
+                this.style.display = 'none';
+                section.querySelector('.edit-biz-logo-input').value = '';
+                section.querySelector('.edit-biz-logo-url').value = '';
+            });
+        }
+    });
 
     window.openEditBusinessModal = async function(id) {
         const modal = document.getElementById('editBusinessModal');
@@ -1665,6 +1725,24 @@
             document.getElementById('editBizVideoUrl').value = biz.video_url;
         } else {
             setEditBizVideoMode('file');
+        }
+
+        // Logo
+        editBizLogoFile = null;
+        const logoSection = form.querySelector('.eb-logo-section');
+        if (logoSection && biz.logo) {
+            logoSection.querySelector('.edit-biz-logo-img').src = biz.logo;
+            logoSection.querySelector('.edit-biz-logo-img').style.display = 'block';
+            logoSection.querySelector('.edit-biz-logo-icon').style.display = 'none';
+            logoSection.querySelector('.edit-biz-logo-remove-btn').style.display = 'inline-flex';
+            logoSection.querySelector('.edit-biz-logo-url').value = biz.logo;
+        } else if (logoSection) {
+            logoSection.querySelector('.edit-biz-logo-img').src = '';
+            logoSection.querySelector('.edit-biz-logo-img').style.display = 'none';
+            logoSection.querySelector('.edit-biz-logo-icon').style.display = '';
+            logoSection.querySelector('.edit-biz-logo-remove-btn').style.display = 'none';
+            logoSection.querySelector('.edit-biz-logo-url').value = '';
+            logoSection.querySelector('.edit-biz-logo-input').value = '';
         }
     }
 
@@ -1741,6 +1819,7 @@
         if (!id) return;
 
         const btn = document.getElementById('editBizSaveBtn');
+        const currentForm = document.getElementById('editBizForm');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
@@ -1770,7 +1849,25 @@
                 schedule: document.getElementById('editBizSchedule').value,
                 features: features.join(','),
                 video_url: document.getElementById('editBizVideoUrlHidden').value || document.getElementById('editBizVideoUrl').value || '',
+                logo: currentForm.querySelector('.edit-biz-logo-url')?.value || null,
             };
+
+            // Upload new logo if selected
+            const logoSection = currentForm.querySelector('.eb-logo-section');
+            if (editBizLogoFile && logoSection) {
+                try {
+                    const logoFd = new FormData();
+                    logoFd.append('file', editBizLogoFile);
+                    logoFd.append('product_type', 'logo');
+                    const logoResult = await api.postFormData('/upload', logoFd);
+                    if (logoResult.url) {
+                        payload.logo = logoResult.url;
+                        logoSection.querySelector('.edit-biz-logo-url').value = logoResult.url;
+                    }
+                } catch(logoErr) {
+                    console.error('Logo upload error:', logoErr);
+                }
+            }
 
             await api.put('/businesses/' + id, payload);
             showToast('Negocio actualizado exitosamente', 'success');

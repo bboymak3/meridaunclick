@@ -19,6 +19,7 @@ const PUBLIC_KEYS = [
   'reviews_enabled',
   'marketplace_enabled',
   'site_name',
+  'hero_banner_url',
 ];
 
 export async function onRequestGet(context) {
@@ -50,6 +51,7 @@ export async function onRequestGet(context) {
       reviews_enabled: '1',
       marketplace_enabled: '1',
       site_name: 'AuNclick',
+      hero_banner_url: '',
     };
 
     const response = {};

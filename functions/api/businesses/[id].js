@@ -128,7 +128,7 @@ export async function onRequestPut(context) {
       'title', 'description', 'category_id', 'business_type',
       'address', 'city', 'state', 'country', 'lat', 'lng',
       'phone', 'whatsapp', 'website', 'instagram', 'facebook',
-      'twitter', 'tiktok', 'youtube', 'video_url',
+      'twitter', 'tiktok', 'youtube', 'video_url', 'logo',
       'email_contact', 'schedule',
       'has_parking', 'has_wifi', 'has_card', 'has_delivery', 'has_outdoor',
       'featured', 'status',

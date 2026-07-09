@@ -16,6 +16,8 @@
     // ─── State ──────────────────────────────────────────────────
     let editingBusinessId = null;
     let uploadedImages = []; // Array of { url, file, preview }
+    let selectedLogoFile = null; // Logo file for upload
+    let uploadedLogoUrl = null; // Logo URL after upload
     let isSubmitting = false;
 
     // ─── DOM Elements ───────────────────────────────────────────
@@ -27,6 +29,46 @@
     const uploadPlaceholder = document.getElementById('uploadPlaceholder');
     const photoInput = document.getElementById('photoInput');
     const photosPreview = document.getElementById('photosPreview');
+
+    // ─── Logo Functions ───────────────────────────────────────
+    window.handleLogoSelect = function(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) {
+            showToast('El logo no puede exceder 2MB', 'error');
+            input.value = '';
+            return;
+        }
+        if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+            showToast('Formato no soportado. Usa JPG, PNG o WebP', 'error');
+            input.value = '';
+            return;
+        }
+        selectedLogoFile = file;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('logoPreviewImg');
+            const icon = document.getElementById('logoPlaceholderIcon');
+            const btn = document.getElementById('removeLogoBtn');
+            if (img) { img.src = e.target.result; img.style.display = 'block'; }
+            if (icon) icon.style.display = 'none';
+            if (btn) btn.style.display = 'inline-flex';
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.removeLogo = function() {
+        selectedLogoFile = null;
+        uploadedLogoUrl = null;
+        const img = document.getElementById('logoPreviewImg');
+        const icon = document.getElementById('logoPlaceholderIcon');
+        const btn = document.getElementById('removeLogoBtn');
+        const input = document.getElementById('logoInput');
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (icon) icon.style.display = '';
+        if (btn) btn.style.display = 'none';
+        if (input) input.value = '';
+    };
 
     // ─── Location Picker Map ────────────────────────────────────
     let locationMap = null;
@@ -318,6 +360,17 @@
         setValue('propYoutube', business.youtube);
         setValue('propVideo', business.video_url);
         setValue('propSchedule', business.schedule);
+
+        // Load existing logo
+        if (business.logo) {
+            uploadedLogoUrl = business.logo;
+            const logoImg = document.getElementById('logoPreviewImg');
+            const logoIcon = document.getElementById('logoPlaceholderIcon');
+            const logoBtn = document.getElementById('removeLogoBtn');
+            if (logoImg) { logoImg.src = business.logo; logoImg.style.display = 'block'; }
+            if (logoIcon) logoIcon.style.display = 'none';
+            if (logoBtn) logoBtn.style.display = 'inline-flex';
+        }
         setValue('propDireccion', business.address);
         setValue('propCiudad', business.city);
         setValue('propEstado', business.state);
@@ -703,7 +756,25 @@
             has_card,
             has_delivery,
             has_outdoor,
+            logo: uploadedLogoUrl || null,
         };
+
+        // Upload logo first if selected and not yet uploaded
+        if (selectedLogoFile && !uploadedLogoUrl) {
+            try {
+                const logoFormData = new FormData();
+                logoFormData.append('file', selectedLogoFile);
+                logoFormData.append('product_type', 'logo');
+                const logoResult = await api.postFormData('/upload', logoFormData);
+                if (logoResult.url) {
+                    uploadedLogoUrl = logoResult.url;
+                    businessData.logo = uploadedLogoUrl;
+                }
+            } catch (logoErr) {
+                console.error('Error uploading logo:', logoErr);
+                // Non-blocking: business is created without logo
+            }
+        }
 
         // Submit
         isSubmitting = true;

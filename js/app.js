@@ -865,10 +865,32 @@ function initMobileSearchModal() {
     });
 }
 
+// ─── Hero Banner Loader ─────────────────────────────────
+async function loadHeroBanner() {
+    const heroBg = document.getElementById('idxHeroBg');
+    if (!heroBg) return;
+    try {
+        const resp = await fetch('/api/settings/public');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data.hero_banner_url) {
+            heroBg.style.backgroundImage = `url(${data.hero_banner_url})`;
+            heroBg.style.backgroundSize = 'cover';
+            heroBg.style.backgroundPosition = 'center';
+            heroBg.style.backgroundRepeat = 'no-repeat';
+        }
+    } catch(e) {
+        // Silent fail — default CSS gradient applies
+    }
+}
+
 // ─── Initialization ────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     // Update navigation bar
     updateNav();
+
+    // Load hero banner from settings
+    loadHeroBanner();
 
     // Initialize location selector (loads saved state, updates brand)
     initLocationSelector();

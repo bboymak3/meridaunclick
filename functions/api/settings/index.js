@@ -75,6 +75,8 @@ const DEFAULT_SETTINGS = {
   points_per_visit: '10',
   points_per_review: '20',
   points_per_booking: '15',
+  // Hero banner
+  hero_banner_url: '',
 };
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────

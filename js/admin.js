@@ -3228,6 +3228,59 @@
         }
     }
 
+    // ─── Banner Management ────────────────────────────────
+    window.handleAdminBannerSelect = async function(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB para el banner', 'error'); input.value = ''; return; }
+
+        try {
+            showToast('Subiendo banner...', 'info');
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('product_type', 'banner');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                document.getElementById('setting_hero_banner_url').value = result.url;
+                const img = document.getElementById('adminBannerImg');
+                const icon = document.getElementById('adminBannerPlaceholderIcon');
+                const btn = document.getElementById('adminBannerRemoveBtn');
+                if (img) { img.src = result.url; img.style.display = 'block'; }
+                if (icon) icon.style.display = 'none';
+                if (btn) btn.style.display = 'inline-flex';
+                showToast('Banner subido. Guarda la configuración para aplicarlo.', 'success');
+            }
+        } catch(e) {
+            showToast('Error al subir banner: ' + e.message, 'error');
+        }
+        input.value = '';
+    };
+
+    window.removeAdminBanner = function() {
+        document.getElementById('setting_hero_banner_url').value = '';
+        const img = document.getElementById('adminBannerImg');
+        const icon = document.getElementById('adminBannerPlaceholderIcon');
+        const btn = document.getElementById('adminBannerRemoveBtn');
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (icon) icon.style.display = '';
+        if (btn) btn.style.display = 'none';
+    };
+
+    // Override loadSettings to also show banner preview
+    const _origLoadSettings = loadSettings;
+    loadSettings = async function() {
+        await _origLoadSettings();
+        const bannerUrl = document.getElementById('setting_hero_banner_url')?.value;
+        if (bannerUrl) {
+            const img = document.getElementById('adminBannerImg');
+            const icon = document.getElementById('adminBannerPlaceholderIcon');
+            const btn = document.getElementById('adminBannerRemoveBtn');
+            if (img) { img.src = bannerUrl; img.style.display = 'block'; }
+            if (icon) icon.style.display = 'none';
+            if (btn) btn.style.display = 'inline-flex';
+        }
+    };
+
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
