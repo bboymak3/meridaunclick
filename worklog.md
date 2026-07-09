@@ -31,3 +31,22 @@ Stage Summary:
 - Full rebranding from "Un Click" to "HOLAX" across all visible text
 - 5 new informational pages created with updated navigation
 - Migration run successfully, deployment live at aunclick.pages.dev
+---
+Task ID: 1
+Agent: Super Z (main)
+Task: Implementar logo en negocios + tab Configuración con banner en dashboard, subir a GitHub y Cloudflare
+
+Work Log:
+- Clonado repo bboymak3/meridaunclick - confirmado como backend completo de aunclick.pages.dev
+- Verificado que logo en creación (business-form.js) y edición (dashboard.js) ya existían desde sesión anterior
+- Verificado que backend (businesses/index.js, businesses/[id].js) ya soporta campo logo
+- Verificado que settings API ya tiene hero_banner_url
+- Agregada tab "Configuración" al panel admin del dashboard.html con: campo banner hero (subida R2, preview, quitar), configuración general (nombre, email, whatsapp, max negocios), toggles de funcionalidades
+- Agregada lógica JS en dashboard.js: setupAdminSettingsTab, loadDashAdminSettings, saveDashAdminSettings, handleAdminBannerSelect, removeAdminBanner
+- Commit 9bd7ad6 subido a GitHub via API (bypass git submodule issues)
+- Deploy exitoso a Cloudflare Pages (https://1229b5d5.aunclick.pages.dev)
+
+Stage Summary:
+- GitHub: commit 9bd7ad6 en main
+- Cloudflare: deploy exitoso, 9 archivos nuevos + Functions bundle
+- 3 features completas: (1) logo en crear negocio, (2) logo en editar negocio, (3) banner admin en dashboard

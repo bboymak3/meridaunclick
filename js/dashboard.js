@@ -57,6 +57,7 @@
     const adminTabPending = document.getElementById('adminTabPending');
     const adminTabAll = document.getElementById('adminTabAll');
     const adminTabUsers = document.getElementById('adminTabUsers');
+    const adminTabSettings = document.getElementById('adminTabSettings');
     const adminUsersBody = document.getElementById('adminUsersBody');
     const adminUsersSearchInput = document.getElementById('adminUsersSearchInput');
 
@@ -1177,7 +1178,7 @@
         const activeTab = document.getElementById('adminTab' + name);
         if (activeTab) activeTab.classList.add('active');
 
-        const panels = ['Pending', 'All', 'Users'];
+        const panels = ['Pending', 'All', 'Users', 'Settings'];
         panels.forEach(p => {
             const panel = document.getElementById('adminPanel' + p);
             if (panel) {
@@ -2489,5 +2490,78 @@
         });
     }
 
+
+
+    // --- Admin Settings Tab (Banner + General) ---
+    function setupAdminSettingsTab() {
+        if (!adminTabSettings) return;
+        adminTabSettings.addEventListener('click', () => { activateAdminTab('Settings'); loadDashAdminSettings(); });
+        const saveBtn = document.getElementById('dashAdminSaveSettingsBtn');
+        if (saveBtn) saveBtn.addEventListener('click', saveDashAdminSettings);
+    }
+    async function loadDashAdminSettings() {
+        try {
+            const data = await api.get('/settings');
+            const settings = data.settings || data;
+            document.querySelectorAll('#adminPanelSettings [data-key]').forEach(el => {
+                const key = el.dataset.key; const value = settings[key];
+                if (el.type === 'checkbox') el.checked = value === '1' || value === 'true';
+                else el.value = value || '';
+            });
+            const bannerUrl = document.getElementById('setting_hero_banner_url')?.value;
+            if (bannerUrl) {
+                const img = document.getElementById('adminBannerImg');
+                const icon = document.getElementById('adminBannerPlaceholderIcon');
+                const btn = document.getElementById('adminBannerRemoveBtn');
+                if (img) { img.src = bannerUrl; img.style.display = 'block'; }
+                if (icon) icon.style.display = 'none';
+                if (btn) btn.style.display = 'inline-flex';
+            }
+        } catch (error) { console.error('Error loading settings:', error); showToast('Error al cargar configuracion', 'error'); }
+    }
+    async function saveDashAdminSettings() {
+        try {
+            const updates = {};
+            document.querySelectorAll('#adminPanelSettings [data-key]').forEach(el => {
+                const key = el.dataset.key;
+                if (el.type === 'checkbox') updates[key] = el.checked ? '1' : '0';
+                else updates[key] = el.value;
+            });
+            await api.put('/settings', updates);
+            showToast('Configuracion guardada exitosamente', 'success');
+        } catch (error) { console.error('Error saving settings:', error); showToast('Error: ' + error.message, 'error'); }
+    }
+    window.handleAdminBannerSelect = async function(input) {
+        const file = input.files[0]; if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB', 'error'); input.value = ''; return; }
+        try {
+            showToast('Subiendo banner...', 'info');
+            const fd = new FormData(); fd.append('file', file); fd.append('product_type', 'banner');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                document.getElementById('setting_hero_banner_url').value = result.url;
+                const img = document.getElementById('adminBannerImg');
+                const icon = document.getElementById('adminBannerPlaceholderIcon');
+                const btn = document.getElementById('adminBannerRemoveBtn');
+                if (img) { img.src = result.url; img.style.display = 'block'; }
+                if (icon) icon.style.display = 'none';
+                if (btn) btn.style.display = 'inline-flex';
+                showToast('Banner subido. Guarda configuracion para aplicarlo.', 'success');
+            }
+        } catch(e) { showToast('Error al subir banner: ' + e.message, 'error'); }
+        input.value = '';
+    };
+    window.removeAdminBanner = function() {
+        document.getElementById('setting_hero_banner_url').value = '';
+        const img = document.getElementById('adminBannerImg');
+        const icon = document.getElementById('adminBannerPlaceholderIcon');
+        const btn = document.getElementById('adminBannerRemoveBtn');
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (icon) icon.style.display = '';
+        if (btn) btn.style.display = 'none';
+    };
+    const _origSetupAdmin = setupAdminSection;
+    setupAdminSection = function() { _origSetupAdmin(); setupAdminSettingsTab(); };
+    if (document.getElementById('adminTabSettings')) setupAdminSettingsTab();
 
 })();
