@@ -65,22 +65,22 @@ export async function onRequestGet(context) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${escapeHtml(description)}">
-    <title>${escapeHtml(title)} - Un Click | Directorio de Negocios en Venezuela</title>
+    <title>${escapeHtml(title)} - OLAX | Directorio de Negocios en Venezuela</title>
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="${canonicalUrl}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="business.business">
-    <meta property="og:title" content="${escapeHtml(title)} - Un Click">
+    <meta property="og:title" content="${escapeHtml(title)} - OLAX">
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:image" content="${imageUrl}">
     <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:site_name" content="Un Click">
+    <meta property="og:site_name" content="OLAX">
     <meta property="og:locale" content="es_VE">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${escapeHtml(title)} - Un Click">
+    <meta name="twitter:title" content="${escapeHtml(title)} - OLAX">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${imageUrl}">
 
@@ -405,7 +405,7 @@ export async function onRequestGet(context) {
         <div class="nav-container">
             <a href="/index.html" class="nav-logo">
                 <i class="fas fa-store"></i>
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> Un Click</span>
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> OLAX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">

@@ -1,5 +1,5 @@
 /**
- * Un Click - Core Application Module
+ * OLAX - Core Application Module
  * Common module loaded on ALL pages
  * Directorio Nacional de Negocios de Venezuela
  */
@@ -698,7 +698,7 @@ function shareBusinessWhatsApp(business) {
     msg += `📌 ${type}\n`;
     if (business.city) msg += `📍 ${business.city}${business.state ? ', ' + business.state : ''}\n`;
     msg += `\n🔗 ${url}`;
-    msg += `\n\n📌 Publicado en Un Click`;
+    msg += `\n\n📌 Publicado en OLAX`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -788,7 +788,7 @@ document.addEventListener('click', (e) => {
         shareBusinessWhatsApp(business);
     }).catch(() => {
         // Minimal share with just the link
-        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en Un Click:\nhttps://aunclick.pages.dev/negocio/' + businessId)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en OLAX:\nhttps://aunclick.pages.dev/negocio/' + businessId)}`, '_blank');
     });
 });
 

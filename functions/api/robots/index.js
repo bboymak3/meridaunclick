@@ -3,7 +3,7 @@
 // Fallback: static robots.txt at root should also exist via _redirects
 
 export async function onRequestGet() {
-  const robotsTxt = `# Un Click - Directorio Nacional de Negocios de Venezuela
+  const robotsTxt = `# OLAX - Directorio Nacional de Negocios de Venezuela
 # https://aunclick.pages.dev
 
 User-agent: *

@@ -52,7 +52,7 @@ export async function onRequestGet(context) {
     const imageUrl = business.cover_image || `${baseUrl}/logo.png`;
     const whatsappNumber = (business.whatsapp || business.phone || '').replace(/[^0-9]/g, '');
     const whatsappLink = whatsappNumber
-      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, vi tu pagina web en Un Click y me interesa conocer mas sobre ' + title)}`
+      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, vi tu pagina web en OLAX y me interesa conocer mas sobre ' + title)}`
       : '#';
     const phoneClean = (business.phone || '').replace(/[^0-9]/g, '');
     const mapQuery = encodeURIComponent(`${business.address || ''} ${business.city || ''} ${business.state || ''} Venezuela`);
@@ -96,7 +96,7 @@ export async function onRequestGet(context) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${escapeHtml(metaDescription)}">
-    <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')} | Un Click</title>
+    <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')} | OLAX</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="canonical" href="${baseUrl}/negocio/${business.slug}">
 
@@ -508,7 +508,7 @@ export async function onRequestGet(context) {
 <!-- NAV -->
 <nav class="lp-nav" id="lpNav">
     <a href="${baseUrl}/index.html" class="lp-nav-brand">
-        <i class="fas fa-store"></i> Un Click
+        <i class="fas fa-store"></i> OLAX
     </a>
     <div class="lp-nav-links">
         <a href="#about">Nosotros</a>
@@ -820,9 +820,9 @@ ${(business.lat || business.latitude || business.address) ? `
 
 <!-- FOOTER -->
 <footer class="lp-footer">
-    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">Un Click</a></p>
+    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">OLAX</a></p>
     <div class="lp-footer-links">
-        <a href="${baseUrl}/negocio/${business.slug}" target="_blank">Ver en Un Click</a>
+        <a href="${baseUrl}/negocio/${business.slug}" target="_blank">Ver en OLAX</a>
         ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
         ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
     </div>

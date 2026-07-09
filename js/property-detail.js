@@ -1,5 +1,5 @@
 /**
- * Un Click - Property Detail Page Loader
+ * OLAX - Property Detail Page Loader
  * Loads property data from API and populates property-detail.html
  *
  * NOTE: PROPERTY_TYPE_LABELS, OPERATION_TYPE_LABELS, CURRENCY_SYMBOLS,
@@ -165,7 +165,7 @@ function sharePropertyWhatsAppUrl(property) {
     if (property.area) msg += `📐 ${property.area}${property.area_unit || 'm²'}\n`;
     if (property.city) msg += `📍 ${property.city}${property.address ? ', ' + property.address : ''}\n`;
     msg += `\n🔗 ${url}`;
-    msg += `\n\n📌 Publicado en Un Click`;
+    msg += `\n\n📌 Publicado en OLAX`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -312,7 +312,7 @@ const PropertyDetail = (function () {
             contentEl.classList.remove('hidden');
 
             // Update page title
-            document.title = `${property.title || 'Inmueble'} - Un Click`;
+            document.title = `${property.title || 'Inmueble'} - OLAX`;
 
             // Load similar properties
             loadSimilarProperties(property);
@@ -686,7 +686,7 @@ const PropertyDetail = (function () {
         if (openChatBtn) {
             openChatBtn.onclick = () => {
                 if (typeof UnClickChat !== 'undefined' && UnClickChat.openChatWith) {
-                    UnClickChat.openChatWith(p.owner_id || p.user_id, `Hola, vi tu propiedad "${p.title}" en Un Click`);
+                    UnClickChat.openChatWith(p.owner_id || p.user_id, `Hola, vi tu propiedad "${p.title}" en OLAX`);
                 } else {
                     showToast('Chat no disponible', 'warning');
                 }
@@ -734,7 +734,7 @@ const PropertyDetail = (function () {
             const op = getOperationTypeLabel(p.operation_type);
             const price = p.price ? formatPropertyPrice(p.price, p.currency) : '';
             const desc = p.description ? p.description.substring(0, 150) : '';
-            metaDesc.content = `${p.title || 'Inmueble'} - ${type} en ${op}${price ? ' por ' + price : ''} en ${p.city || 'Venezuela'}. ${desc} Visita Un Click para más información.`;
+            metaDesc.content = `${p.title || 'Inmueble'} - ${type} en ${op}${price ? ' por ' + price : ''} en ${p.city || 'Venezuela'}. ${desc} Visita OLAX para más información.`;
         }
     }
 
@@ -863,7 +863,7 @@ const PropertyDetail = (function () {
             const property = await api.get(`/properties/${propertyId}`);
             sharePropertyWhatsAppUrl(property);
         } catch {
-            window.open(`https://wa.me/?text=${encodeURIComponent('🏠 Mira esta propiedad en Un Click:\nhttps://aunclick.pages.dev/property-detail.html?id=' + propertyId)}`, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent('🏠 Mira esta propiedad en OLAX:\nhttps://aunclick.pages.dev/property-detail.html?id=' + propertyId)}`, '_blank');
         }
     }
 

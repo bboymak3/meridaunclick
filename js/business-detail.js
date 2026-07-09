@@ -1,5 +1,5 @@
 /**
- * Un Click - Business Detail Page Loader
+ * OLAX - Business Detail Page Loader
  * Loads business data from API and populates business.html
  */
 
@@ -42,7 +42,7 @@
             contentEl.classList.remove('hidden');
 
             // Update page title
-            document.title = `${business.title || 'Negocio'} - Un Click`;
+            document.title = `${business.title || 'Negocio'} - OLAX`;
 
             // Load similar businesses
             loadSimilarBusinesses(business);
@@ -75,7 +75,7 @@ function populateBusinessDetail(b) {
     if (b.custom_html && b.custom_html.trim()) {
         const contentEl = document.getElementById('businessContent');
         if (contentEl) {
-            // Keep the logo display
+            // Show logo if exists
             const logoWrap = document.getElementById('businessLogoWrap');
             const logoImg = document.getElementById('businessLogo');
             if (b.logo && logoWrap && logoImg) {
@@ -83,25 +83,21 @@ function populateBusinessDetail(b) {
                 logoImg.alt = (b.title || 'Logo') + ' logo';
                 logoImg.onerror = function() { logoWrap.style.display = 'none'; };
                 logoWrap.style.display = 'block';
+            } else if (logoWrap) {
+                logoWrap.style.display = 'none';
             }
-            // Replace everything after logo with custom HTML
-            const logoSection = document.getElementById('businessLogoWrap');
-            let insertPoint = logoSection ? logoSection.nextSibling : contentEl.firstChild;
-            // Clear existing content
-            while (contentEl.lastChild !== insertPoint && contentEl.lastChild !== (logoSection || null)) {
-                contentEl.removeChild(contentEl.lastChild);
+            // Clear everything and insert custom HTML
+            contentEl.innerHTML = '';
+            if (b.logo && logoWrap) {
+                contentEl.appendChild(logoWrap);
             }
-            if (insertPoint && insertPoint !== logoSection) {
-                contentEl.removeChild(insertPoint);
+            const customDiv = document.createElement('div');
+            customDiv.innerHTML = b.custom_html;
+            while (customDiv.firstChild) {
+                contentEl.appendChild(customDiv.firstChild);
             }
-            // Insert custom HTML
-            const wrapper = document.createElement('div');
-            wrapper.innerHTML = b.custom_html;
-            while (wrapper.firstChild) {
-                contentEl.appendChild(wrapper.firstChild);
-            }
-            // Execute any scripts in the custom HTML
-            wrapper.querySelectorAll('script').forEach(oldScript => {
+            // Execute any scripts
+            customDiv.querySelectorAll('script').forEach(oldScript => {
                 const newScript = document.createElement('script');
                 if (oldScript.src) newScript.src = oldScript.src;
                 else newScript.textContent = oldScript.textContent;
@@ -191,7 +187,13 @@ function populateBusinessDetail(b) {
 
     // ─── Title ────────────────────────────────────────────────
     const titleEl = document.getElementById('propDetailTitle');
-    if (titleEl) titleEl.textContent = b.title || 'Sin título';
+    if (titleEl) {
+        titleEl.textContent = b.title || 'Sin título';
+        // Add Premium badge next to title if owner is premium
+        if (b.owner_plan_type === 'premium') {
+            titleEl.innerHTML += ' <span style="display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#1a73e8,#4285f4);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:10px;vertical-align:middle;margin-left:6px;"><i class="fas fa-crown" style="font-size:0.6rem;"></i> Premium</span>';
+        }
+    }
 
     // ─── Price (hidden for businesses) ─────────────────────────
     const priceEl = document.getElementById('propDetailPrice');
@@ -440,7 +442,7 @@ function populateBusinessDetail(b) {
     if (openChatBtn) {
         openChatBtn.onclick = () => {
             if (typeof UnClickChat !== 'undefined' && UnClickChat.openChatWith) {
-                UnClickChat.openChatWith(b.id, `Hola, vi tu negocio "${b.title}" en Un Click`);
+                UnClickChat.openChatWith(b.id, `Hola, vi tu negocio "${b.title}" en OLAX`);
             } else {
                 showToast('Chat no disponible', 'warning');
             }
@@ -483,7 +485,7 @@ function populateBusinessDetail(b) {
 
     // ─── SEO Meta Description ─────────────────────────────────
     const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.content = `${b.title || 'Negocio'} - ${b.category_name || ''} en ${b.city || 'Mérida'}, ${b.state || 'Venezuela'}. ${b.description ? b.description.substring(0, 150) : 'Visita Un Click para más información.'}`;
+    if (metaDesc) metaDesc.content = `${b.title || 'Negocio'} - ${b.category_name || ''} en ${b.city || 'Mérida'}, ${b.state || 'Venezuela'}. ${b.description ? b.description.substring(0, 150) : 'Visita OLAX para más información.'}`;
 
     // ─── Load Business Products, Jobs, Services ─────────────
     loadBusinessProducts(b.id);

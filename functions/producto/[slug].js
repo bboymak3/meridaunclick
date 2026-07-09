@@ -56,7 +56,7 @@ export async function onRequestGet(context) {
     const price = product.price ? `$${Number(product.price).toLocaleString('es-VE')}` : '';
     const description = product.description
       ? product.description.substring(0, 160)
-      : `${title}${price ? ' - ' + price : ''} - Disponible en Un Click Marketplace, Venezuela.`;
+      : `${title}${price ? ' - ' + price : ''} - Disponible en OLAX Marketplace, Venezuela.`;
     const imageUrl = product.image || `${baseUrl}/logo.png`;
     const canonicalUrl = `${baseUrl}/producto/${product.slug}`;
 
@@ -138,7 +138,7 @@ export async function onRequestGet(context) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${esc(title)}${price ? ' - ' + price : ''} - Un Click Marketplace</title>
+    <title>${esc(title)}${price ? ' - ' + price : ''} - OLAX Marketplace</title>
     <meta name="description" content="${esc(description)}">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="${canonicalUrl}">
@@ -147,12 +147,12 @@ export async function onRequestGet(context) {
     <meta property="og:description" content="${esc(description)}">
     <meta property="og:image" content="${imageUrl}">
     <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:site_name" content="Un Click Marketplace">
+    <meta property="og:site_name" content="OLAX Marketplace">
     <meta property="og:locale" content="es_VE">
     <meta property="product:price:amount" content="${product.price || '0'}">
     <meta property="product:price:currency" content="USD">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${esc(title)} - Un Click">
+    <meta name="twitter:title" content="${esc(title)} - OLAX">
     <meta name="twitter:description" content="${esc(description)}">
     <meta name="twitter:image" content="${imageUrl}">
     <link rel="stylesheet" href="/css/styles.css">
@@ -305,7 +305,7 @@ export async function onRequestGet(context) {
 <body>
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <a href="/" class="nav-logo"><i class="fas fa-store"></i> <span class="brand-name">Un Click</span></a>
+            <a href="/" class="nav-logo"><i class="fas fa-store"></i> <span class="brand-name">OLAX</span></a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
             </button>
@@ -426,7 +426,7 @@ export async function onRequestGet(context) {
     <script>
     function shareProduct(){
         if(navigator.share){navigator.share({title:'${escJs(title)}',text:'${escJs(product.description||title)}',url:location.href}).catch(function(){});}
-        else{window.open('https://wa.me/?text='+encodeURIComponent('${escJs(title)} - En Un Click Marketplace')+'%20'+encodeURIComponent(location.href),'_blank');}
+        else{window.open('https://wa.me/?text='+encodeURIComponent('${escJs(title)} - En OLAX Marketplace')+'%20'+encodeURIComponent(location.href),'_blank');}
     }
     // Navbar dropdown toggle
     document.querySelectorAll('.nav-dropdown-toggle').forEach(function(btn){
