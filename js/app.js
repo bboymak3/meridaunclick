@@ -54,10 +54,22 @@ function setSelectedState(stateName) {
   }
   updateBrandDisplay(stateName);
   updateLocationLabel(stateName);
-  // Reload businesses if on index or search page
+  // Reload all index page sections filtered by state
   const featuredGrid = document.getElementById('featuredGrid');
   if (featuredGrid) {
     loadFeaturedProperties();
+  }
+  const featuredPropertiesGrid = document.getElementById('featuredPropertiesGrid');
+  if (featuredPropertiesGrid) {
+    loadFeaturedPropertiesSection();
+  }
+  const featuredProductsGrid = document.getElementById('featuredProductsGrid');
+  if (featuredProductsGrid) {
+    loadFeaturedProducts();
+  }
+  const featuredJobsGrid = document.getElementById('featuredJobsGrid');
+  if (featuredJobsGrid) {
+    loadFeaturedJobs();
   }
   const searchGrid = document.getElementById('searchResultsGrid');
   if (searchGrid) {
@@ -72,9 +84,9 @@ function updateBrandDisplay(stateName) {
   });
   // Update page title dynamically
   if (stateName) {
-    document.title = stateName + ' Un Click - Directorio de Negocios en Venezuela';
+    document.title = stateName + ' OLAX - Directorio de Negocios';
   } else {
-    document.title = 'Un Click - Directorio de Negocios en Venezuela';
+    document.title = 'OLAX - Directorio de Negocios en Venezuela';
   }
 }
 
@@ -1032,8 +1044,9 @@ async function loadFeaturedProperties() {
 
         // Fallback: try direct API with featured=1 flag
         if (businesses.length === 0) {
+            // No featured businesses in this state — load any approved businesses from the state
             const selectedState = getSelectedState();
-            let endpoint = '/businesses?status=approved&limit=3&featured=1';
+            let endpoint = '/businesses?status=approved&limit=12';
             if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
             const data = await api.get(endpoint);
             businesses = data.businesses || [];
@@ -1047,8 +1060,15 @@ async function loadFeaturedProperties() {
         }
 
         if (emptyState) emptyState.style.display = 'none';
-        businesses = businesses.slice(0, 3);
+        // When a state is selected, show up to 12; otherwise show 3 featured
+        const maxShow = getSelectedState() ? 12 : 3;
+        businesses = businesses.slice(0, maxShow);
         grid.innerHTML = businesses.map(p => createBusinessCard(p)).join('');
+        // Update section title to reflect state filter
+        const sectionTitle = grid.closest('.admin-card, .idx-section')?.querySelector('h2, h3');
+        if (sectionTitle && getSelectedState()) {
+            sectionTitle.textContent = 'Negocios en ' + getSelectedState();
+        }
     } catch (error) {
         if (loading) loading.remove();
         if (emptyState) emptyState.style.display = '';
