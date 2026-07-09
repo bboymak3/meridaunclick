@@ -32,34 +32,79 @@ export async function onRequestGet(context) {
     // Check if sellers_profiles table exists
     const tableCheck = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='sellers_profiles'").first();
     if (!tableCheck) {
-      // Table doesn't exist - return empty array instead of 500
+      // Table doesn't exist - return empty array
       return new Response(JSON.stringify({ sellers: [] }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Safe query: use COALESCE in case columns don't exist
-    const sellers = await env.DB.prepare(`
-      SELECT sp.user_id,
-             COALESCE(sp.store_name, (SELECT b.title FROM businesses b WHERE b.user_id = sp.user_id LIMIT 1), u.name, 'Sin nombre') as store_name,
-             COALESCE(sp.description, '') as description,
-             COALESCE(sp.avatar, '') as avatar,
-             COALESCE(sp.city, '') as city,
-             COALESCE(sp.state, '') as state,
-             COALESCE(sp.phone, '') as phone,
-             COALESCE(sp.whatsapp, '') as whatsapp,
-             COALESCE(sp.instagram, '') as instagram,
-             COALESCE(sp.facebook, '') as facebook,
-             COALESCE(sp.tiktok, '') as tiktok,
-             COALESCE(sp.rating, 0) as rating,
-             COALESCE(sp.total_sales, 0) as total_sales,
-             sp.created_at, sp.updated_at,
-             u.name as user_name, u.email as user_email, u.role as user_role,
+    // Discover actual columns in sellers_profiles table
+    const colRows = await env.DB.prepare("PRAGMA table_info(sellers_profiles)").all();
+    const existingCols = (colRows.results || []).map(r => r.name);
+    const colSet = new Set(existingCols);
+
+    // Build SELECT clause dynamically using only columns that exist
+    const spSelects = [];
+    if (colSet.has('user_id')) spSelects.push('sp.user_id');
+
+    // store_name: use if exists, else derive from businesses or users
+    if (colSet.has('store_name')) {
+      spSelects.push("sp.store_name");
+    } else {
+      spSelects.push("(SELECT b.title FROM businesses b WHERE b.user_id = sp.user_id LIMIT 1) as store_name");
+    }
+
+    if (colSet.has('description')) spSelects.push("sp.description");
+    else spSelects.push("'' as description");
+
+    if (colSet.has('avatar')) spSelects.push("sp.avatar");
+    else spSelects.push("'' as avatar");
+
+    if (colSet.has('city')) spSelects.push("sp.city");
+    else spSelects.push("'' as city");
+
+    if (colSet.has('state')) spSelects.push("sp.state");
+    else spSelects.push("'' as state");
+
+    if (colSet.has('phone')) spSelects.push("sp.phone");
+    else spSelects.push("'' as phone");
+
+    if (colSet.has('whatsapp')) spSelects.push("sp.whatsapp");
+    else spSelects.push("'' as whatsapp");
+
+    if (colSet.has('instagram')) spSelects.push("sp.instagram");
+    else spSelects.push("'' as instagram");
+
+    if (colSet.has('facebook')) spSelects.push("sp.facebook");
+    else spSelects.push("'' as facebook");
+
+    if (colSet.has('tiktok')) spSelects.push("sp.tiktok");
+    else spSelects.push("'' as tiktok");
+
+    if (colSet.has('rating')) spSelects.push("sp.rating");
+    else spSelects.push("0 as rating");
+
+    if (colSet.has('total_sales')) spSelects.push("sp.total_sales");
+    else spSelects.push("0 as total_sales");
+
+    if (colSet.has('created_at')) spSelects.push("sp.created_at");
+    else spSelects.push("'' as created_at");
+
+    if (colSet.has('updated_at')) spSelects.push("sp.updated_at");
+    else spSelects.push("'' as updated_at");
+
+    const query = `
+      SELECT ${spSelects.join(', ')},
+             COALESCE(u.name, 'Sin nombre') as user_name,
+             u.email as user_email,
+             u.role as user_role,
              COALESCE(u.plan_type, 'basic') as plan_type
       FROM sellers_profiles sp
       LEFT JOIN users u ON sp.user_id = u.id
       ORDER BY sp.created_at DESC
-    `).all();
+    `;
+
+    const sellers = await env.DB.prepare(query).all();
 
     return new Response(JSON.stringify({ sellers: sellers.results || [] }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
