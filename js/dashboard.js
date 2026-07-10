@@ -5,15 +5,8 @@
 
 // Self-contained edit business modal opener — completely outside the IIFE
 // so it works even if the IIFE has errors.
-document.addEventListener('open-edit-biz', function(e) {
-    var id = e.detail.id;
+function _openEditBizModal(id) {
     if (!id) return;
-    // If the IIFE version is available, use it
-    if (typeof window.openEditBusinessModal === 'function') {
-        window.openEditBusinessModal(id);
-        return;
-    }
-    // Fallback: open modal and load data directly
     var modal = document.getElementById('editBusinessModal');
     var loading = document.getElementById('editBizLoading');
     var form = document.getElementById('editBizForm');
@@ -22,15 +15,22 @@ document.addEventListener('open-edit-biz', function(e) {
     if (loading) loading.style.display = '';
     if (form) form.style.display = 'none';
 
+    // Reset
+    document.querySelectorAll('#editBizFeatures .eb-feature').forEach(function(f) { f.classList.remove('checked'); });
+    var vidPrev = document.getElementById('ebVideoPreview');
+    if (vidPrev) vidPrev.style.display = 'none';
+
     var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
     fetch('/api/businesses/' + id, {
         headers: { 'Authorization': 'Bearer ' + token }
     })
-    .then(function(r) { return r.json(); })
+    .then(function(r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
     .then(function(data) {
         var biz = data.business || data;
         if (form) {
-            // Populate basic fields directly
             var el = function(eid, val) { var ee = document.getElementById(eid); if (ee && val) ee.value = val; };
             el('editBizId', biz.id);
             el('editBizTitle', biz.title);
@@ -58,7 +58,13 @@ document.addEventListener('open-edit-biz', function(e) {
                 var logoSection = form.querySelector('.eb-logo-section');
                 if (logoSection) {
                     var logoImg = logoSection.querySelector('.edit-biz-logo-img');
+                    var logoIcon = logoSection.querySelector('.edit-biz-logo-icon');
+                    var logoRemove = logoSection.querySelector('.edit-biz-logo-remove-btn');
                     if (logoImg) { logoImg.src = biz.logo; logoImg.style.display = 'block'; }
+                    if (logoIcon) logoIcon.style.display = 'none';
+                    if (logoRemove) logoRemove.style.display = 'inline-flex';
+                    var logoUrlInput = logoSection.querySelector('.edit-biz-logo-url');
+                    if (logoUrlInput) logoUrlInput.value = biz.logo;
                 }
             }
             // Banner
@@ -66,8 +72,10 @@ document.addEventListener('open-edit-biz', function(e) {
                 var bannerSection = form.querySelector('.eb-banner-section');
                 if (bannerSection) {
                     bannerSection.querySelector('.edit-biz-banner-preview').innerHTML = '<img src="' + biz.banner + '" style="width:100%;height:100%;object-fit:cover;">';
-                    bannerSection.querySelector('.edit-biz-banner-remove-btn').style.display = 'inline-flex';
-                    bannerSection.querySelector('.edit-biz-banner-url').value = biz.banner;
+                    var bRemove = bannerSection.querySelector('.edit-biz-banner-remove-btn');
+                    if (bRemove) bRemove.style.display = 'inline-flex';
+                    var bUrl = bannerSection.querySelector('.edit-biz-banner-url');
+                    if (bUrl) bUrl.value = biz.banner;
                 }
             }
             // Video
@@ -88,12 +96,10 @@ document.addEventListener('open-edit-biz', function(e) {
     .catch(function(err) {
         if (loading) loading.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><p>Error al cargar datos del negocio</p>';
     });
-});
+}
 
-// Also register as global function for inline onclick handlers in table rows
-window.openEditBusinessModal = function(id) {
-    document.dispatchEvent(new CustomEvent('open-edit-biz', {detail:{id:id}}));
-};
+// Global function for all callers (inline onclick, CustomEvent, etc.)
+window.openEditBusinessModal = _openEditBizModal;
 window.closeEditBusinessModal = function() {
     var modal = document.getElementById('editBusinessModal');
     if (modal) modal.classList.add('hidden');
@@ -366,7 +372,7 @@ window.closeEditBusinessModal = function() {
                 const statusLabels = { approved: 'Activo', pending: 'Pendiente de aprobacion', rejected: 'Rechazado' };
                 editProfileBizName.textContent = primaryBiz.title || 'Mi Negocio';
                 editProfileBizStatus.textContent = statusLabels[primaryBiz.status] || primaryBiz.status;
-                editProfileBtn.onclick = function() { document.dispatchEvent(new CustomEvent('open-edit-biz', {detail:{id:primaryBiz.id}})); };
+                editProfileBtn.onclick = function() { window.openEditBusinessModal(primaryBiz.id); };
                 editProfileViewBtn.href = '/negocio/' + (primaryBiz.slug || primaryBiz.id);
                 editProfileCTA.style.display = '';
 
@@ -383,7 +389,7 @@ window.closeEditBusinessModal = function() {
                         chip.className = 'btn btn-secondary btn-sm';
                         chip.style.cssText = 'font-size:0.82rem;border-radius:8px;';
                         chip.innerHTML = '<i class="fas fa-pen" style="font-size:0.7rem;"></i> ' + (b.title || 'Negocio');
-                        chip.onclick = function() { document.dispatchEvent(new CustomEvent('open-edit-biz', {detail:{id:b.id}})); };
+                        chip.onclick = function() { window.openEditBusinessModal(b.id); };
                         otherWrap.appendChild(chip);
                     });
                 }
@@ -1808,7 +1814,7 @@ window.closeEditBusinessModal = function() {
                 </div>
                 <input type="hidden" class="edit-biz-banner-url">
             `;
-            form.insertBefore(bannerDiv, firstField);
+            try { form.insertBefore(bannerDiv, firstField); } catch(e) { form.prepend(bannerDiv); }
 
             // Bind events
             const bSection = bannerDiv;
