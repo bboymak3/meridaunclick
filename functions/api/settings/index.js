@@ -53,7 +53,9 @@ const DEFAULT_SETTINGS = {
   marketplace_enabled: '1',
   businesses_enabled: '1',
   jobs_enabled: '1',
+  // Chat configuration
   chat_enabled: '1',
+  chat_mode: 'all', // 'all' | 'premium_only' | 'none'
   registrations_enabled: '1',
   maintenance_mode: '0',
   site_name: 'AuNclick Mérida',

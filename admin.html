@@ -767,6 +767,35 @@
                             </div>
                             <hr style="margin:20px 0; border-color:var(--color-border-light);">
                             <div class="settings-section">
+                                <h4 class="settings-section-title"><i class="fas fa-comments" style="color:#25d366;"></i> Chat entre Usuarios</h4>
+                                <p style="font-size:0.85rem;color:#6b7280;margin-bottom:14px;">Configura quién puede usar el sistema de chat entre compradores y vendedores. Los cambios se aplican inmediatamente.</p>
+                                <div style="display:flex;flex-direction:column;gap:10px;">
+                                    <label class="settings-radio-card" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;transition:all 0.2s;">
+                                        <input type="radio" name="chat_mode" value="all" data-key="chat_mode" style="width:18px;height:18px;accent-color:#25d366;">
+                                        <div>
+                                            <div style="font-weight:600;color:#111;font-size:0.92rem;"><i class="fas fa-globe" style="color:#25d366;margin-right:6px;"></i> Todos los usuarios</div>
+                                            <div style="font-size:0.8rem;color:#6b7280;margin-top:2px;">Cualquier usuario registrado puede chatear con vendedores.</div>
+                                        </div>
+                                    </label>
+                                    <label class="settings-radio-card" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;transition:all 0.2s;">
+                                        <input type="radio" name="chat_mode" value="premium_only" data-key="chat_mode" style="width:18px;height:18px;accent-color:#f59e0b;">
+                                        <div>
+                                            <div style="font-weight:600;color:#111;font-size:0.92rem;"><i class="fas fa-crown" style="color:#f59e0b;margin-right:6px;"></i> Solo Premium</div>
+                                            <div style="font-size:0.8rem;color:#6b7280;margin-top:2px;">Solo usuarios con plan Premium pueden usar el chat (ambas partes).</div>
+                                        </div>
+                                    </label>
+                                    <label class="settings-radio-card" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:2px solid #e5e7eb;border-radius:12px;cursor:pointer;transition:all 0.2s;">
+                                        <input type="radio" name="chat_mode" value="none" data-key="chat_mode" style="width:18px;height:18px;accent-color:#dc2626;">
+                                        <div>
+                                            <div style="font-weight:600;color:#111;font-size:0.92rem;"><i class="fas fa-ban" style="color:#dc2626;margin-right:6px;"></i> Desactivado</div>
+                                            <div style="font-size:0.8rem;color:#6b7280;margin-top:2px;">El chat entre usuarios está completamente desactivado. El botón flotante no se mostrará.</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div id="chatModeStatus" style="margin-top:12px;padding:10px 14px;border-radius:8px;font-size:0.85rem;display:none;"></div>
+                            </div>
+                            <hr style="margin:20px 0; border-color:var(--color-border-light);">
+                            <div class="settings-section">
                                 <h4 class="settings-section-title"><i class="fas fa-puzzle-piece" style="color:#28a745;"></i> Funcionalidades</h4>
                                 <div class="settings-toggle-row"><label class="settings-label">Reseñas y Calificaciones</label><label class="settings-switch"><input type="checkbox" id="setting_reviews_enabled" data-key="reviews_enabled"><span class="settings-switch-slider"></span></label></div>
                                 <div class="settings-toggle-row"><label class="settings-label">Cupones y Ofertas</label><label class="settings-switch"><input type="checkbox" id="setting_coupons_enabled" data-key="coupons_enabled"><span class="settings-switch-slider"></span></label></div>
@@ -1849,3 +1878,4 @@
     </script>
 </body>
 </html>
+ 

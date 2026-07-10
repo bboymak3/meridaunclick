@@ -14,6 +14,7 @@
   let pollInterval = null;
   let totalUnread = 0;
   let isOpen = false;
+  let chatConfig = { chat_enabled: true, chat_mode: 'all' }; // fetched from /chat/config
 
   // ─── Create Widget HTML ─────────────────────────────────────
   function createWidget() {
@@ -400,6 +401,17 @@
         return;
       }
 
+      // ─── Check chat mode restrictions ────────────────────
+      if (!chatConfig.chat_enabled || chatConfig.chat_mode === 'none') {
+        showToast('El chat está desactivado temporalmente', 'warning');
+        return;
+      }
+      if (chatConfig.chat_mode === 'premium_only') {
+        // Show message — backend will also enforce this
+        showToast('El chat está disponible solo para usuarios Premium', 'warning');
+        return;
+      }
+
       createWidget();
       openChat();
 
@@ -428,14 +440,34 @@
     },
 
     init() {
-      createWidget();
-      // Load unread count if authenticated
-      if (isAuthenticated()) {
-        api.get('/chat/conversations').then(data => {
-          totalUnread = data.total_unread || 0;
-          updateBadge();
-        }).catch(() => {});
-      }
+      // First fetch chat config, then decide whether to show widget
+      fetch('/api/chat/config')
+        .then(r => r.json())
+        .then(config => {
+          chatConfig = config;
+          if (!config.chat_enabled || config.chat_mode === 'none') {
+            // Chat disabled — don't create widget at all
+            return;
+          }
+          createWidget();
+          // Load unread count if authenticated
+          if (isAuthenticated()) {
+            api.get('/chat/conversations').then(data => {
+              totalUnread = data.total_unread || 0;
+              updateBadge();
+            }).catch(() => {});
+          }
+        })
+        .catch(() => {
+          // On error, create widget normally (fail open)
+          createWidget();
+          if (isAuthenticated()) {
+            api.get('/chat/conversations').then(data => {
+              totalUnread = data.total_unread || 0;
+              updateBadge();
+            }).catch(() => {});
+          }
+        });
     },
   };
 
@@ -493,3 +525,4 @@
     window.UnClickChat.init();
   }
 })();
+

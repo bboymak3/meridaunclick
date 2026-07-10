@@ -463,6 +463,15 @@ function populateBusinessDetail(b) {
                 showToast('Chat no disponible', 'warning');
             }
         };
+
+        // Check chat config to hide button if chat is disabled
+        fetch('/api/chat/config').then(r => r.json()).then(chatCfg => {
+            if (!chatCfg.chat_enabled || chatCfg.chat_mode === 'none') {
+                openChatBtn.style.display = 'none';
+            } else if (chatCfg.chat_mode === 'premium_only' && !isOwnerPremium) {
+                openChatBtn.style.display = 'none';
+            }
+        }).catch(() => { /* fail open — keep button visible */ });
     }
 
     // Share WhatsApp button (premium only — black outline style to differentiate from contact)
@@ -770,6 +779,7 @@ async function loadBusinessServices(businessId) {
 
 // ─── Utility ────────────────────────────────────────────────
 // escapeHtml is defined in app.js (common module)
+
 
 
 

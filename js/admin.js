@@ -2258,16 +2258,21 @@
             const data = await api.get('/settings');
             const settings = data.settings || data;
 
-            // Populate toggle checkboxes
+            // Populate toggle checkboxes and inputs
             document.querySelectorAll('[data-key]').forEach(el => {
                 const key = el.dataset.key;
                 const value = settings[key];
                 if (el.type === 'checkbox') {
                     el.checked = value === '1' || value === 'true';
+                } else if (el.type === 'radio') {
+                    el.checked = (el.value === value);
                 } else {
                     el.value = value || '';
                 }
             });
+
+            // Highlight active radio card
+            highlightChatModeCard();
         } catch (error) {
             console.error('Error loading settings:', error);
             showToast('Error al cargar configuración', 'error');
@@ -2284,10 +2289,18 @@
     async function saveSettings() {
         try {
             const updates = {};
+            const radioKeysSaved = new Set();
+
             document.querySelectorAll('[data-key]').forEach(el => {
                 const key = el.dataset.key;
                 if (el.type === 'checkbox') {
                     updates[key] = el.checked ? '1' : '0';
+                } else if (el.type === 'radio') {
+                    if (el.checked) {
+                        updates[key] = el.value;
+                        radioKeysSaved.add(key);
+                    }
+                    // Skip unchecked radios — only save the checked one
                 } else {
                     updates[key] = el.value;
                 }
@@ -2295,11 +2308,52 @@
 
             await api.put('/settings', updates);
             showToast('Configuración guardada exitosamente', 'success');
+            highlightChatModeCard();
         } catch (error) {
             console.error('Error saving settings:', error);
             showToast('Error al guardar configuración: ' + error.message, 'error');
         }
     }
+
+    // ─── Chat Mode Card Highlight ──────────────────────────────
+    function highlightChatModeCard() {
+        const colors = { all: '#25d366', premium_only: '#f59e0b', none: '#dc2626' };
+        document.querySelectorAll('[name="chat_mode"]').forEach(radio => {
+            const card = radio.closest('.settings-radio-card');
+            if (!card) return;
+            if (radio.checked) {
+                card.style.borderColor = colors[radio.value] || '#25d366';
+                card.style.background = (radio.value === 'all' ? '#f0fdf4' : radio.value === 'premium_only' ? '#fffbeb' : '#fef2f2');
+            } else {
+                card.style.borderColor = '#e5e7eb';
+                card.style.background = 'transparent';
+            }
+        });
+
+        // Update status message
+        const statusEl = document.getElementById('chatModeStatus');
+        if (statusEl) {
+            const checked = document.querySelector('[name="chat_mode"]:checked');
+            if (checked) {
+                const msgs = {
+                    all: { bg: '#f0fdf4', border: '#bbf7d0', color: '#059669', text: 'Chat activo para todos los usuarios registrados.' },
+                    premium_only: { bg: '#fffbeb', border: '#fde68a', color: '#b45309', text: 'Chat restringido a usuarios Premium.' },
+                    none: { bg: '#fef2f2', border: '#fecaca', color: '#dc2626', text: 'Chat completamente desactivado.' },
+                };
+                const m = msgs[checked.value] || msgs.all;
+                statusEl.style.display = 'block';
+                statusEl.style.background = m.bg;
+                statusEl.style.border = '1px solid ' + m.border;
+                statusEl.style.color = m.color;
+                statusEl.innerHTML = '<i class="fas fa-info-circle"></i> ' + m.text;
+            }
+        }
+    }
+
+    // Add change listeners for chat mode radios
+    document.querySelectorAll('[name="chat_mode"]').forEach(radio => {
+        radio.addEventListener('change', () => highlightChatModeCard());
+    });
 
     // ─── Products Management ────────────────────────────────────
     async function loadProducts() {
@@ -3620,3 +3674,4 @@
     }
 
 })();
+

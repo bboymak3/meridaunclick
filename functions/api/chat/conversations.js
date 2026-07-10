@@ -190,6 +190,39 @@ export async function onRequestPost(context) {
 
     await ensureTables(env.DB);
 
+    // ─── Check chat mode setting ──────────────────────────────
+    try {
+      const chatSettings = await env.DB.prepare(
+        "SELECT key, value FROM admin_settings WHERE key IN ('chat_enabled', 'chat_mode')"
+      ).all();
+      const settingsMap = {};
+      for (const row of (chatSettings.results || [])) settingsMap[row.key] = row.value;
+
+      const chatEnabled = settingsMap.chat_enabled !== '0';
+      const chatMode = settingsMap.chat_mode || 'all';
+
+      if (!chatEnabled || chatMode === 'none') {
+        return new Response(JSON.stringify({ error: 'El chat está desactivado temporalmente' }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (chatMode === 'premium_only') {
+        // Check if BOTH users (buyer/seller) are premium
+        const buyerPlan = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(user.id).first();
+        const sellerPlan = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(business.user_id).first();
+        if ((!buyerPlan || buyerPlan.plan_type !== 'premium') || (!sellerPlan || sellerPlan.plan_type !== 'premium')) {
+          return new Response(JSON.stringify({ error: 'El chat está disponible solo para usuarios Premium' }), {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        }
+      }
+    } catch (e) {
+      // If settings table doesn't exist, allow chat (fail open)
+    }
+
     // Get business and seller
     const business = await env.DB.prepare('SELECT id, user_id, title, status FROM businesses WHERE id = ?').bind(business_id).first();
     if (!business) {
