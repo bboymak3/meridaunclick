@@ -197,12 +197,13 @@ function populateBusinessDetail(b) {
         galleryBadges.innerHTML = badges;
     }
 
+    // ─── Premium check (used in title badge, contact buttons, etc.) ──
+    const isOwnerPremium = b.owner_plan_type === 'premium';
+
     // ─── Title + Plan Badge ─────────────────────────────────
     const titleEl = document.getElementById('propDetailTitle');
     if (titleEl) {
         titleEl.textContent = b.title || 'Sin título';
-        // Plan badge next to business name
-        const isOwnerPremium = b.owner_plan_type === 'premium';
         if (isOwnerPremium) {
             titleEl.innerHTML += ' <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:10px;vertical-align:middle;margin-left:8px;letter-spacing:0.3px;text-transform:uppercase;"><i class="fas fa-crown" style="font-size:0.65rem;"></i> Premium</span>';
         } else {
@@ -419,7 +420,7 @@ function populateBusinessDetail(b) {
     }
 
     // ─── Contact Actions ──────────────────────────────────────
-    // isOwnerPremium already declared above in Title section
+    // isOwnerPremium declared at function top (shared scope)
     const mainWhatsApp = document.getElementById('mainWhatsApp');
     const emailContactBtn = document.getElementById('emailContactBtn');
 
@@ -762,4 +763,5 @@ async function loadBusinessServices(businessId) {
 
 // ─── Utility ────────────────────────────────────────────────
 // escapeHtml is defined in app.js (common module)
+
 
