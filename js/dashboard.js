@@ -3,6 +3,16 @@
  * Handles user dashboard and admin panel functionality
  */
 
+// Register global functions early so they're always available
+window.openEditBusinessModal = window.openEditBusinessModal || function(id) {
+    console.warn('openEditBusinessModal called before full init, retrying in 500ms...');
+    setTimeout(function() { if (window.openEditBusinessModal !== arguments.callee) window.openEditBusinessModal(id); }, 500);
+};
+window.closeEditBusinessModal = window.closeEditBusinessModal || function() {
+    const modal = document.getElementById('editBusinessModal');
+    if (modal) modal.classList.add('hidden');
+};
+
 (function () {
     'use strict';
 
