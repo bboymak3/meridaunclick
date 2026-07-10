@@ -1872,7 +1872,11 @@ window.closeEditBusinessModal = function() {
         }
     });
 
-    window.openEditBusinessModal = async function(id) {
+    // NOTE: window.openEditBusinessModal is defined OUTSIDE this IIFE (top of file)
+    // to avoid issues with elements that may not exist in the DOM.
+    // The IIFE version below is kept as _iifeOpenEditBizModal for internal use only.
+
+    function _iifeOpenEditBizModal(id) {
         const modal = document.getElementById('editBusinessModal');
         const loading = document.getElementById('editBizLoading');
         const form = document.getElementById('editBizForm');
@@ -1883,28 +1887,31 @@ window.closeEditBusinessModal = function() {
 
         // Reset features
         document.querySelectorAll('#editBizFeatures .eb-feature').forEach(f => f.classList.remove('checked'));
-        document.getElementById('ebVideoPreview').style.display = 'none';
-        document.getElementById('ebVideoFileInfo').innerHTML = '';
-        document.getElementById('editBizVideoUrlHidden').value = '';
-        document.getElementById('editBizVideoUrl').value = '';
-        document.getElementById('editBizVideoFileInput').value = '';
+        var vidPrev = document.getElementById('ebVideoPreview');
+        if (vidPrev) vidPrev.style.display = 'none';
+        var vidFileInfo = document.getElementById('ebVideoFileInfo');
+        if (vidFileInfo) vidFileInfo.innerHTML = '';
+        var vidUrlHid = document.getElementById('editBizVideoUrlHidden');
+        if (vidUrlHid) vidUrlHid.value = '';
+        var vidUrl = document.getElementById('editBizVideoUrl');
+        if (vidUrl) vidUrl.value = '';
+        var vidFileIn = document.getElementById('editBizVideoFileInput');
+        if (vidFileIn) vidFileIn.value = '';
 
         try {
-            const data = await api.get('/businesses/' + id);
-            const biz = data.business || data;
-            document.getElementById('editBizId').value = biz.id;
-            populateEditBizForm(biz);
-            loading.style.display = 'none';
-            form.style.display = '';
+            api.get('/businesses/' + id).then(function(data) {
+                const biz = data.business || data;
+                document.getElementById('editBizId').value = biz.id;
+                populateEditBizForm(biz);
+                loading.style.display = 'none';
+                form.style.display = '';
+            }).catch(function(e) {
+                loading.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><p>Error al cargar datos del negocio</p>';
+            });
         } catch(e) {
             loading.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><p>Error al cargar datos del negocio</p>';
         }
-    };
-
-    window.closeEditBusinessModal = function() {
-        const modal = document.getElementById('editBusinessModal');
-        if (modal) modal.classList.add('hidden');
-    };
+    }
 
     function populateEditBizForm(biz) {
         const el = (id, val) => { const e = document.getElementById(id); if (e && val) e.value = val; };
