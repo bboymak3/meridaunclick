@@ -207,14 +207,13 @@
 
     // ─── Tab Navigation ─────────────────────────────────────────
     function setupTabNavigation() {
-        document.querySelectorAll('.admin-nav-link').forEach(link => {
+        document.querySelectorAll('.admin-nav-link:not(.admin-nav-external)').forEach(link => {
             link.addEventListener('click', (e) => {
                 const tab = link.dataset.tab;
                 if (tab) {
                     e.preventDefault();
                     switchTab(tab);
                 }
-                // If no data-tab, let the browser navigate normally (external links like admin-chat.html)
             });
         });
 
@@ -234,7 +233,7 @@
         currentTab = tab;
 
         // Update nav links
-        document.querySelectorAll('.admin-nav-link').forEach(link => {
+        document.querySelectorAll('.admin-nav-link:not(.admin-nav-external)').forEach(link => {
             link.classList.toggle('active', link.dataset.tab === tab);
         });
 
