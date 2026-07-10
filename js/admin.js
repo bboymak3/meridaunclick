@@ -209,9 +209,12 @@
     function setupTabNavigation() {
         document.querySelectorAll('.admin-nav-link').forEach(link => {
             link.addEventListener('click', (e) => {
-                e.preventDefault();
                 const tab = link.dataset.tab;
-                if (tab) switchTab(tab);
+                if (tab) {
+                    e.preventDefault();
+                    switchTab(tab);
+                }
+                // If no data-tab, let the browser navigate normally (external links like admin-chat.html)
             });
         });
 
