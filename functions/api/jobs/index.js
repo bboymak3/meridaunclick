@@ -68,6 +68,7 @@ export async function onRequestGet(context) {
     const offset = (page - 1) * limit;
     const sort = params.get('sort') || 'newest';
     const userId = params.get('user_id');
+    const businessId = params.get('business_id');
 
     // Build conditions
     const conditions = [];
@@ -80,6 +81,11 @@ export async function onRequestGet(context) {
     // Filter expired posts for public views
     if (status === 'approved') {
       conditions.push("(expires_at IS NULL OR expires_at > datetime('now'))");
+    }
+
+    if (businessId) {
+      conditions.push('business_id = ?');
+      bindings.push(parseInt(businessId));
     }
 
     if (userId) {

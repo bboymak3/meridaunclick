@@ -286,8 +286,6 @@
                 break;
             case 'settings':
                 loadSettings();
-                loadSellersPanel();
-                setupCreateUserForm();
                 break;
             case 'premium':
                 premiumPage = 1;
@@ -2349,8 +2347,10 @@
                 }
             });
 
-            // Highlight active radio card
-            highlightChatModeCard();
+            // Highlight active radio card (only if chat_mode radios exist on this page)
+            if (document.querySelector('[name="chat_mode"]')) {
+                highlightChatModeCard();
+            }
         } catch (error) {
             console.error('Error loading settings:', error);
             showToast('Error al cargar configuración', 'error');
@@ -2386,7 +2386,9 @@
 
             await api.put('/settings', updates);
             showToast('Configuración guardada exitosamente', 'success');
-            highlightChatModeCard();
+            if (document.querySelector('[name="chat_mode"]')) {
+                highlightChatModeCard();
+            }
         } catch (error) {
             console.error('Error saving settings:', error);
             showToast('Error al guardar configuración: ' + error.message, 'error');

@@ -2051,6 +2051,18 @@
             }
         }
 
+        // Also update profile plan badge
+        const profilePlanBadge = document.getElementById('profilePlanBadge');
+        if (profilePlanBadge) {
+            if (isPremium) {
+                profilePlanBadge.className = 'plan-badge plan-badge-premium';
+                profilePlanBadge.innerHTML = '<i class="fas fa-crown"></i> Premium';
+            } else {
+                profilePlanBadge.className = 'plan-badge plan-badge-basic';
+                profilePlanBadge.innerHTML = '<i class="fas fa-user"></i> Basico';
+            }
+        }
+
         // Render action buttons dynamically
         const btnsContainer = document.getElementById('planActionBtns');
         if (btnsContainer) {

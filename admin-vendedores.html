@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="description" content="Vendedores y Agentes - OLAX Admin">
+    <title>Vendedores - Administración OLAX</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-admin" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <i class="fas fa-store"></i>
+                <span class="brand-name">OLAX</span> <span class="admin-badge">Admin</span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+                <i class="fas fa-bars"></i>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link">Inicio</a></li>
+                <li><a href="admin.html" class="nav-link"><i class="fas fa-cogs"></i> Panel Admin</a></li>
+                <li><a href="admin-vendedores.html" class="nav-link active"><i class="fas fa-store"></i> Vendedores</a></li>
+                <li><a href="admin-chat.html" class="nav-link"><i class="fas fa-comments"></i> Chat</a></li>
+                <li id="navLoginItem"><a href="login.html" class="nav-link nav-btn">Login</a></li>
+                <li id="navUserItem" class="nav-user">
+                    <a href="dashboard.html" class="nav-link" id="navUserName">
+                        <i class="fas fa-user-circle"></i> Mi Cuenta
+                    </a>
+                    <button class="nav-link btn-logout" id="navLogout">
+                        <i class="fas fa-sign-out-alt"></i> Salir
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="admin-panel">
+        <div class="admin-layout">
+            <!-- Sidebar -->
+            <aside class="admin-sidebar" id="adminSidebar">
+                <div class="admin-sidebar-header">
+                    <i class="fas fa-store"></i>
+                    <span>Vendedores</span>
+                </div>
+                <nav class="admin-nav">
+                    <a href="admin.html" class="admin-nav-link">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Volver al Panel</span>
+                    </a>
+                    <a href="admin.html#tab=settings" class="admin-nav-link">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Configuración General</span>
+                    </a>
+                    <a href="admin-chat.html" class="admin-nav-link">
+                        <i class="fas fa-comments"></i>
+                        <span>Configuración Chat</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Content -->
+            <div class="admin-content">
+                <div class="admin-topbar">
+                    <div class="admin-topbar-left">
+                        <button class="admin-sidebar-toggle" id="adminSidebarToggle">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <h1 class="admin-page-title" id="adminPageTitle">Vendedores / Agentes</h1>
+                    </div>
+                    <div class="admin-topbar-right">
+                        <span class="admin-date" id="adminDate"></span>
+                    </div>
+                </div>
+
+                <!-- Vendedores Table -->
+                <div class="admin-card" style="margin-bottom:24px;">
+                    <div class="admin-card-header">
+                        <h3><i class="fas fa-store" style="color:#2563eb;"></i> Panel de Vendedores / Agentes</h3>
+                        <div class="admin-card-actions">
+                            <button class="btn btn-sm" style="background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;" onclick="document.getElementById('createUserSection').scrollIntoView({behavior:'smooth'})">
+                                <i class="fas fa-user-plus"></i> Crear Agente
+                            </button>
+                            <button class="btn btn-sm" id="btnRefreshSellers" style="background:var(--color-primary);color:#fff;">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="admin-card-body">
+                        <p style="font-size:0.88rem;color:#6b7280;margin-bottom:14px;">Vista de todos los perfiles de vendedores/agentes registrados en la plataforma. Aquí puedes gestionar sus cuentas y asignarles Premium.</p>
+                        <div id="sellersLoading" style="text-align:center;padding:20px;color:#9ca3af;">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top:8px;">Cargando vendedores...</p>
+                        </div>
+                        <div class="admin-table-responsive">
+                            <table class="admin-table" id="sellersTable" style="display:none;">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Vendedor</th>
+                                        <th>Tienda</th>
+                                        <th>Ciudad / Estado</th>
+                                        <th>Teléfono</th>
+                                        <th>WhatsApp</th>
+                                        <th>Negocios</th>
+                                        <th>Plan</th>
+                                        <th>Registro</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sellersTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="sellersEmpty" class="empty-state-sm" style="display:none;">
+                            <p>No hay vendedores registrados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Create User Section -->
+                <div class="admin-card" id="createUserSection">
+                    <div class="admin-card-header">
+                        <h3><i class="fas fa-user-plus" style="color:#059669;"></i> Crear Nueva Cuenta</h3>
+                    </div>
+                    <div class="admin-card-body">
+                        <p style="font-size:0.88rem;color:#6b7280;margin-bottom:16px;">Crea una nueva cuenta de usuario, agente o administrador directamente desde aquí.</p>
+                        <div style="max-width:500px;">
+                            <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Nombre Completo <span style="color:#dc2626;">*</span></label>
+                                    <input type="text" id="newUserName" class="form-control" placeholder="Ej: Juan Pérez">
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Email <span style="color:#dc2626;">*</span></label>
+                                    <input type="email" id="newUserEmail" class="form-control" placeholder="Ej: juan@email.com">
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Teléfono (opcional)</label>
+                                    <input type="text" id="newUserPhone" class="form-control" placeholder="Ej: 0414-123-4567">
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:12px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Contraseña <span style="color:#dc2626;">*</span></label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="newUserPassword" class="form-control" placeholder="Mínimo 6 caracteres">
+                                        <button type="button" id="toggleNewUserPwd" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#6b7280;cursor:pointer;font-size:0.9rem;"><i class="fas fa-eye"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-bottom:16px;">
+                                <div class="form-group" style="flex:1;">
+                                    <label style="display:block;font-size:0.82rem;font-weight:600;color:#374151;margin-bottom:4px;">Rol</label>
+                                    <select id="newUserRole" class="form-control">
+                                        <option value="user">Usuario</option>
+                                        <option value="agent">Agente / Vendedor</option>
+                                        <option value="admin">Administrador</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="createUserError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:#dc2626;"></div>
+                            <div id="createUserSuccess" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:#059669;"></div>
+                            <button class="btn btn-primary" id="btnCreateUser" style="background:linear-gradient(135deg,#059669,#10b981);">
+                                <i class="fas fa-user-plus"></i> Crear Cuenta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast container -->
+    <div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;"></div>
+
+    <script src="js/app.js"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        // Auth check
+        if (!window.isAuthenticated || !window.isAuthenticated()) {
+            window.location.href = 'login.html';
+            return;
+        }
+        const user = window.getCachedUser ? window.getCachedUser() : null;
+        if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+            alert('Acceso denegado. Solo administradores.');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Date
+        const dateEl = document.getElementById('adminDate');
+        if (dateEl) dateEl.textContent = new Date().toLocaleDateString('es-VE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+        // Sidebar toggle
+        const sidebarToggle = document.getElementById('adminSidebarToggle');
+        const sidebar = document.getElementById('adminSidebar');
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        }
+
+        // Toast helper
+        function showToast(msg, type) {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+            const colors = { success:'#059669', error:'#dc2626', info:'#2563eb' };
+            const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
+            const el = document.createElement('div');
+            el.style.cssText = `padding:12px 20px;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);animation:slideIn 0.3s ease;background:${colors[type]||colors.info};`;
+            el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i> ${msg}`;
+            container.appendChild(el);
+            setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }, 3000);
+        }
+
+        function escHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ─── Sellers Panel ──────────────────────────────────────
+        async function loadSellersPanel() {
+            const loading = document.getElementById('sellersLoading');
+            const table = document.getElementById('sellersTable');
+            const tbody = document.getElementById('sellersTableBody');
+            const empty = document.getElementById('sellersEmpty');
+            if (!tbody) return;
+
+            if (loading) loading.style.display = 'block';
+            if (table) table.style.display = 'none';
+            if (empty) empty.style.display = 'none';
+
+            try {
+                const data = await api.get('/admin/sellers');
+                const sellers = data.sellers || [];
+
+                if (loading) loading.style.display = 'none';
+
+                if (sellers.length === 0) {
+                    if (empty) empty.style.display = 'block';
+                    return;
+                }
+
+                if (table) table.style.display = 'table';
+
+                tbody.innerHTML = sellers.map(s => {
+                    const avatarHTML = s.avatar
+                        ? `<img src="${s.avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">`
+                        : `<div style="width:32px;height:32px;border-radius:50%;background:#e0e7ff;color:#4338ca;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;">${(s.user_name || 'V')[0].toUpperCase()}</div>`;
+                    const planBadge = s.plan_type === 'premium'
+                        ? '<span style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;padding:2px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;">Premium</span>'
+                        : '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:12px;font-size:0.72rem;">Basico</span>';
+                    const date = s.created_at ? new Date(s.created_at).toLocaleDateString('es-VE') : '-';
+                    const isPremium = s.plan_type === 'premium';
+
+                    return `<tr>
+                        <td>${s.user_id}</td>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                ${avatarHTML}
+                                <div>
+                                    <div style="font-weight:600;font-size:0.85rem;">${escHtml(s.user_name || 'Sin nombre')}</div>
+                                    <div style="font-size:0.72rem;color:#94a3b8;">${escHtml(s.user_email || '')}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="font-weight:600;">${escHtml(s.store_name || '-')}</td>
+                        <td>${escHtml(s.city || '')} / ${escHtml(s.state || '')}</td>
+                        <td>${escHtml(s.phone || '-')}</td>
+                        <td>${s.whatsapp ? `<span style="color:#25D366;"><i class="fab fa-whatsapp"></i> ${escHtml(s.whatsapp)}</span>` : '<span style="color:#d1d5db;">-</span>'}</td>
+                        <td>${s.business_count || 0}</td>
+                        <td>${planBadge}</td>
+                        <td style="font-size:0.78rem;color:#94a3b8;">${date}</td>
+                        <td>
+                            <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                                <button class="btn btn-xs btn-outline" onclick="window.location.href='admin.html#tab=users&editUser=${s.user_id}'" title="Editar agente"><i class="fas fa-edit"></i></button>
+                                ${!isPremium ? `<button class="btn btn-xs" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-weight:600;" onclick="activateSellerPremium(${s.user_id})" title="Activar Premium"><i class="fas fa-crown"></i> Premium</button>` : `<button class="btn btn-xs" style="background:#f1f5f9;color:#64748b;" onclick="deactivateSellerPremium(${s.user_id})" title="Quitar Premium"><i class="fas fa-times-circle"></i> Quitar</button>`}
+                            </div>
+                        </td>
+                    </tr>`;
+                }).join('');
+            } catch (err) {
+                if (loading) loading.style.display = 'none';
+                console.error('Error loading sellers:', err);
+                if (tbody) tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state-sm"><p style="color:#dc2626;">Error al cargar vendedores: ${escHtml(err.message)}</p></div></td></tr>`;
+                if (table) table.style.display = 'table';
+            }
+        }
+
+        // Activate premium for a seller
+        window.activateSellerPremium = async function(userId) {
+            if (!confirm('¿Activar plan Premium a este vendedor por 3 meses?')) return;
+            try {
+                await api.post('/users/activate-premium', { user_id: userId, duration: '3_months' });
+                showToast('Premium activado exitosamente (3 meses)', 'success');
+                loadSellersPanel();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        };
+
+        // Deactivate premium for a seller
+        window.deactivateSellerPremium = async function(userId) {
+            if (!confirm('¿Quitar el plan Premium a este vendedor?')) return;
+            try {
+                await api.put(`/users/${userId}`, { plan_type: 'basic' });
+                showToast('Premium removido exitosamente', 'success');
+                loadSellersPanel();
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+        };
+
+        // Refresh sellers button
+        const btnRefreshSellers = document.getElementById('btnRefreshSellers');
+        if (btnRefreshSellers) {
+            btnRefreshSellers.addEventListener('click', loadSellersPanel);
+        }
+
+        // ─── Create User Form ─────────────────────────────────
+        const togglePwd = document.getElementById('toggleNewUserPwd');
+        const pwdInput = document.getElementById('newUserPassword');
+        if (togglePwd && pwdInput) {
+            togglePwd.addEventListener('click', () => {
+                const isPassword = pwdInput.type === 'password';
+                pwdInput.type = isPassword ? 'text' : 'password';
+                togglePwd.innerHTML = isPassword ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+            });
+        }
+
+        const btnCreateUser = document.getElementById('btnCreateUser');
+        if (btnCreateUser) {
+            btnCreateUser.addEventListener('click', async () => {
+                const name = document.getElementById('newUserName')?.value.trim();
+                const email = document.getElementById('newUserEmail')?.value.trim();
+                const phone = document.getElementById('newUserPhone')?.value.trim();
+                const password = document.getElementById('newUserPassword')?.value;
+                const role = document.getElementById('newUserRole')?.value || 'user';
+
+                const errDiv = document.getElementById('createUserError');
+                const successDiv = document.getElementById('createUserSuccess');
+                if (errDiv) errDiv.style.display = 'none';
+                if (successDiv) successDiv.style.display = 'none';
+
+                if (!name || !email || !password) {
+                    if (errDiv) { errDiv.textContent = 'Nombre, email y contraseña son obligatorios.'; errDiv.style.display = 'block'; }
+                    return;
+                }
+                if (password.length < 6) {
+                    if (errDiv) { errDiv.textContent = 'La contraseña debe tener al menos 6 caracteres.'; errDiv.style.display = 'block'; }
+                    return;
+                }
+
+                btnCreateUser.disabled = true;
+                btnCreateUser.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+
+                try {
+                    const result = await api.post('/admin/create-user', { name, email, phone, password, role });
+                    if (successDiv) { successDiv.textContent = result.message || `Usuario "${name}" creado correctamente.`; successDiv.style.display = 'block'; }
+                    document.getElementById('newUserName').value = '';
+                    document.getElementById('newUserEmail').value = '';
+                    document.getElementById('newUserPhone').value = '';
+                    document.getElementById('newUserPassword').value = '';
+                    document.getElementById('newUserRole').value = 'user';
+                    showToast('Cuenta creada exitosamente', 'success');
+                    loadSellersPanel();
+                } catch (err) {
+                    if (errDiv) { errDiv.textContent = err.message || 'Error al crear la cuenta.'; errDiv.style.display = 'block'; }
+                } finally {
+                    btnCreateUser.disabled = false;
+                    btnCreateUser.innerHTML = '<i class="fas fa-user-plus"></i> Crear Cuenta';
+                }
+            });
+        }
+
+        // ─── Init ───────────────────────────────────────────────
+        loadSellersPanel();
+
+    })();
+    </script>
+</body>
+</html>
