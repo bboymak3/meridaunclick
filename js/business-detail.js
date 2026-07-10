@@ -268,11 +268,11 @@ function populateBusinessDetail(b) {
         }
     }
 
-    // WhatsApp
+    // WhatsApp (info chip — only visible for premium owners)
     const waEl = document.getElementById('statWhatsApp');
     const waWrap = document.getElementById('statWhatsAppWrap');
     if (waWrap) {
-        if (b.whatsapp) {
+        if (b.whatsapp && isOwnerPremium) {
             waEl.textContent = b.whatsapp;
             waWrap.style.display = '';
         } else {
@@ -763,5 +763,6 @@ async function loadBusinessServices(businessId) {
 
 // ─── Utility ────────────────────────────────────────────────
 // escapeHtml is defined in app.js (common module)
+
 
 

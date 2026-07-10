@@ -624,9 +624,9 @@ export async function onRequestGet(context) {
     <span id="statAreaLabel" class="hidden"></span>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/js/app.js?v=4"></script>
+    <script src="/js/app.js?v=5"></script>
     <script>window.__BUSINESS_ID = ${business.id}; window.__BUSINESS_SLUG = '${escapeJs(business.slug)}';</script>
-    <script src="/js/business-detail.js?v=4"></script>
+    <script src="/js/business-detail.js?v=5"></script>
     <script src="/js/chat.js?v=3"></script>
     <script src="/js/review-widget.js?v=3"></script>
     <script src="/js/ai-chatbot.js?v=3"></script>
