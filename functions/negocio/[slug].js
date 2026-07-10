@@ -582,7 +582,7 @@ export async function onRequestGet(context) {
                     </div>
                     <div class="jobs-list" id="businessJobsList"></div>
                     <div id="businessJobsEmpty" style="display:none;text-align:center;padding:24px 16px;">
-                        <a href="/empleo.html" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:8px;padding:12px 28px;font-size:1rem;border-radius:10px;text-decoration:none;"><i class="fas fa-briefcase"></i> Ver Empleos</a>
+                        <a href="/empleo.html" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;font-size:0.92rem;border-radius:10px;text-decoration:none;width:100%;max-width:400px;justify-content:center;"><i class="fas fa-briefcase"></i> Ir a ofertas de empleo</a>
                     </div>
                 </section>
 

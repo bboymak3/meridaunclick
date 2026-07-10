@@ -4,10 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="description" content="Configuración de Chat - OLAX Admin">
+    <meta name="description" content="Chat - Administración OLAX">
     <title>Chat - Administración OLAX</title>
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .chat-logs-view { display:none; }
+        .chat-logs-view.active { display:block; }
+        .chat-config-view.hidden { display:none; }
+        .chat-back-btn { display:inline-flex;align-items:center;gap:6px;color:#6b7280;font-size:0.9rem;cursor:pointer;border:none;background:none;padding:6px 0;transition:color 0.2s; }
+        .chat-back-btn:hover { color:#2563eb; }
+        .conv-row { display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;transition:all 0.15s;margin-bottom:8px; }
+        .conv-row:hover { border-color:#2563eb;background:#f8faff; }
+        .conv-avatar { width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;flex-shrink:0; }
+        .conv-info { flex:1;min-width:0; }
+        .conv-names { font-weight:600;font-size:0.88rem;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .conv-meta { font-size:0.78rem;color:#94a3b8;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap; }
+        .conv-last-msg { font-size:0.8rem;color:#6b7280;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px; }
+        .conv-stats { text-align:right;flex-shrink:0; }
+        .conv-msg-count { font-size:0.72rem;background:#e0e7ff;color:#4338ca;padding:2px 8px;border-radius:10px;font-weight:600; }
+        .conv-date { font-size:0.72rem;color:#94a3b8;margin-top:4px; }
+        .msg-bubble { max-width:75%;padding:10px 14px;border-radius:14px;font-size:0.88rem;line-height:1.5;margin-bottom:8px;word-wrap:break-word; }
+        .msg-mine { background:#2563eb;color:#fff;margin-left:auto;border-bottom-right-radius:4px; }
+        .msg-other { background:#f1f5f9;color:#111;border-bottom-left-radius:4px; }
+        .msg-time { font-size:0.68rem;color:#94a3b8;margin-top:2px; }
+        .msg-sender { font-size:0.75rem;font-weight:600;margin-bottom:2px; }
+        .chat-messages-container { background:#fafbfc;border:1px solid #e5e7eb;border-radius:12px;padding:20px;max-height:500px;overflow-y:auto; }
+        .chat-conv-header { background:#fff;border:1px solid #e5e7eb;border-radius:12px 12px 0 0;padding:16px 20px;display:flex;align-items:center;justify-content:space-between; }
+        .chat-conv-info h3 { margin:0;font-size:1rem;font-weight:700; }
+        .chat-conv-info p { margin:2px 0 0;font-size:0.8rem;color:#6b7280; }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -69,51 +95,166 @@
                         <button class="admin-sidebar-toggle" id="adminSidebarToggle">
                             <i class="fas fa-bars"></i>
                         </button>
-                        <h1 class="admin-page-title" id="adminPageTitle">Configuración de Chat</h1>
+                        <h1 class="admin-page-title" id="adminPageTitle">Chat</h1>
                     </div>
                     <div class="admin-topbar-right">
                         <span class="admin-date" id="adminDate"></span>
                     </div>
                 </div>
 
-                <div class="admin-tab" id="tabChatConfig" style="display:block;">
-                    <div class="admin-card">
+                <!-- ─── VIEW: Chat Config ───────────────────────── -->
+                <div class="chat-config-view" id="chatConfigView">
+                    <!-- Stats cards -->
+                    <div class="admin-stats-grid" style="margin-bottom:20px;">
+                        <div class="admin-stat-card" style="border-left:4px solid #25d366;cursor:pointer;" onclick="showChatLogs()">
+                            <div class="admin-stat-icon" style="background:#f0fdf4;color:#25d366;">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-number" id="statTotalConvs">-</div>
+                                <div class="admin-stat-label">Total Conversaciones</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card" style="border-left:4px solid #2563eb;cursor:pointer;" onclick="showChatLogs()">
+                            <div class="admin-stat-icon" style="background:#eff6ff;color:#2563eb;">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-number" id="statTotalMsgs">-</div>
+                                <div class="admin-stat-label">Total Mensajes</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card" style="border-left:4px solid #f59e0b;">
+                            <div class="admin-stat-icon" style="background:#fffbeb;color:#f59e0b;">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-number" style="font-size:0.9rem;line-height:1.3;">Respaldo<br>Automático</div>
+                                <div class="admin-stat-label">Todos los chats se guardan</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick access to chat logs -->
+                    <div class="admin-card" style="margin-bottom:20px;">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-comments" style="color:#25d366;"></i> Chat entre Usuarios</h3>
+                            <h3><i class="fas fa-history" style="color:#2563eb;"></i> Registro de Conversaciones</h3>
                             <div class="admin-card-actions">
-                                <button class="btn btn-primary btn-sm" id="adminSaveSettingsBtn">
-                                    <i class="fas fa-save"></i> Guardar Cambios
+                                <button class="btn btn-primary btn-sm" onclick="showChatLogs()">
+                                    <i class="fas fa-search"></i> Ver Todos los Chats
                                 </button>
                             </div>
                         </div>
                         <div class="admin-card-body">
-                            <p style="font-size:0.9rem;color:#6b7280;margin-bottom:20px;">
-                                Configura quién puede usar el sistema de chat entre compradores y vendedores. Los cambios se aplican inmediatamente.
+                            <p style="font-size:0.88rem;color:#6b7280;margin-bottom:12px;">
+                                Todas las conversaciones entre usuarios y vendedores se almacenan como respaldo. Puedes buscar por nombre, email, negocio o contenido del mensaje. Ideal para resolver disputas o verificar acuerdos.
                             </p>
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                                <input type="text" id="chatLogsQuickSearch" class="form-control" placeholder="Buscar conversación rápida..." style="flex:1;min-width:250px;">
+                                <button class="btn btn-primary btn-sm" onclick="quickSearchChats()">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Mode Config -->
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-sliders-h" style="color:#25d366;"></i> Modo de Chat</h3>
+                            <div class="admin-card-actions">
+                                <button class="btn btn-primary btn-sm" id="adminSaveSettingsBtn">
+                                    <i class="fas fa-save"></i> Guardar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
                             <div style="display:flex;flex-direction:column;gap:12px;">
-                                <label class="settings-radio-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;border:2px solid #e5e7eb;border-radius:14px;cursor:pointer;transition:all 0.2s;">
+                                <label class="settings-radio-card" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border:2px solid #e5e7eb;border-radius:14px;cursor:pointer;transition:all 0.2s;">
                                     <input type="radio" name="chat_mode" value="all" data-key="chat_mode" style="width:20px;height:20px;accent-color:#25d366;">
                                     <div style="flex:1;">
-                                        <div style="font-weight:700;color:#111;font-size:1rem;"><i class="fas fa-globe" style="color:#25d366;margin-right:8px;"></i> Todos los usuarios</div>
-                                        <div style="font-size:0.85rem;color:#6b7280;margin-top:4px;">Cualquier usuario registrado puede chatear con vendedores. Es la opción más abierta.</div>
+                                        <div style="font-weight:700;color:#111;font-size:0.95rem;"><i class="fas fa-globe" style="color:#25d366;margin-right:8px;"></i> Todos los usuarios</div>
+                                        <div style="font-size:0.82rem;color:#6b7280;margin-top:2px;">Cualquier usuario registrado puede chatear con vendedores.</div>
                                     </div>
                                 </label>
-                                <label class="settings-radio-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;border:2px solid #e5e7eb;border-radius:14px;cursor:pointer;transition:all 0.2s;">
+                                <label class="settings-radio-card" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border:2px solid #e5e7eb;border-radius:14px;cursor:pointer;transition:all 0.2s;">
                                     <input type="radio" name="chat_mode" value="premium_only" data-key="chat_mode" style="width:20px;height:20px;accent-color:#f59e0b;">
                                     <div style="flex:1;">
-                                        <div style="font-weight:700;color:#111;font-size:1rem;"><i class="fas fa-crown" style="color:#f59e0b;margin-right:8px;"></i> Solo Premium</div>
-                                        <div style="font-size:0.85rem;color:#6b7280;margin-top:4px;">Solo usuarios con plan Premium pueden usar el chat (ambas partes: comprador y vendedor deben ser Premium).</div>
+                                        <div style="font-weight:700;color:#111;font-size:0.95rem;"><i class="fas fa-crown" style="color:#f59e0b;margin-right:8px;"></i> Solo Premium</div>
+                                        <div style="font-size:0.82rem;color:#6b7280;margin-top:2px;">Ambas partes (comprador y vendedor) deben ser Premium.</div>
                                     </div>
                                 </label>
-                                <label class="settings-radio-card" style="display:flex;align-items:center;gap:14px;padding:18px 20px;border:2px solid #e5e7eb;border-radius:14px;cursor:pointer;transition:all 0.2s;">
+                                <label class="settings-radio-card" style="display:flex;align-items:center;gap:14px;padding:16px 18px;border:2px solid #e5e7eb;border-radius:14px;cursor:pointer;transition:all 0.2s;">
                                     <input type="radio" name="chat_mode" value="none" data-key="chat_mode" style="width:20px;height:20px;accent-color:#dc2626;">
                                     <div style="flex:1;">
-                                        <div style="font-weight:700;color:#111;font-size:1rem;"><i class="fas fa-ban" style="color:#dc2626;margin-right:8px;"></i> Desactivado</div>
-                                        <div style="font-size:0.85rem;color:#6b7280;margin-top:4px;">El chat entre usuarios está completamente desactivado. El botón flotante no se mostrará en ningún lado.</div>
+                                        <div style="font-weight:700;color:#111;font-size:0.95rem;"><i class="fas fa-ban" style="color:#dc2626;margin-right:8px;"></i> Desactivado</div>
+                                        <div style="font-size:0.82rem;color:#6b7280;margin-top:2px;">El chat entre usuarios está completamente desactivado.</div>
                                     </div>
                                 </label>
                             </div>
-                            <div id="chatModeStatus" style="margin-top:16px;padding:12px 16px;border-radius:10px;font-size:0.9rem;display:none;"></div>
+                            <div id="chatModeStatus" style="margin-top:14px;padding:10px 14px;border-radius:10px;font-size:0.85rem;display:none;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─── VIEW: Chat Logs ─────────────────────────── -->
+                <div class="chat-logs-view" id="chatLogsView">
+                    <button class="chat-back-btn" onclick="showChatConfig()">
+                        <i class="fas fa-arrow-left"></i> Volver a Configuración
+                    </button>
+
+                    <!-- Search bar -->
+                    <div class="admin-card" style="margin-top:12px;margin-bottom:16px;">
+                        <div class="admin-card-body" style="padding:14px 18px;">
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                                <div style="position:relative;flex:1;min-width:220px;">
+                                    <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
+                                    <input type="text" id="chatLogsSearch" class="form-control" placeholder="Buscar por nombre, email, negocio o mensaje..." style="padding-left:36px;">
+                                </div>
+                                <button class="btn btn-primary btn-sm" id="btnSearchLogs" style="min-width:100px;">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                                <button class="btn btn-secondary btn-sm" id="btnClearSearch">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </button>
+                                <button class="btn btn-secondary btn-sm" id="btnRefreshLogs">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conversation list -->
+                    <div id="chatLogsListContainer">
+                        <div id="chatLogsLoading" style="text-align:center;padding:40px;color:#9ca3af;">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p style="margin-top:10px;">Cargando conversaciones...</p>
+                        </div>
+                        <div id="chatLogsList"></div>
+                        <div id="chatLogsEmpty" class="empty-state-sm" style="display:none;padding:40px;">
+                            <i class="fas fa-comments" style="font-size:2.5rem;color:#d1d5db;"></i>
+                            <p style="margin-top:12px;font-size:0.95rem;color:#6b7280;">No se encontraron conversaciones.</p>
+                        </div>
+                        <div class="admin-pagination" id="chatLogsPagination"></div>
+                    </div>
+
+                    <!-- Conversation detail (hidden by default) -->
+                    <div id="chatConvDetail" style="display:none;">
+                        <div class="chat-conv-header">
+                            <div class="chat-conv-info">
+                                <button class="chat-back-btn" onclick="hideConvDetail()" style="margin-bottom:8px;">
+                                    <i class="fas fa-arrow-left"></i> Volver a la lista
+                                </button>
+                                <h3 id="convDetailTitle">Cargando...</h3>
+                                <p id="convDetailMeta"></p>
+                            </div>
+                            <div id="convDetailBadges" style="display:flex;gap:6px;flex-shrink:0;"></div>
+                        </div>
+                        <div class="chat-messages-container" id="convMessagesContainer" style="border-top:none;border-radius:0 0 12px 12px;margin-top:-1px;">
+                            <div id="convMessagesLoading" style="text-align:center;padding:40px;color:#9ca3af;">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            </div>
+                            <div id="convMessagesList"></div>
                         </div>
                     </div>
                 </div>
@@ -135,7 +276,7 @@
             return;
         }
         const user = window.getCachedUser ? window.getCachedUser() : null;
-        if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+        if (!user || user.role !== 'admin') {
             alert('Acceso denegado. Solo administradores.');
             window.location.href = 'index.html';
             return;
@@ -148,108 +289,305 @@
         // Sidebar toggle
         const sidebarToggle = document.getElementById('adminSidebarToggle');
         const sidebar = document.getElementById('adminSidebar');
-        if (sidebarToggle && sidebar) {
-            sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-        }
+        if (sidebarToggle && sidebar) sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
 
-        // Toast helper
+        // Toast
         function showToast(msg, type) {
-            const container = document.getElementById('toastContainer');
-            if (!container) return;
+            const c = document.getElementById('toastContainer');
+            if (!c) return;
             const colors = { success:'#059669', error:'#dc2626', info:'#2563eb' };
             const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
             const el = document.createElement('div');
-            el.style.cssText = `padding:12px 20px;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);animation:slideIn 0.3s ease;background:${colors[type]||colors.info};`;
+            el.style.cssText = `padding:12px 20px;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);background:${colors[type]||colors.info};`;
             el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i> ${msg}`;
-            container.appendChild(el);
+            c.appendChild(el);
             setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }, 3000);
         }
 
-        // Load settings
+        function esc(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function formatDate(d) {
+            if (!d) return '-';
+            try { return new Date(d).toLocaleDateString('es-VE', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' }); } catch(e) { return d; }
+        }
+
+        // ─── View Switching ────────────────────────────────
+        const configView = document.getElementById('chatConfigView');
+        const logsView = document.getElementById('chatLogsView');
+        const pageTitle = document.getElementById('adminPageTitle');
+
+        window.showChatConfig = function() {
+            configView.classList.remove('hidden');
+            logsView.classList.remove('active');
+            pageTitle.textContent = 'Chat';
+        };
+
+        window.showChatLogs = function(searchTerm) {
+            configView.classList.add('hidden');
+            logsView.classList.add('active');
+            pageTitle.textContent = 'Registro de Chats';
+            if (searchTerm !== undefined) {
+                document.getElementById('chatLogsSearch').value = searchTerm;
+            }
+            loadChatLogs(1);
+        };
+
+        window.quickSearchChats = function() {
+            const q = document.getElementById('chatLogsQuickSearch').value.trim();
+            showChatLogs(q);
+        };
+
+        // Enter key on quick search
+        const quickInput = document.getElementById('chatLogsQuickSearch');
+        if (quickInput) quickInput.addEventListener('keydown', e => { if (e.key === 'Enter') quickSearchChats(); });
+
+        // ─── Chat Settings ──────────────────────────────────
         async function loadSettings() {
             try {
                 const settings = await api.get('/settings');
-                document.querySelectorAll('[data-key]').forEach(el => {
+                document.querySelectorAll('#chatConfigView [data-key]').forEach(el => {
                     const key = el.dataset.key;
                     const value = settings[key];
-                    if (el.type === 'radio') {
-                        el.checked = (el.value === value);
-                    } else {
-                        el.value = value || '';
-                    }
+                    if (el.type === 'radio') el.checked = (el.value === value);
+                    else el.value = value || '';
                 });
                 highlightChatModeCard();
-            } catch (err) {
-                console.error('Error loading settings:', err);
-                showToast('Error al cargar configuración', 'error');
-            }
+            } catch (err) { showToast('Error al cargar configuración', 'error'); }
         }
 
-        // Save settings
         async function saveSettings() {
             try {
                 const updates = {};
-                document.querySelectorAll('[data-key]').forEach(el => {
+                document.querySelectorAll('#chatConfigView [data-key]').forEach(el => {
                     const key = el.dataset.key;
-                    if (el.type === 'radio') {
-                        if (el.checked) updates[key] = el.value;
-                    } else {
-                        updates[key] = el.value;
-                    }
+                    if (el.type === 'radio') { if (el.checked) updates[key] = el.value; }
+                    else updates[key] = el.value;
                 });
                 await api.put('/settings', updates);
-                showToast('Configuración de chat guardada exitosamente', 'success');
+                showToast('Configuración guardada', 'success');
                 highlightChatModeCard();
-            } catch (err) {
-                console.error('Error saving settings:', err);
-                showToast('Error al guardar: ' + err.message, 'error');
-            }
+            } catch (err) { showToast('Error: ' + err.message, 'error'); }
         }
 
-        // Highlight chat mode card
         function highlightChatModeCard() {
-            const colors = { all: '#25d366', premium_only: '#f59e0b', none: '#dc2626' };
-            document.querySelectorAll('[name="chat_mode"]').forEach(radio => {
-                const card = radio.closest('.settings-radio-card');
+            const colors = { all:'#25d366', premium_only:'#f59e0b', none:'#dc2626' };
+            document.querySelectorAll('[name="chat_mode"]').forEach(r => {
+                const card = r.closest('.settings-radio-card');
                 if (!card) return;
-                if (radio.checked) {
-                    card.style.borderColor = colors[radio.value] || '#25d366';
-                    card.style.background = (radio.value === 'all' ? '#f0fdf4' : radio.value === 'premium_only' ? '#fffbeb' : '#fef2f2');
-                } else {
-                    card.style.borderColor = '#e5e7eb';
-                    card.style.background = 'transparent';
-                }
+                if (r.checked) {
+                    card.style.borderColor = colors[r.value]||'#25d366';
+                    card.style.background = r.value==='all'?'#f0fdf4':r.value==='premium_only'?'#fffbeb':'#fef2f2';
+                } else { card.style.borderColor='#e5e7eb'; card.style.background='transparent'; }
             });
-            const statusEl = document.getElementById('chatModeStatus');
-            if (statusEl) {
-                const checked = document.querySelector('[name="chat_mode"]:checked');
-                if (checked) {
-                    const msgs = {
-                        all: { bg:'#f0fdf4', border:'#bbf7d0', color:'#059669', text:'Chat activo para todos los usuarios registrados.' },
-                        premium_only: { bg:'#fffbeb', border:'#fde68a', color:'#b45309', text:'Chat restringido a usuarios Premium (ambas partes).' },
-                        none: { bg:'#fef2f2', border:'#fecaca', color:'#dc2626', text:'Chat completamente desactivado.' },
-                    };
-                    const m = msgs[checked.value] || msgs.all;
-                    statusEl.style.display = 'block';
-                    statusEl.style.background = m.bg;
-                    statusEl.style.border = '1px solid ' + m.border;
-                    statusEl.style.color = m.color;
-                    statusEl.innerHTML = '<i class="fas fa-info-circle"></i> ' + m.text;
+            const st = document.getElementById('chatModeStatus');
+            if (st) {
+                const ch = document.querySelector('[name="chat_mode"]:checked');
+                if (ch) {
+                    const m = { all:{bg:'#f0fdf4',border:'#bbf7d0',color:'#059669',text:'Chat activo para todos los usuarios.'}, premium_only:{bg:'#fffbeb',border:'#fde68a',color:'#b45309',text:'Chat restringido a usuarios Premium.'}, none:{bg:'#fef2f2',border:'#fecaca',color:'#dc2626',text:'Chat desactivado.'} };
+                    const s = m[ch.value]||m.all;
+                    st.style.display='block'; st.style.background=s.bg; st.style.border='1px solid '+s.border; st.style.color=s.color;
+                    st.innerHTML='<i class="fas fa-info-circle"></i> '+s.text;
                 }
             }
         }
 
-        // Radio change listeners
-        document.querySelectorAll('[name="chat_mode"]').forEach(radio => {
-            radio.addEventListener('change', () => highlightChatModeCard());
-        });
-
-        // Save button
+        document.querySelectorAll('[name="chat_mode"]').forEach(r => r.addEventListener('change', () => highlightChatModeCard()));
         const saveBtn = document.getElementById('adminSaveSettingsBtn');
         if (saveBtn) saveBtn.addEventListener('click', saveSettings);
 
-        // Init
+        // ─── Chat Logs ──────────────────────────────────────
+        let logsPage = 1;
+
+        async function loadChatLogs(page) {
+            logsPage = page || 1;
+            const loading = document.getElementById('chatLogsLoading');
+            const list = document.getElementById('chatLogsList');
+            const empty = document.getElementById('chatLogsEmpty');
+            const pagination = document.getElementById('chatLogsPagination');
+            const detail = document.getElementById('chatConvDetail');
+            const listContainer = document.getElementById('chatLogsListContainer');
+
+            if (loading) loading.style.display = 'block';
+            if (list) list.innerHTML = '';
+            if (empty) empty.style.display = 'none';
+            if (pagination) pagination.innerHTML = '';
+            if (detail) detail.style.display = 'none';
+            if (listContainer) listContainer.style.display = 'block';
+
+            const search = document.getElementById('chatLogsSearch').value.trim();
+            try {
+                const params = new URLSearchParams({ page: logsPage, limit: 20 });
+                if (search) params.set('search', search);
+                const data = await api.get('/admin/chat-logs?' + params.toString());
+
+                if (loading) loading.style.display = 'none';
+                const convs = data.conversations || [];
+
+                // Update stats on config view
+                if (page === 1) {
+                    const statTotal = document.getElementById('statTotalConvs');
+                    if (statTotal && data.stats) statTotal.textContent = data.stats.total_conversations || 0;
+                }
+
+                if (convs.length === 0) {
+                    if (empty) empty.style.display = 'block';
+                    return;
+                }
+
+                list.innerHTML = convs.map(c => {
+                    const buyerColor = '#2563eb';
+                    const sellerColor = '#059669';
+                    const date = formatDate(c.last_message_at || c.created_at);
+                    return `
+                    <div class="conv-row" onclick="openConversation(${c.id})">
+                        <div class="conv-avatar" style="background:#e0e7ff;color:#4338ca;">${(c.buyer_name||'?')[0].toUpperCase()}</div>
+                        <div class="conv-info">
+                            <div class="conv-names">${esc(c.buyer_name||'Anónimo')} <i class="fas fa-exchange-alt" style="font-size:0.7rem;color:#d1d5db;margin:0 4px;"></i> ${esc(c.seller_name||'Anónimo')}</div>
+                            <div class="conv-meta">
+                                <span style="color:#2563eb;"><i class="fas fa-user"></i> Comprador</span>
+                                <span style="color:#059669;"><i class="fas fa-store"></i> Vendedor</span>
+                                ${c.business_title ? `<span><i class="fas fa-building"></i> ${esc(c.business_title)}</span>` : ''}
+                            </div>
+                            ${c.last_message ? `<div class="conv-last-msg"><i class="fas fa-comment-dots" style="color:#d1d5db;margin-right:4px;"></i>${esc(c.last_message)}</div>` : ''}
+                        </div>
+                        <div class="conv-stats">
+                            <span class="conv-msg-count">${c.message_count || 0} msgs</span>
+                            <div class="conv-date">${date}</div>
+                        </div>
+                    </div>`;
+                }).join('');
+
+                // Pagination
+                if (data.pagination && data.pagination.totalPages > 1) {
+                    const p = data.pagination;
+                    let html = '';
+                    if (p.page > 1) html += `<button class="btn btn-xs btn-outline" onclick="loadChatLogs(${p.page-1})"><i class="fas fa-chevron-left"></i></button>`;
+                    html += `<span style="padding:0 12px;font-size:0.82rem;color:#6b7280;">Página ${p.page} de ${p.totalPages} (${p.total} total)</span>`;
+                    if (p.page < p.totalPages) html += `<button class="btn btn-xs btn-outline" onclick="loadChatLogs(${p.page+1})"><i class="fas fa-chevron-right"></i></button>`;
+                    pagination.innerHTML = html;
+                }
+            } catch (err) {
+                if (loading) loading.style.display = 'none';
+                console.error('Error loading chat logs:', err);
+                if (list) list.innerHTML = `<p style="color:#dc2626;text-align:center;padding:20px;">Error: ${esc(err.message)}</p>`;
+            }
+        }
+
+        window.loadChatLogs = loadChatLogs;
+
+        // Open conversation detail
+        window.openConversation = async function(convId) {
+            const listContainer = document.getElementById('chatLogsListContainer');
+            const detail = document.getElementById('chatConvDetail');
+            const msgsLoading = document.getElementById('convMessagesLoading');
+            const msgsList = document.getElementById('convMessagesList');
+            const titleEl = document.getElementById('convDetailTitle');
+            const metaEl = document.getElementById('convDetailMeta');
+            const badgesEl = document.getElementById('convDetailBadges');
+
+            if (listContainer) listContainer.style.display = 'none';
+            if (detail) detail.style.display = 'block';
+            if (msgsLoading) msgsLoading.style.display = 'block';
+            if (msgsList) msgsList.innerHTML = '';
+            if (titleEl) titleEl.textContent = 'Cargando...';
+
+            try {
+                const data = await api.get('/admin/chat-logs?conversation_id=' + convId);
+                const conv = data.conversation;
+                const messages = data.messages || [];
+
+                if (!conv) { titleEl.textContent = 'No encontrada'; return; }
+
+                titleEl.textContent = (conv.buyer_name||'Anónimo') + ' ↔ ' + (conv.seller_name||'Anónimo');
+                metaEl.innerHTML = `
+                    ${conv.business_title ? `<i class="fas fa-building"></i> <a href="/negocio/${conv.business_slug||conv.business_id}" target="_blank" style="color:#2563eb;">${esc(conv.business_title)}</a> &nbsp;|&nbsp; ` : ''}
+                    <i class="fas fa-user"></i> ${esc(conv.buyer_name||'')} (${esc(conv.buyer_email||'')}) &nbsp;|&nbsp;
+                    <i class="fas fa-store"></i> ${esc(conv.seller_name||'')} (${esc(conv.seller_email||'')}) &nbsp;|&nbsp;
+                    <i class="fas fa-calendar"></i> ${formatDate(conv.created_at)} &nbsp;|&nbsp;
+                    <i class="fas fa-comment"></i> ${conv.message_count} mensajes
+                `;
+                badgesEl.innerHTML = `
+                    <a href="/negocio/${conv.business_slug||conv.business_id}" target="_blank" class="btn btn-xs btn-outline" title="Ver negocio"><i class="fas fa-external-link-alt"></i> Negocio</a>
+                `;
+
+                if (msgsLoading) msgsLoading.style.display = 'none';
+
+                if (messages.length === 0) {
+                    msgsList.innerHTML = '<p style="text-align:center;color:#94a3b8;padding:30px;">No hay mensajes en esta conversación.</p>';
+                    return;
+                }
+
+                let html = '';
+                let lastDate = '';
+                messages.forEach(m => {
+                    const msgDate = m.created_at ? m.created_at.substring(0,10) : '';
+                    if (msgDate && msgDate !== lastDate) {
+                        html += `<div style="text-align:center;margin:16px 0 8px;"><span style="background:#e5e7eb;color:#6b7280;padding:3px 12px;border-radius:10px;font-size:0.72rem;">${formatDate(m.created_at).substring(0,12)}</span></div>`;
+                        lastDate = msgDate;
+                    }
+                    const isMine = false; // Admin view: show both sides
+                    const senderLabel = m.sender_id === conv.buyer.id
+                        ? `<span style="color:#2563eb;"><i class="fas fa-user"></i> ${esc(m.sender_name||'Comprador')}</span>`
+                        : `<span style="color:#059669;"><i class="fas fa-store"></i> ${esc(m.sender_name||'Vendedor')}</span>`;
+                    const bubbleClass = m.sender_id === conv.seller.id ? 'msg-other' : 'msg-mine';
+                    html += `
+                        <div style="display:flex;flex-direction:column;${m.sender_id === conv.seller.id ? '' : 'align-items:flex-end;'}">
+                            <div class="msg-sender">${senderLabel} <span class="msg-time">${m.created_at ? m.created_at.substring(11,16) : ''}</span></div>
+                            <div class="msg-bubble ${bubbleClass}">${esc(m.content)}</div>
+                        </div>`;
+                });
+
+                msgsList.innerHTML = html;
+
+                // Scroll to bottom
+                const container = document.getElementById('convMessagesContainer');
+                if (container) container.scrollTop = container.scrollHeight;
+
+            } catch (err) {
+                if (msgsLoading) msgsLoading.style.display = 'none';
+                msgsList.innerHTML = `<p style="color:#dc2626;text-align:center;padding:20px;">Error: ${esc(err.message)}</p>`;
+            }
+        };
+
+        window.hideConvDetail = function() {
+            document.getElementById('chatConvDetail').style.display = 'none';
+            document.getElementById('chatLogsListContainer').style.display = 'block';
+        };
+
+        // Search buttons
+        document.getElementById('btnSearchLogs').addEventListener('click', () => loadChatLogs(1));
+        document.getElementById('btnClearSearch').addEventListener('click', () => {
+            document.getElementById('chatLogsSearch').value = '';
+            loadChatLogs(1);
+        });
+        document.getElementById('btnRefreshLogs').addEventListener('click', () => loadChatLogs(logsPage));
+        const searchInput = document.getElementById('chatLogsSearch');
+        if (searchInput) searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') loadChatLogs(1); });
+
+        // ─── Load Stats ────────────────────────────────────
+        async function loadStats() {
+            try {
+                const data = await api.get('/admin/chat-logs?limit=1');
+                if (data.stats) {
+                    document.getElementById('statTotalConvs').textContent = data.stats.total_conversations || 0;
+                }
+                // Count total messages from the first page result
+                const dataAll = await api.get('/admin/chat-logs?limit=50&page=1');
+                let totalMsgs = 0;
+                (dataAll.conversations || []).forEach(c => { totalMsgs += (c.message_count || 0); });
+                document.getElementById('statTotalMsgs').textContent = totalMsgs;
+            } catch(e) {
+                document.getElementById('statTotalConvs').textContent = '0';
+                document.getElementById('statTotalMsgs').textContent = '0';
+            }
+        }
+
+        // ─── Init ──────────────────────────────────────────
         loadSettings();
+        loadStats();
 
     })();
     </script>
