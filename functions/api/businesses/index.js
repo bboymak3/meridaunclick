@@ -56,6 +56,7 @@ export async function onRequestGet(context) {
     try { await env.DB.prepare("ALTER TABLE users ADD COLUMN plan_type TEXT DEFAULT 'basic'").run(); } catch(e) { /* column may exist */ }
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN logo TEXT").run(); } catch(e) { /* column may exist */ }
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN custom_html TEXT").run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN banner TEXT").run(); } catch(e) { /* column may exist */ }
 
     const url = new URL(request.url);
     const params = url.searchParams;
@@ -306,7 +307,7 @@ export async function onRequestPost(context) {
         address, city, state, country, lat, lng,
         phone, whatsapp, website, instagram, facebook, twitter, tiktok, youtube, email_contact, schedule,
         has_parking, has_wifi, has_card, has_delivery, has_outdoor,
-        video_url, logo,
+        video_url, logo, banner,
         status
       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
@@ -339,6 +340,7 @@ export async function onRequestPost(context) {
       body.has_outdoor ? 1 : 0,
       body.video_url || null,
       body.logo || null,
+      body.banner || null,
       'pending'
     ).run();
 

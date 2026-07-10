@@ -78,6 +78,15 @@ function populateBusinessDetail(b) {
     if (b.custom_html && b.custom_html.trim()) {
         const contentEl = document.getElementById('businessContent');
         if (contentEl) {
+            // Show banner if exists
+            const bannerWrap = document.getElementById('businessBannerWrap');
+            const bannerImg = document.getElementById('businessBanner');
+            if (b.banner && bannerWrap && bannerImg) {
+                bannerImg.src = b.banner;
+                bannerImg.alt = (b.title || 'Negocio') + ' portada';
+                bannerImg.onerror = function() { bannerWrap.style.display = 'none'; };
+                bannerWrap.style.display = 'block';
+            }
             // Show logo if exists (bigger, prominent)
             const logoWrap = document.getElementById('businessLogoWrap');
             const logoImg = document.getElementById('businessLogo');
@@ -118,6 +127,16 @@ function populateBusinessDetail(b) {
     const breadcrumbTitle = document.getElementById('breadcrumbTitle');
     if (breadcrumbTitle) {
         breadcrumbTitle.textContent = b.title || 'Negocio';
+    }
+
+    // ─── Banner (portada tipo Facebook) ─────────────────────
+    const bannerWrap = document.getElementById('businessBannerWrap');
+    const bannerImg = document.getElementById('businessBanner');
+    if (b.banner && bannerWrap && bannerImg) {
+        bannerImg.src = b.banner;
+        bannerImg.alt = (b.title || 'Negocio') + ' portada';
+        bannerImg.onerror = function() { bannerWrap.style.display = 'none'; };
+        bannerWrap.style.display = 'block';
     }
 
     // ─── Logo (bigger, prominent) ─────────────────────────

@@ -1595,8 +1595,9 @@
     // ─── Edit Business Modal ─────────────────────────────
     let editBizVideoMode = 'file';
     let editBizLogoFile = null;
+    let editBizBannerFile = null;
 
-    // Inject logo field into edit business form (both modals)
+    // Inject logo + banner fields into edit business form (both modals)
     document.querySelectorAll('#editBizForm').forEach(form => {
         const firstField = form.querySelector('.eb-field');
         if (firstField && !form.querySelector('.eb-logo-section')) {
@@ -1651,6 +1652,57 @@
                 this.style.display = 'none';
                 section.querySelector('.edit-biz-logo-input').value = '';
                 section.querySelector('.edit-biz-logo-url').value = '';
+            });
+        }
+
+        // Inject banner field
+        if (!form.querySelector('.eb-banner-section')) {
+            const bannerDiv = document.createElement('div');
+            bannerDiv.className = 'eb-field eb-banner-section';
+            bannerDiv.style.marginBottom = '16px';
+            bannerDiv.innerHTML = `
+                <label>Imagen de Portada (Banner)</label>
+                <p style="font-size:0.78rem;color:#6b7280;margin:4px 0 8px;">Se muestra como portada tipo Facebook. Recomendado: 1200x400px.</p>
+                <div class="edit-biz-banner-preview" style="width:100%;height:140px;border-radius:10px;overflow:hidden;background:#f1f5f9;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+                    <span style="color:#94a3b8;font-size:0.85rem;"><i class="fas fa-panorama"></i> Sin banner</span>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <button type="button" class="btn btn-secondary btn-sm edit-biz-banner-upload-btn">
+                        <i class="fas fa-upload"></i> Subir Banner
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm edit-biz-banner-remove-btn" style="display:none;color:#dc2626;">
+                        <i class="fas fa-times"></i> Quitar
+                    </button>
+                    <input type="file" class="edit-biz-banner-input" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                    <span class="edit-biz-banner-status" style="font-size:0.8rem;color:#6b7280;"></span>
+                </div>
+                <input type="hidden" class="edit-biz-banner-url">
+            `;
+            form.insertBefore(bannerDiv, firstField);
+
+            // Bind events
+            const bSection = bannerDiv;
+            bSection.querySelector('.edit-biz-banner-upload-btn').addEventListener('click', () => {
+                bSection.querySelector('.edit-biz-banner-input').click();
+            });
+            bSection.querySelector('.edit-biz-banner-input').addEventListener('change', function() {
+                const file = this.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) { showToast('Banner max 5MB', 'error'); return; }
+                editBizBannerFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    bSection.querySelector('.edit-biz-banner-preview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+                    bSection.querySelector('.edit-biz-banner-remove-btn').style.display = 'inline-flex';
+                };
+                reader.readAsDataURL(file);
+            });
+            bSection.querySelector('.edit-biz-banner-remove-btn').addEventListener('click', function() {
+                editBizBannerFile = null;
+                bSection.querySelector('.edit-biz-banner-preview').innerHTML = '<span style="color:#94a3b8;font-size:0.85rem;"><i class="fas fa-panorama"></i> Sin banner</span>';
+                this.style.display = 'none';
+                bSection.querySelector('.edit-biz-banner-input').value = '';
+                bSection.querySelector('.edit-biz-banner-url').value = '';
             });
         }
     });
@@ -1730,6 +1782,7 @@
 
         // Logo
         editBizLogoFile = null;
+        editBizBannerFile = null;
         const logoSection = form.querySelector('.eb-logo-section');
         if (logoSection && biz.logo) {
             logoSection.querySelector('.edit-biz-logo-img').src = biz.logo;
@@ -1744,6 +1797,21 @@
             logoSection.querySelector('.edit-biz-logo-remove-btn').style.display = 'none';
             logoSection.querySelector('.edit-biz-logo-url').value = '';
             logoSection.querySelector('.edit-biz-logo-input').value = '';
+        }
+
+        // Banner
+        const bannerSection = form.querySelector('.eb-banner-section');
+        if (bannerSection) {
+            if (biz.banner) {
+                bannerSection.querySelector('.edit-biz-banner-preview').innerHTML = '<img src="' + biz.banner + '" style="width:100%;height:100%;object-fit:cover;">';
+                bannerSection.querySelector('.edit-biz-banner-remove-btn').style.display = 'inline-flex';
+                bannerSection.querySelector('.edit-biz-banner-url').value = biz.banner;
+            } else {
+                bannerSection.querySelector('.edit-biz-banner-preview').innerHTML = '<span style="color:#94a3b8;font-size:0.85rem;"><i class="fas fa-panorama"></i> Sin banner</span>';
+                bannerSection.querySelector('.edit-biz-banner-remove-btn').style.display = 'none';
+                bannerSection.querySelector('.edit-biz-banner-url').value = '';
+                bannerSection.querySelector('.edit-biz-banner-input').value = '';
+            }
         }
     }
 
@@ -1851,6 +1919,7 @@
                 features: features.join(','),
                 video_url: document.getElementById('editBizVideoUrlHidden').value || document.getElementById('editBizVideoUrl').value || '',
                 logo: currentForm.querySelector('.edit-biz-logo-url')?.value || null,
+                banner: currentForm.querySelector('.edit-biz-banner-url')?.value || null,
             };
 
             // Upload new logo if selected
@@ -1867,6 +1936,26 @@
                     }
                 } catch(logoErr) {
                     console.error('Logo upload error:', logoErr);
+                }
+            }
+
+            // Upload new banner if selected
+            const bannerSection = currentForm.querySelector('.eb-banner-section');
+            if (editBizBannerFile && bannerSection) {
+                try {
+                    const bannerStatus = bannerSection.querySelector('.edit-biz-banner-status');
+                    if (bannerStatus) bannerStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo banner...';
+                    const bannerFd = new FormData();
+                    bannerFd.append('file', editBizBannerFile);
+                    bannerFd.append('product_type', 'banner');
+                    const bannerResult = await api.postFormData('/upload', bannerFd);
+                    if (bannerResult.url) {
+                        payload.banner = bannerResult.url;
+                        bannerSection.querySelector('.edit-biz-banner-url').value = bannerResult.url;
+                    }
+                    if (bannerStatus) bannerStatus.innerHTML = '';
+                } catch(bannerErr) {
+                    console.error('Banner upload error:', bannerErr);
                 }
             }
 

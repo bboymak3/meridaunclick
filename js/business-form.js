@@ -18,6 +18,8 @@
     let uploadedImages = []; // Array of { url, file, preview }
     let selectedLogoFile = null; // Logo file for upload
     let uploadedLogoUrl = null; // Logo URL after upload
+    let selectedBannerFile = null; // Banner file for upload
+    let uploadedBannerUrl = null; // Banner URL after upload
     let isSubmitting = false;
 
     // ─── DOM Elements ───────────────────────────────────────────
@@ -66,6 +68,46 @@
         const input = document.getElementById('logoInput');
         if (img) { img.src = ''; img.style.display = 'none'; }
         if (icon) icon.style.display = '';
+        if (btn) btn.style.display = 'none';
+        if (input) input.value = '';
+    };
+
+    // ─── Banner Functions ──────────────────────────────────
+    window.handleBannerSelect = function(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('El banner no puede exceder 5MB', 'error');
+            input.value = '';
+            return;
+        }
+        if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+            showToast('Formato no soportado. Usa JPG, PNG o WebP', 'error');
+            input.value = '';
+            return;
+        }
+        selectedBannerFile = file;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = document.getElementById('bannerPreviewImg');
+            const placeholder = document.getElementById('bannerPlaceholderText');
+            const btn = document.getElementById('removeBannerBtn');
+            if (img) { img.src = e.target.result; img.style.display = 'block'; }
+            if (placeholder) placeholder.style.display = 'none';
+            if (btn) btn.style.display = 'inline-flex';
+        };
+        reader.readAsDataURL(file);
+    };
+
+    window.removeBanner = function() {
+        selectedBannerFile = null;
+        uploadedBannerUrl = null;
+        const img = document.getElementById('bannerPreviewImg');
+        const placeholder = document.getElementById('bannerPlaceholderText');
+        const btn = document.getElementById('removeBannerBtn');
+        const input = document.getElementById('bannerInput');
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (placeholder) placeholder.style.display = '';
         if (btn) btn.style.display = 'none';
         if (input) input.value = '';
     };
@@ -370,6 +412,17 @@
             if (logoImg) { logoImg.src = business.logo; logoImg.style.display = 'block'; }
             if (logoIcon) logoIcon.style.display = 'none';
             if (logoBtn) logoBtn.style.display = 'inline-flex';
+        }
+
+        // Load existing banner
+        if (business.banner) {
+            uploadedBannerUrl = business.banner;
+            const bannerImg = document.getElementById('bannerPreviewImg');
+            const bannerPlaceholder = document.getElementById('bannerPlaceholderText');
+            const bannerBtn = document.getElementById('removeBannerBtn');
+            if (bannerImg) { bannerImg.src = business.banner; bannerImg.style.display = 'block'; }
+            if (bannerPlaceholder) bannerPlaceholder.style.display = 'none';
+            if (bannerBtn) bannerBtn.style.display = 'inline-flex';
         }
         setValue('propDireccion', business.address);
         setValue('propCiudad', business.city);
@@ -757,6 +810,7 @@
             has_delivery,
             has_outdoor,
             logo: uploadedLogoUrl || null,
+            banner: uploadedBannerUrl || null,
         };
 
         // Upload logo first if selected and not yet uploaded
@@ -773,6 +827,23 @@
             } catch (logoErr) {
                 console.error('Error uploading logo:', logoErr);
                 // Non-blocking: business is created without logo
+            }
+        }
+
+        // Upload banner if selected and not yet uploaded
+        if (selectedBannerFile && !uploadedBannerUrl) {
+            try {
+                const bannerFormData = new FormData();
+                bannerFormData.append('file', selectedBannerFile);
+                bannerFormData.append('product_type', 'banner');
+                const bannerResult = await api.postFormData('/upload', bannerFormData);
+                if (bannerResult.url) {
+                    uploadedBannerUrl = bannerResult.url;
+                    businessData.banner = uploadedBannerUrl;
+                }
+            } catch (bannerErr) {
+                console.error('Error uploading banner:', bannerErr);
+                // Non-blocking: business is created without banner
             }
         }
 

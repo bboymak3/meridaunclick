@@ -934,6 +934,20 @@
                 preview.innerHTML = `<img src="${url}" style="max-width:200px;max-height:150px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
             }
         });
+
+        // Banner upload handlers
+        const bannerFileInput = document.getElementById('bizEditBannerFile');
+        const bannerCameraInput = document.getElementById('bizEditBannerCamera');
+        if (bannerFileInput) bannerFileInput.addEventListener('change', (e) => handleBizBannerUpload(e.target.files[0]));
+        if (bannerCameraInput) bannerCameraInput.addEventListener('change', (e) => handleBizBannerUpload(e.target.files[0]));
+
+        // Banner remove button
+        const bannerRemoveBtn = document.getElementById('bizEditBannerRemove');
+        if (bannerRemoveBtn) bannerRemoveBtn.addEventListener('click', () => {
+            document.getElementById('bizEditBannerUrl').value = '';
+            document.getElementById('bizEditBannerPreview').innerHTML = '';
+            bannerRemoveBtn.style.display = 'none';
+        });
     }
 
     async function editBusiness(businessId) {
@@ -948,6 +962,14 @@
         // Reset image preview
         const preview = document.getElementById('bizEditImagePreview');
         if (preview) preview.innerHTML = '<div style="color:#999;font-size:0.85rem;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
+
+        // Reset banner
+        const bannerPreview = document.getElementById('bizEditBannerPreview');
+        const bannerUrl = document.getElementById('bizEditBannerUrl');
+        const bannerRemove = document.getElementById('bizEditBannerRemove');
+        if (bannerPreview) bannerPreview.innerHTML = '';
+        if (bannerUrl) bannerUrl.value = '';
+        if (bannerRemove) bannerRemove.style.display = 'none';
 
         // Load categories for select
         try {
@@ -993,6 +1015,16 @@
 
             // Video URL
             document.getElementById('bizEditVideoUrl').value = biz.video_url || '';
+
+            // Banner
+            if (biz.banner) {
+                const bPreview = document.getElementById('bizEditBannerPreview');
+                const bUrl = document.getElementById('bizEditBannerUrl');
+                const bRemove = document.getElementById('bizEditBannerRemove');
+                if (bPreview) bPreview.innerHTML = '<img src="' + biz.banner + '" style="width:100%;height:180px;object-fit:cover;border-radius:10px;" onerror="this.parentElement.innerHTML=\'\'">';
+                if (bUrl) bUrl.value = biz.banner;
+                if (bRemove) bRemove.style.display = 'inline-flex';
+            }
 
             // Load images gallery
             adminBizEditModal.dataset.imageCount = (biz.images || []).length;
@@ -1096,6 +1128,43 @@
         }
     }
 
+    // Handle banner upload for business edit modal
+    async function handleBizBannerUpload(file) {
+        if (!file) return;
+        const statusEl = document.getElementById('bizEditBannerStatus');
+        const removeBtn = document.getElementById('bizEditBannerRemove');
+        const previewEl = document.getElementById('bizEditBannerPreview');
+        const urlInput = document.getElementById('bizEditBannerUrl');
+
+        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo banner...';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('product_type', 'banner');
+
+            const token = localStorage.getItem(TOKEN_KEY);
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+            const data = await response.json();
+
+            if (!data.url) {
+                if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + (data.error || 'Error al subir');
+                return;
+            }
+
+            if (urlInput) urlInput.value = data.url;
+            if (previewEl) previewEl.innerHTML = '<img src="' + data.url + '" style="width:100%;height:180px;object-fit:cover;border-radius:10px;" onerror="this.parentElement.innerHTML=\'\'">';
+            if (removeBtn) removeBtn.style.display = 'inline-flex';
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Banner subido';
+        } catch (error) {
+            if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + error.message;
+        }
+    }
+
     // Load business images gallery in edit modal
     async function loadBizEditGallery(businessId) {
         const galleryEl = document.getElementById('bizEditGallery');
@@ -1171,6 +1240,7 @@
                 has_outdoor: document.getElementById('bizEditOutdoor')?.checked ? 1 : 0,
                 image: adminBizEditModal.dataset.currentImage || '',
                 video_url: document.getElementById('bizEditVideoUrl')?.value?.trim() || '',
+                banner: document.getElementById('bizEditBannerUrl')?.value?.trim() || '',
             };
 
             await api.put(`/businesses/${businessId}`, body);
@@ -3545,6 +3615,20 @@
             </div>
         </div>
         <div class="aeb-card">
+            <h4><i class="fas fa-panorama" style="color:#7c3aed;"></i> Banner de Portada</h4>
+            <p style="font-size:0.78rem;color:#6b7280;margin-bottom:10px;">Imagen de portada tipo Facebook. Recomendado: 1200x400px.</p>
+            <div class="aeb-banner-preview" id="aebBannerPreview" style="width:100%;height:180px;border-radius:10px;overflow:hidden;background:#f1f5f9;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
+                ${b.banner ? '<img src="'+escH(b.banner)+'" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML=\'<span style=color:#94a3b8><i class=\\\'fas fa-panorama\\\' style=\\\'font-size:2rem\\\'></i><br>Sin banner</span>\'">' : '<span style="color:#94a3b8;text-align:center;"><i class="fas fa-panorama" style="font-size:2rem;"></i><br><span style="font-size:0.78rem;">Sin banner</span></span>'}
+            </div>
+            <div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('aebBannerInput').click()"><i class="fas fa-upload"></i> Subir Banner</button>
+                ${b.banner ? '<button type="button" class="btn btn-secondary btn-sm" onclick="adminEditBizRemoveBanner()"><i class="fas fa-trash"></i> Quitar</button>' : ''}
+                <input type="file" id="aebBannerInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="adminEditBizHandleBanner(this)">
+                <input type="hidden" id="aebBannerUrl" value="${escH(b.banner||'')}">
+                <p style="font-size:0.72rem;color:#9ca3af;margin-top:4px;">JPG, PNG, WebP - Max 5MB</p>
+            </div>
+        </div>
+        <div class="aeb-card">
             <h4><i class="fas fa-info-circle" style="color:#2563eb;"></i> Informacion Basica</h4>
             <div class="aeb-grid">
                 <div class="aeb-field"><label>Nombre *</label><input type="text" class="eb-input" id="aebTitle" value="${escH(b.title||'')}" maxlength="150"></div>
@@ -3642,6 +3726,28 @@
         if (editBizCurrent) editBizCurrent.logo = null;
     };
 
+    window.adminEditBizHandleBanner = async function(input) {
+        const file = input.files[0]; if (!file) return;
+        if (file.size > 5*1024*1024) { showToast('Max 5MB para banner','error'); input.value=''; return; }
+        try {
+            showToast('Subiendo banner...','info');
+            const fd = new FormData(); fd.append('file',file); fd.append('product_type','banner');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                document.getElementById('aebBannerUrl').value = result.url;
+                document.getElementById('aebBannerPreview').innerHTML = '<img src="'+result.url+'" style="width:100%;height:100%;object-fit:cover;">';
+                showToast('Banner subido correctamente','success');
+            }
+        } catch(e) { showToast('Error al subir banner: '+e.message,'error'); }
+        input.value = '';
+    };
+
+    window.adminEditBizRemoveBanner = function() {
+        document.getElementById('aebBannerUrl').value = '';
+        document.getElementById('aebBannerPreview').innerHTML = '<span style="color:#94a3b8;text-align:center;"><i class="fas fa-panorama" style="font-size:2rem;"></i><br><span style="font-size:0.78rem;">Sin banner</span></span>';
+        if (editBizCurrent) editBizCurrent.banner = null;
+    };
+
     window.adminEditBizAddImage = async function(input) {
         const file = input.files[0]; if (!file) return;
         if (!editBizCurrent) return;
@@ -3730,6 +3836,7 @@
                 state: document.getElementById('aebState').value,
                 schedule: document.getElementById('aebSchedule').value,
                 logo: document.getElementById('aebLogoUrl').value || null,
+                banner: document.getElementById('aebBannerUrl').value || null,
                 custom_html: customHtmlEl ? customHtmlEl.value || null : null,
             };
             await api.put('/businesses/' + id, payload);

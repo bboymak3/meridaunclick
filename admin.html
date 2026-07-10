@@ -1040,6 +1040,30 @@
                             </div>
                         </div>
                     </div>
+                    <!-- Banner de Portada -->
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-panorama" style="color:#7c3aed;"></i> <span>Imagen de Portada (Banner)</span></div>
+                        <p style="font-size:0.82rem;color:#6b7280;margin-bottom:10px;">Esta imagen se muestra como portada tipo Facebook en la página del negocio. Recomendado: 1200x400px.</p>
+                        <div id="bizEditBannerPreview" style="margin-bottom:10px;border-radius:10px;overflow:hidden;max-height:200px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"></div>
+                        <div class="profile-input-group">
+                            <label>Subir Banner</label>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                                <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                                    <i class="fas fa-upload"></i> Subir archivo
+                                    <input type="file" id="bizEditBannerFile" accept="image/*" style="display:none;">
+                                </label>
+                                <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                                    <i class="fas fa-camera"></i> Tomar foto
+                                    <input type="file" id="bizEditBannerCamera" accept="image/*" capture="environment" style="display:none;">
+                                </label>
+                                <button type="button" class="btn btn-outline btn-sm" id="bizEditBannerRemove" style="display:none;color:#dc2626;margin:0;">
+                                    <i class="fas fa-trash"></i> Quitar
+                                </button>
+                                <span id="bizEditBannerStatus" style="font-size:0.8rem;color:#6b7280;"></span>
+                            </div>
+                            <input type="hidden" id="bizEditBannerUrl" value="">
+                        </div>
+                    </div>
                     <!-- Imagen -->
                     <div class="profile-form-section">
                         <div class="profile-form-section-title"><i class="fas fa-image"></i> <span>Imagen del Negocio</span></div>
