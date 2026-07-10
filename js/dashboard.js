@@ -259,6 +259,41 @@
             if (dashPendingProps) dashPendingProps.textContent = pending;
             if (dashTotalViews) dashTotalViews.textContent = views;
 
+            // Edit Profile CTA — show for each approved business (or first business if none approved)
+            const editProfileCTA = document.getElementById('editProfileCTA');
+            const editProfileBizName = document.getElementById('editProfileBizName');
+            const editProfileBizStatus = document.getElementById('editProfileBizStatus');
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            const editProfileViewBtn = document.getElementById('editProfileViewBtn');
+            if (editProfileCTA && userProperties.length > 0) {
+                // Prefer first approved business, fall back to first of any status
+                const primaryBiz = approvedProps[0] || userProperties[0];
+                const statusLabels = { approved: 'Activo', pending: 'Pendiente de aprobacion', rejected: 'Rechazado' };
+                editProfileBizName.textContent = primaryBiz.title || 'Mi Negocio';
+                editProfileBizStatus.textContent = statusLabels[primaryBiz.status] || primaryBiz.status;
+                editProfileBtn.onclick = function() { openEditBusinessModal(primaryBiz.id); };
+                editProfileViewBtn.href = '/negocio/' + (primaryBiz.slug || primaryBiz.id);
+                editProfileCTA.style.display = '';
+
+                // If multiple businesses, show a small selector
+                if (userProperties.length > 1) {
+                    const selectorWrap = document.createElement('div');
+                    selectorWrap.style.cssText = 'margin-top:12px;padding-top:12px;border-top:1px solid #e2e8f0;';
+                    selectorWrap.innerHTML = '<p style="margin:0 0 8px;font-size:0.8rem;color:#64748b;font-weight:600;">Tambien puedes editar:</p><div style="display:flex;gap:8px;flex-wrap:wrap;" id="editProfileOtherBiz"></div>';
+                    editProfileCTA.appendChild(selectorWrap);
+                    const otherWrap = document.getElementById('editProfileOtherBiz');
+                    userProperties.forEach(b => {
+                        if (b.id === primaryBiz.id) return;
+                        const chip = document.createElement('button');
+                        chip.className = 'btn btn-secondary btn-sm';
+                        chip.style.cssText = 'font-size:0.82rem;border-radius:8px;';
+                        chip.innerHTML = '<i class="fas fa-pen" style="font-size:0.7rem;"></i> ' + (b.title || 'Negocio');
+                        chip.onclick = function() { openEditBusinessModal(b.id); };
+                        otherWrap.appendChild(chip);
+                    });
+                }
+            }
+
             // Recent businesses table (last 5)
             if (recentPropsBody) {
                 const recent = userProperties.slice(0, 5);

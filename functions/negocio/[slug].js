@@ -477,12 +477,12 @@ export async function onRequestGet(context) {
 
             <div class="business-content hidden" id="businessContent">
                 <!-- Banner de Portada (tipo Facebook) -->
-                <div id="businessBannerWrap" style="display:none;margin:-22px -22px 0;border-radius:16px 16px 0 0;overflow:hidden;position:relative;max-height:350px;min-height:180px;background:linear-gradient(135deg,#1e3a5f,#2563eb,#7c3aed);">
+                <div id="businessBannerWrap" style="display:none;margin:-22px -22px 0;border-radius:16px 16px 0 0;overflow:hidden;position:relative;max-height:420px;min-height:220px;background:linear-gradient(135deg,#1e3a5f,#2563eb,#7c3aed);">
                     <img id="businessBanner" src="" alt="Portada" style="width:100%;height:100%;object-fit:cover;display:block;">
                 </div>
 
                 <!-- Logo (se superpone sobre el banner si existe) -->
-                <div id="businessLogoWrap" style="display:none;text-align:center;padding:24px 0 8px;${business.banner ? 'margin-top:-50px;position:relative;z-index:2;' : 'margin-bottom:24px;'}">
+                <div id="businessLogoWrap" style="display:none;text-align:center;padding:24px 0 8px;${business.banner ? 'margin-top:-60px;position:relative;z-index:2;' : 'margin-bottom:24px;'}">
                     <img id="businessLogo" src="" alt="Logo" style="max-height:200px;max-width:420px;object-fit:contain;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,0.10);${business.banner ? 'border:4px solid #fff;' : ''}">
                 </div>
 
@@ -631,7 +631,7 @@ export async function onRequestGet(context) {
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/js/app.js?v=7"></script>
     <script>window.__BUSINESS_ID = ${business.id}; window.__BUSINESS_SLUG = '${escapeJs(business.slug)}';</script>
-    <script src="/js/business-detail.js?v=8"></script>
+    <script src="/js/business-detail.js?v=9"></script>
     <script src="/js/chat.js?v=3"></script>
     <script src="/js/review-widget.js?v=3"></script>
     <script src="/js/ai-chatbot.js?v=3"></script>
