@@ -508,7 +508,7 @@ export async function onRequestGet(context) {
 <!-- NAV -->
 <nav class="lp-nav" id="lpNav">
     <a href="${baseUrl}/index.html" class="lp-nav-brand">
-        <i class="fas fa-store"></i> HOLAX
+        <img src="${baseUrl}/images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:6px;"> HOLAX
     </a>
     <div class="lp-nav-links">
         <a href="#about">Nosotros</a>

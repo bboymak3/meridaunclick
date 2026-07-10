@@ -305,7 +305,7 @@ export async function onRequestGet(context) {
 <body>
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <a href="/" class="nav-logo"><i class="fas fa-store"></i> <span class="brand-name">HOLAX</span></a>
+            <a href="/" class="nav-logo"><img src="https://aunclick.pages.dev/images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;"> <span class="brand-name">HOLAX</span></a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
             </button>
