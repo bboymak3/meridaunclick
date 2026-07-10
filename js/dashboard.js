@@ -3,20 +3,101 @@
  * Handles user dashboard and admin panel functionality
  */
 
-// Event bridge: registered OUTSIDE the IIFE so it's always available.
-// The IIFE registers the actual handler on window.openEditBusinessModal.
+// Self-contained edit business modal opener — completely outside the IIFE
+// so it works even if the IIFE has errors.
 document.addEventListener('open-edit-biz', function(e) {
+    var id = e.detail.id;
+    if (!id) return;
+    // If the IIFE version is available, use it
     if (typeof window.openEditBusinessModal === 'function') {
-        window.openEditBusinessModal(e.detail.id);
-    } else {
-        // If not ready yet, retry once after a short delay
-        setTimeout(function() {
-            if (typeof window.openEditBusinessModal === 'function') {
-                window.openEditBusinessModal(e.detail.id);
-            }
-        }, 800);
+        window.openEditBusinessModal(id);
+        return;
     }
+    // Fallback: open modal and load data directly
+    var modal = document.getElementById('editBusinessModal');
+    var loading = document.getElementById('editBizLoading');
+    var form = document.getElementById('editBizForm');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    if (loading) loading.style.display = '';
+    if (form) form.style.display = 'none';
+
+    var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    fetch('/api/businesses/' + id, {
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var biz = data.business || data;
+        if (form) {
+            // Populate basic fields directly
+            var el = function(eid, val) { var ee = document.getElementById(eid); if (ee && val) ee.value = val; };
+            el('editBizId', biz.id);
+            el('editBizTitle', biz.title);
+            el('editBizDesc', biz.description);
+            el('editBizCat', biz.category || biz.category_id);
+            el('editBizType', biz.business_type);
+            el('editBizPhone', biz.phone);
+            el('editBizWhatsapp', biz.whatsapp);
+            el('editBizEmail', biz.email_contact || biz.email);
+            el('editBizWebsite', biz.website);
+            el('editBizInstagram', biz.instagram);
+            el('editBizFacebook', biz.facebook);
+            el('editBizTwitter', biz.twitter);
+            el('editBizTiktok', biz.tiktok);
+            el('editBizYoutube', biz.youtube);
+            el('editBizAddress', biz.address);
+            el('editBizCity', biz.city);
+            el('editBizState', biz.state);
+            el('editBizLat', biz.lat || biz.latitude);
+            el('editBizLng', biz.lng || biz.longitude);
+            el('editBizSchedule', biz.schedule);
+
+            // Logo
+            if (biz.logo) {
+                var logoSection = form.querySelector('.eb-logo-section');
+                if (logoSection) {
+                    var logoImg = logoSection.querySelector('.edit-biz-logo-img');
+                    if (logoImg) { logoImg.src = biz.logo; logoImg.style.display = 'block'; }
+                }
+            }
+            // Banner
+            if (biz.banner) {
+                var bannerSection = form.querySelector('.eb-banner-section');
+                if (bannerSection) {
+                    bannerSection.querySelector('.edit-biz-banner-preview').innerHTML = '<img src="' + biz.banner + '" style="width:100%;height:100%;object-fit:cover;">';
+                    bannerSection.querySelector('.edit-biz-banner-remove-btn').style.display = 'inline-flex';
+                    bannerSection.querySelector('.edit-biz-banner-url').value = biz.banner;
+                }
+            }
+            // Video
+            if (biz.video_url) {
+                el('editBizVideoUrlHidden', biz.video_url);
+                el('editBizVideoUrl', biz.video_url);
+            }
+            // Features
+            var features = biz.features || biz.caracteristicas || '';
+            var featList = typeof features === 'string' ? features.split(',') : features;
+            document.querySelectorAll('#editBizFeatures .eb-feature').forEach(function(f) {
+                if (featList.indexOf(f.dataset.feature) !== -1) f.classList.add('checked');
+            });
+        }
+        if (loading) loading.style.display = 'none';
+        if (form) form.style.display = '';
+    })
+    .catch(function(err) {
+        if (loading) loading.innerHTML = '<i class="fas fa-exclamation-circle" style="color:#ef4444;"></i><p>Error al cargar datos del negocio</p>';
+    });
 });
+
+// Also register as global function for inline onclick handlers in table rows
+window.openEditBusinessModal = function(id) {
+    document.dispatchEvent(new CustomEvent('open-edit-biz', {detail:{id:id}}));
+};
+window.closeEditBusinessModal = function() {
+    var modal = document.getElementById('editBusinessModal');
+    if (modal) modal.classList.add('hidden');
+};
 
 (function () {
     'use strict';
