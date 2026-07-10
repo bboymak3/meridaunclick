@@ -81,8 +81,8 @@
                 btnAmbos.className = active === 'both' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
                 btnAmbos.style.flex = '1';
                 btnAmbos.style.fontSize = '0.85rem';
-                btnAmbos.style.background = active === 'both' ? 'linear-gradient(135deg,#1a73e8,#059669)' : '';
-                if (active === 'both') btnAmbos.style.background = 'linear-gradient(135deg,#1a73e8,#059669)';
+                btnAmbos.style.background = active === 'both' ? 'linear-gradient(135deg,#1a73e8,#006EE3)' : '';
+                if (active === 'both') btnAmbos.style.background = 'linear-gradient(135deg,#1a73e8,#006EE3)';
             }
             if (btnPropiedades) {
                 btnPropiedades.className = active === 'properties' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
@@ -164,7 +164,7 @@
     function createPropertyIcon() {
         return L.divIcon({
             className: 'custom-map-marker',
-            html: '<div class="marker-pin" style="background-color:#059669;">'
+            html: '<div class="marker-pin" style="background-color:#006EE3;">'
                 + '<span class="marker-price" style="font-size:10px;"><i class="fas fa-home"></i></span>'
                 + '</div>'
                 + '<div class="marker-shadow"></div>',
@@ -240,7 +240,7 @@
                     + '<h4 class="map-popup-title">' + title + '</h4>'
                     + '<div class="map-popup-badges">'
                     + '<span class="map-popup-badge">' + opLabel + '</span>'
-                    + (price ? '<span class="map-popup-badge" style="background:#059669;">' + price + '</span>' : '')
+                    + (price ? '<span class="map-popup-badge" style="background:#006EE3;">' + price + '</span>' : '')
                     + '</div>'
                     + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
                     + '<a href="/property-detail.html?id=' + p.id + '" class="map-popup-link">Ver m\u00e1s <i class="fas fa-arrow-right"></i></a>'

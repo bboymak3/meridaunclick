@@ -72,7 +72,7 @@ export async function onRequestGet(context) {
       email_shown: !isPremium && !!(business.owner_email || business.whatsapp),
       badge_type: isPremium ? 'premium' : 'basic',
       badge_color: isPremium ? 'gold' : 'green',
-      badge_label: isPremium ? 'Premium' : 'OLAX',
+      badge_label: isPremium ? 'Premium' : 'HOLAX',
     };
 
     return new Response(JSON.stringify({

@@ -2,11 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="description" content="Vendedores y Agentes - OLAX Admin">
-    <title>Vendedores - Administración OLAX</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta name="description" content="Vendedores y Agentes - HOLAX Admin">
+    <title>Vendedores - Administración HOLAX</title>
+    <link rel="stylesheet" href="css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -14,8 +15,8 @@
     <nav class="navbar navbar-admin" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-store"></i>
-                <span class="brand-name">OLAX</span> <span class="admin-badge">Admin</span>
+                <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name">HOLAX</span> <span class="admin-badge">Admin</span>
             </a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
@@ -123,7 +124,7 @@
                 <!-- Create User Section -->
                 <div class="admin-card" id="createUserSection">
                     <div class="admin-card-header">
-                        <h3><i class="fas fa-user-plus" style="color:#059669;"></i> Crear Nueva Cuenta</h3>
+                        <h3><i class="fas fa-user-plus" style="color:#006EE3;"></i> Crear Nueva Cuenta</h3>
                     </div>
                     <div class="admin-card-body">
                         <p style="font-size:0.88rem;color:#6b7280;margin-bottom:16px;">Crea una nueva cuenta de usuario, agente o administrador directamente desde aquí.</p>
@@ -166,8 +167,8 @@
                                 </div>
                             </div>
                             <div id="createUserError" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:#dc2626;"></div>
-                            <div id="createUserSuccess" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:#059669;"></div>
-                            <button class="btn btn-primary" id="btnCreateUser" style="background:linear-gradient(135deg,#059669,#10b981);">
+                            <div id="createUserSuccess" style="display:none;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:0.85rem;color:#006EE3;"></div>
+                            <button class="btn btn-primary" id="btnCreateUser" style="background:linear-gradient(135deg,#006EE3,#3B9AFF);">
                                 <i class="fas fa-user-plus"></i> Crear Cuenta
                             </button>
                         </div>
@@ -259,7 +260,7 @@
         function showToast(msg, type) {
             const container = document.getElementById('toastContainer');
             if (!container) return;
-            const colors = { success:'#059669', error:'#dc2626', info:'#2563eb' };
+            const colors = { success:'#006EE3', error:'#dc2626', info:'#2563eb' };
             const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
             const el = document.createElement('div');
             el.style.cssText = `padding:12px 20px;border-radius:10px;color:#fff;font-size:0.9rem;font-weight:500;display:flex;align-items:center;gap:10px;box-shadow:0 4px 12px rgba(0,0,0,0.15);animation:slideIn 0.3s ease;background:${colors[type]||colors.info};`;
@@ -571,6 +572,14 @@
         loadSellersPanel();
 
     })();
+    </script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+    }
     </script>
 </body>
 </html>

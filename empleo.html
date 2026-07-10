@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Ofertas de empleo en Venezuela - Encuentra trabajo en restaurantes, tiendas, servicios y más.">
-    <title>Empleo - OLAX</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Empleo - HOLAX</title>
+    <link rel="stylesheet" href="css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* ─── Empleo Hero ──────────────────────────────────────── */
@@ -354,8 +355,8 @@
         }
 
         .job-card-type-badge.full-time {
-            background: #ecfdf5;
-            color: #059669;
+            background: #EFF6FF;
+            color: #006EE3;
             border: 1px solid #a7f3d0;
         }
 
@@ -422,12 +423,12 @@
         }
 
         .job-card-salary {
-            color: #059669;
+            color: #006EE3;
             font-weight: 600;
         }
 
         .job-card-salary i {
-            color: #059669 !important;
+            color: #006EE3 !important;
         }
 
         .job-card-description {
@@ -754,8 +755,8 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-store"></i>
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> OLAX</span>
+                <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HOLAX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
@@ -956,7 +957,7 @@
     <!-- Footer -->
     <footer class="empleo-footer">
         <div class="container">
-            <p>&copy; 2025 <a href="index.html">OLAX</a>. Todos los derechos reservados.</p>
+            <p>&copy; 2025 <a href="index.html">HOLAX</a>. Todos los derechos reservados.</p>
         </div>
     </footer>
 
@@ -1294,6 +1295,14 @@
                 fetchJobs(1);
             }
         })();
+    </script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+    }
     </script>
 </body>
 </html>

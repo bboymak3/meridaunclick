@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Publica un nuevo inmueble en OLAX - El directorio comercial e inmobiliario de Venezuela.">
-    <title>Publicar Inmueble - OLAX</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta name="description" content="Publica un nuevo inmueble en HOLAX - El directorio comercial e inmobiliario de Venezuela.">
+    <title>Publicar Inmueble - HOLAX</title>
+    <link rel="stylesheet" href="css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -13,8 +14,8 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-store"></i>
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> OLAX</span>
+                <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HOLAX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
@@ -537,5 +538,13 @@
 
     <script src="js/app.js"></script>
     <script src="js/property-form.js"></script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+    }
+    </script>
 </body>
 </html>

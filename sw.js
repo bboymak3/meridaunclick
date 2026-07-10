@@ -1,106 +1,67 @@
-const CACHE_NAME = 'unclick-v44';
-const STATIC_ASSETS = [
+const CACHE_NAME = 'holax-v1';
+const OFFLINE_URL = '/index.html';
+
+const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/search.html',
   '/map.html',
-  '/business.html',
-  '/new-business.html',
-  '/login.html',
-  '/dashboard.html',
-  '/empleo.html',
-  '/entretenimiento.html',
-  '/cupones.html',
   '/marketplace.html',
-  '/emergencia.html',
-  '/admin.html',
-  '/properties.html',
-  '/property-detail.html',
-  '/new-property.html',
-  '/planes.html',
-  '/quienes-somos.html',
-  '/mision-vision.html',
-  '/contacto.html',
-  '/clientes-satisfechos.html',
-  '/privacidad.html',
-  '/eliminacion-datos.html',
   '/css/styles.css',
   '/js/app.js',
-  '/js/business-detail.js',
-  '/js/chat.js',
-  '/js/review-widget.js',
-  '/js/ai-chatbot.js',
-  '/js/home-map.js',
-  '/js/map.js',
-  '/js/dashboard.js',
-  '/js/admin.js',
-  '/js/auth.js',
-  '/js/business-form.js',
-  '/js/property-form.js',
-  '/js/property-detail.js',
-  '/js/properties-search.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/images/favicon.jpeg',
+  '/images/logoprincipal.jpeg',
+  '/images/PWA.jpeg',
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(PRECACHE_URLS).catch(() => {
+        // Some URLs may fail (e.g. images not yet uploaded), that's OK
+      });
+    })
   );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys => Promise.all(
-      keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-    ))
+    caches.keys().then((names) => {
+      return Promise.all(
+        names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
+      );
+    })
   );
   self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // API calls: network only, no caching (POST/PUT/DELETE not supported by Cache API)
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // HTML pages: network first (always serve fresh pages)
-  if (request.headers.get('accept')?.includes('text/html') ||
-      url.pathname.endsWith('.html') ||
-      url.pathname === '/' ||
-      url.pathname.endsWith('/')) {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-          }
-          return response;
-        })
-        .catch(() => caches.match(request))
-    );
-    return;
-  }
-
-  // Static assets (CSS, JS, images): stale-while-revalidate
+self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+  
+  // Skip API calls and admin pages
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/functions/')) return;
+  
+  // Network first, fallback to cache
   event.respondWith(
-    caches.match(request).then(cached => {
-      const fetchPromise = fetch(request).then(response => {
-        if (response.ok) {
+    fetch(event.request)
+      .then((response) => {
+        // Cache successful responses
+        if (response.status === 200) {
           const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, clone);
+          });
         }
         return response;
-      }).catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cached) => {
+          return cached || caches.match(OFFLINE_URL);
+        });
+      })
   );
 });

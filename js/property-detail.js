@@ -1,5 +1,5 @@
 /**
- * OLAX - Property Detail Page Loader
+ * HOLAX - Property Detail Page Loader
  * Loads property data from API and populates property-detail.html
  *
  * NOTE: PROPERTY_TYPE_LABELS, OPERATION_TYPE_LABELS, CURRENCY_SYMBOLS,
@@ -154,7 +154,7 @@ function sharePropertyWhatsAppUrl(property) {
     const type = getPropertyTypeLabel(property.property_type);
     const op = getOperationTypeLabel(property.operation_type);
     const price = formatPropertyPrice(property.price, property.currency);
-    const url = `https://aunclick.pages.dev/property-detail.html?id=${property.id}`;
+    const url = `https://holax.com/property-detail.html?id=${property.id}`;
     const title = property.title || 'Propiedad';
 
     let msg = `🏠 *${title}*\n`;
@@ -165,7 +165,7 @@ function sharePropertyWhatsAppUrl(property) {
     if (property.area) msg += `📐 ${property.area}${property.area_unit || 'm²'}\n`;
     if (property.city) msg += `📍 ${property.city}${property.address ? ', ' + property.address : ''}\n`;
     msg += `\n🔗 ${url}`;
-    msg += `\n\n📌 Publicado en OLAX`;
+    msg += `\n\n📌 Publicado en HOLAX`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -312,7 +312,7 @@ const PropertyDetail = (function () {
             contentEl.classList.remove('hidden');
 
             // Update page title
-            document.title = `${property.title || 'Inmueble'} - OLAX`;
+            document.title = `${property.title || 'Inmueble'} - HOLAX`;
 
             // Load similar properties
             loadSimilarProperties(property);
@@ -658,7 +658,7 @@ const PropertyDetail = (function () {
             const waNumber = p.whatsapp || p.phone || p.owner_whatsapp || '';
             if (waNumber && isOwnerPremium) {
                 const cleanNumber = waNumber.replace(/[^0-9+]/g, '');
-                const msg = encodeURIComponent(`Hola, vi tu propiedad "${p.title || ''}" en OLAX y me interesa saber más.`);
+                const msg = encodeURIComponent(`Hola, vi tu propiedad "${p.title || ''}" en HOLAX y me interesa saber más.`);
                 mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
                 mainWhatsApp.style.display = '';
             } else {
@@ -686,7 +686,7 @@ const PropertyDetail = (function () {
         if (openChatBtn) {
             openChatBtn.onclick = () => {
                 if (typeof UnClickChat !== 'undefined' && UnClickChat.openChatWith) {
-                    UnClickChat.openChatWith(p.owner_id || p.user_id, `Hola, vi tu propiedad "${p.title}" en OLAX`);
+                    UnClickChat.openChatWith(p.owner_id || p.user_id, `Hola, vi tu propiedad "${p.title}" en HOLAX`);
                 } else {
                     showToast('Chat no disponible', 'warning');
                 }
@@ -734,7 +734,7 @@ const PropertyDetail = (function () {
             const op = getOperationTypeLabel(p.operation_type);
             const price = p.price ? formatPropertyPrice(p.price, p.currency) : '';
             const desc = p.description ? p.description.substring(0, 150) : '';
-            metaDesc.content = `${p.title || 'Inmueble'} - ${type} en ${op}${price ? ' por ' + price : ''} en ${p.city || 'Venezuela'}. ${desc} Visita OLAX para más información.`;
+            metaDesc.content = `${p.title || 'Inmueble'} - ${type} en ${op}${price ? ' por ' + price : ''} en ${p.city || 'Venezuela'}. ${desc} Visita HOLAX para más información.`;
         }
     }
 
@@ -863,7 +863,7 @@ const PropertyDetail = (function () {
             const property = await api.get(`/properties/${propertyId}`);
             sharePropertyWhatsAppUrl(property);
         } catch {
-            window.open(`https://wa.me/?text=${encodeURIComponent('🏠 Mira esta propiedad en OLAX:\nhttps://aunclick.pages.dev/property-detail.html?id=' + propertyId)}`, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent('🏠 Mira esta propiedad en HOLAX:\nhttps://holax.com/property-detail.html?id=' + propertyId)}`, '_blank');
         }
     }
 

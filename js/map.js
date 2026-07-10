@@ -409,7 +409,7 @@
                 + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin t\u00edtulo') + '</div>'
                 + '<div class="card-location">' + address + '</div>'
                 + '<div class="card-badges">'
-                + '<span class="card-badge badge-type" style="background:#059669;color:#fff;">' + opLabel + '</span>'
+                + '<span class="card-badge badge-type" style="background:#006EE3;color:#fff;">' + opLabel + '</span>'
                 + (price ? '<span class="card-badge badge-price">' + price + '</span>' : '')
                 + '</div>'
                 + '</div>'
@@ -766,7 +766,7 @@
 
         var icon = L.divIcon({
             className: 'custom-map-marker',
-            html: '<div class="marker-pin" style="background-color: #059669;">'
+            html: '<div class="marker-pin" style="background-color: #006EE3;">'
                 + '<span class="marker-price" style="font-size:10px;"><i class="fas fa-home"></i></span>'
                 + '</div>'
                 + '<div class="marker-shadow"></div>',
@@ -789,7 +789,7 @@
             + '<h4 class="map-popup-title">' + title + '</h4>'
             + '<div class="map-popup-badges">'
             + '<span class="map-popup-badge">' + opLabel + '</span>'
-            + (price ? '<span class="map-popup-badge" style="background:#059669;">' + price + '</span>' : '')
+            + (price ? '<span class="map-popup-badge" style="background:#006EE3;">' + price + '</span>' : '')
             + '</div>'
             + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
             + '<a href="/property-detail.html?id=' + property.id + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
@@ -879,7 +879,7 @@
             btnTodos.className = type === 'both' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
             btnTodos.style.flex = '1';
             if (type === 'both') {
-                btnTodos.style.background = 'linear-gradient(135deg,#1a73e8,#059669)';
+                btnTodos.style.background = 'linear-gradient(135deg,#1a73e8,#006EE3)';
             } else {
                 btnTodos.style.background = '';
             }

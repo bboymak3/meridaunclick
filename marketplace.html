@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Marketplace - Compra y vende en tu comunidad con OLAX. Encuentra vehículos, inmuebles, electrónica, servicios y más.">
-    <title>Marketplace - OLAX</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta name="description" content="Marketplace - Compra y vende en tu comunidad con HOLAX. Encuentra vehículos, inmuebles, electrónica, servicios y más.">
+    <title>Marketplace - HOLAX</title>
+    <link rel="stylesheet" href="css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* ─── Marketplace Hero ─────────────────────────────────── */
@@ -76,7 +77,7 @@
         .mp-hero-shapes .shape-3 {
             width: 120px; height: 120px;
             top: 30%; left: 10%;
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(135deg, #3B9AFF, #006EE3);
             border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
             animation: floatShape 8s ease-in-out infinite;
         }
@@ -247,7 +248,7 @@
             align-items: center;
             gap: 8px;
             padding: 11px 28px;
-            background: linear-gradient(135deg, #059669, #10b981);
+            background: linear-gradient(135deg, #006EE3, #3B9AFF);
             border: none;
             border-radius: 10px;
             font-size: 0.9rem;
@@ -317,7 +318,7 @@
         }
 
         .mp-sort-select select:focus {
-            border-color: #059669;
+            border-color: #006EE3;
             box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
         }
 
@@ -347,7 +348,7 @@
         }
 
         .mp-card:hover {
-            border-color: #059669;
+            border-color: #006EE3;
             box-shadow: 0 12px 36px rgba(5, 150, 105, 0.12);
             transform: translateY(-4px);
         }
@@ -356,7 +357,7 @@
             position: relative;
             width: 100%;
             padding-top: 65%;
-            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            background: linear-gradient(135deg, #EFF6FF, #EFF6FF);
             overflow: hidden;
         }
 
@@ -385,7 +386,7 @@
             justify-content: center;
             flex-direction: column;
             gap: 8px;
-            color: #059669;
+            color: #006EE3;
         }
 
         .mp-card-image-placeholder i {
@@ -445,7 +446,7 @@
         .mp-card-price {
             font-size: 1.2rem;
             font-weight: 800;
-            color: #059669;
+            color: #006EE3;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -508,7 +509,7 @@
         }
 
         .mp-card-details-meta i {
-            color: #059669;
+            color: #006EE3;
             font-size: 0.72rem;
         }
 
@@ -570,9 +571,9 @@
         }
 
         .mp-btn-details:hover {
-            border-color: #059669;
-            color: #059669;
-            background: #f0fdf4;
+            border-color: #006EE3;
+            color: #006EE3;
+            background: #EFF6FF;
         }
 
         .mp-btn-details i {
@@ -624,12 +625,12 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+            background: linear-gradient(135deg, #EFF6FF, #EFF6FF);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2.5rem;
-            color: #059669;
+            color: #006EE3;
             margin-bottom: 24px;
         }
 
@@ -679,13 +680,13 @@
         }
 
         .mp-pagination button:hover:not(:disabled) {
-            border-color: #059669;
-            color: #059669;
-            background: #f0fdf4;
+            border-color: #006EE3;
+            color: #006EE3;
+            background: #EFF6FF;
         }
 
         .mp-pagination button.active {
-            background: linear-gradient(135deg, #059669, #10b981);
+            background: linear-gradient(135deg, #006EE3, #3B9AFF);
             color: #fff;
             border-color: transparent;
             box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
@@ -808,8 +809,8 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-store"></i>
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> OLAX</span>
+                <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HOLAX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
@@ -1006,7 +1007,7 @@
     <!-- Footer -->
     <footer class="mp-footer">
         <div class="container">
-            <p>&copy; 2025 <a href="index.html">OLAX</a>. Todos los derechos reservados.</p>
+            <p>&copy; 2025 <a href="index.html">HOLAX</a>. Todos los derechos reservados.</p>
         </div>
     </footer>
 
@@ -1015,7 +1016,7 @@
         <div class="modal-overlay"></div>
         <div class="modal-content" style="max-width:560px;">
             <div class="modal-header">
-                <h3><i class="fas fa-plus-circle" style="color:#059669;"></i> Publicar Nuevo Producto</h3>
+                <h3><i class="fas fa-plus-circle" style="color:#006EE3;"></i> Publicar Nuevo Producto</h3>
                 <button class="modal-close" id="mpModalClose">&times;</button>
             </div>
             <div class="modal-body">
@@ -1098,7 +1099,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" id="mpModalCancel">Cancelar</button>
-                <button class="btn btn-primary" id="mpModalSave" style="background:linear-gradient(135deg,#059669,#10b981);"><i class="fas fa-save"></i> Publicar Producto</button>
+                <button class="btn btn-primary" id="mpModalSave" style="background:linear-gradient(135deg,#006EE3,#3B9AFF);"><i class="fas fa-save"></i> Publicar Producto</button>
             </div>
         </div>
     </div>
@@ -1116,16 +1117,16 @@
         .profile-form { display:flex; flex-direction:column; gap:16px; }
         .profile-form-section { display:flex; flex-direction:column; gap:10px; }
         .profile-form-section-title { display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.88rem; color:#374151; text-transform:uppercase; letter-spacing:0.3px; }
-        .profile-form-section-title i { color:#059669; font-size:0.8rem; }
+        .profile-form-section-title i { color:#006EE3; font-size:0.8rem; }
         .profile-input-group { display:flex; flex-direction:column; gap:4px; }
         .profile-input-group label { font-size:0.82rem; font-weight:500; color:#4b5563; }
         .profile-input-wrapper { display:flex; align-items:center; gap:10px; border:1.5px solid #d1d5db; border-radius:10px; padding:0 14px; transition:all 0.2s; }
-        .profile-input-wrapper:focus-within { border-color:#059669; box-shadow:0 0 0 3px rgba(5,150,105,0.1); }
+        .profile-input-wrapper:focus-within { border-color:#006EE3; box-shadow:0 0 0 3px rgba(0,110,227,0.1); }
         .profile-input-wrapper i { color:#9ca3af; font-size:0.85rem; width:18px; text-align:center; flex-shrink:0; }
         .profile-input-wrapper input, .profile-input-wrapper select { flex:1; border:none; outline:none; padding:12px 0; font-size:0.9rem; font-family:inherit; color:#1f2937; background:transparent; }
         .profile-textarea-wrapper { position:relative; }
         .profile-textarea-wrapper textarea { width:100%; border:1.5px solid #d1d5db; border-radius:10px; padding:12px 14px; font-size:0.9rem; font-family:inherit; resize:vertical; outline:none; transition:all 0.2s; }
-        .profile-textarea-wrapper textarea:focus { border-color:#059669; box-shadow:0 0 0 3px rgba(5,150,105,0.1); }
+        .profile-textarea-wrapper textarea:focus { border-color:#006EE3; box-shadow:0 0 0 3px rgba(0,110,227,0.1); }
         .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
         @media(max-width:480px){ .form-row{grid-template-columns:1fr;} }
         .profile-input-hint { font-size:0.75rem; color:#9ca3af; margin-top:2px; }
@@ -1135,7 +1136,7 @@
         .prod-upload-preview { display:flex; flex-direction:column; align-items:center; gap:8px; }
         .prod-upload-preview img { max-width:100%; max-height:200px; border-radius:8px; object-fit:cover; border:1px solid #e5e7eb; }
         .prod-upload-preview .prod-upload-filename { font-size:0.8rem; color:#6b7280; display:flex; align-items:center; gap:5px; }
-        .prod-upload-progress { color:#059669; font-size:0.85rem; padding:8px; }
+        .prod-upload-progress { color:#006EE3; font-size:0.85rem; padding:8px; }
         .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 20px; border:none; border-radius:8px; font-size:0.88rem; font-weight:600; cursor:pointer; font-family:inherit; transition:all 0.2s; text-decoration:none; }
         .btn-primary { background:linear-gradient(135deg,#1a73e8,#4a90e8); color:#fff; }
         .btn-primary:hover { opacity:0.9; transform:translateY(-1px); }
@@ -1267,7 +1268,7 @@
 
                 // WhatsApp: use business WhatsApp if available
                 const waNumber = product.business_whatsapp ? product.business_whatsapp.replace(/[^0-9]/g, '') : '';
-                const whatsappMsg = encodeURIComponent('Hola, me interesa el producto: ' + product.name + '. Vi el anuncio en OLAX.');
+                const whatsappMsg = encodeURIComponent('Hola, me interesa el producto: ' + product.name + '. Vi el anuncio en HOLAX.');
                 const whatsappUrl = waNumber
                     ? 'https://wa.me/' + waNumber + '?text=' + whatsappMsg
                     : 'https://wa.me/?text=' + whatsappMsg;
@@ -1275,7 +1276,7 @@
                 // Business name
                 const businessHtml = product.business_name
                     ? '<div style="display:flex;align-items:center;gap:5px;font-size:0.78rem;color:#64748b;margin-bottom:4px;">' +
-                        '<i class="fas fa-store" style="color:#059669;font-size:0.68rem;"></i> ' +
+                        '<i class="fas fa-store" style="color:#006EE3;font-size:0.68rem;"></i> ' +
                         (product.business_slug
                             ? '<a href="/negocio/' + product.business_slug + '" style="color:#1a73e8;text-decoration:none;font-weight:500;">' + escapeHtml(product.business_name) + '</a>'
                             : '<span style="font-weight:500;">' + escapeHtml(product.business_name) + '</span>'
@@ -1572,7 +1573,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 if (uploadPreview) {
-                    uploadPreview.innerHTML = '<img src="' + e.target.result + '" alt="Preview"><div class="prod-upload-filename"><i class="fas fa-check-circle" style="color:#059669;"></i> ' + file.name + '</div>';
+                    uploadPreview.innerHTML = '<img src="' + e.target.result + '" alt="Preview"><div class="prod-upload-filename"><i class="fas fa-check-circle" style="color:#006EE3;"></i> ' + file.name + '</div>';
                 }
             };
             reader.readAsDataURL(file);
@@ -1671,7 +1672,7 @@
             if (!container) return;
             var toast = document.createElement('div');
             toast.style.cssText = 'padding:12px 20px;border-radius:10px;color:#fff;font-size:0.88rem;margin-bottom:8px;animation:fadeIn 0.3s;';
-            toast.style.background = type === 'error' ? '#ef4444' : type === 'success' ? '#059669' : '#3b82f6';
+            toast.style.background = type === 'error' ? '#ef4444' : type === 'success' ? '#006EE3' : '#3b82f6';
             toast.textContent = msg;
             container.appendChild(toast);
             setTimeout(function() { toast.remove(); }, 3000);
@@ -1680,6 +1681,14 @@
         // Expose showToast globally for modal
         window.showToast = showToast;
     })();
+    </script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+    }
     </script>
 </body>
 </html>

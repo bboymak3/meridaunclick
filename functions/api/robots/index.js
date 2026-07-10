@@ -3,8 +3,8 @@
 // Fallback: static robots.txt at root should also exist via _redirects
 
 export async function onRequestGet() {
-  const robotsTxt = `# OLAX - Directorio Nacional de Negocios de Venezuela
-# https://aunclick.pages.dev
+  const robotsTxt = `# HOLAX - Directorio Nacional de Negocios de Venezuela
+# https://holax.com
 
 User-agent: *
 Allow: /
@@ -23,7 +23,7 @@ Disallow: /*?page=
 Disallow: /*?sort=
 
 # Sitemap
-Sitemap: https://aunclick.pages.dev/api/sitemap`;
+Sitemap: https://holax.com/api/sitemap`;
 
   return new Response(robotsTxt, {
     status: 200,

@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Detalle de negocio en OLAX - Directorio de negocios de Venezuela.">
-    <title>Negocio - OLAX</title>
-    <link rel="stylesheet" href="css/styles.css?v=3">
+    <meta name="description" content="Detalle de negocio en HOLAX - Directorio de negocios de Venezuela.">
+    <title>Negocio - HOLAX</title>
+    <link rel="stylesheet" href="css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
@@ -44,7 +45,7 @@
     text-overflow: ellipsis;
 }
 .product-card-price {
-    color: #059669;
+    color: #006EE3;
     font-weight: 700;
     font-size: 1.05rem;
 }
@@ -119,8 +120,8 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-store"></i>
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> OLAX</span>
+                <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HOLAX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
@@ -338,7 +339,7 @@
                 <!-- Products Section -->
                 <section class="business-section" id="productsSection" style="display:none;">
                     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <h2 class="business-section-title"><i class="fas fa-boxes-stacked" style="color:#059669;"></i> Productos</h2>
+                        <h2 class="business-section-title"><i class="fas fa-boxes-stacked" style="color:#006EE3;"></i> Productos</h2>
                         <a href="marketplace.html" class="section-link" id="viewAllProducts">Ver más <i class="fas fa-arrow-right"></i></a>
                     </div>
                     <div class="products-grid" id="businessProductsGrid">
@@ -422,5 +423,13 @@
     <script src="js/chat.js?v=3"></script>
     <script src="js/review-widget.js?v=3"></script>
     <script src="js/ai-chatbot.js?v=3"></script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+    }
+    </script>
 </body>
 </html>

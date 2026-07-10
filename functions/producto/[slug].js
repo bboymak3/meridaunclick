@@ -51,12 +51,12 @@ export async function onRequestGet(context) {
       });
     }
 
-    const baseUrl = 'https://aunclick.pages.dev';
+    const baseUrl = 'https://holax.com';
     const title = product.name || 'Producto';
     const price = product.price ? `$${Number(product.price).toLocaleString('es-VE')}` : '';
     const description = product.description
       ? product.description.substring(0, 160)
-      : `${title}${price ? ' - ' + price : ''} - Disponible en OLAX Marketplace, Venezuela.`;
+      : `${title}${price ? ' - ' + price : ''} - Disponible en HOLAX Marketplace, Venezuela.`;
     const imageUrl = product.image || `${baseUrl}/logo.png`;
     const canonicalUrl = `${baseUrl}/producto/${product.slug}`;
 
@@ -138,7 +138,7 @@ export async function onRequestGet(context) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${esc(title)}${price ? ' - ' + price : ''} - OLAX Marketplace</title>
+    <title>${esc(title)}${price ? ' - ' + price : ''} - HOLAX Marketplace</title>
     <meta name="description" content="${esc(description)}">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="${canonicalUrl}">
@@ -147,15 +147,15 @@ export async function onRequestGet(context) {
     <meta property="og:description" content="${esc(description)}">
     <meta property="og:image" content="${imageUrl}">
     <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:site_name" content="OLAX Marketplace">
+    <meta property="og:site_name" content="HOLAX Marketplace">
     <meta property="og:locale" content="es_VE">
     <meta property="product:price:amount" content="${product.price || '0'}">
     <meta property="product:price:currency" content="USD">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${esc(title)} - OLAX">
+    <meta name="twitter:title" content="${esc(title)} - HOLAX">
     <meta name="twitter:description" content="${esc(description)}">
     <meta name="twitter:image" content="${imageUrl}">
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="manifest" href="/manifest.json">
     <style>
@@ -184,7 +184,7 @@ export async function onRequestGet(context) {
         .nav-dropdown-menu.active { display:block; }
         .nav-dropdown-menu .nav-link { padding:10px 14px; font-size:0.9rem; border-radius:8px; }
         .nav-dropdown-menu .nav-link i { width:18px; text-align:center; }
-        .nav-dropdown-menu .nav-link:hover { background:#f0fdf4; color:#059669; }
+        .nav-dropdown-menu .nav-link:hover { background:#EFF6FF; color:#006EE3; }
         .nav-dropdown-divider { border:none; border-top:1px solid #f1f5f9; margin:4px 0; }
         .nav-user { display:flex; align-items:center; gap:4px; }
         .nav-user.hidden { display:none; }
@@ -201,14 +201,14 @@ export async function onRequestGet(context) {
             .nav-dropdown-menu.active { display:block; }
             .nav-mobile-cta { display:block; margin-top:8px; }
             .nav-mobile-cta a { display:flex; align-items:center; justify-content:center; gap:8px; padding:14px; border-radius:10px; font-size:1rem; font-weight:600; text-decoration:none; }
-            .nav-mobile-cta-marketplace { background:linear-gradient(135deg,#059669,#10b981); color:#fff; }
+            .nav-mobile-cta-marketplace { background:linear-gradient(135deg,#006EE3,#3B9AFF); color:#fff; }
             .nav-mobile-cta-marketplace:hover { opacity:0.9; }
         }
 
         /* === PRODUCT FICHA (large size) === */
         .pd-wrap { max-width:900px; margin:0 auto; padding:24px 21px 72px; }
         .pd-breadcrumb { display:flex; align-items:center; gap:9px; font-size:1rem; color:#94a3b8; margin-bottom:21px; flex-wrap:wrap; }
-        .pd-breadcrumb a { color:#059669; text-decoration:none; font-weight:500; }
+        .pd-breadcrumb a { color:#006EE3; text-decoration:none; font-weight:500; }
         .pd-breadcrumb a:hover { text-decoration:underline; }
         .pd-breadcrumb .sep { color:#cbd5e1; font-size:0.9rem; }
 
@@ -216,9 +216,9 @@ export async function onRequestGet(context) {
         .pd-card { background:#fff; border-radius:20px; border:1px solid #e5e7eb; overflow:hidden; box-shadow:0 3px 12px rgba(0,0,0,0.06); }
 
         /* Image */
-        .pd-img { position:relative; width:100%; height:320px; background:#f0fdf4; overflow:hidden; }
+        .pd-img { position:relative; width:100%; height:320px; background:#EFF6FF; overflow:hidden; }
         .pd-img img { width:100%; height:100%; object-fit:cover; display:block; }
-        .pd-img-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#059669; font-size:3rem; opacity:0.25; }
+        .pd-img-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#006EE3; font-size:3rem; opacity:0.25; }
 
         /* Category badge */
         .pd-cat-badge { position:absolute; top:15px; left:15px; padding:6px 15px; border-radius:18px; font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.3px; color:#fff; z-index:2; }
@@ -228,52 +228,52 @@ export async function onRequestGet(context) {
         .badge-electronica { background:rgba(14,165,233,.85); }
         .badge-servicios { background:rgba(168,85,247,.85); }
         .badge-ropa { background:rgba(236,72,153,.85); }
-        .badge-hogar { background:rgba(5,150,105,.85); }
+        .badge-hogar { background:rgba(0,110,227,.85); }
 
         /* Card body */
         .pd-body { padding:20px 24px 24px; }
         .pd-biz-name { display:flex; align-items:center; gap:6px; font-size:1.1rem; color:#64748b; margin-bottom:6px; text-decoration:none; }
         .pd-biz-name:hover { color:#1a73e8; }
-        .pd-biz-name i { color:#059669; font-size:1rem; }
+        .pd-biz-name i { color:#006EE3; font-size:1rem; }
         .pd-title { font-size:1.65rem; font-weight:700; color:#0f172a; margin:0 0 6px; line-height:1.3; letter-spacing:-0.2px; }
-        .pd-price { font-size:1.7rem; font-weight:800; color:#059669; margin:0 0 12px; }
+        .pd-price { font-size:1.7rem; font-weight:800; color:#006EE3; margin:0 0 12px; }
         .pd-desc { font-size:1.2rem; color:#475569; line-height:1.6; margin:0 0 18px; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
         .pd-meta { display:flex; flex-wrap:wrap; gap:9px; margin-bottom:21px; }
         .pd-meta-chip { display:flex; align-items:center; gap:6px; padding:7px 14px; background:#f8fafc; border-radius:10px; font-size:1rem; color:#475569; border:1px solid #f1f5f9; }
-        .pd-meta-chip i { color:#059669; font-size:1rem; }
+        .pd-meta-chip i { color:#006EE3; font-size:1rem; }
         .pd-actions { display:flex; gap:12px; flex-wrap:wrap; }
         .pd-btn { display:inline-flex; align-items:center; gap:9px; padding:14px 28px; border-radius:15px; font-size:1.2rem; font-weight:600; text-decoration:none; cursor:pointer; transition:all .25s; font-family:inherit; border:none; }
         .pd-btn-wa { background:linear-gradient(135deg,#25d366,#128c7e); color:#fff; box-shadow:0 3px 12px rgba(37,211,102,.3); }
         .pd-btn-wa:hover { box-shadow:0 6px 21px rgba(37,211,102,.45); transform:translateY(-2px); color:#fff; }
         .pd-btn-out { background:#fff; color:#475569; border:2px solid #e2e8f0; }
-        .pd-btn-out:hover { border-color:#059669; color:#059669; background:#f0fdf4; }
+        .pd-btn-out:hover { border-color:#006EE3; color:#006EE3; background:#EFF6FF; }
 
         /* Business section */
         .pd-divider { border:none; border-top:1px solid #f1f5f9; margin:0; }
         .pd-biz-section { padding:16px 24px; }
         .pd-biz-section-label { font-size:1rem; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:#94a3b8; margin-bottom:12px; }
-        .pd-biz-card { display:flex; align-items:center; gap:18px; padding:15px 18px; background:linear-gradient(135deg,#f0fdf4,#ecfdf5); border:2px solid #d1fae5; border-radius:18px; text-decoration:none; transition:all .25s; }
-        .pd-biz-card:hover { border-color:#059669; box-shadow:0 5px 18px rgba(5,150,105,.1); }
-        .pd-biz-icon { width:50px; height:50px; border-radius:13px; background:linear-gradient(135deg,#059669,#10b981); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.2rem; flex-shrink:0; }
+        .pd-biz-card { display:flex; align-items:center; gap:18px; padding:15px 18px; background:linear-gradient(135deg,#EFF6FF,#EFF6FF); border:2px solid #d1fae5; border-radius:18px; text-decoration:none; transition:all .25s; }
+        .pd-biz-card:hover { border-color:#006EE3; box-shadow:0 5px 18px rgba(0,110,227,.1); }
+        .pd-biz-icon { width:50px; height:50px; border-radius:13px; background:linear-gradient(135deg,#006EE3,#3B9AFF); display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.2rem; flex-shrink:0; }
         .pd-biz-info { flex:1; min-width:0; }
         .pd-biz-name-card { font-size:1.25rem; font-weight:700; color:#0f172a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .pd-biz-loc { font-size:1rem; color:#64748b; }
-        .pd-biz-arrow { color:#059669; font-size:1.05rem; flex-shrink:0; }
+        .pd-biz-arrow { color:#006EE3; font-size:1.05rem; flex-shrink:0; }
 
         /* === RELATED PRODUCTS (3-col compact grid) === */
         .pd-section-related { margin-top:27px; }
         .pd-section-title { font-size:1.3rem; font-weight:700; color:#0f172a; margin-bottom:15px; display:flex; align-items:center; gap:9px; }
-        .pd-section-title i { color:#059669; font-size:1.17rem; }
+        .pd-section-title i { color:#006EE3; font-size:1.17rem; }
         .rp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
         .rp-card { background:#fff; border-radius:15px; border:1px solid #e5e7eb; overflow:hidden; text-decoration:none; color:inherit; transition:all .25s; }
-        .rp-card:hover { border-color:#059669; box-shadow:0 5px 15px rgba(5,150,105,.1); transform:translateY(-3px); }
-        .rp-card-img { position:relative; width:100%; padding-top:75%; background:#f0fdf4; overflow:hidden; }
+        .rp-card:hover { border-color:#006EE3; box-shadow:0 5px 15px rgba(0,110,227,.1); transform:translateY(-3px); }
+        .rp-card-img { position:relative; width:100%; padding-top:75%; background:#EFF6FF; overflow:hidden; }
         .rp-card-img img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
-        .rp-card-ph { position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#059669; font-size:1.65rem; opacity:0.25; }
+        .rp-card-ph { position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#006EE3; font-size:1.65rem; opacity:0.25; }
         .rp-badge { position:absolute; top:8px; left:8px; width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:#fff; }
         .rp-card-body { padding:12px 14px 14px; }
         .rp-card-name { font-size:1rem; font-weight:600; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
-        .rp-card-price { font-size:1.1rem; font-weight:700; color:#059669; }
+        .rp-card-price { font-size:1.1rem; font-weight:700; color:#006EE3; }
 
         .pd-video { max-width:320px; margin:0 auto; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
         .pd-video iframe { width:100%; aspect-ratio:9/16; display:block; }
@@ -305,7 +305,7 @@ export async function onRequestGet(context) {
 <body>
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <a href="/" class="nav-logo"><i class="fas fa-store"></i> <span class="brand-name">OLAX</span></a>
+            <a href="/" class="nav-logo"><i class="fas fa-store"></i> <span class="brand-name">HOLAX</span></a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
             </button>
@@ -407,10 +407,10 @@ export async function onRequestGet(context) {
             <hr class="pd-divider">
             <div class="pd-biz-section">
                 <div class="pd-biz-section-label" style="font-size:1rem;font-weight:700;color:#0f172a;text-transform:none;letter-spacing:0;display:flex;align-items:center;gap:8px;">
-                    <i class="fas fa-share-nodes" style="color:#059669;"></i> Redes Sociales y Web
+                    <i class="fas fa-share-nodes" style="color:#006EE3;"></i> Redes Sociales y Web
                 </div>
                 <div style="display:flex;gap:15px;flex-wrap:wrap;margin-top:12px;">
-                    ${hasWeb ? `<a href="/web/${esc(product.business_slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:linear-gradient(135deg,#059669,#0ea5e9);color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fas fa-globe" style="font-size:1.5rem;"></i> Sitio Web</a>` : ''}
+                    ${hasWeb ? `<a href="/web/${esc(product.business_slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:linear-gradient(135deg,#006EE3,#0ea5e9);color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fas fa-globe" style="font-size:1.5rem;"></i> Sitio Web</a>` : ''}
                     ${instagram ? `<a href="${esc(instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-instagram" style="font-size:1.5rem;"></i> Instagram</a>` : ''}
                     ${facebook ? `<a href="${esc(facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#1877f2;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-facebook-f" style="font-size:1.5rem;"></i> Facebook</a>` : ''}
                     ${twitter ? `<a href="${esc(twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#000;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-x-twitter" style="font-size:1.5rem;"></i> X (Twitter)</a>` : ''}
@@ -426,7 +426,7 @@ export async function onRequestGet(context) {
     <script>
     function shareProduct(){
         if(navigator.share){navigator.share({title:'${escJs(title)}',text:'${escJs(product.description||title)}',url:location.href}).catch(function(){});}
-        else{window.open('https://wa.me/?text='+encodeURIComponent('${escJs(title)} - En OLAX Marketplace')+'%20'+encodeURIComponent(location.href),'_blank');}
+        else{window.open('https://wa.me/?text='+encodeURIComponent('${escJs(title)} - En HOLAX Marketplace')+'%20'+encodeURIComponent(location.href),'_blank');}
     }
     // Navbar dropdown toggle
     document.querySelectorAll('.nav-dropdown-toggle').forEach(function(btn){

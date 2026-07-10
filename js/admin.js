@@ -1020,7 +1020,7 @@ if (!window._renderVideoList) {
                 Array.from(files).forEach(file => {
                     if (!file.type.startsWith('video/')) { showToast(file.name + ': Solo video', 'error'); return; }
                     if (file.size > 50 * 1024 * 1024) { showToast(file.name + ': Max 50MB', 'error'); return; }
-                    if (infoDiv) infoDiv.innerHTML += '<div style="padding:4px 8px;background:#ecfdf5;border-radius:6px;margin-top:4px;font-size:0.82rem;" id="adminUp_' + file.name.replace(/[^a-zA-Z0-9]/g, '_') + '"><i class="fas fa-spinner fa-spin"></i> ' + file.name + ' - Subiendo...</div>';
+                    if (infoDiv) infoDiv.innerHTML += '<div style="padding:4px 8px;background:#EFF6FF;border-radius:6px;margin-top:4px;font-size:0.82rem;" id="adminUp_' + file.name.replace(/[^a-zA-Z0-9]/g, '_') + '"><i class="fas fa-spinner fa-spin"></i> ' + file.name + ' - Subiendo...</div>';
                     const fd = new FormData();
                     fd.append('file', file);
                     fd.append('product_type', 'video');
@@ -1801,7 +1801,7 @@ if (!window._renderVideoList) {
                         <td><div style="display:flex;align-items:center;gap:8px;">${imgHTML}<span style="font-weight:600;">${escapeHtml(p.name || 'Sin nombre')}</span></div></td>
                         <td>${escapeHtml(p.business_name || '—')}</td>
                         <td><span class="badge badge-default">${escapeHtml(p.category || 'general')}</span></td>
-                        <td style="font-weight:600;color:#059669;">$${parseFloat(p.price || 0).toFixed(2)}</td>
+                        <td style="font-weight:600;color:#006EE3;">$${parseFloat(p.price || 0).toFixed(2)}</td>
                         <td><div style="font-size:0.8rem;">${escapeHtml(p.owner_name || '—')}<br><span style="color:#999;">${escapeHtml(p.owner_email || '')}</span></div></td>
                         <td>${statusBadge}</td>
                         <td style="font-size:0.8rem;color:#888;">${formatDate(p.created_at)}</td>
@@ -2587,7 +2587,7 @@ if (!window._renderVideoList) {
             if (!card) return;
             if (radio.checked) {
                 card.style.borderColor = colors[radio.value] || '#25d366';
-                card.style.background = (radio.value === 'all' ? '#f0fdf4' : radio.value === 'premium_only' ? '#fffbeb' : '#fef2f2');
+                card.style.background = (radio.value === 'all' ? '#EFF6FF' : radio.value === 'premium_only' ? '#fffbeb' : '#fef2f2');
             } else {
                 card.style.borderColor = '#e5e7eb';
                 card.style.background = 'transparent';
@@ -2600,7 +2600,7 @@ if (!window._renderVideoList) {
             const checked = document.querySelector('[name="chat_mode"]:checked');
             if (checked) {
                 const msgs = {
-                    all: { bg: '#f0fdf4', border: '#bbf7d0', color: '#059669', text: 'Chat activo para todos los usuarios registrados.' },
+                    all: { bg: '#EFF6FF', border: '#BFDBFE', color: '#006EE3', text: 'Chat activo para todos los usuarios registrados.' },
                     premium_only: { bg: '#fffbeb', border: '#fde68a', color: '#b45309', text: 'Chat restringido a usuarios Premium.' },
                     none: { bg: '#fef2f2', border: '#fecaca', color: '#dc2626', text: 'Chat completamente desactivado.' },
                 };
@@ -2679,7 +2679,7 @@ if (!window._renderVideoList) {
                         </div>
                     </td>
                     <td><span style="font-size:0.8rem;">${escapeHtml(p.category || 'general')}</span></td>
-                    <td style="font-weight:600;color:#059669;">${price}</td>
+                    <td style="font-weight:600;color:#006EE3;">${price}</td>
                     <td style="font-size:0.8rem;">
                         <div>${escapeHtml(p.owner_name || 'Usuario')}</div>
                         ${p.owner_email ? `<div style="font-size:0.7rem;color:#94a3b8;">${escapeHtml(p.owner_email)}</div>` : ''}
@@ -2868,8 +2868,8 @@ if (!window._renderVideoList) {
 
             properties.filter(p => featuredIds.has(p.id)).forEach(p => {
                 const price = p.price ? `$${parseFloat(p.price).toLocaleString('es-VE')}` : '';
-                html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #059669;border-radius:10px;background:#ecfdf5;cursor:pointer;">
-                    <input type="checkbox" class="featured-property-checkbox" value="${p.id}" checked style="width:18px;height:18px;accent-color:#059669;">
+                html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #006EE3;border-radius:10px;background:#EFF6FF;cursor:pointer;">
+                    <input type="checkbox" class="featured-property-checkbox" value="${p.id}" checked style="width:18px;height:18px;accent-color:#006EE3;">
                     <div style="flex:1;">
                         <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.title)}</div>
                         <div style="font-size:0.75rem;color:#6b7280;">${escapeHtml(p.property_type || '')} · ${escapeHtml(p.city || '')} ${price ? '· ' + price : ''}</div>
@@ -2883,7 +2883,7 @@ if (!window._renderVideoList) {
                 nonFeatured.slice(0, 30).forEach(p => {
                     const price = p.price ? `$${parseFloat(p.price).toLocaleString('es-VE')}` : '';
                     html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;">
-                        <input type="checkbox" class="featured-property-checkbox" value="${p.id}" style="width:18px;height:18px;accent-color:#059669;">
+                        <input type="checkbox" class="featured-property-checkbox" value="${p.id}" style="width:18px;height:18px;accent-color:#006EE3;">
                         <div style="flex:1;">
                             <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.title)}</div>
                             <div style="font-size:0.75rem;color:#6b7280;">${escapeHtml(p.property_type || '')} · ${escapeHtml(p.city || '')} ${price ? '· ' + price : ''}</div>
@@ -2896,7 +2896,7 @@ if (!window._renderVideoList) {
             }
 
             html += '</div>';
-            html += '<button class="btn btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#059669,#047857);" onclick="window._adminSaveFeaturedProperties()"><i class="fas fa-save"></i> Guardar Inmuebles Destacados</button>';
+            html += '<button class="btn btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#006EE3,#005BB5);" onclick="window._adminSaveFeaturedProperties()"><i class="fas fa-save"></i> Guardar Inmuebles Destacados</button>';
             container.innerHTML = html;
 
             container.querySelectorAll('.featured-property-checkbox').forEach(cb => {
@@ -3681,7 +3681,7 @@ if (!window._renderVideoList) {
         const container = document.getElementById('adminEditBizContainer');
         if (!container) return;
         container.style.display = 'block';
-        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#059669;"></i><p style="margin-top:8px;color:#64748b;">Cargando datos...</p></div>';
+        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#006EE3;"></i><p style="margin-top:8px;color:#64748b;">Cargando datos...</p></div>';
         try {
             const data = await api.get('/businesses/' + id);
             editBizCurrent = data.business || data;
@@ -3696,13 +3696,13 @@ if (!window._renderVideoList) {
     function renderEditBizForm(b) {
         const container = document.getElementById('adminEditBizContainer');
         if (!container) return;
-        const statusColors = { approved: '#059669', pending: '#d97706', rejected: '#dc2626' };
+        const statusColors = { approved: '#006EE3', pending: '#d97706', rejected: '#dc2626' };
         const statusLabels = { approved: 'Aprobado', pending: 'Pendiente', rejected: 'Rechazado' };
         const images = b.images || [];
         container.innerHTML = `
         <div class="aeb-card">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                <h4 style="margin:0;"><i class="fas fa-building" style="color:#059669;"></i> ${escH(b.title)}</h4>
+                <h4 style="margin:0;"><i class="fas fa-building" style="color:#006EE3;"></i> ${escH(b.title)}</h4>
                 <div style="display:flex;gap:6px;align-items:center;">
                     <span style="padding:3px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;background:${statusColors[b.status]||'#64748b'};color:#fff;">${statusLabels[b.status]||b.status}</span>
                     <a href="/negocio/${b.slug||b.id}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-external-link-alt"></i> Ver</a>
@@ -3712,7 +3712,7 @@ if (!window._renderVideoList) {
             <p style="font-size:0.78rem;color:#94a3b8;margin:4px 0 0;">ID: ${b.id} | Dueño: ${escH(b.owner_name||b.user_id||'?')} | Vistas: ${b.views||0}</p>
         </div>
         <div class="aeb-card">
-            <h4><i class="fas fa-image" style="color:#059669;"></i> Logo</h4>
+            <h4><i class="fas fa-image" style="color:#006EE3;"></i> Logo</h4>
             <div class="aeb-logo-area">
                 <div class="aeb-logo-preview" id="aebLogoPreview">
                     ${b.logo ? '<img src="'+escH(b.logo)+'" alt="Logo" onerror="this.style.display=\'none\'">' : '<i class="fas fa-store" style="font-size:1.5rem;color:#94a3b8;"></i>'}
@@ -3750,7 +3750,7 @@ if (!window._renderVideoList) {
             </div>
         </div>
         <div class="aeb-card">
-            <h4><i class="fas fa-phone" style="color:#059669;"></i> Contacto</h4>
+            <h4><i class="fas fa-phone" style="color:#006EE3;"></i> Contacto</h4>
             <div class="aeb-grid">
                 <div class="aeb-field"><label>Telefono</label><input type="tel" class="eb-input" id="aebPhone" value="${escH(b.phone||'')}"></div>
                 <div class="aeb-field"><label>WhatsApp</label><input type="tel" class="eb-input" id="aebWhatsapp" value="${escH(b.whatsapp||'')}"></div>
@@ -3788,7 +3788,7 @@ if (!window._renderVideoList) {
         <div class="aeb-card">
             <h4><i class="fas fa-toggle-on" style="color:#f59e0b;"></i> Estado</h4>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-sm ${b.status==='approved'?'btn-primary':'btn-secondary'}" onclick="adminEditBizChangeStatus(${b.id},'approved')" style="${b.status==='approved'?'background:#059669;':''}"><i class="fas fa-check"></i> Aprobar</button>
+                <button class="btn btn-sm ${b.status==='approved'?'btn-primary':'btn-secondary'}" onclick="adminEditBizChangeStatus(${b.id},'approved')" style="${b.status==='approved'?'background:#006EE3;':''}"><i class="fas fa-check"></i> Aprobar</button>
                 <button class="btn btn-sm ${b.status==='pending'?'btn-primary':'btn-secondary'}" onclick="adminEditBizChangeStatus(${b.id},'pending')" style="${b.status==='pending'?'background:#d97706;':''}"><i class="fas fa-clock"></i> Pendiente</button>
                 <button class="btn btn-sm ${b.status==='rejected'?'btn-primary':'btn-secondary'}" onclick="adminEditBizChangeStatus(${b.id},'rejected')" style="${b.status==='rejected'?'background:#dc2626;color:#fff;':''}"><i class="fas fa-times"></i> Rechazar</button>
             </div>
@@ -3810,7 +3810,7 @@ if (!window._renderVideoList) {
         </div>
 
         <div style="text-align:right;margin-top:8px;">
-            <button class="btn" onclick="adminEditBizSave(${b.id})" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;font-weight:600;padding:12px 32px;border-radius:10px;border:none;cursor:pointer;font-size:0.95rem;">
+            <button class="btn" onclick="adminEditBizSave(${b.id})" style="background:linear-gradient(135deg,#006EE3,#005BB5);color:#fff;font-weight:600;padding:12px 32px;border-radius:10px;border:none;cursor:pointer;font-size:0.95rem;">
                 <i class="fas fa-save"></i> Guardar Cambios
             </button>
         </div>`;
@@ -3860,7 +3860,7 @@ if (!window._renderVideoList) {
                         <button type="button" onclick="document.getElementById('aebBannerEditImg').style.transform='rotate(90deg)';" style="width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.7);color:#fff;border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Rotar +90°">
                             <i class="fas fa-rotate-right"></i>
                         </button>
-                        <button type="button" id="aebBannerCropBtn" style="padding:0 14px;height:36px;border-radius:18px;background:linear-gradient(135deg,#059669,#0ea5e9);color:#fff;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px;" title="Confirmar y subir">
+                        <button type="button" id="aebBannerCropBtn" style="padding:0 14px;height:36px;border-radius:18px;background:linear-gradient(135deg,#006EE3,#0ea5e9);color:#fff;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px;" title="Confirmar y subir">
                             <i class="fas fa-check"></i> Subir
                         </button>
                     </div>

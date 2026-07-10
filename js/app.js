@@ -1,5 +1,5 @@
 /**
- * OLAX - Core Application Module
+ * HOLAX - Core Application Module
  * Common module loaded on ALL pages
  * Directorio Nacional de Negocios de Venezuela
  */
@@ -84,9 +84,9 @@ function updateBrandDisplay(stateName) {
   });
   // Update page title dynamically
   if (stateName) {
-    document.title = stateName + ' OLAX - Directorio de Negocios';
+    document.title = stateName + ' HOLAX - Directorio de Negocios';
   } else {
-    document.title = 'OLAX - Directorio de Negocios en Venezuela';
+    document.title = 'HOLAX - Directorio de Negocios en Venezuela';
   }
 }
 
@@ -370,7 +370,7 @@ function showWebPageSelector() {
                 <i class="fas fa-user-lock" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
                 <p style="font-size:0.95rem;font-weight:600;">Inicia sesion para ver tus paginas web</p>
                 <p style="font-size:0.85rem;margin-top:4px;">Necesitas tener una cuenta y al menos un negocio registrado.</p>
-                <a href="/login.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#059669;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Iniciar Sesion</a>
+                <a href="/login.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#006EE3;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Iniciar Sesion</a>
             </div>`;
         return;
     }
@@ -385,7 +385,7 @@ function showWebPageSelector() {
                     <i class="fas fa-store" style="font-size:2.5rem;color:#cbd5e1;margin-bottom:12px;"></i>
                     <p style="font-size:0.95rem;font-weight:600;">No tienes negocios registrados</p>
                     <p style="font-size:0.85rem;margin-top:4px;">Primero crea un negocio para generar su pagina web.</p>
-                    <a href="/new-business.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#059669;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Crear Negocio</a>
+                    <a href="/new-business.html" style="display:inline-block;margin-top:16px;padding:10px 24px;background:#006EE3;color:#fff;border-radius:10px;font-size:0.9rem;font-weight:600;">Crear Negocio</a>
                 </div>`;
             return;
         }
@@ -693,14 +693,14 @@ function getBusinessUrl(business) {
 function shareBusinessWhatsApp(business) {
     if (!business) return;
     const type = getBusinessTypeLabel(business.business_type);
-    const url = 'https://aunclick.pages.dev' + getBusinessUrl(business);
+    const url = 'https://holax.com' + getBusinessUrl(business);
     const title = business.title || 'Negocio';
 
     let msg = `🏪 *${title}*\n`;
     msg += `📌 ${type}\n`;
     if (business.city) msg += `📍 ${business.city}${business.state ? ', ' + business.state : ''}\n`;
     msg += `\n🔗 ${url}`;
-    msg += `\n\n📌 Publicado en OLAX`;
+    msg += `\n\n📌 Publicado en HOLAX`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -791,7 +791,7 @@ document.addEventListener('click', (e) => {
         shareBusinessWhatsApp(business);
     }).catch(() => {
         // Minimal share with just the link
-        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en OLAX:\nhttps://aunclick.pages.dev/negocio/' + businessId)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en HOLAX:\nhttps://holax.com/negocio/' + businessId)}`, '_blank');
     });
 });
 

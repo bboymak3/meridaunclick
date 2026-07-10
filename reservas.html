@@ -2,10 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Reserva servicios y cita en negocios de Venezuela directamente desde OLAX.">
-    <title>Reservas y Citas - OLAX</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta name="description" content="Reserva servicios y cita en negocios de Venezuela directamente desde HOLAX.">
+    <title>Reservas y Citas - HOLAX</title>
+    <link rel="stylesheet" href="css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* ─── Reservas Hero ────────────────────────────────────── */
@@ -270,8 +271,8 @@
         }
 
         .booking-status-badge.confirmada {
-            background: #ecfdf5;
-            color: #059669;
+            background: #EFF6FF;
+            color: #006EE3;
             border: 1px solid #a7f3d0;
         }
 
@@ -929,7 +930,7 @@
             align-items: center;
             gap: 14px;
             padding: 14px 18px;
-            background: #ecfdf5;
+            background: #EFF6FF;
             border: 1.5px solid #a7f3d0;
             border-radius: 12px;
             margin-top: 10px;
@@ -948,7 +949,7 @@
             align-items: center;
             justify-content: center;
             font-size: 1rem;
-            color: #059669;
+            color: #006EE3;
             flex-shrink: 0;
         }
 
@@ -960,12 +961,12 @@
         .selected-business-card-name {
             font-size: 0.9rem;
             font-weight: 600;
-            color: #065f46;
+            color: #004899;
         }
 
         .selected-business-card-location {
             font-size: 0.75rem;
-            color: #059669;
+            color: #006EE3;
             display: flex;
             align-items: center;
             gap: 4px;
@@ -1079,8 +1080,8 @@
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-store"></i>
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> OLAX</span>
+                <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HOLAX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
@@ -1399,7 +1400,7 @@
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
-                <p>&copy; 2025 <a href="index.html" style="color: var(--color-primary);">OLAX</a>. Todos los derechos reservados.</p>
+                <p>&copy; 2025 <a href="index.html" style="color: var(--color-primary);">HOLAX</a>. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>
@@ -2006,6 +2007,14 @@
             init();
         }
     })();
+    </script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+    }
     </script>
 </body>
 </html>

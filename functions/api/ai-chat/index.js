@@ -80,7 +80,7 @@ export async function onRequestPost(context) {
     }
 
     // ── Build system prompt ───────────────────────────────────────
-    const systemPrompt = `Eres un asistente virtual amigable del directorio de negocios "OLAX".
+    const systemPrompt = `Eres un asistente virtual amigable del directorio de negocios "HOLAX".
 ${welcomeContext ? `Contexto del admin: "${welcomeContext}"\n` : ''}
 Reglas:
 - Siempre responde en español
@@ -145,13 +145,13 @@ Reglas:
 function generateFallbackReply(msg) {
   const lower = msg.toLowerCase();
   if (lower.includes('hola') || lower.includes('buenas') || lower.includes('hey')) {
-    return 'Hola! Soy el asistente de OLAX. Puedo ayudarte a encontrar negocios, eventos y ofertas. Escribe lo que buscas.';
+    return 'Hola! Soy el asistente de HOLAX. Puedo ayudarte a encontrar negocios, eventos y ofertas. Escribe lo que buscas.';
   }
   if (lower.includes('restaurante') || lower.includes('comida') || lower.includes('comer')) {
     return 'Puedes encontrar restaurantes en nuestra sección de búsqueda. Visita la página principal y usa el buscador o filtra por la categoría "Restaurantes".';
   }
   if (lower.includes('negocio') || lower.includes('registrar') || lower.includes('publicar')) {
-    return 'Para publicar tu negocio en OLAX, haz clic en "Registrar" en el menú principal. Completa el formulario con los datos de tu negocio y será revisado por un administrador.';
+    return 'Para publicar tu negocio en HOLAX, haz clic en "Registrar" en el menú principal. Completa el formulario con los datos de tu negocio y será revisado por un administrador.';
   }
   if (lower.includes('evento') || lower.includes('actividad')) {
     return 'Visita nuestra sección de Eventos para ver las actividades más recientes. Allí encontrarás conciertos, ferias, talleres y más.';
@@ -165,5 +165,5 @@ function generateFallbackReply(msg) {
   if (lower.includes('emergencia') || lower.includes('hospital') || lower.includes('farmacia')) {
     return 'La sección de Emergencias tiene números de hospitales, farmacias de guardia, bomberos y policía. Accesible desde el menú principal.';
   }
-  return 'Gracias por tu mensaje. Puedo ayudarte a buscar negocios, eventos, cupones de descuento y más en OLAX. Escribe lo que necesitas y te guiaré.';
+  return 'Gracias por tu mensaje. Puedo ayudarte a buscar negocios, eventos, cupones de descuento y más en HOLAX. Escribe lo que necesitas y te guiaré.';
 }

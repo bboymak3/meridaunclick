@@ -2,28 +2,33 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="OLAX - El directorio de negocios y comercios más completo de Venezuela. Encuentra restaurantes, farmacias, tiendas, profesionales y más en todo el país.">
+    <meta name="description" content="HOLAX - El directorio de negocios y comercios más completo de Venezuela. Encuentra restaurantes, farmacias, tiendas, profesionales y más en todo el país.">
     <meta name="keywords" content="directorio de negocios, Venezuela, comercios, restaurantes, farmacias, tiendas, profesionales, servicios, Mérida, registro gratis">
-    <title>OLAX - Directorio de Negocios en Venezuela</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>HOLAX - Directorio de Negocios en Venezuela</title>
+    <link rel="stylesheet" href="css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="apple-touch-icon" href="/images/PWA.jpeg">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#1a73e8">
-    <meta property="og:title" content="OLAX - Directorio de Negocios en Venezuela">
+    <meta name="theme-color" content="#006EE3">
+    <meta property="og:title" content="HOLAX - Directorio de Negocios en Venezuela">
     <meta property="og:description" content="El directorio de negocios más completo de Venezuela. Restaurantes, farmacias, tiendas y más.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://aunclick.pages.dev">
+    <meta property="og:image" content="/images/logoprincipal.jpeg">
+    <meta property="og:url" content="https://holax.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="/images/logoprincipal.jpeg">
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-store"></i>
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> OLAX</span>
+                <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HOLAX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
@@ -396,7 +401,7 @@
                     <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
                 </a>
                 <a href="search.html?categoria=supermercados" class="idx-type-card">
-                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #2ecc71;">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #EFF6FF, #dcfce7); color: #2ecc71;">
                         <i class="fas fa-shopping-cart"></i>
                     </div>
                     <h3>Supermercados</h3>
@@ -431,7 +436,7 @@
                     <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
                 </a>
                 <a href="search.html?categoria=cafeterias" class="idx-type-card">
-                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #ecfdf5, #a7f3d0); color: #795548;">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #EFF6FF, #a7f3d0); color: #795548;">
                         <i class="fas fa-coffee"></i>
                     </div>
                     <h3>Cafeterías</h3>
@@ -473,7 +478,7 @@
                     <span class="idx-type-arrow"><i class="fas fa-arrow-right"></i></span>
                 </a>
                 <a href="search.html?categoria=academias" class="idx-type-card">
-                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7); color: #3f51b5;">
+                    <div class="idx-type-icon" style="background: linear-gradient(135deg, #EFF6FF, #dcfce7); color: #3f51b5;">
                         <i class="fas fa-graduation-cap"></i>
                     </div>
                     <h3>Academias</h3>
@@ -532,7 +537,7 @@
                 <!-- Map Type Toggle -->
                 <div style="display:flex;gap:6px;margin-bottom:12px;">
                     <button class="btn btn-primary btn-sm" id="homeMapToggleNegocios" style="flex:1;font-size:0.85rem;"><i class="fas fa-store"></i> Negocios</button>
-                    <button class="btn btn-primary btn-sm" id="homeMapToggleAmbos" style="flex:1;font-size:0.85rem;background:linear-gradient(135deg,#1a73e8,#059669);"><i class="fas fa-layer-group"></i> Todos</button>
+                    <button class="btn btn-primary btn-sm" id="homeMapToggleAmbos" style="flex:1;font-size:0.85rem;background:linear-gradient(135deg,#1a73e8,#006EE3);"><i class="fas fa-layer-group"></i> Todos</button>
                     <button class="btn btn-secondary btn-sm" id="homeMapTogglePropiedades" style="flex:1;font-size:0.85rem;"><i class="fas fa-home"></i> Propiedades</button>
                 </div>
                 <div id="homeMap" class="home-map"></div>
@@ -644,7 +649,7 @@
                 <div class="idx-cta-glow"></div>
                 <div class="idx-cta-content">
                     <h2>¿Tienes un negocio o comercio?</h2>
-                    <p>Registra tu negocio gratis en OLAX y llega a miles de personas en toda Venezuela.</p>
+                    <p>Registra tu negocio gratis en HOLAX y llega a miles de personas en toda Venezuela.</p>
                     <a href="new-business.html" class="idx-cta-btn">
                         <i class="fas fa-plus-circle"></i> Registrar Negocio Gratis
                     </a>
@@ -659,8 +664,8 @@
             <div class="footer-grid">
                 <div class="footer-col">
                     <a href="index.html" class="footer-logo">
-                        <i class="fas fa-store"></i>
-                        <span>OLAX</span>
+                        <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:28px;width:auto;border-radius:6px;margin-right:6px;">
+                        <span>HOLAX</span>
                     </a>
                     <p>El directorio de negocios más completo de Venezuela. Conectamos comercios con clientes en todo el país.</p>
                     <div class="footer-social">
@@ -700,7 +705,7 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 OLAX. Todos los derechos reservados.</p>
+                <p>&copy; 2025 HOLAX. Todos los derechos reservados.</p>
             </div>
         </div>
     </footer>

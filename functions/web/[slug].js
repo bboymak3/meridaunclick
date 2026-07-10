@@ -43,7 +43,7 @@ export async function onRequestGet(context) {
       `SELECT url, is_cover FROM images WHERE business_id = ? ORDER BY is_cover DESC, id ASC LIMIT 10`
     ).bind(business.id).all();
 
-    const baseUrl = 'https://aunclick.pages.dev';
+    const baseUrl = 'https://holax.com';
     const title = business.title || 'Negocio';
     const fullDescription = business.description || '';
     const metaDescription = fullDescription
@@ -52,7 +52,7 @@ export async function onRequestGet(context) {
     const imageUrl = business.cover_image || `${baseUrl}/logo.png`;
     const whatsappNumber = (business.whatsapp || business.phone || '').replace(/[^0-9]/g, '');
     const whatsappLink = whatsappNumber
-      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, vi tu pagina web en OLAX y me interesa conocer mas sobre ' + title)}`
+      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, vi tu pagina web en HOLAX y me interesa conocer mas sobre ' + title)}`
       : '#';
     const phoneClean = (business.phone || '').replace(/[^0-9]/g, '');
     const mapQuery = encodeURIComponent(`${business.address || ''} ${business.city || ''} ${business.state || ''} Venezuela`);
@@ -96,7 +96,7 @@ export async function onRequestGet(context) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${escapeHtml(metaDescription)}">
-    <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')} | OLAX</title>
+    <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')} | HOLAX</title>
     <meta name="robots" content="noindex, nofollow">
     <link rel="canonical" href="${baseUrl}/negocio/${business.slug}">
 
@@ -139,7 +139,7 @@ export async function onRequestGet(context) {
         }
         .lp-nav.scrolled { box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
         .lp-nav-brand {
-            font-size: 1.1rem; font-weight: 700; color: #059669;
+            font-size: 1.1rem; font-weight: 700; color: #006EE3;
             display: flex; align-items: center; gap: 6px;
         }
         .lp-nav-brand i { font-size: 1.3rem; }
@@ -147,7 +147,7 @@ export async function onRequestGet(context) {
         .lp-nav-links a {
             font-size: 0.82rem; font-weight: 600; color: #64748b; transition: color 0.2s;
         }
-        .lp-nav-links a:hover { color: #059669; }
+        .lp-nav-links a:hover { color: #006EE3; }
         .lp-nav-cta {
             background: #25d366 !important; color: #fff !important;
             padding: 8px 16px; border-radius: 8px;
@@ -164,7 +164,7 @@ export async function onRequestGet(context) {
         .lp-hero {
             min-height: 100vh; display: flex; align-items: center; justify-content: center;
             position: relative; overflow: hidden;
-            background: linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%);
+            background: linear-gradient(135deg, #006EE3 0%, #005BB5 50%, #004899 100%);
             padding: 100px 20px 60px;
         }
         .lp-hero-bg {
@@ -230,9 +230,9 @@ export async function onRequestGet(context) {
         }
         .lp-btn-phone:hover { background: rgba(255,255,255,0.25); }
         .lp-btn-outline {
-            background: transparent; color: #059669; border: 2px solid #059669;
+            background: transparent; color: #006EE3; border: 2px solid #006EE3;
         }
-        .lp-btn-outline:hover { background: #059669; color: #fff; }
+        .lp-btn-outline:hover { background: #006EE3; color: #fff; }
         @media (max-width: 768px) {
             .lp-hero { min-height: 90vh; padding: 80px 20px 40px; }
             .lp-hero-title { font-size: 2.2rem; }
@@ -248,7 +248,7 @@ export async function onRequestGet(context) {
         .lp-section-header { text-align: center; margin-bottom: 48px; }
         .lp-section-label {
             font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 2px; color: #059669; margin-bottom: 8px;
+            letter-spacing: 2px; color: #006EE3; margin-bottom: 8px;
         }
         .lp-section-title {
             font-size: 2rem; font-weight: 800; color: #0f172a;
@@ -277,8 +277,8 @@ export async function onRequestGet(context) {
             font-size: 0.95rem; color: #334155; font-weight: 500;
         }
         .lp-about-highlight i {
-            color: #059669; font-size: 0.85rem; width: 24px; height: 24px;
-            background: #ecfdf5; border-radius: 50%; display: flex; align-items: center;
+            color: #006EE3; font-size: 0.85rem; width: 24px; height: 24px;
+            background: #EFF6FF; border-radius: 50%; display: flex; align-items: center;
             justify-content: center; flex-shrink: 0;
         }
         @media (max-width: 768px) {
@@ -302,7 +302,7 @@ export async function onRequestGet(context) {
             display: flex; align-items: center; justify-content: center;
             font-size: 1.3rem; margin-bottom: 16px;
         }
-        .lp-service-icon.green { background: #ecfdf5; color: #059669; }
+        .lp-service-icon.green { background: #EFF6FF; color: #006EE3; }
         .lp-service-icon.blue { background: #eff6ff; color: #2563eb; }
         .lp-service-icon.amber { background: #fffbeb; color: #d97706; }
         .lp-service-icon.purple { background: #faf5ff; color: #7c3aed; }
@@ -323,7 +323,7 @@ export async function onRequestGet(context) {
         .lp-why-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.06); }
         .lp-why-icon {
             width: 48px; height: 48px; border-radius: 12px;
-            background: linear-gradient(135deg, #059669, #047857);
+            background: linear-gradient(135deg, #006EE3, #005BB5);
             color: #fff; display: flex; align-items: center; justify-content: center;
             font-size: 1.1rem; flex-shrink: 0;
         }
@@ -349,16 +349,16 @@ export async function onRequestGet(context) {
             font-size: 0.82rem; color: #64748b; line-height: 1.5; margin-bottom: 10px;
             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
         }
-        .lp-product-price { font-size: 1.15rem; font-weight: 800; color: #059669; }
+        .lp-product-price { font-size: 1.15rem; font-weight: 800; color: #006EE3; }
         .lp-product-footer {
             padding: 0 18px 18px;
         }
         .lp-product-wa {
             display: inline-flex; align-items: center; gap: 6px;
             padding: 8px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
-            background: #ecfdf5; color: #059669; transition: all 0.2s;
+            background: #EFF6FF; color: #006EE3; transition: all 0.2s;
         }
-        .lp-product-wa:hover { background: #059669; color: #fff; }
+        .lp-product-wa:hover { background: #006EE3; color: #fff; }
 
         /* === INFO CARDS === */
         .lp-info-grid {
@@ -376,7 +376,7 @@ export async function onRequestGet(context) {
             display: flex; align-items: center; justify-content: center;
             font-size: 1.2rem; flex-shrink: 0;
         }
-        .lp-info-icon.green { background: #ecfdf5; color: #059669; }
+        .lp-info-icon.green { background: #EFF6FF; color: #006EE3; }
         .lp-info-icon.blue { background: #eff6ff; color: #2563eb; }
         .lp-info-icon.amber { background: #fffbeb; color: #d97706; }
         .lp-info-icon.purple { background: #faf5ff; color: #7c3aed; }
@@ -384,7 +384,7 @@ export async function onRequestGet(context) {
         .lp-info-icon.pink { background: #fdf2f8; color: #db2777; }
         .lp-info-card-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 2px; }
         .lp-info-card-value { font-size: 1rem; font-weight: 700; color: #0f172a; }
-        .lp-info-card-value a { color: #059669; }
+        .lp-info-card-value a { color: #006EE3; }
         .lp-info-card-value a:hover { text-decoration: underline; }
 
         /* === GALLERY === */
@@ -409,7 +409,7 @@ export async function onRequestGet(context) {
             padding: 18px 22px; cursor: pointer; font-weight: 600; color: #0f172a;
             font-size: 0.95rem; gap: 12px; user-select: none;
         }
-        .lp-faq-q i { color: #059669; transition: transform 0.3s; font-size: 0.8rem; flex-shrink: 0; }
+        .lp-faq-q i { color: #006EE3; transition: transform 0.3s; font-size: 0.8rem; flex-shrink: 0; }
         .lp-faq-item.open .lp-faq-q i { transform: rotate(180deg); }
         .lp-faq-a {
             max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease;
@@ -440,15 +440,15 @@ export async function onRequestGet(context) {
         .lp-map-container iframe { width: 100%; height: 100%; border: none; }
 
         /* === CTA === */
-        .lp-cta { background: linear-gradient(135deg, #059669 0%, #047857 100%); text-align: center; color: #fff; }
+        .lp-cta { background: linear-gradient(135deg, #006EE3 0%, #005BB5 100%); text-align: center; color: #fff; }
         .lp-cta-title { font-size: 2rem; font-weight: 800; margin-bottom: 12px; }
         .lp-cta-text { font-size: 1.1rem; opacity: 0.9; margin-bottom: 32px; max-width: 500px; margin-left: auto; margin-right: auto; line-height: 1.7; }
         .lp-cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
         /* === FOOTER === */
         .lp-footer { background: #0f172a; color: #94a3b8; text-align: center; padding: 40px 20px; font-size: 0.85rem; }
-        .lp-footer-brand { color: #059669; font-weight: 700; }
-        .lp-footer a { color: #059669; }
+        .lp-footer-brand { color: #006EE3; font-weight: 700; }
+        .lp-footer a { color: #006EE3; }
         .lp-footer a:hover { text-decoration: underline; }
         .lp-footer-links { display: flex; gap: 20px; justify-content: center; margin-top: 12px; }
         .lp-footer-copy { margin-top: 20px; font-size: 0.78rem; color: #475569; }
@@ -465,7 +465,7 @@ export async function onRequestGet(context) {
             display: flex; align-items: center; justify-content: center; gap: 6px;
         }
         .lp-mobile-cta .wa-btn { background: #25d366; color: #fff; }
-        .lp-mobile-cta .call-btn { background: #059669; color: #fff; }
+        .lp-mobile-cta .call-btn { background: #006EE3; color: #fff; }
         @media (max-width: 768px) {
             .lp-mobile-cta { display: flex; }
             .lp-section { padding: 60px 16px; }
@@ -508,7 +508,7 @@ export async function onRequestGet(context) {
 <!-- NAV -->
 <nav class="lp-nav" id="lpNav">
     <a href="${baseUrl}/index.html" class="lp-nav-brand">
-        <i class="fas fa-store"></i> OLAX
+        <i class="fas fa-store"></i> HOLAX
     </a>
     <div class="lp-nav-links">
         <a href="#about">Nosotros</a>
@@ -761,7 +761,7 @@ ${(business.instagram || business.facebook || business.twitter || business.tikto
             <h2 class="lp-section-title">Nuestras Redes Sociales</h2>
         </div>
         <div class="lp-social-grid">
-            ${business.slug ? `<a href="${baseUrl}/negocio/${escapeHtml(business.slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#059669,#0ea5e9);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fas fa-store" style="font-size:1.75rem;"></i> Ficha del Negocio</a>` : ''}
+            ${business.slug ? `<a href="${baseUrl}/negocio/${escapeHtml(business.slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#006EE3,#0ea5e9);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fas fa-store" style="font-size:1.75rem;"></i> Ficha del Negocio</a>` : ''}
             ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-instagram" style="font-size:1.75rem;"></i> Instagram</a>` : ''}
             ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#1877f2;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-facebook-f" style="font-size:1.75rem;"></i> Facebook</a>` : ''}
             ${business.twitter ? `<a href="${escapeHtml(business.twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-x-twitter" style="font-size:1.75rem;"></i> X (Twitter)</a>` : ''}
@@ -828,9 +828,9 @@ ${(business.lat || business.latitude || business.address) ? `
 
 <!-- FOOTER -->
 <footer class="lp-footer">
-    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">OLAX</a></p>
+    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">HOLAX</a></p>
     <div class="lp-footer-links">
-        <a href="${baseUrl}/negocio/${business.slug}" target="_blank">Ver en OLAX</a>
+        <a href="${baseUrl}/negocio/${business.slug}" target="_blank">Ver en HOLAX</a>
         ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
         ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
     </div>

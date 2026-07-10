@@ -49,7 +49,7 @@ export async function onRequestGet(context) {
       });
     }
 
-    const baseUrl = 'https://aunclick.pages.dev';
+    const baseUrl = 'https://holax.com';
     const title = business.title || 'Negocio';
     const description = business.description
       ? business.description.substring(0, 160)
@@ -65,22 +65,22 @@ export async function onRequestGet(context) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${escapeHtml(description)}">
-    <title>${escapeHtml(title)} - OLAX | Directorio de Negocios en Venezuela</title>
+    <title>${escapeHtml(title)} - HOLAX | Directorio de Negocios en Venezuela</title>
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="${canonicalUrl}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="business.business">
-    <meta property="og:title" content="${escapeHtml(title)} - OLAX">
+    <meta property="og:title" content="${escapeHtml(title)} - HOLAX">
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:image" content="${imageUrl}">
     <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:site_name" content="OLAX">
+    <meta property="og:site_name" content="HOLAX">
     <meta property="og:locale" content="es_VE">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${escapeHtml(title)} - OLAX">
+    <meta name="twitter:title" content="${escapeHtml(title)} - HOLAX">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${imageUrl}">
 
@@ -90,7 +90,7 @@ export async function onRequestGet(context) {
     <meta property="business:contact_data:region" content="${escapeHtml(business.state || '')}">
     <meta property="business:contact_data:country_name" content="${escapeHtml(business.country || 'Venezuela')}">
 
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="manifest" href="/manifest.json">
@@ -270,7 +270,7 @@ export async function onRequestGet(context) {
 .product-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    border-color: #059669;
+    border-color: #006EE3;
 }
 .product-card img {
     width: 100%;
@@ -290,7 +290,7 @@ export async function onRequestGet(context) {
     color: #1e293b;
 }
 .product-card-price {
-    color: #059669;
+    color: #006EE3;
     font-weight: 700;
     font-size: 0.82rem;
 }
@@ -405,7 +405,7 @@ export async function onRequestGet(context) {
         <div class="nav-container">
             <a href="/index.html" class="nav-logo">
                 <i class="fas fa-store"></i>
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> OLAX</span>
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HOLAX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
@@ -550,10 +550,10 @@ export async function onRequestGet(context) {
                 ${(() => { const instagram = business.instagram; const facebook = business.facebook; const twitter = business.twitter; const tiktok = business.tiktok; const youtube = business.youtube; const hasSocial = instagram || facebook || twitter || tiktok || youtube; if (!hasSocial && !business.slug) return ''; return `
                 <div class="pd-social-section" style="padding:20px 24px;">
                   <div style="font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-                    <i class="fas fa-share-nodes" style="color:#059669;"></i> Redes Sociales y Web
+                    <i class="fas fa-share-nodes" style="color:#006EE3;"></i> Redes Sociales y Web
                   </div>
                   <div style="display:flex;gap:15px;flex-wrap:wrap;">
-                    ${business.slug ? `<a href="/web/${escapeHtml(business.slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:linear-gradient(135deg,#059669,#0ea5e9);color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fas fa-globe" style="font-size:1.5rem;"></i> Sitio Web</a>` : ''}
+                    ${business.slug ? `<a href="/web/${escapeHtml(business.slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:linear-gradient(135deg,#006EE3,#0ea5e9);color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fas fa-globe" style="font-size:1.5rem;"></i> Sitio Web</a>` : ''}
                     ${instagram ? `<a href="${escapeHtml(instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-instagram" style="font-size:1.5rem;"></i> Instagram</a>` : ''}
                     ${facebook ? `<a href="${escapeHtml(facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#1877f2;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-facebook-f" style="font-size:1.5rem;"></i> Facebook</a>` : ''}
                     ${twitter ? `<a href="${escapeHtml(twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#000;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-x-twitter" style="font-size:1.5rem;"></i> X (Twitter)</a>` : ''}
@@ -573,7 +573,7 @@ export async function onRequestGet(context) {
                     return `
                 <div style="padding:16px 20px;">
                   <div style="font-size:0.85rem;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
-                    <i class="fas fa-play-circle" style="color:#059669;"></i> Video${urls.length > 1 ? 's' : ''} (${urls.length})
+                    <i class="fas fa-play-circle" style="color:#006EE3;"></i> Video${urls.length > 1 ? 's' : ''} (${urls.length})
                   </div>
                   <div style="display:${urls.length > 1 ? 'grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;' : 'block;max-width:320px;margin:0 auto;'}border-radius:16px;overflow:hidden;">
                     ${urls.map(u => '<div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">' + getVideoEmbed(u) + '</div>').join('')}
@@ -583,7 +583,7 @@ export async function onRequestGet(context) {
 
                 <section class="business-section" id="productsSection" style="display:none;">
                     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <h2 class="business-section-title"><i class="fas fa-boxes-stacked" style="color:#059669;"></i> Productos</h2>
+                        <h2 class="business-section-title"><i class="fas fa-boxes-stacked" style="color:#006EE3;"></i> Productos</h2>
                         <a href="/marketplace.html" class="section-link" id="viewAllProducts">Ver más <i class="fas fa-arrow-right"></i></a>
                     </div>
                     <div class="products-grid" id="businessProductsGrid"></div>

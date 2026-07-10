@@ -1087,7 +1087,7 @@
             Array.from(files).forEach(function(file) {
                 if (!file.type.startsWith('video/')) { showToast(file.name + ': Solo video', 'error'); return; }
                 if (file.size > 50 * 1024 * 1024) { showToast(file.name + ': Max 50MB', 'error'); return; }
-                if (infoDiv) infoDiv.innerHTML += '<div style="padding:4px 8px;background:#ecfdf5;border-radius:6px;margin-top:4px;font-size:0.82rem;" id="bfUpload_' + file.name.replace(/[^a-zA-Z0-9]/g, '_') + '"><i class="fas fa-spinner fa-spin"></i> ' + file.name + ' - Subiendo...</div>';
+                if (infoDiv) infoDiv.innerHTML += '<div style="padding:4px 8px;background:#EFF6FF;border-radius:6px;margin-top:4px;font-size:0.82rem;" id="bfUpload_' + file.name.replace(/[^a-zA-Z0-9]/g, '_') + '"><i class="fas fa-spinner fa-spin"></i> ' + file.name + ' - Subiendo...</div>';
 
                 var fd = new FormData();
                 fd.append('file', file);

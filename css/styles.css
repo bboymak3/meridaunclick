@@ -1342,7 +1342,7 @@ strong {
 
 .idx-quick-link-publish:hover {
     background: rgba(40, 167, 69, 0.25);
-    color: #bbf7d0;
+    color: #BFDBFE;
 }
 
 /* --- Mobile Search Trigger --- */
@@ -2535,7 +2535,7 @@ strong {
 }
 .business-card-location i {
     font-size: 0.65rem;
-    color: #059669;
+    color: #006EE3;
 }
 .business-card-desc {
     font-size: 0.72rem;
@@ -3813,7 +3813,7 @@ select.form-select {
 }
 
 .prod-upload-progress {
-    color: #059669;
+    color: #006EE3;
     font-size: 0.85rem;
     padding: 8px;
 }
@@ -5238,7 +5238,7 @@ a.btn-icon {
 
 .pf-currency-option input:checked + .pf-currency-card {
     border-color: #28a745;
-    background: #f0fdf4;
+    background: #EFF6FF;
     box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
 }
 
@@ -11478,7 +11478,7 @@ a.btn-icon {
     }
 
     .nav-mobile-cta-marketplace {
-        background: linear-gradient(135deg, #059669, #10b981);
+        background: linear-gradient(135deg, #006EE3, #3B9AFF);
         color: #fff;
         box-shadow: 0 4px 16px rgba(5, 150, 105, 0.4);
     }

@@ -899,10 +899,10 @@ window.closeEditBusinessModal = function() {
             <div class="dash-card" style="margin-bottom:16px;">
                 <div class="dash-card-header">
                     <h3 style="display:flex;align-items:center;gap:8px;">
-                        <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;">
+                        <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#006EE3,#3B9AFF);display:flex;align-items:center;justify-content:center;">
                             <i class="fas fa-store" style="color:#fff;font-size:0.8rem;"></i>
                         </div>
-                        ${slug ? `<a href="/negocio/${slug}" style="color:#059669;text-decoration:none;font-weight:700;">${title}</a>` : `<span style="color:#059669;font-weight:700;">${title}</span>`}
+                        ${slug ? `<a href="/negocio/${slug}" style="color:#006EE3;text-decoration:none;font-weight:700;">${title}</a>` : `<span style="color:#006EE3;font-weight:700;">${title}</span>`}
                     </h3>
                     <span style="font-size:0.75rem;color:#94a3b8;background:#f1f5f9;padding:4px 10px;border-radius:12px;">${products.length} producto${products.length > 1 ? 's' : ''}</span>
                 </div>
@@ -1016,7 +1016,7 @@ window.closeEditBusinessModal = function() {
                     uploadPreview.innerHTML = `
                         <img src="${e.target.result}" alt="Preview">
                         <div class="prod-upload-filename">
-                            <i class="fas fa-check-circle" style="color:#059669;"></i> ${file.name}
+                            <i class="fas fa-check-circle" style="color:#006EE3;"></i> ${file.name}
                             <button class="prod-upload-remove" type="button" onclick="this.closest('.prod-upload-preview').innerHTML='';uploadedImageUrl='';document.getElementById('prodImage').value='';">&times;</button>
                         </div>`;
                 }
@@ -1724,7 +1724,7 @@ window.closeEditBusinessModal = function() {
 
                     rows.push(`
                         <tr>
-                            <td><a href="/negocio/${biz.slug || biz.id}" style="color:#059669;font-weight:600;text-decoration:none;">${biz.title || 'Sin título'}</a></td>
+                            <td><a href="/negocio/${biz.slug || biz.id}" style="color:#006EE3;font-weight:600;text-decoration:none;">${biz.title || 'Sin título'}</a></td>
                             <td><span style="font-weight:700;color:#1e293b;">${(stats.total_views || 0).toLocaleString()}</span></td>
                             <td><span style="font-weight:700;color:#25d366;">${(stats.total_whatsapp_clicks || 0).toLocaleString()}</span></td>
                             <td><span style="font-weight:700;color:#0ea5e9;">${(stats.total_website_clicks || 0).toLocaleString()}</span></td>
@@ -2260,7 +2260,7 @@ window.closeEditBusinessModal = function() {
     }
 
     function getPropertyStatusColor(status) {
-        const colors = { approved: '#059669', pending: '#d97706', rejected: '#dc2626' };
+        const colors = { approved: '#006EE3', pending: '#d97706', rejected: '#dc2626' };
         return colors[status] || '#64748b';
     }
 
@@ -2315,7 +2315,7 @@ window.closeEditBusinessModal = function() {
                         <div class="business-card-body" style="flex:1;display:flex;flex-direction:column;">
                             <h3 class="business-card-title">${truncateText(p.title, 40)}</h3>
                             <p class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${city}</p>
-                            <p style="font-size:0.9rem;font-weight:700;color:#059669;margin:4px 0;">${price}</p>
+                            <p style="font-size:0.9rem;font-weight:700;color:#006EE3;margin:4px 0;">${price}</p>
                             <p style="font-size:0.72rem;color:#94a3b8;margin-bottom:8px;"><i class="fas fa-eye"></i> ${p.views || 0} vistas</p>
                             <div style="margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;">
                                 <a href="property-detail.html?id=${p.id}" class="btn btn-sm btn-secondary" title="Ver"><i class="fas fa-eye"></i> Ver</a>
@@ -2453,7 +2453,7 @@ window.closeEditBusinessModal = function() {
                     const daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
                     planExpiryInfo.querySelector('span').textContent = `Tu plan Premium esta vigente. Expira en ${daysLeft} dias (${expDate.toLocaleDateString('es-VE')}). Tus publicaciones nunca caducan.`;
                     planExpiryInfo.style.display = 'block';
-                    planExpiryInfo.style.color = '#059669';
+                    planExpiryInfo.style.color = '#006EE3';
                 } else {
                     planExpiryInfo.querySelector('span').textContent = 'Tu plan Premium ha expirado. Tus proximas publicaciones caducaran a los 20 dias.';
                     planExpiryInfo.style.display = 'block';
@@ -2521,7 +2521,7 @@ window.closeEditBusinessModal = function() {
             premiumVoucherDrop.addEventListener('click', () => premiumVoucherInput.click());
             premiumVoucherDrop.addEventListener('dragover', (e) => {
                 e.preventDefault();
-                premiumVoucherDrop.style.borderColor = '#059669';
+                premiumVoucherDrop.style.borderColor = '#006EE3';
             });
             premiumVoucherDrop.addEventListener('dragleave', () => {
                 premiumVoucherDrop.style.borderColor = '#d1d5db';
@@ -2754,7 +2754,7 @@ window.closeEditBusinessModal = function() {
             searchInput.value = userEmail || userName || '';
             manualPremiumSelectedUser = { id: userId, name: userName, email: userEmail };
             resultDiv.style.display = 'block';
-            resultDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#059669;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">${(userName||'U')[0].toUpperCase()}</div><div><strong>${userName}</strong><br><span style="font-size:0.82rem;color:#64748b;">${userEmail}</span></div></div>`;
+            resultDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#006EE3;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">${(userName||'U')[0].toUpperCase()}</div><div><strong>${userName}</strong><br><span style="font-size:0.82rem;color:#64748b;">${userEmail}</span></div></div>`;
             actionsDiv.style.display = 'block';
             activateBtn.disabled = false;
         } else {
@@ -2810,7 +2810,7 @@ window.closeEditBusinessModal = function() {
                 manualPremiumSelectedUser = { id: u.id, name: u.name, email: u.email };
                 resultDiv.style.display = 'block';
                 const planInfo = u.plan_type === 'premium' ? ' <span style="color:#f59e0b;font-weight:700;">(YA ES PREMIUM)</span>' : '';
-                resultDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#059669;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">${(u.name||'U')[0].toUpperCase()}</div><div><strong>${u.name}</strong>${planInfo}<br><span style="font-size:0.82rem;color:#64748b;">${u.email}</span></div></div>`;
+                resultDiv.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><div style="width:36px;height:36px;border-radius:50%;background:#006EE3;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;">${(u.name||'U')[0].toUpperCase()}</div><div><strong>${u.name}</strong>${planInfo}<br><span style="font-size:0.82rem;color:#64748b;">${u.email}</span></div></div>`;
                 actionsDiv.style.display = u.plan_type !== 'premium' ? 'block' : 'none';
                 activateBtn.disabled = u.plan_type === 'premium';
             } catch (e) {
@@ -2968,7 +2968,7 @@ window.closeEditBusinessModal = function() {
         const container = document.getElementById('adminEditBizContainer');
         if (!container) return;
         container.style.display = 'block';
-        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#059669;"></i><p style="margin-top:8px;color:#64748b;">Cargando datos...</p></div>';
+        container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:#006EE3;"></i><p style="margin-top:8px;color:#64748b;">Cargando datos...</p></div>';
         try {
             const data = await api.get('/businesses/' + id);
             adminEditBizCurrent = data.business || data;
@@ -2981,13 +2981,13 @@ window.closeEditBusinessModal = function() {
     function renderAdminEditBizForm(b) {
         const container = document.getElementById('adminEditBizContainer');
         if (!container) return;
-        const statusColors = { approved: '#059669', pending: '#d97706', rejected: '#dc2626' };
+        const statusColors = { approved: '#006EE3', pending: '#d97706', rejected: '#dc2626' };
         const statusLabels = { approved: 'Aprobado', pending: 'Pendiente', rejected: 'Rechazado' };
         const images = b.images || [];
         container.innerHTML = `
         <div class="aeb-card">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-                <h4 style="margin:0;"><i class="fas fa-building" style="color:#059669;"></i> ${escH(b.title)}</h4>
+                <h4 style="margin:0;"><i class="fas fa-building" style="color:#006EE3;"></i> ${escH(b.title)}</h4>
                 <div style="display:flex;gap:6px;align-items:center;">
                     <span style="padding:3px 10px;border-radius:8px;font-size:0.75rem;font-weight:700;background:${statusColors[b.status]||'#64748b'};color:#fff;">${statusLabels[b.status]||b.status}</span>
                     <a href="/negocio/${b.slug||b.id}" target="_blank" class="btn btn-secondary btn-sm"><i class="fas fa-external-link-alt"></i> Ver</a>
@@ -2999,7 +2999,7 @@ window.closeEditBusinessModal = function() {
 
         <!-- Logo -->
         <div class="aeb-card">
-            <h4><i class="fas fa-image" style="color:#059669;"></i> Logo</h4>
+            <h4><i class="fas fa-image" style="color:#006EE3;"></i> Logo</h4>
             <div class="aeb-logo-area">
                 <div class="aeb-logo-preview" id="aebLogoPreview">
                     ${b.logo ? `<img src="${escH(b.logo)}" alt="Logo" onerror="this.style.display='none'">` : '<i class="fas fa-store" style="font-size:1.5rem;color:#94a3b8;"></i>'}
@@ -3027,7 +3027,7 @@ window.closeEditBusinessModal = function() {
 
         <!-- Contact -->
         <div class="aeb-card">
-            <h4><i class="fas fa-phone" style="color:#059669;"></i> Contacto</h4>
+            <h4><i class="fas fa-phone" style="color:#006EE3;"></i> Contacto</h4>
             <div class="aeb-grid">
                 <div class="aeb-field"><label>Telefono</label><input type="tel" class="eb-input" id="aebPhone" value="${escH(b.phone||'')}"></div>
                 <div class="aeb-field"><label>WhatsApp</label><input type="tel" class="eb-input" id="aebWhatsapp" value="${escH(b.whatsapp||'')}"></div>
@@ -3073,7 +3073,7 @@ window.closeEditBusinessModal = function() {
         <div class="aeb-card">
             <h4><i class="fas fa-toggle-on" style="color:#f59e0b;"></i> Estado</h4>
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn btn-sm ${b.status==='approved'?'btn-primary':'btn-secondary'}" onclick="adminChangeStatus(${b.id},'approved')" style="${b.status==='approved'?'background:#059669;':''}"><i class="fas fa-check"></i> Aprobar</button>
+                <button class="btn btn-sm ${b.status==='approved'?'btn-primary':'btn-secondary'}" onclick="adminChangeStatus(${b.id},'approved')" style="${b.status==='approved'?'background:#006EE3;':''}"><i class="fas fa-check"></i> Aprobar</button>
                 <button class="btn btn-sm ${b.status==='pending'?'btn-primary':'btn-secondary'}" onclick="adminChangeStatus(${b.id},'pending')" style="${b.status==='pending'?'background:#d97706;':''}"><i class="fas fa-clock"></i> Pendiente</button>
                 <button class="btn btn-sm ${b.status==='rejected'?'btn-primary':'btn-secondary'}" onclick="adminChangeStatus(${b.id},'rejected')" style="${b.status==='rejected'?'background:#dc2626;color:#fff;':''}"><i class="fas fa-times"></i> Rechazar</button>
             </div>
@@ -3081,7 +3081,7 @@ window.closeEditBusinessModal = function() {
 
         <!-- Save Button -->
         <div style="text-align:right;margin-top:8px;">
-            <button class="btn" onclick="adminSaveBizEdit(${b.id})" style="background:linear-gradient(135deg,#059669,#047857);color:#fff;font-weight:600;padding:12px 32px;border-radius:10px;border:none;cursor:pointer;font-size:0.95rem;">
+            <button class="btn" onclick="adminSaveBizEdit(${b.id})" style="background:linear-gradient(135deg,#006EE3,#005BB5);color:#fff;font-weight:600;padding:12px 32px;border-radius:10px;border:none;cursor:pointer;font-size:0.95rem;">
                 <i class="fas fa-save"></i> Guardar Cambios
             </button>
         </div>`;

@@ -2,11 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <meta name="description" content="Panel de Administración - OLAX">
-    <title>Administración - OLAX</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <meta name="description" content="Panel de Administración - HOLAX">
+    <title>Administración - HOLAX</title>
+    <link rel="stylesheet" href="css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
@@ -14,8 +15,8 @@
     <nav class="navbar navbar-admin" id="navbar">
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
-                <i class="fas fa-store"></i>
-                <span class="brand-name">OLAX</span> <span class="admin-badge">Admin</span>
+                <img src="images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name">HOLAX</span> <span class="admin-badge">Admin</span>
             </a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
@@ -265,7 +266,7 @@
                         <div class="admin-card-header">
                             <h3><i class="fas fa-building"></i> Gestión de Negocios</h3>
                             <div class="admin-card-actions">
-                                <a href="new-business.html" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg,#059669,#10b981);text-decoration:none;"><i class="fas fa-plus"></i> Crear Negocio</a>
+                                <a href="new-business.html" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg,#006EE3,#3B9AFF);text-decoration:none;"><i class="fas fa-plus"></i> Crear Negocio</a>
                                 <select id="adminPropStatusFilter" class="form-select-sm">
                                     <option value="">Todos los estados</option>
                                     <option value="approved">Aprobados</option>
@@ -320,7 +321,7 @@
                         <div class="admin-card-header">
                             <h3><i class="fas fa-users"></i> Gestión de Usuarios</h3>
                             <div class="admin-card-actions">
-                                <button class="btn btn-primary btn-sm" id="adminCreateUserBtn" style="background:linear-gradient(135deg,#059669,#10b981);" onclick="switchTab('settings')">
+                                <button class="btn btn-primary btn-sm" id="adminCreateUserBtn" style="background:linear-gradient(135deg,#006EE3,#3B9AFF);" onclick="switchTab('settings')">
                                     <i class="fas fa-user-plus"></i> Crear Usuario
                                 </button>
                                 <select id="adminUserRoleFilter" class="form-select-sm">
@@ -562,7 +563,7 @@
                         <div class="admin-card-header">
                             <h3><i class="fas fa-home"></i> Gestión de Inmuebles</h3>
                             <div class="admin-card-actions">
-                                <a href="new-property.html" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg,#059669,#10b981);text-decoration:none;"><i class="fas fa-plus"></i> Crear Inmueble</a>
+                                <a href="new-property.html" class="btn btn-primary btn-sm" style="background:linear-gradient(135deg,#006EE3,#3B9AFF);text-decoration:none;"><i class="fas fa-plus"></i> Crear Inmueble</a>
                                 <select id="propStatusFilter" class="form-select-sm">
                                     <option value="">Todos</option>
                                     <option value="pending">Pendientes</option>
@@ -682,7 +683,7 @@
                             </div>
                             <hr style="margin:20px 0; border-color:var(--color-border-light);">
                             <!-- Link to Chat Config (separate page) -->
-                            <div class="settings-section" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;" onclick="window.location.href='admin-chat.html'">
+                            <div class="settings-section" style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;" onclick="window.location.href='admin-chat.html'">
                                 <div>
                                     <div style="font-weight:600;color:#111;font-size:0.95rem;"><i class="fas fa-comments" style="color:#25d366;margin-right:8px;"></i> Configuración de Chat entre Usuarios</div>
                                     <div style="font-size:0.82rem;color:#6b7280;margin-top:2px;">Gestionar el modo de chat (todos, solo premium, desactivado)</div>
@@ -764,7 +765,7 @@
 
                             <!-- Featured Properties Selector -->
                             <div class="settings-section" style="margin-top:24px;">
-                                <h4 class="settings-section-title"><i class="fas fa-home" style="color:#059669;"></i> Inmuebles Destacados en Inicio</h4>
+                                <h4 class="settings-section-title"><i class="fas fa-home" style="color:#006EE3;"></i> Inmuebles Destacados en Inicio</h4>
                                 <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Selecciona hasta 6 inmuebles que aparecerán destacados en la página principal.</p>
                                 <div id="featuredPropertiesContainer">
                                     <div style="text-align:center;padding:20px;color:#9ca3af;"><i class="fas fa-spinner fa-spin"></i> Cargando inmuebles...</div>
@@ -787,7 +788,7 @@
                 <div class="admin-tab hidden" id="tabEditBiz">
                     <div style="margin-bottom:16px;">
                         <label for="adminEditBizSelect" style="font-weight:600;font-size:0.95rem;display:block;margin-bottom:6px;">
-                            <i class="fas fa-search" style="color:#059669;"></i> Selecciona un negocio para editar
+                            <i class="fas fa-search" style="color:#006EE3;"></i> Selecciona un negocio para editar
                         </label>
                         <select id="adminEditBizSelect" style="width:100%;max-width:500px;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:0.95rem;background:#fff;">
                             <option value="">-- Cargando negocios... --</option>
@@ -1189,7 +1190,7 @@
                             <div id="bizEditVideosList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
                             <div style="display:flex;gap:6px;">
                                 <input type="url" id="bizEditVideoUrl" placeholder="https://youtube.com/watch?v=... o tiktok.com/..." style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
-                                <button type="button" id="bizEditVideoAddBtn" style="padding:8px 14px;border-radius:8px;border:none;background:#059669;color:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="fas fa-plus"></i> Agregar</button>
+                                <button type="button" id="bizEditVideoAddBtn" style="padding:8px 14px;border-radius:8px;border:none;background:#006EE3;color:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="fas fa-plus"></i> Agregar</button>
                             </div>
                             <div id="bizEditVideoFileInfo" style="margin-top:6px;"></div>
                             <input type="file" id="bizEditVideoFileInput" accept="video/*" multiple style="display:none;">
@@ -1623,7 +1624,7 @@
         <div class="modal-overlay"></div>
         <div class="modal-content modal-xl">
             <div class="modal-header">
-                <h3><i class="fas fa-boxes-stacked" style="color:#059669;"></i> Productos B2 - Gestión Completa</h3>
+                <h3><i class="fas fa-boxes-stacked" style="color:#006EE3;"></i> Productos B2 - Gestión Completa</h3>
                 <button class="modal-close" id="adminProductsB2Close">&times;</button>
             </div>
             <div class="modal-body" style="padding:0;">
@@ -1790,7 +1791,7 @@
     .aeb-img-thumb{position:relative;border-radius:8px;overflow:hidden;border:1px solid #e5e7eb;aspect-ratio:1;}
     .aeb-img-thumb img{width:100%;height:100%;object-fit:cover;}
     .aeb-img-remove{position:absolute;top:2px;right:2px;background:rgba(220,38,38,0.85);color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:14px;line-height:22px;text-align:center;}
-    .aeb-img-cover{position:absolute;bottom:2px;left:2px;background:rgba(5,150,105,0.85);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:4px;border:none;cursor:default;}
+    .aeb-img-cover{position:absolute;bottom:2px;left:2px;background:rgba(0,110,227,0.85);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:4px;border:none;cursor:default;}
     </style>
     <script>
     // Force Service Worker update + cache bust on admin page
@@ -1807,6 +1808,14 @@
         // Listen for SW controller change and auto-reload
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             window.location.reload();
+        });
+    }
+    </script>
+
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
         });
     }
     </script>
