@@ -289,7 +289,15 @@
         // Sidebar toggle
         const sidebarToggle = document.getElementById('adminSidebarToggle');
         const sidebar = document.getElementById('adminSidebar');
-        if (sidebarToggle && sidebar) sidebarToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+        if (sidebarToggle && sidebar) {
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('active');
+            });
+            // Close sidebar on mobile when clicking a link
+            sidebar.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => sidebar.classList.remove('active'));
+            });
+        }
 
         // Toast
         function showToast(msg, type) {
