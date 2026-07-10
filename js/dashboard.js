@@ -3,15 +3,20 @@
  * Handles user dashboard and admin panel functionality
  */
 
-// Register global functions early so they're always available
-window.openEditBusinessModal = window.openEditBusinessModal || function(id) {
-    console.warn('openEditBusinessModal called before full init, retrying in 500ms...');
-    setTimeout(function() { if (window.openEditBusinessModal !== arguments.callee) window.openEditBusinessModal(id); }, 500);
-};
-window.closeEditBusinessModal = window.closeEditBusinessModal || function() {
-    const modal = document.getElementById('editBusinessModal');
-    if (modal) modal.classList.add('hidden');
-};
+// Event bridge: registered OUTSIDE the IIFE so it's always available.
+// The IIFE registers the actual handler on window.openEditBusinessModal.
+document.addEventListener('open-edit-biz', function(e) {
+    if (typeof window.openEditBusinessModal === 'function') {
+        window.openEditBusinessModal(e.detail.id);
+    } else {
+        // If not ready yet, retry once after a short delay
+        setTimeout(function() {
+            if (typeof window.openEditBusinessModal === 'function') {
+                window.openEditBusinessModal(e.detail.id);
+            }
+        }, 800);
+    }
+});
 
 (function () {
     'use strict';
@@ -280,7 +285,7 @@ window.closeEditBusinessModal = window.closeEditBusinessModal || function() {
                 const statusLabels = { approved: 'Activo', pending: 'Pendiente de aprobacion', rejected: 'Rechazado' };
                 editProfileBizName.textContent = primaryBiz.title || 'Mi Negocio';
                 editProfileBizStatus.textContent = statusLabels[primaryBiz.status] || primaryBiz.status;
-                editProfileBtn.onclick = function() { window.openEditBusinessModal(primaryBiz.id); };
+                editProfileBtn.onclick = function() { document.dispatchEvent(new CustomEvent('open-edit-biz', {detail:{id:primaryBiz.id}})); };
                 editProfileViewBtn.href = '/negocio/' + (primaryBiz.slug || primaryBiz.id);
                 editProfileCTA.style.display = '';
 
@@ -297,7 +302,7 @@ window.closeEditBusinessModal = window.closeEditBusinessModal || function() {
                         chip.className = 'btn btn-secondary btn-sm';
                         chip.style.cssText = 'font-size:0.82rem;border-radius:8px;';
                         chip.innerHTML = '<i class="fas fa-pen" style="font-size:0.7rem;"></i> ' + (b.title || 'Negocio');
-                        chip.onclick = function() { window.openEditBusinessModal(b.id); };
+                        chip.onclick = function() { document.dispatchEvent(new CustomEvent('open-edit-biz', {detail:{id:b.id}})); };
                         otherWrap.appendChild(chip);
                     });
                 }
