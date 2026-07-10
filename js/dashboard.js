@@ -113,9 +113,8 @@
         // Setup profile form
         setupProfileForm();
 
-        // Setup premium plan display (badge + buttons)
-        setupPremiumModal();
-        updatePlanDisplay();
+        // NOTE: setupPremiumModal() and updatePlanDisplay() are called
+        //       after their const declarations (see near line 2160)
 
         // Load data for overview section
         await loadOverviewData();
@@ -2159,6 +2158,10 @@
     const adminPremiumBadge = document.getElementById('adminPremiumBadge');
 
     let selectedVoucherFile = null;
+
+    // Now that premium consts are declared, initialize premium modal and plan display
+    setupPremiumModal();
+    updatePlanDisplay();
 
     function updatePlanDisplay() {
         if (!currentUser) return;
