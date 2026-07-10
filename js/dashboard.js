@@ -17,8 +17,7 @@ function _openEditBizModal(id) {
 
     // Reset
     document.querySelectorAll('#editBizFeatures .eb-feature').forEach(function(f) { f.classList.remove('checked'); });
-    var vidPrev = document.getElementById('ebVideoPreview');
-    if (vidPrev) vidPrev.style.display = 'none';
+    window._editBizVideos = [];
 
     var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
     fetch('/api/businesses/' + id, {
@@ -78,11 +77,14 @@ function _openEditBizModal(id) {
                     if (bUrl) bUrl.value = biz.banner;
                 }
             }
-            // Video
+            // Video (multi)
             if (biz.video_url) {
-                el('editBizVideoUrlHidden', biz.video_url);
-                el('editBizVideoUrl', biz.video_url);
+                var urls = window._parseVideoUrls(biz.video_url);
+                urls.forEach(function(u) {
+                    if (u) window._editBizVideos.push({ url: u, type: 'url' });
+                });
             }
+            window._renderVideoList('ebVideosList');
             // Features
             var features = biz.features || biz.caracteristicas || '';
             var featList = typeof features === 'string' ? features.split(',') : features;
@@ -99,6 +101,59 @@ function _openEditBizModal(id) {
 }
 
 // Global function for all callers (inline onclick, CustomEvent, etc.)
+// ─── Multi-video helpers (global, used by all edit modals) ──────
+window._editBizVideos = []; // array of { url, type:'url'|'file' }
+
+window._parseVideoUrls = function(video_url) {
+    if (!video_url) return [];
+    if (video_url.startsWith('[')) {
+        try { return JSON.parse(video_url); } catch(e) { return [video_url]; }
+    }
+    return [video_url];
+};
+
+window._getVideoUrlsJSON = function() {
+    return JSON.stringify(window._editBizVideos.map(function(v) { return v.url; }));
+};
+
+window._renderVideoList = function(containerId) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    window._editBizVideos.forEach(function(v, i) {
+        var item = document.createElement('div');
+        item.className = 'eb-video-item';
+        var label = v.url.length > 60 ? v.url.substring(0, 60) + '...' : v.url;
+        if (v.type === 'file') {
+            var m = v.url.match(/([^/]+)$/);
+            label = m ? m[1] : v.url;
+        }
+        item.innerHTML = '<span class="eb-video-item-num">' + (i + 1) + '</span>' +
+            '<span class="eb-video-item-text" title="' + v.url.replace(/"/g, '&quot;') + '">' + label + '</span>' +
+            '<button type="button" class="eb-video-item-remove" data-idx="' + i + '"><i class="fas fa-times"></i></button>';
+        item.querySelector('.eb-video-item-remove').addEventListener('click', function() {
+            window._editBizVideos.splice(i, 1);
+            window._renderVideoList(containerId);
+        });
+        container.appendChild(item);
+    });
+};
+
+window._removeEditBizVideo = function(idx) {
+    window._editBizVideos.splice(idx, 1);
+};
+
+// Add video URL from input (dashboard edit modal)
+window.addEditBizVideoUrl = function() {
+    var input = document.getElementById('editBizVideoUrl');
+    if (!input) return;
+    var url = input.value.trim();
+    if (!url) return;
+    window._editBizVideos.push({ url: url, type: 'url' });
+    input.value = '';
+    window._renderVideoList('ebVideosList');
+};
+
 window.openEditBusinessModal = _openEditBizModal;
 window.closeEditBusinessModal = function() {
     var modal = document.getElementById('editBusinessModal');
@@ -1887,21 +1942,15 @@ window.closeEditBusinessModal = function() {
 
         // Reset features
         document.querySelectorAll('#editBizFeatures .eb-feature').forEach(f => f.classList.remove('checked'));
-        var vidPrev = document.getElementById('ebVideoPreview');
-        if (vidPrev) vidPrev.style.display = 'none';
+        window._editBizVideos = [];
         var vidFileInfo = document.getElementById('ebVideoFileInfo');
         if (vidFileInfo) vidFileInfo.innerHTML = '';
-        var vidUrlHid = document.getElementById('editBizVideoUrlHidden');
-        if (vidUrlHid) vidUrlHid.value = '';
-        var vidUrl = document.getElementById('editBizVideoUrl');
-        if (vidUrl) vidUrl.value = '';
-        var vidFileIn = document.getElementById('editBizVideoFileInput');
+        var vidFileIn = document.getElementById('ebVideoFileInput');
         if (vidFileIn) vidFileIn.value = '';
 
         try {
             api.get('/businesses/' + id).then(function(data) {
                 const biz = data.business || data;
-                document.getElementById('editBizId').value = biz.id;
                 populateEditBizForm(biz);
                 loading.style.display = 'none';
                 form.style.display = '';
@@ -1915,6 +1964,7 @@ window.closeEditBusinessModal = function() {
 
     function populateEditBizForm(biz) {
         const el = (id, val) => { const e = document.getElementById(id); if (e && val) e.value = val; };
+        el('editBizId', biz.id);
         el('editBizTitle', biz.title);
         el('editBizDesc', biz.description);
         el('editBizCat', biz.category || biz.category_id);
@@ -1942,15 +1992,15 @@ window.closeEditBusinessModal = function() {
             if (featList.includes(f.dataset.feature)) f.classList.add('checked');
         });
 
-        // Video
+        // Video (multi)
+        window._editBizVideos = [];
         if (biz.video_url) {
-            document.getElementById('editBizVideoUrlHidden').value = biz.video_url;
-            showEditBizVideoPreview(biz.video_url);
-            setEditBizVideoMode('url');
-            document.getElementById('editBizVideoUrl').value = biz.video_url;
-        } else {
-            setEditBizVideoMode('file');
+            var urls = window._parseVideoUrls(biz.video_url);
+            urls.forEach(function(u) {
+                if (u) window._editBizVideos.push({ url: u, type: 'url' });
+            });
         }
+        window._renderVideoList('ebVideosList');
 
         // Logo
         editBizLogoFile = null;
@@ -1996,46 +2046,54 @@ window.closeEditBusinessModal = function() {
     };
 
     window.handleEditBizVideoFile = function(input) {
-        const file = input.files[0];
-        if (!file) return;
-        if (!file.type.startsWith('video/')) {
-            showToast('Solo se permiten archivos de video', 'error');
-            return;
-        }
-        if (file.size > 50 * 1024 * 1024) {
-            showToast('El video no puede superar 50MB', 'error');
-            return;
-        }
+        var files = input.files;
+        if (!files || !files.length) return;
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
 
-        // Show local preview
-        const preview = document.getElementById('ebVideoPreview');
-        preview.style.display = 'block';
-        preview.innerHTML = '<video src="' + URL.createObjectURL(file) + '" controls></video>';
-
-        document.getElementById('ebVideoFileInfo').innerHTML =
-            '<div class="eb-video-file-info"><i class="fas fa-check-circle"></i> ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + 'MB)</div>';
-
-        // Upload
-        const token = getToken();
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('product_type', 'video');
-
-        fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Authorization': 'Bearer ' + token },
-            body: formData,
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.url) {
-                document.getElementById('editBizVideoUrlHidden').value = data.url;
-                showToast('Video subido correctamente', 'success');
-            } else {
-                showToast(data.error || 'Error al subir video', 'error');
+        Array.from(files).forEach(function(file) {
+            if (!file.type.startsWith('video/')) {
+                showToast(file.name + ': Solo se permiten archivos de video', 'error');
+                return;
             }
-        })
-        .catch(() => showToast('Error de conexion al subir video', 'error'));
+            if (file.size > 50 * 1024 * 1024) {
+                showToast(file.name + ': Max 50MB', 'error');
+                return;
+            }
+
+            // Show uploading info
+            var infoDiv = document.getElementById('ebVideoFileInfo');
+            if (infoDiv) {
+                infoDiv.innerHTML += '<div class="eb-video-file-info" id="ebUpload_' + file.name.replace(/[^a-zA-Z0-9]/g, '_') + '"><i class="fas fa-spinner fa-spin"></i> ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(1) + 'MB) - Subiendo...</div>';
+            }
+
+            var formData = new FormData();
+            formData.append('file', file);
+            formData.append('product_type', 'video');
+
+            fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: formData,
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.url) {
+                    window._editBizVideos.push({ url: data.url, type: 'file' });
+                    window._renderVideoList('ebVideosList');
+                    showToast(file.name + ' subido correctamente', 'success');
+                } else {
+                    showToast(data.error || 'Error al subir ' + file.name, 'error');
+                }
+                var el = document.getElementById('ebUpload_' + file.name.replace(/[^a-zA-Z0-9]/g, '_'));
+                if (el) el.remove();
+            })
+            .catch(function() {
+                showToast('Error de conexion al subir ' + file.name, 'error');
+                var el = document.getElementById('ebUpload_' + file.name.replace(/[^a-zA-Z0-9]/g, '_'));
+                if (el) el.remove();
+            });
+        });
+        input.value = '';
     };
 
     function showEditBizVideoPreview(url) {
@@ -2089,7 +2147,7 @@ window.closeEditBusinessModal = function() {
                 lng: parseFloat(document.getElementById('editBizLng').value) || null,
                 schedule: document.getElementById('editBizSchedule').value,
                 features: features.join(','),
-                video_url: document.getElementById('editBizVideoUrlHidden').value || document.getElementById('editBizVideoUrl').value || '',
+                video_url: window._getVideoUrlsJSON(),
                 logo: currentForm.querySelector('.edit-biz-logo-url')?.value || null,
                 banner: currentForm.querySelector('.edit-biz-banner-url')?.value || null,
             };

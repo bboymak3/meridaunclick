@@ -562,15 +562,24 @@ export async function onRequestGet(context) {
                   </div>
                 </div>`; })()}
 
-                ${(() => { const video_url = business.video_url; if (!video_url) return ''; return `
+                ${(() => {
+                    const raw = business.video_url;
+                    if (!raw) return '';
+                    let urls = [];
+                    if (raw.startsWith('[')) { try { urls = JSON.parse(raw); } catch(e) { urls = [raw]; } }
+                    else { urls = [raw]; }
+                    urls = urls.filter(u => u);
+                    if (!urls.length) return '';
+                    return `
                 <div style="padding:16px 20px;">
                   <div style="font-size:0.85rem;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:6px;">
-                    <i class="fas fa-play-circle" style="color:#059669;"></i> Video
+                    <i class="fas fa-play-circle" style="color:#059669;"></i> Video${urls.length > 1 ? 's' : ''} (${urls.length})
                   </div>
-                  <div style="max-width:320px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-                    ${getVideoEmbed(video_url)}
+                  <div style="display:${urls.length > 1 ? 'grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;' : 'block;max-width:320px;margin:0 auto;'}border-radius:16px;overflow:hidden;">
+                    ${urls.map(u => '<div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">' + getVideoEmbed(u) + '</div>').join('')}
                   </div>
-                </div>`; })()}
+                </div>`;
+                })()}
 
                 <section class="business-section" id="productsSection" style="display:none;">
                     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">

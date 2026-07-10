@@ -427,7 +427,18 @@
         setValue('propTwitter', business.twitter);
         setValue('propTiktok', business.tiktok);
         setValue('propYoutube', business.youtube);
-        setValue('propVideo', business.video_url);
+        // Load existing videos (multi)
+        if (business.video_url) {
+            window._editBizVideos = [];
+            var videoUrls = [];
+            if (business.video_url.startsWith('[')) {
+                try { videoUrls = JSON.parse(business.video_url); } catch(e) { videoUrls = [business.video_url]; }
+            } else {
+                videoUrls = [business.video_url];
+            }
+            videoUrls.forEach(function(u) { if (u) window._editBizVideos.push({ url: u, type: 'url' }); });
+            window._renderVideoList('bizFormVideosList');
+        }
         setValue('propSchedule', business.schedule);
 
         // Load existing logo
@@ -752,7 +763,7 @@
         const twitter = getValue('propTwitter');
         const tiktok = getValue('propTiktok');
         const youtube = getValue('propYoutube');
-        const videoUrl = getValue('propVideo');
+        const videoUrl = (typeof window._getVideoUrlsJSON === 'function') ? window._getVideoUrlsJSON() : (getValue('propVideo') || '[]');
         const schedule = getValue('propSchedule');
         const direccion = getValue('propDireccion');
         const ciudad = getValue('propCiudad');
@@ -1009,6 +1020,105 @@
                 errorSpan.textContent = message;
             }
         }
+    }
+
+    // ─── Multi-video support for new business form ──────────
+    // Ensure global helpers exist (may already be set by dashboard.js on dashboard pages)
+    if (!window._editBizVideos) window._editBizVideos = [];
+    if (!window._parseVideoUrls) {
+        window._parseVideoUrls = function(video_url) {
+            if (!video_url) return [];
+            if (video_url.startsWith('[')) { try { return JSON.parse(video_url); } catch(e) { return [video_url]; } }
+            return [video_url];
+        };
+    }
+    if (!window._getVideoUrlsJSON) {
+        window._getVideoUrlsJSON = function() {
+            return JSON.stringify(window._editBizVideos.map(function(v) { return v.url; }));
+        };
+    }
+    if (!window._renderVideoList) {
+        window._renderVideoList = function(containerId) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            window._editBizVideos.forEach(function(v, i) {
+                var item = document.createElement('div');
+                item.className = 'eb-video-item';
+                var label = v.url.length > 60 ? v.url.substring(0, 60) + '...' : v.url;
+                if (v.type === 'file') { var m = v.url.match(/([^/]+)$/); label = m ? m[1] : v.url; }
+                item.innerHTML = '<span class="eb-video-item-num">' + (i + 1) + '</span>' +
+                    '<span class="eb-video-item-text" title="' + v.url.replace(/"/g, '&quot;') + '">' + label + '</span>' +
+                    '<button type="button" class="eb-video-item-remove" data-idx="' + i + '"><i class="fas fa-times"></i></button>';
+                item.querySelector('.eb-video-item-remove').addEventListener('click', function() {
+                    window._editBizVideos.splice(i, 1);
+                    window._renderVideoList(containerId);
+                });
+                container.appendChild(item);
+            });
+        };
+    }
+
+    // Bind video add URL button
+    var videoAddBtn = document.getElementById('bizFormVideoAddBtn');
+    if (videoAddBtn) {
+        videoAddBtn.addEventListener('click', function() {
+            var input = document.getElementById('propVideo');
+            if (!input) return;
+            var url = input.value.trim();
+            if (!url) return;
+            window._editBizVideos.push({ url: url, type: 'url' });
+            input.value = '';
+            window._renderVideoList('bizFormVideosList');
+        });
+    }
+
+    // Bind video upload button
+    var videoUploadBtn = document.getElementById('bizFormVideoUploadBtn');
+    var videoFileInput = document.getElementById('bizFormVideoFileInput');
+    if (videoUploadBtn && videoFileInput) {
+        videoUploadBtn.addEventListener('click', function() { videoFileInput.click(); });
+        videoFileInput.addEventListener('change', function() {
+            var files = this.files;
+            if (!files || !files.length) return;
+            var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+            var infoDiv = document.getElementById('bizFormVideoFileInfo');
+
+            Array.from(files).forEach(function(file) {
+                if (!file.type.startsWith('video/')) { showToast(file.name + ': Solo video', 'error'); return; }
+                if (file.size > 50 * 1024 * 1024) { showToast(file.name + ': Max 50MB', 'error'); return; }
+                if (infoDiv) infoDiv.innerHTML += '<div style="padding:4px 8px;background:#ecfdf5;border-radius:6px;margin-top:4px;font-size:0.82rem;" id="bfUpload_' + file.name.replace(/[^a-zA-Z0-9]/g, '_') + '"><i class="fas fa-spinner fa-spin"></i> ' + file.name + ' - Subiendo...</div>';
+
+                var fd = new FormData();
+                fd.append('file', file);
+                fd.append('product_type', 'video');
+                fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.url) {
+                        window._editBizVideos.push({ url: data.url, type: 'file' });
+                        window._renderVideoList('bizFormVideosList');
+                        showToast(file.name + ' subido', 'success');
+                    } else { showToast(data.error || 'Error al subir ' + file.name, 'error'); }
+                    var el = document.getElementById('bfUpload_' + file.name.replace(/[^a-zA-Z0-9]/g, '_'));
+                    if (el) el.remove();
+                })
+                .catch(function() {
+                    showToast('Error de conexion', 'error');
+                    var el = document.getElementById('bfUpload_' + file.name.replace(/[^a-zA-Z0-9]/g, '_'));
+                    if (el) el.remove();
+                });
+            });
+            this.value = '';
+        });
+    }
+
+    // Also allow Enter key on the URL input to add
+    var propVideoInput = document.getElementById('propVideo');
+    if (propVideoInput) {
+        propVideoInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') { e.preventDefault(); if (videoAddBtn) videoAddBtn.click(); }
+        });
     }
 
     // ─── Initialize on DOM Ready ────────────────────────────────

@@ -81,6 +81,28 @@
         padding:8px 12px; background:#ecfdf5; border-radius:8px;
         font-size:0.82rem; color:#065f46;
     }
+    /* Multi-video list */
+    .eb-video-item {
+        display:flex; align-items:center; gap:8px; padding:8px 12px;
+        background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;
+        font-size:0.82rem;
+    }
+    .eb-video-item-text {
+        flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+        color:#334155; font-family:monospace;
+    }
+    .eb-video-item-remove {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:26px; height:26px; border-radius:6px; border:none;
+        background:#fef2f2; color:#dc2626; cursor:pointer; font-size:0.8rem;
+        flex-shrink:0;
+    }
+    .eb-video-item-remove:hover { background:#fecaca; }
+    .eb-video-item-num {
+        display:inline-flex; align-items:center; justify-content:center;
+        width:22px; height:22px; border-radius:50%; background:#e0e7ff;
+        color:#4338ca; font-size:0.72rem; font-weight:700; flex-shrink:0;
+    }
     /* Feature chips */
     .eb-features { display:flex; flex-wrap:wrap; gap:8px; }
     .eb-feature {
@@ -1357,7 +1379,8 @@
 
                     <!-- Video -->
                     <div class="eb-section">
-                        <div class="eb-section-title"><i class="fas fa-video" style="color:#6366f1;"></i> Video del Negocio</div>
+                        <div class="eb-section-title"><i class="fas fa-video" style="color:#6366f1;"></i> Videos del Negocio</div>
+                        <div id="ebVideosList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;"></div>
                         <div class="eb-video-tabs">
                             <button type="button" class="eb-video-tab active" id="ebVideoTabFile" onclick="setEditBizVideoMode('file')">
                                 <i class="fas fa-upload"></i> Subir desde PC
@@ -1370,15 +1393,17 @@
                             <div class="eb-video-drop" id="ebVideoDrop" onclick="document.getElementById('ebVideoFileInput').click()">
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <p>Haz clic para seleccionar un video</p>
-                                <p style="font-size:0.75rem;color:#94a3b8;">MP4, WebM - Max 50MB</p>
+                                <p style="font-size:0.75rem;color:#94a3b8;">MP4, WebM - Max 50MB por video</p>
                             </div>
-                            <input type="file" id="ebVideoFileInput" accept="video/*" style="display:none;" onchange="handleEditBizVideoFile(this)">
+                            <input type="file" id="ebVideoFileInput" accept="video/*" multiple style="display:none;" onchange="handleEditBizVideoFile(this)">
                             <div id="ebVideoFileInfo"></div>
                         </div>
                         <div class="eb-video-content" id="ebVideoUrlContent">
-                            <input type="url" id="editBizVideoUrl" class="eb-input" placeholder="https://youtube.com/watch?v=... o https://tiktok.com/@user/video/...">
+                            <div style="display:flex;gap:8px;">
+                                <input type="url" id="editBizVideoUrl" class="eb-input" placeholder="https://youtube.com/watch?v=... o tiktok.com/..." style="flex:1;">
+                                <button type="button" class="btn btn-primary" style="padding:8px 16px;font-size:0.82rem;white-space:nowrap;" onclick="addEditBizVideoUrl()"><i class="fas fa-plus"></i> Agregar</button>
+                            </div>
                         </div>
-                        <div class="eb-video-preview" id="ebVideoPreview" style="display:none;"></div>
                         <input type="hidden" id="editBizVideoUrlHidden">
                     </div>
 
@@ -1579,7 +1604,7 @@
     </div>
 
     <script src="js/app.js"></script>
-    <script src="js/dashboard.js?v=6"></script>
+    <script src="js/dashboard.js?v=7"></script>
     <script src="js/chat.js"></script>
 </body>
 </html>

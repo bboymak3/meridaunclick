@@ -3,6 +3,53 @@
  * Loaded on admin.html
  */
 
+// ─── Multi-video helpers (global, must be outside IIFE) ──────
+if (!window._editBizVideos) window._editBizVideos = [];
+if (!window._parseVideoUrls) {
+    window._parseVideoUrls = function(video_url) {
+        if (!video_url) return [];
+        if (video_url.startsWith('[')) { try { return JSON.parse(video_url); } catch(e) { return [video_url]; } }
+        return [video_url];
+    };
+}
+if (!window._getVideoUrlsJSON) {
+    window._getVideoUrlsJSON = function() {
+        return JSON.stringify(window._editBizVideos.map(function(v) { return v.url; }));
+    };
+}
+if (!window._renderVideoList) {
+    window._renderVideoList = function(containerId) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        window._editBizVideos.forEach(function(v, i) {
+            var item = document.createElement('div');
+            item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;font-size:0.82rem;';
+            var label = v.url.length > 60 ? v.url.substring(0, 60) + '...' : v.url;
+            if (v.type === 'file') { var m = v.url.match(/([^/]+)$/); label = m ? m[1] : v.url; }
+            var numSpan = document.createElement('span');
+            numSpan.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#e0e7ff;color:#4338ca;font-size:0.72rem;font-weight:700;flex-shrink:0;';
+            numSpan.textContent = (i + 1);
+            var textSpan = document.createElement('span');
+            textSpan.style.cssText = 'flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#334155;font-family:monospace;';
+            textSpan.textContent = label;
+            textSpan.title = v.url;
+            var removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:6px;border:none;background:#fef2f2;color:#dc2626;cursor:pointer;font-size:0.8rem;flex-shrink:0;';
+            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            removeBtn.addEventListener('click', function() {
+                window._editBizVideos.splice(i, 1);
+                window._renderVideoList(containerId);
+            });
+            item.appendChild(numSpan);
+            item.appendChild(textSpan);
+            item.appendChild(removeBtn);
+            container.appendChild(item);
+        });
+    };
+}
+
 (function () {
     'use strict';
 
@@ -948,6 +995,66 @@
             document.getElementById('bizEditBannerPreview').innerHTML = '';
             bannerRemoveBtn.style.display = 'none';
         });
+
+        // ─── Multi-video handlers for admin edit ───
+        const videoAddBtn = document.getElementById('bizEditVideoAddBtn');
+        const videoUrlInput = document.getElementById('bizEditVideoUrl');
+        const videoFileInput = document.getElementById('bizEditVideoFileInput');
+        if (videoAddBtn && videoUrlInput) {
+            videoAddBtn.addEventListener('click', () => {
+                const url = videoUrlInput.value.trim();
+                if (!url) return;
+                window._editBizVideos.push({ url, type: 'url' });
+                videoUrlInput.value = '';
+                window._renderVideoList('bizEditVideosList');
+            });
+            videoUrlInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); videoAddBtn.click(); }
+            });
+        }
+        if (videoFileInput) {
+            videoFileInput.addEventListener('change', function() {
+                const files = this.files;
+                if (!files || !files.length) return;
+                const infoDiv = document.getElementById('bizEditVideoFileInfo');
+                Array.from(files).forEach(file => {
+                    if (!file.type.startsWith('video/')) { showToast(file.name + ': Solo video', 'error'); return; }
+                    if (file.size > 50 * 1024 * 1024) { showToast(file.name + ': Max 50MB', 'error'); return; }
+                    if (infoDiv) infoDiv.innerHTML += '<div style="padding:4px 8px;background:#ecfdf5;border-radius:6px;margin-top:4px;font-size:0.82rem;" id="adminUp_' + file.name.replace(/[^a-zA-Z0-9]/g, '_') + '"><i class="fas fa-spinner fa-spin"></i> ' + file.name + ' - Subiendo...</div>';
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('product_type', 'video');
+                    fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('token')) }, body: fd })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.url) {
+                            window._editBizVideos.push({ url: data.url, type: 'file' });
+                            window._renderVideoList('bizEditVideosList');
+                            showToast(file.name + ' subido', 'success');
+                        } else { showToast(data.error || 'Error al subir ' + file.name, 'error'); }
+                        const el = document.getElementById('adminUp_' + file.name.replace(/[^a-zA-Z0-9]/g, '_'));
+                        if (el) el.remove();
+                    })
+                    .catch(() => {
+                        showToast('Error de conexion', 'error');
+                        const el = document.getElementById('adminUp_' + file.name.replace(/[^a-zA-Z0-9]/g, '_'));
+                        if (el) el.remove();
+                    });
+                });
+                this.value = '';
+            });
+            // Add a small "Subir Video" button next to the add URL button
+            const urlRow = videoUrlInput?.parentElement;
+            if (urlRow && !document.getElementById('bizEditVideoUploadBtn')) {
+                const upBtn = document.createElement('button');
+                upBtn.type = 'button';
+                upBtn.id = 'bizEditVideoUploadBtn';
+                upBtn.style.cssText = 'padding:8px 14px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;';
+                upBtn.innerHTML = '<i class="fas fa-upload"></i> Subir';
+                upBtn.addEventListener('click', () => videoFileInput.click());
+                urlRow.appendChild(upBtn);
+            }
+        }
     }
 
     async function editBusiness(businessId) {
@@ -1013,8 +1120,13 @@
             document.getElementById('bizEditDelivery').checked = !!biz.has_delivery;
             document.getElementById('bizEditOutdoor').checked = !!biz.has_outdoor;
 
-            // Video URL
-            document.getElementById('bizEditVideoUrl').value = biz.video_url || '';
+            // Video URL (multi)
+            window._editBizVideos = [];
+            if (biz.video_url) {
+                const urls = window._parseVideoUrls ? window._parseVideoUrls(biz.video_url) : [biz.video_url];
+                urls.forEach(u => { if (u) window._editBizVideos.push({ url: u, type: 'url' }); });
+            }
+            window._renderVideoList('bizEditVideosList');
 
             // Banner
             if (biz.banner) {
@@ -1239,7 +1351,7 @@
                 has_delivery: document.getElementById('bizEditDelivery')?.checked ? 1 : 0,
                 has_outdoor: document.getElementById('bizEditOutdoor')?.checked ? 1 : 0,
                 image: adminBizEditModal.dataset.currentImage || '',
-                video_url: document.getElementById('bizEditVideoUrl')?.value?.trim() || '',
+                video_url: (typeof window._getVideoUrlsJSON === 'function') ? window._getVideoUrlsJSON() : '',
                 banner: document.getElementById('bizEditBannerUrl')?.value?.trim() || '',
             };
 

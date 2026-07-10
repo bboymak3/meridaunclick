@@ -1183,10 +1183,16 @@
                             </label>
                         </div>
                         <div class="form-group" style="margin-top:12px;">
-                            <label for="bizEditVideoUrl" style="font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:4px;display:block;">
-                                <i class="fas fa-video" style="color:#ef4444;"></i> URL del Video (YouTube, TikTok, etc.)
+                            <label style="font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:4px;display:block;">
+                                <i class="fas fa-video" style="color:#ef4444;"></i> Videos del Negocio
                             </label>
-                            <input type="url" id="bizEditVideoUrl" name="video_url" placeholder="https://www.youtube.com/watch?v=..." style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
+                            <div id="bizEditVideosList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+                            <div style="display:flex;gap:6px;">
+                                <input type="url" id="bizEditVideoUrl" placeholder="https://youtube.com/watch?v=... o tiktok.com/..." style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
+                                <button type="button" id="bizEditVideoAddBtn" style="padding:8px 14px;border-radius:8px;border:none;background:#059669;color:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="fas fa-plus"></i> Agregar</button>
+                            </div>
+                            <div id="bizEditVideoFileInfo" style="margin-top:6px;"></div>
+                            <input type="file" id="bizEditVideoFileInput" accept="video/*" multiple style="display:none;">
                         </div>
                     </div>
                 </form>
@@ -1768,7 +1774,7 @@
     </div>
 
     <script src="js/app.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="js/admin.js?v=2"></script>
     <style>
     /* Editar Negocios styles */
     .aeb-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;}

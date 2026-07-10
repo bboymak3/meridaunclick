@@ -773,19 +773,27 @@ ${(business.instagram || business.facebook || business.twitter || business.tikto
 ` : ''}
 
 <!-- VIDEO -->
-${business.video_url ? `
+${(() => {
+    const raw = business.video_url;
+    if (!raw) return '';
+    let urls = [];
+    if (raw.startsWith('[')) { try { urls = JSON.parse(raw); } catch(e) { urls = [raw]; } }
+    else { urls = [raw]; }
+    urls = urls.filter(u => u);
+    if (!urls.length) return '';
+    return `
 <section class="lp-section">
     <div class="lp-container" style="text-align:center;">
         <div class="lp-section-header">
-            <div class="lp-section-label">Video</div>
+            <div class="lp-section-label">Video${urls.length > 1 ? 's' : ''}</div>
             <h2 class="lp-section-title">Conoce Nuestro Trabajo</h2>
         </div>
-        <div style="max-width:320px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">
-            ${getVideoEmbed(business.video_url)}
+        <div style="${urls.length > 1 ? 'display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;' : 'max-width:320px;margin:0 auto;'}border-radius:16px;overflow:hidden;">
+            ${urls.map(u => '<div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">' + getVideoEmbed(u) + '</div>').join('')}
         </div>
     </div>
-</section>
-` : ''}
+</section>`;
+})()}
 
 <!-- MAP -->
 ${(business.lat || business.latitude || business.address) ? `
