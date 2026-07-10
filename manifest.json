@@ -2,8 +2,8 @@
   "name": "HOLAX - Directorio de Negocios de Venezuela",
   "short_name": "HOLAX",
   "description": "Directorio Nacional de Negocios de Venezuela. Encuentra negocios, productos, empleos y servicios en tu ciudad.",
-  "start_url": "/index.html",
-  "scope": "/",
+  "start_url": "https://aunclick.pages.dev/",
+  "scope": "https://aunclick.pages.dev/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#006EE3",
@@ -14,25 +14,25 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "images/PWA.jpeg",
+      "src": "https://aunclick.pages.dev/images/PWA.jpeg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "images/PWA.jpeg",
+      "src": "https://aunclick.pages.dev/images/PWA.jpeg",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "maskable"
     },
     {
-      "src": "images/PWA.jpeg",
+      "src": "https://aunclick.pages.dev/images/PWA.jpeg",
       "sizes": "192x192",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "images/PWA.jpeg",
+      "src": "https://aunclick.pages.dev/images/PWA.jpeg",
       "sizes": "192x192",
       "type": "image/jpeg",
       "purpose": "maskable"
@@ -43,19 +43,19 @@
     {
       "name": "Buscar Negocios",
       "short_name": "Buscar",
-      "url": "/search.html",
+      "url": "https://aunclick.pages.dev/search.html",
       "description": "Buscar negocios por categoría y ubicación"
     },
     {
       "name": "Marketplace",
       "short_name": "Productos",
-      "url": "/marketplace.html",
+      "url": "https://aunclick.pages.dev/marketplace.html",
       "description": "Ver productos y ofertas"
     },
     {
       "name": "Mapa",
       "short_name": "Mapa",
-      "url": "/map.html",
+      "url": "https://aunclick.pages.dev/map.html",
       "description": "Ver negocios en el mapa"
     }
   ]

@@ -1,28 +1,8 @@
-const CACHE_NAME = 'holax-v1';
+const CACHE_NAME = 'holax-v2';
+const BASE = 'https://aunclick.pages.dev';
 const OFFLINE_URL = '/index.html';
 
-const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/search.html',
-  '/map.html',
-  '/marketplace.html',
-  '/css/styles.css',
-  '/js/app.js',
-  '/manifest.json',
-  '/images/favicon.jpeg',
-  '/images/logoprincipal.jpeg',
-  '/images/PWA.jpeg',
-];
-
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(PRECACHE_URLS).catch(() => {
-        // Some URLs may fail (e.g. images not yet uploaded), that's OK
-      });
-    })
-  );
   self.skipWaiting();
 });
 
@@ -38,18 +18,19 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
   if (event.request.method !== 'GET') return;
   
-  // Skip API calls and admin pages
   const url = new URL(event.request.url);
+  
+  // Skip API and functions
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/functions/')) return;
   
-  // Network first, fallback to cache
+  // Skip external requests
+  if (url.origin !== self.location.origin) return;
+  
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Cache successful responses
         if (response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => {
