@@ -3729,17 +3729,87 @@
     window.adminEditBizHandleBanner = async function(input) {
         const file = input.files[0]; if (!file) return;
         if (file.size > 5*1024*1024) { showToast('Max 5MB para banner','error'); input.value=''; return; }
-        try {
-            showToast('Subiendo banner...','info');
-            const fd = new FormData(); fd.append('file',file); fd.append('product_type','banner');
-            const result = await api.postFormData('/upload', fd);
-            if (result.url) {
-                document.getElementById('aebBannerUrl').value = result.url;
-                document.getElementById('aebBannerPreview').innerHTML = '<img src="'+result.url+'" style="width:100%;height:100%;object-fit:cover;">';
-                showToast('Banner subido correctamente','success');
-            }
-        } catch(e) { showToast('Error al subir banner: '+e.message,'error'); }
-        input.value = '';
+
+        // Show banner editor with rotate controls
+        const previewEl = document.getElementById('aebBannerPreview');
+        if (!previewEl) { input.value=''; return; }
+
+        let bannerRotation = 0;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imgSrc = e.target.result;
+            previewEl.innerHTML = `
+                <div style="position:relative;width:100%;height:100%;overflow:hidden;">
+                    <img id="aebBannerEditImg" src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.3s ease;transform:rotate(0deg);">
+                    <div style="position:absolute;bottom:8px;right:8px;display:flex;gap:6px;">
+                        <button type="button" onclick="document.getElementById('aebBannerEditImg').style.transform='rotate(-90deg)';" style="width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.7);color:#fff;border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Rotar -90°">
+                            <i class="fas fa-rotate-left"></i>
+                        </button>
+                        <button type="button" onclick="document.getElementById('aebBannerEditImg').style.transform='rotate(90deg)';" style="width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,0.7);color:#fff;border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;" title="Rotar +90°">
+                            <i class="fas fa-rotate-right"></i>
+                        </button>
+                        <button type="button" id="aebBannerCropBtn" style="padding:0 14px;height:36px;border-radius:18px;background:linear-gradient(135deg,#059669,#0ea5e9);color:#fff;border:none;cursor:pointer;font-size:0.85rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px;" title="Confirmar y subir">
+                            <i class="fas fa-check"></i> Subir
+                        </button>
+                    </div>
+                </div>
+            `;
+            // Track current rotation via a data attribute
+            const editImg = document.getElementById('aebBannerEditImg');
+            editImg.dataset.rotation = '0';
+            // Override rotate buttons to track state
+            editImg.parentElement.querySelectorAll('button').forEach(btn => {
+                if (btn.id === 'aebBannerCropBtn') return;
+                const origOnclick = btn.getAttribute('onclick');
+                btn.removeAttribute('onclick');
+                btn.addEventListener('click', function() {
+                    const isLeft = origOnclick.includes('-90');
+                    let rot = parseInt(editImg.dataset.rotation) || 0;
+                    rot = isLeft ? rot - 90 : rot + 90;
+                    editImg.dataset.rotation = rot;
+                    editImg.style.transform = 'rotate(' + rot + 'deg)';
+                });
+            });
+            // Crop/upload button
+            document.getElementById('aebBannerCropBtn').addEventListener('click', async function() {
+                const rotation = parseInt(editImg.dataset.rotation) || 0;
+                const btn = this;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                btn.disabled = true;
+                try {
+                    // If rotation needed, create a rotated canvas
+                    let finalFile = file;
+                    if (rotation !== 0) {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const img = new Image();
+                        img.crossOrigin = 'anonymous';
+                        await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = imgSrc; });
+                        const absRot = ((rotation % 360) + 360) % 360;
+                        const swap = (absRot === 90 || absRot === 270);
+                        canvas.width = swap ? img.height : img.width;
+                        canvas.height = swap ? img.width : img.height;
+                        ctx.save();
+                        ctx.translate(canvas.width / 2, canvas.height / 2);
+                        ctx.rotate(absRot * Math.PI / 180);
+                        ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                        ctx.restore();
+                        const blob = await new Promise(r => canvas.toBlob(r, file.type || 'image/jpeg', 0.92));
+                        finalFile = new File([blob], file.name, { type: file.type || 'image/jpeg' });
+                    }
+                    showToast('Subiendo banner...','info');
+                    const fd = new FormData(); fd.append('file', finalFile); fd.append('product_type','banner');
+                    const result = await api.postFormData('/upload', fd);
+                    if (result.url) {
+                        document.getElementById('aebBannerUrl').value = result.url;
+                        previewEl.innerHTML = '<img src="'+result.url+'" style="width:100%;height:100%;object-fit:cover;">';
+                        showToast('Banner subido correctamente','success');
+                    }
+                } catch(err) { showToast('Error: '+err.message,'error'); }
+                input.value = '';
+            });
+        };
+        reader.readAsDataURL(file);
     };
 
     window.adminEditBizRemoveBanner = function() {

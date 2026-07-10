@@ -270,7 +270,7 @@
                 const statusLabels = { approved: 'Activo', pending: 'Pendiente de aprobacion', rejected: 'Rechazado' };
                 editProfileBizName.textContent = primaryBiz.title || 'Mi Negocio';
                 editProfileBizStatus.textContent = statusLabels[primaryBiz.status] || primaryBiz.status;
-                editProfileBtn.onclick = function() { openEditBusinessModal(primaryBiz.id); };
+                editProfileBtn.onclick = function() { window.openEditBusinessModal(primaryBiz.id); };
                 editProfileViewBtn.href = '/negocio/' + (primaryBiz.slug || primaryBiz.id);
                 editProfileCTA.style.display = '';
 
@@ -287,7 +287,7 @@
                         chip.className = 'btn btn-secondary btn-sm';
                         chip.style.cssText = 'font-size:0.82rem;border-radius:8px;';
                         chip.innerHTML = '<i class="fas fa-pen" style="font-size:0.7rem;"></i> ' + (b.title || 'Negocio');
-                        chip.onclick = function() { openEditBusinessModal(b.id); };
+                        chip.onclick = function() { window.openEditBusinessModal(b.id); };
                         otherWrap.appendChild(chip);
                     });
                 }
@@ -1726,13 +1726,42 @@
                 editBizBannerFile = file;
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    bSection.querySelector('.edit-biz-banner-preview').innerHTML = '<img src="' + e.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
-                    bSection.querySelector('.edit-biz-banner-remove-btn').style.display = 'inline-flex';
+                    const imgSrc = e.target.result;
+                    bSection.querySelector('.edit-biz-banner-preview').innerHTML = `
+                        <div style="position:relative;width:100%;height:100%;overflow:hidden;">
+                            <img id="editBizBannerEditImg" src="${imgSrc}" style="width:100%;height:100%;object-fit:cover;transition:transform 0.3s ease;transform:rotate(0deg);">
+                            <div style="position:absolute;bottom:6px;right:6px;display:flex;gap:5px;">
+                                <button type="button" class="eb-banner-rotate-btn" data-dir="-90" style="width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.7);color:#fff;border:none;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;" title="Rotar -90°">
+                                    <i class="fas fa-rotate-left"></i>
+                                </button>
+                                <button type="button" class="eb-banner-rotate-btn" data-dir="90" style="width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.7);color:#fff;border:none;cursor:pointer;font-size:0.9rem;display:flex;align-items:center;justify-content:center;" title="Rotar +90°">
+                                    <i class="fas fa-rotate-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    const editImg = document.getElementById('editBizBannerEditImg');
+                    editImg.dataset.rotation = '0';
+                    bSection.querySelectorAll('.eb-banner-rotate-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const dir = parseInt(this.dataset.dir);
+                            let rot = parseInt(editImg.dataset.rotation) || 0;
+                            rot += dir;
+                            editImg.dataset.rotation = rot;
+                            editImg.style.transform = 'rotate(' + rot + 'deg)';
+                        });
+                    });
+                    // Store rotated file reference for upload
+                    bSection._bannerImgSrc = imgSrc;
+                    bSection._bannerFile = file;
                 };
                 reader.readAsDataURL(file);
+                bSection.querySelector('.edit-biz-banner-remove-btn').style.display = 'inline-flex';
             });
             bSection.querySelector('.edit-biz-banner-remove-btn').addEventListener('click', function() {
                 editBizBannerFile = null;
+                bSection._bannerImgSrc = null;
+                bSection._bannerFile = null;
                 bSection.querySelector('.edit-biz-banner-preview').innerHTML = '<span style="color:#94a3b8;font-size:0.85rem;"><i class="fas fa-panorama"></i> Sin banner</span>';
                 this.style.display = 'none';
                 bSection.querySelector('.edit-biz-banner-input').value = '';
@@ -1979,8 +2008,34 @@
                 try {
                     const bannerStatus = bannerSection.querySelector('.edit-biz-banner-status');
                     if (bannerStatus) bannerStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo banner...';
+
+                    // Check if banner was rotated
+                    let finalBannerFile = editBizBannerFile;
+                    const editImg = document.getElementById('editBizBannerEditImg');
+                    if (editImg && bannerSection._bannerImgSrc) {
+                        const rotation = parseInt(editImg.dataset.rotation) || 0;
+                        if (rotation !== 0) {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+                            const img = new Image();
+                            img.crossOrigin = 'anonymous';
+                            await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = bannerSection._bannerImgSrc; });
+                            const absRot = ((rotation % 360) + 360) % 360;
+                            const swap = (absRot === 90 || absRot === 270);
+                            canvas.width = swap ? img.height : img.width;
+                            canvas.height = swap ? img.width : img.height;
+                            ctx.save();
+                            ctx.translate(canvas.width / 2, canvas.height / 2);
+                            ctx.rotate(absRot * Math.PI / 180);
+                            ctx.drawImage(img, -img.width / 2, -img.height / 2);
+                            ctx.restore();
+                            const blob = await new Promise(r => canvas.toBlob(r, editBizBannerFile.type || 'image/jpeg', 0.92));
+                            finalBannerFile = new File([blob], editBizBannerFile.name, { type: editBizBannerFile.type || 'image/jpeg' });
+                        }
+                    }
+
                     const bannerFd = new FormData();
-                    bannerFd.append('file', editBizBannerFile);
+                    bannerFd.append('file', finalBannerFile);
                     bannerFd.append('product_type', 'banner');
                     const bannerResult = await api.postFormData('/upload', bannerFd);
                     if (bannerResult.url) {
