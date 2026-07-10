@@ -286,6 +286,29 @@
         const dateEl = document.getElementById('adminDate');
         if (dateEl) dateEl.textContent = new Date().toLocaleDateString('es-VE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
 
+        // ─── Hamburger menu toggle (fix for admin sub-pages) ──
+        const navToggle = document.getElementById('navToggle');
+        const navMenu = document.getElementById('navMenu');
+        if (navToggle && navMenu) {
+            navToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                navMenu.classList.toggle('active');
+                navToggle.classList.toggle('active');
+            });
+            navMenu.querySelectorAll('.nav-link').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    navMenu.classList.remove('active');
+                    navToggle.classList.remove('active');
+                });
+            });
+            document.addEventListener('click', function(e) {
+                if (!navToggle.contains(e.target) && !navMenu.contains(e.target)) {
+                    navMenu.classList.remove('active');
+                    navToggle.classList.remove('active');
+                }
+            });
+        }
+
         // Sidebar toggle
         const sidebarToggle = document.getElementById('adminSidebarToggle');
         const sidebar = document.getElementById('adminSidebar');
