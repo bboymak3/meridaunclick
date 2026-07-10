@@ -465,12 +465,17 @@ function populateBusinessDetail(b) {
         };
     }
 
-    // Share WhatsApp button
+    // Share WhatsApp button (premium only)
     const shareWhatsAppBtn = document.getElementById('shareWhatsAppBtn');
     if (shareWhatsAppBtn) {
-        shareWhatsAppBtn.onclick = () => {
-            shareBusinessWhatsApp(b);
-        };
+        if (isOwnerPremium) {
+            shareWhatsAppBtn.style.display = '';
+            shareWhatsAppBtn.onclick = () => {
+                shareBusinessWhatsApp(b);
+            };
+        } else {
+            shareWhatsAppBtn.style.display = 'none';
+        }
     }
 
     // ─── Favorite Button ──────────────────────────────────────
@@ -763,6 +768,7 @@ async function loadBusinessServices(businessId) {
 
 // ─── Utility ────────────────────────────────────────────────
 // escapeHtml is defined in app.js (common module)
+
 
 
 

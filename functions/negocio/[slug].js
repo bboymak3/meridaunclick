@@ -538,7 +538,7 @@ export async function onRequestGet(context) {
                         <a href="#" class="btn btn-whatsapp btn-full btn-lg" id="mainWhatsApp" style="display:none;" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Contactar por WhatsApp</a>
                         <a href="#" class="btn btn-full btn-lg" id="emailContactBtn" style="display:none;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;font-weight:600;border-radius:12px;text-align:center;text-decoration:none;padding:14px 24px;font-size:1rem;"><i class="fas fa-envelope"></i> Contactar por Email</a>
                         <button class="btn btn-primary btn-full btn-lg" id="openChatBtn" style="margin-top:8px;"><i class="fas fa-comment-dots"></i> Enviar Mensaje</button>
-                        <button class="btn btn-share-wa btn-full btn-lg" id="shareWhatsAppBtn" style="margin-top:8px;"><i class="fab fa-whatsapp"></i> Compartir por WhatsApp</button>
+                        <button class="btn btn-share-wa btn-full btn-lg" id="shareWhatsAppBtn" style="display:none;margin-top:8px;"><i class="fab fa-whatsapp"></i> Compartir por WhatsApp</button>
                     </div>
                 </div>
 
@@ -624,9 +624,9 @@ export async function onRequestGet(context) {
     <span id="statAreaLabel" class="hidden"></span>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="/js/app.js?v=5"></script>
+    <script src="/js/app.js?v=6"></script>
     <script>window.__BUSINESS_ID = ${business.id}; window.__BUSINESS_SLUG = '${escapeJs(business.slug)}';</script>
-    <script src="/js/business-detail.js?v=5"></script>
+    <script src="/js/business-detail.js?v=6"></script>
     <script src="/js/chat.js?v=3"></script>
     <script src="/js/review-widget.js?v=3"></script>
     <script src="/js/ai-chatbot.js?v=3"></script>
