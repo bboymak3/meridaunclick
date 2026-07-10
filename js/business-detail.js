@@ -465,11 +465,13 @@ function populateBusinessDetail(b) {
         };
     }
 
-    // Share WhatsApp button (premium only)
+    // Share WhatsApp button (premium only — black outline style to differentiate from contact)
     const shareWhatsAppBtn = document.getElementById('shareWhatsAppBtn');
     if (shareWhatsAppBtn) {
         if (isOwnerPremium) {
             shareWhatsAppBtn.style.display = '';
+            shareWhatsAppBtn.onmouseenter = () => { shareWhatsAppBtn.style.background = '#111'; shareWhatsAppBtn.style.color = '#fff'; shareWhatsAppBtn.querySelector('i').style.color = '#fff'; };
+            shareWhatsAppBtn.onmouseleave = () => { shareWhatsAppBtn.style.background = '#fff'; shareWhatsAppBtn.style.color = '#111'; shareWhatsAppBtn.querySelector('i').style.color = '#25d366'; };
             shareWhatsAppBtn.onclick = () => {
                 shareBusinessWhatsApp(b);
             };
@@ -768,6 +770,7 @@ async function loadBusinessServices(businessId) {
 
 // ─── Utility ────────────────────────────────────────────────
 // escapeHtml is defined in app.js (common module)
+
 
 
 
