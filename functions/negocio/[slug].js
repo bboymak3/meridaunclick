@@ -476,11 +476,12 @@ export async function onRequestGet(context) {
             </div>
 
             <div class="business-content hidden" id="businessContent">
-                <div class="compact-info-card">
-                    <!-- Logo -->
+                <!-- Logo -->
                 <div id="businessLogoWrap" style="display:none;margin-bottom:24px;text-align:center;padding:24px 0 8px;">
                     <img id="businessLogo" src="" alt="Logo" style="max-height:200px;max-width:420px;object-fit:contain;border-radius:12px;box-shadow:0 2px 16px rgba(0,0,0,0.10);">
                 </div>
+
+                <div class="compact-info-card">
                     <div class="compact-top-row">
                         <div class="compact-price-row"><span id="propDetailBadges"></span></div>
                         <button class="btn-favorite" id="btnFavorite" aria-label="Agregar a favoritos" data-business-id=""><i class="far fa-heart"></i></button>

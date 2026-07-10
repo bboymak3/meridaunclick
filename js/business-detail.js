@@ -49,12 +49,15 @@
 
         } catch (error) {
             console.error('Error loading business:', error);
+            // Temporary: show error details in console for debugging
+            if (window.__DEBUG_BUSINESS) console.error('Business load error details:', error.message, error.stack);
             if (error.message.includes('no encontrado') || error.message.includes('404')) {
                 showError();
             } else {
                 loadingEl.innerHTML = `
                     <i class="fas fa-exclamation-triangle fa-spin fa-3x" style="color:#f59e0b;"></i>
                     <p>Error al cargar. Intenta nuevamente.</p>
+                    <p style="font-size:0.75rem;color:#999;margin-top:8px;max-width:400px;word-break:break-all;">${(error.message||'').replace(/</g,'&lt;')}</p>
                     <button class="btn btn-primary" onclick="location.reload()" style="margin-top:16px;">
                         <i class="fas fa-redo"></i> Reintentar
                     </button>
