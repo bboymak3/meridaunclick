@@ -59,7 +59,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    const { name, email, phone, password } = body;
+    const { name, email, phone, password, role: requestedRole } = body;
 
     // Validation
     if (!name || !email || !password) {
@@ -101,7 +101,16 @@ export async function onRequestPost(context) {
     // Check if any admin exists - if not, first user becomes admin
     const adminCheck = await env.DB.prepare('SELECT COUNT(*) as count FROM users WHERE role = ?').bind('admin').first();
     const isFirstUser = !adminCheck || adminCheck.count === 0;
-    const assignedRole = isFirstUser ? 'admin' : 'user';
+
+    // Determine role: first user is always admin, otherwise accept 'agent' or default to 'user'
+    let assignedRole;
+    if (isFirstUser) {
+      assignedRole = 'admin';
+    } else if (requestedRole === 'agent') {
+      assignedRole = 'agent';
+    } else {
+      assignedRole = 'user';
+    }
 
     // Insert user
     const result = await env.DB.prepare(

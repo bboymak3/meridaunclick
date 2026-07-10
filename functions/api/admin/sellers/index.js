@@ -32,8 +32,21 @@ export async function onRequestGet(context) {
     // Check if sellers_profiles table exists
     const tableCheck = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='sellers_profiles'").first();
     if (!tableCheck) {
-      // Table doesn't exist - return empty array
-      return new Response(JSON.stringify({ sellers: [] }), {
+      // No sellers_profiles table — list agents/users with businesses directly
+      const agentSellers = await env.DB.prepare(`
+        SELECT u.id as user_id, u.name as user_name, u.email as user_email, u.role as user_role,
+               COALESCE(u.plan_type, 'basic') as plan_type,
+               u.avatar, u.phone, u.whatsapp,
+               (SELECT b.title FROM businesses b WHERE b.user_id = u.id LIMIT 1) as store_name,
+               (SELECT COUNT(*) FROM businesses b WHERE b.user_id = u.id) as business_count,
+               u.created_at
+        FROM users u
+        WHERE u.role IN ('agent', 'user')
+          AND u.id IN (SELECT DISTINCT user_id FROM businesses)
+        ORDER BY u.created_at DESC
+      `).all();
+
+      return new Response(JSON.stringify({ sellers: agentSellers.results || [] }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -98,7 +111,8 @@ export async function onRequestGet(context) {
              COALESCE(u.name, 'Sin nombre') as user_name,
              u.email as user_email,
              u.role as user_role,
-             COALESCE(u.plan_type, 'basic') as plan_type
+             COALESCE(u.plan_type, 'basic') as plan_type,
+             (SELECT COUNT(*) FROM businesses b WHERE b.user_id = sp.user_id) as business_count
       FROM sellers_profiles sp
       LEFT JOIN users u ON sp.user_id = u.id
       ORDER BY sp.created_at DESC

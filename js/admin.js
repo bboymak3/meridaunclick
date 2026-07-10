@@ -85,6 +85,74 @@
     const adminBizEditSave = document.getElementById('adminBizEditSave');
     const adminBizEditCancel = document.getElementById('adminBizEditCancel');
 
+    // ─── Agent Read-Only Mode ────────────────────────────────
+    function applyReadOnlyMode() {
+        // Disable all action buttons (delete, save, approve, reject, create, etc.)
+        document.querySelectorAll('button').forEach(btn => {
+            const text = (btn.textContent || '').toLowerCase();
+            const icon = btn.querySelector('i');
+            const hasDangerIcon = icon && (icon.classList.contains('fa-trash') || icon.classList.contains('fa-ban'));
+            const isAction = text.includes('eliminar') || text.includes('borrar') || text.includes('eliminar')
+                || text.includes('aprobar') || text.includes('rechazar') || text.includes('guardar')
+                || text.includes('crear') || text.includes('agregar') || text.includes('eliminar')
+                || text.includes('activar') || text.includes('desactivar') || text.includes('importar')
+                || hasDangerIcon;
+
+            // Allow profile editing and navigation
+            const isProfileBtn = btn.closest('#sectionProfile') || text.includes('perfil');
+            const isNavBtn = btn.closest('.admin-sidebar') || btn.closest('.admin-tabs') || text.includes('volver');
+
+            if (isAction && !isProfileBtn && !isNavBtn) {
+                btn.disabled = true;
+                btn.style.opacity = '0.4';
+                btn.style.cursor = 'not-allowed';
+                btn.style.pointerEvents = 'none';
+            }
+        });
+
+        // Disable all inputs/textarea/selects EXCEPT in profile section
+        document.querySelectorAll('input, textarea, select').forEach(el => {
+            if (!el.closest('#sectionProfile')) {
+                if (el.type !== 'hidden' && el.type !== 'search') {
+                    el.disabled = true;
+                    el.style.opacity = '0.6';
+                }
+            }
+        });
+
+        // Disable role toggles for agents
+        document.querySelectorAll('.role-toggle-btn').forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = '0.4';
+            btn.style.cursor = 'not-allowed';
+            btn.style.pointerEvents = 'none';
+        });
+
+        // Add read-only banner
+        const header = document.querySelector('.admin-main') || document.querySelector('.admin-content');
+        if (header) {
+            const banner = document.createElement('div');
+            banner.style.cssText = 'background:linear-gradient(135deg,#eff6ff,#dbeafe);color:#1d4ed8;padding:10px 16px;border-radius:10px;margin-bottom:16px;font-size:0.88rem;font-weight:600;display:flex;align-items:center;gap:8px;';
+            banner.innerHTML = '<i class="fas fa-eye"></i> Modo Agente — Solo lectura. Puedes ver la información pero no modificarla. Usa "Mi Perfil" para editar tus datos.';
+            header.insertBefore(banner, header.firstChild);
+        }
+
+        // Hide certain tabs that agents shouldn't see
+        const hideTabs = ['tabUsers', 'tabMessages', 'tabPremium', 'tabEditBiz'];
+        hideTabs.forEach(tabId => {
+            const tab = document.getElementById(tabId);
+            if (tab) tab.style.display = 'none';
+        });
+
+        // Also hide sidebar items for hidden tabs
+        hideTabs.forEach(tabId => {
+            const sideLink = document.querySelector(`.admin-sidebar a[data-tab="${tabId}"]`);
+            if (sideLink) sideLink.closest('li')?.remove();
+        });
+
+        showToast('Modo Agente: Vista de solo lectura activada', 'info');
+    }
+
     // ─── Initialization ─────────────────────────────────────────
     async function init() {
         // Check auth
@@ -93,14 +161,21 @@
             return;
         }
 
-        // Check admin role
+        // Check admin or agent role
         const user = getCachedUser();
-        if (!user || user.role !== 'admin') {
-            showToast('Acceso denegado. Solo administradores.', 'error');
+        const isAgent = user && user.role === 'agent';
+
+        if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
+            showToast('Acceso denegado. Solo administradores o agentes.', 'error');
             setTimeout(() => {
                 window.location.href = 'index.html';
             }, 1500);
             return;
+        }
+
+        // Agent read-only mode
+        if (isAgent) {
+            applyReadOnlyMode();
         }
 
         // Set current date
@@ -564,6 +639,7 @@
                 // Role toggle
                 let toggleHTML = `<div class="role-toggle" data-user-id="${u.id}" data-current-role="${currentRole}">`;
                 toggleHTML += `<button class="role-toggle-btn ${currentRole === 'admin' ? 'active-admin' : ''} ${isSelf ? 'self-badge' : ''}" data-role="admin" ${isSelf ? 'disabled' : ''}><i class="fas fa-shield-alt"></i> Admin</button>`;
+                toggleHTML += `<button class="role-toggle-btn ${currentRole === 'agent' ? 'active-agent' : ''} ${isSelf ? 'self-badge' : ''}" data-role="agent" ${isSelf ? 'disabled' : ''}><i class="fas fa-store"></i> Agente</button>`;
                 toggleHTML += `<button class="role-toggle-btn ${currentRole === 'user' ? 'active-user' : ''} ${isSelf ? 'self-badge' : ''}" data-role="user" ${isSelf ? 'disabled' : ''}><i class="fas fa-user"></i> User</button>`;
                 toggleHTML += `</div>`;
 
@@ -582,8 +658,8 @@
                         <td style="font-size:0.83rem;">${u.phone || '<span style="color:#ccc">—</span>'}</td>
                         <td>
                             <span class="admin-role-badge-inline role-${currentRole}">
-                                <i class="fas ${currentRole === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
-                                ${currentRole === 'admin' ? 'Admin' : 'Usuario'}
+                                <i class="fas ${currentRole === 'admin' ? 'fa-shield-alt' : currentRole === 'agent' ? 'fa-store' : 'fa-user'}"></i>
+                                ${currentRole === 'admin' ? 'Admin' : currentRole === 'agent' ? 'Agente' : 'Usuario'}
                             </span>
                         </td>
                         <td>${u.is_active ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>'}</td>
@@ -631,7 +707,7 @@
 
         try {
             await api.put(`/users/${userId}`, { role: newRole });
-            showToast(`Rol cambiado a ${newRole === 'admin' ? 'Administrador' : 'Usuario'} exitosamente`, 'success');
+            showToast(`Rol cambiado a ${newRole === 'admin' ? 'Administrador' : newRole === 'agent' ? 'Agente' : 'Usuario'} exitosamente`, 'success');
 
             // Update toggle UI
             toggleEl.dataset.currentRole = newRole;
@@ -649,8 +725,8 @@
                 if (badgeCell) {
                     badgeCell.innerHTML = `
                         <span class="admin-role-badge-inline role-${newRole}">
-                            <i class="fas ${newRole === 'admin' ? 'fa-shield-alt' : 'fa-user'}"></i>
-                            ${newRole === 'admin' ? 'Admin' : 'Usuario'}
+                            <i class="fas ${newRole === 'admin' ? 'fa-shield-alt' : newRole === 'agent' ? 'fa-store' : 'fa-user'}"></i>
+                            ${newRole === 'admin' ? 'Admin' : newRole === 'agent' ? 'Agente' : 'Usuario'}
                         </span>
                     `;
                 }
@@ -1953,6 +2029,8 @@
         approveJob,
         rejectJob,
         deleteJob,
+        activateSellerPremium,
+        deactivateSellerPremium,
     };
 
     // ─── Facebook Event Listeners (set up in init) ─────────────
@@ -3185,6 +3263,7 @@
                     ? '<span style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;padding:2px 10px;border-radius:12px;font-size:0.72rem;font-weight:700;">Premium</span>'
                     : '<span style="background:#f1f5f9;color:#64748b;padding:2px 10px;border-radius:12px;font-size:0.72rem;">Básico</span>';
                 const date = s.created_at ? new Date(s.created_at).toLocaleDateString('es-VE') : '-';
+                const isPremium = s.plan_type === 'premium';
 
                 return `<tr>
                     <td>${s.user_id}</td>
@@ -3201,16 +3280,46 @@
                     <td>${escHtml(s.city || '')} / ${escHtml(s.state || '')}</td>
                     <td>${escHtml(s.phone || '-')}</td>
                     <td>${s.whatsapp ? `<span style="color:#25D366;"><i class="fab fa-whatsapp"></i> ${escHtml(s.whatsapp)}</span>` : '<span style="color:#d1d5db;">-</span>'}</td>
-                    <td>${s.total_sales || 0}</td>
+                    <td>${s.business_count || 0}</td>
                     <td>${planBadge}</td>
                     <td style="font-size:0.78rem;color:#94a3b8;">${date}</td>
+                    <td>
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                            <button class="btn btn-xs btn-outline" onclick="window.admin.editUser(${s.user_id})" title="Editar agente"><i class="fas fa-edit"></i></button>
+                            ${!isPremium ? `<button class="btn btn-xs" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-weight:600;" onclick="window.admin.activateSellerPremium(${s.user_id})" title="Activar Premium"><i class="fas fa-crown"></i> Premium</button>` : `<button class="btn btn-xs" style="background:#f1f5f9;color:#64748b;" onclick="window.admin.deactivateSellerPremium(${s.user_id})" title="Quitar Premium"><i class="fas fa-times-circle"></i> Quitar</button>`}
+                        </div>
+                    </td>
                 </tr>`;
             }).join('');
         } catch (err) {
             if (loading) loading.style.display = 'none';
             console.error('Error loading sellers:', err);
-            if (tbody) tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state-sm"><p style="color:#dc2626;">Error al cargar vendedores: ${escHtml(err.message)}</p></div></td></tr>`;
+            if (tbody) tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state-sm"><p style="color:#dc2626;">Error al cargar vendedores: ${escHtml(err.message)}</p></div></td></tr>`;
             if (table) table.style.display = 'table';
+        }
+    }
+
+    // Activate premium for a seller
+    async function activateSellerPremium(userId) {
+        if (!confirm('¿Activar plan Premium a este vendedor por 3 meses?')) return;
+        try {
+            await api.post('/users/activate-premium', { user_id: userId, duration: '3_months' });
+            showToast('Premium activado exitosamente (3 meses)', 'success');
+            loadSellersPanel();
+        } catch (err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    }
+
+    // Deactivate premium for a seller
+    async function deactivateSellerPremium(userId) {
+        if (!confirm('¿Quitar el plan Premium a este vendedor?')) return;
+        try {
+            await api.put(`/users/${userId}`, { plan_type: 'basic' });
+            showToast('Premium removido exitosamente', 'success');
+            loadSellersPanel();
+        } catch (err) {
+            showToast('Error: ' + err.message, 'error');
         }
     }
 
@@ -3674,4 +3783,5 @@
     }
 
 })();
+
 

@@ -258,7 +258,7 @@
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone: phone || null, password }),
+                body: JSON.stringify({ name, email, phone: phone || null, password, role: window._registerAsAgent ? 'agent' : undefined }),
             });
 
             const data = await response.json();
@@ -342,6 +342,29 @@
             } else {
                 clearFieldError('regEmailError');
             }
+        });
+    }
+
+    // ─── Register as Agent Tab ─────────────────────────────────
+    const tabRegisterAgent = document.getElementById('tabRegisterAgent');
+    if (tabRegisterAgent) {
+        tabRegisterAgent.addEventListener('click', () => {
+            // Set a flag so handleRegister sends role=agent
+            window._registerAsAgent = true;
+            switchTab('register');
+            // Change register button text
+            const regBtn = document.getElementById('registerBtn');
+            if (regBtn) regBtn.innerHTML = '<i class="fas fa-store"></i> Crear Cuenta de Agente';
+        });
+    }
+
+    // Override switchTab for normal register to clear agent flag
+    const tabRegNormal = document.getElementById('tabRegister');
+    if (tabRegNormal) {
+        tabRegNormal.addEventListener('click', () => {
+            window._registerAsAgent = false;
+            const regBtn = document.getElementById('registerBtn');
+            if (regBtn) regBtn.innerHTML = '<i class="fas fa-user-plus"></i> Crear Cuenta';
         });
     }
 
@@ -504,3 +527,4 @@
     checkAuthAndRedirect();
 
 })();
+

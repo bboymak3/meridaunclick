@@ -460,13 +460,15 @@ function updateNav() {
         const mobileCtaProduct = document.getElementById('mobileCtaProduct');
         if (mobileCtaProduct) mobileCtaProduct.style.display = '';
 
-        // Show admin link for admin users
+        // Show admin link for admin/agent users
         let adminLinkItem = document.getElementById('navAdminItem');
-        if (user && user.role === 'admin') {
+        if (user && (user.role === 'admin' || user.role === 'agent')) {
             if (!adminLinkItem) {
                 adminLinkItem = document.createElement('li');
                 adminLinkItem.id = 'navAdminItem';
-                adminLinkItem.innerHTML = `<a href="admin.html" class="nav-link nav-admin-link"><i class="fas fa-shield-alt"></i> Admin</a>`;
+                const linkLabel = user.role === 'agent' ? 'Panel Agente' : 'Admin';
+                const linkIcon = user.role === 'agent' ? 'fa-store' : 'fa-shield-alt';
+                adminLinkItem.innerHTML = `<a href="admin.html" class="nav-link nav-admin-link"><i class="fas ${linkIcon}"></i> ${linkLabel}</a>`;
                 // Insert before the user item
                 navUserItem.parentNode.insertBefore(adminLinkItem, navUserItem);
             } else {
@@ -1583,4 +1585,5 @@ async function loadFeaturedJobs() {
         console.error('Error loading featured jobs:', error);
     }
 }
+
 
