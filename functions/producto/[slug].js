@@ -512,11 +512,6 @@ export async function onRequestGet(context) {
             this.classList.toggle('active');
         });
     });
-    document.addEventListener('click',function(){document.querySelectorAll('.nav-dropdown-menu.active').forEach(function(m){m.classList.remove('active');});document.querySelectorAll('.nav-dropdown-toggle.active').forEach(function(t){t.classList.remove('active');});});
-    // Mobile nav toggle
-    var navToggle=document.getElementById('navToggle');
-    var navMenu=document.getElementById('navMenu');
-    if(navToggle&&navMenu){navToggle.addEventListener('click',function(){navMenu.classList.toggle('active');});}
     </script>
     <script src="/js/app.js"></script>
     <script>

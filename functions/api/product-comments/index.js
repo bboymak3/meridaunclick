@@ -165,11 +165,11 @@ export async function onRequestPost(context) {
       'INSERT INTO product_comments (product_id, user_id, content) VALUES (?, ?, ?)'
     ).bind(productId, userId, content).run();
 
-    // Also send as a chat message to admin chat if user is logged in and product has a business
-    if (user && product.business_id) {
+    // Also send as a chat message to admin/seller chat (works for logged-in AND anonymous)
+    if (product.business_id) {
       try {
         const business = await env.DB.prepare('SELECT user_id, title FROM businesses WHERE id = ?').bind(product.business_id).first();
-        if (business && business.user_id && business.user_id !== user.id) {
+        if (business && business.user_id) {
           try {
             await env.DB.prepare(`CREATE TABLE IF NOT EXISTS conversations (
               id INTEGER PRIMARY KEY AUTOINCREMENT, business_id INTEGER NOT NULL,
@@ -188,28 +188,36 @@ export async function onRequestPost(context) {
             )`).run();
           } catch (e) {}
 
-          const buyerId = user.id;
+          // For anonymous comments, use buyer_id = 0; for logged-in, use their id
+          const buyerId = user ? user.id : 0;
           const sellerId = business.user_id;
 
-          let conv = await env.DB.prepare(
-            'SELECT id FROM conversations WHERE buyer_id = ? AND seller_id = ? AND business_id = ?'
-          ).bind(buyerId, sellerId, product.business_id).first();
-
-          if (!conv) {
-            const convResult = await env.DB.prepare(
-              'INSERT INTO conversations (business_id, buyer_id, seller_id, last_message, last_message_at) VALUES (?, ?, ?, ?, datetime(\'now\'))'
-            ).bind(product.business_id, buyerId, sellerId, '[COMENTARIO] ' + content).run();
-            conv = { id: convResult.meta.last_row_id };
+          // Skip if logged-in user is the business owner (commenting own product)
+          if (buyerId === sellerId) {
+            // still skip, no need to notify yourself
           } else {
-            await env.DB.prepare(
-              "UPDATE conversations SET last_message = ?, last_message_at = datetime('now'), seller_unread = seller_unread + 1 WHERE id = ?"
-            ).bind('[COMENTARIO] ' + content, conv.id).run();
-          }
+            let conv = await env.DB.prepare(
+              'SELECT id FROM conversations WHERE buyer_id = ? AND seller_id = ? AND business_id = ?'
+            ).bind(buyerId, sellerId, product.business_id).first();
 
-          const commentMsg = '[COMENTARIO en ' + product.name + '] ' + content;
-          await env.DB.prepare(
-            'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)'
-          ).bind(conv.id, user.id, commentMsg).run();
+            if (!conv) {
+              const convResult = await env.DB.prepare(
+                'INSERT INTO conversations (business_id, buyer_id, seller_id, last_message, last_message_at) VALUES (?, ?, ?, ?, datetime(\'now\'))'
+              ).bind(product.business_id, buyerId, sellerId, '[COMENTARIO] ' + content).run();
+              conv = { id: convResult.meta.last_row_id };
+            } else {
+              await env.DB.prepare(
+                "UPDATE conversations SET last_message = ?, last_message_at = datetime('now'), seller_unread = seller_unread + 1 WHERE id = ?"
+              ).bind('[COMENTARIO] ' + content, conv.id).run();
+            }
+
+            const senderName = user ? (user.name || 'Usuario') : 'Anonimo';
+            const commentMsg = '[COMENTARIO en ' + product.name + '] ' + senderName + ': ' + content;
+            const senderId = user ? user.id : 0;
+            await env.DB.prepare(
+              'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)'
+            ).bind(conv.id, senderId, commentMsg).run();
+          }
         }
       } catch (chatErr) {
         console.error('Chat sync error:', chatErr);

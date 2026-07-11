@@ -149,7 +149,7 @@ export async function onRequestGet(context) {
       },
       other_user: c.buyer_id === user.id
         ? { id: c.seller_id, name: c.seller_name, role: 'seller' }
-        : { id: c.buyer_id, name: c.buyer_name, role: 'buyer' },
+        : { id: c.buyer_id, name: c.buyer_name || (c.buyer_id === 0 ? 'Anonimo' : 'Usuario'), role: c.buyer_id === 0 ? 'anonymous' : 'buyer' },
       last_message: c.last_message,
       last_message_at: c.last_message_at,
       unread: c.buyer_id === user.id ? c.buyer_unread : c.seller_unread,
