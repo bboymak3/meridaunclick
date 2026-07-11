@@ -51,13 +51,20 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Parse image: could be JSON array or plain URL
+    let productImage = product.image || '';
+    try {
+        const parsed = JSON.parse(productImage);
+        if (Array.isArray(parsed) && parsed.length > 0) productImage = parsed[0];
+    } catch(e) {}
+
     const baseUrl = 'https://holax.com';
     const title = product.name || 'Producto';
     const price = product.price ? `$${Number(product.price).toLocaleString('es-VE')}` : '';
     const description = product.description
       ? product.description.substring(0, 160)
       : `${title}${price ? ' - ' + price : ''} - Disponible en HOLAX Marketplace, Venezuela.`;
-    const imageUrl = product.image || `${baseUrl}/logo.png`;
+    const imageUrl = productImage || `${baseUrl}/logo.png`;
     const canonicalUrl = `${baseUrl}/producto/${product.slug}`;
 
     // Fetch 3 related products - try same category first, fallback to same business, then any
@@ -275,8 +282,9 @@ export async function onRequestGet(context) {
         .rp-card-name { font-size:1rem; font-weight:600; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:3px; }
         .rp-card-price { font-size:1.1rem; font-weight:700; color:#006EE3; }
 
-        .pd-video { max-width:320px; margin:0 auto; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
-        .pd-video iframe { width:100%; aspect-ratio:9/16; display:block; }
+        .pd-video { width:100%; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.1); }
+        .pd-video iframe { width:100%; aspect-ratio:16/9; display:block; }
+        .pd-video iframe[data-tiktok] { aspect-ratio:9/16; max-width:320px; margin:0 auto; }
 
         @media (max-width:640px) {
             .pd-wrap { padding:15px 12px 54px; }
@@ -353,22 +361,27 @@ export async function onRequestGet(context) {
         </div>
 
         <div class="pd-card">
+            <div class="pd-body" style="padding-top:24px;">
+                ${bizLink ? `<a href="${bizLink}" class="pd-biz-name"><i class="fas fa-store"></i> ${esc(product.business_name || 'Negocio')}${product.city ? ' · ' + esc(product.city) : ''}</a>` : (product.business_name ? `<div class="pd-biz-name"><i class="fas fa-store"></i> ${esc(product.business_name)}</div>` : '')}
+                <h1 class="pd-title">${esc(title)}</h1>
+                ${price ? `<div class="pd-price">${price}</div>` : ''}
+            </div>
+
             <div class="pd-img">
-                ${product.image
-                    ? `<img src="${esc(product.image)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'pd-img-ph\\'><i class=\\'fas fa-image\\'></i></div>'">`
+                ${productImage
+                    ? `<img src="${esc(productImage)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'pd-img-ph\\'><i class=\\'fas fa-image\\'></i></div>'">`
                     : `<div class="pd-img-ph"><i class="fas fa-image"></i></div>`}
                 <span class="pd-cat-badge ${catBadge}"><i class="fas ${catIcon}"></i> ${catLabel}</span>
             </div>
 
             ${product.video_url ? `
-            <div class="pd-video">
-              ${getVideoEmbed(product.video_url)}
+            <div style="padding:20px 24px 0;">
+                <div class="pd-video" style="max-width:100%;">
+                  ${getVideoEmbed(product.video_url)}
+                </div>
             </div>` : ''}
 
             <div class="pd-body">
-                ${bizLink ? `<a href="${bizLink}" class="pd-biz-name"><i class="fas fa-store"></i> ${esc(product.business_name || 'Negocio')}${product.city ? ' · ' + esc(product.city) : ''}</a>` : (product.business_name ? `<div class="pd-biz-name"><i class="fas fa-store"></i> ${esc(product.business_name)}</div>` : '')}
-                <h1 class="pd-title">${esc(title)}</h1>
-                ${price ? `<div class="pd-price">${price}</div>` : ''}
                 <p class="pd-desc">${esc(product.description || 'Sin descripcion disponible.')}</p>
                 <div class="pd-meta">
                     <div class="pd-meta-chip"><i class="fas fa-tag"></i> ${catLabel}</div>
@@ -484,15 +497,15 @@ function fmtDate(d) {
 function getVideoEmbed(url) {
   if (!url) return '';
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) return `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  if (ytMatch) return `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen></iframe>`;
   // YouTube Shorts: youtube.com/shorts/XXX
   const ytShortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
-  if (ytShortsMatch) return `<iframe src="https://www.youtube.com/embed/${ytShortsMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  if (ytShortsMatch) return `<iframe src="https://www.youtube.com/embed/${ytShortsMatch[1]}" frameborder="0" allowfullscreen></iframe>`;
   const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
-  if (ttMatch) return `<iframe src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  if (ttMatch) return `<iframe data-tiktok src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" frameborder="0" allowfullscreen></iframe>`;
   // Direct video files (R2 uploads): .mp4, .webm, .ogg, .mov
   if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) {
     return `<video src="${esc(url)}" controls playsinline preload="metadata" style="width:100%;border-radius:12px;background:#000;"></video>`;
   }
-  return `<iframe src="${esc(url)}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  return `<iframe src="${esc(url)}" frameborder="0" allowfullscreen></iframe>`;
 }

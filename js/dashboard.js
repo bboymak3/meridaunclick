@@ -971,11 +971,22 @@ window.closeEditBusinessModal = function() {
 
             try {
                 const fd = new FormData(form);
+                const rawImage = uploadedImageUrl || fd.get('image') || '';
+                // If image is a JSON array, use first URL as main image
+                let finalImage = rawImage;
+                try {
+                    const parsed = JSON.parse(rawImage);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        finalImage = parsed[0]; // First image as main
+                    }
+                } catch(e) {
+                    // Not JSON, use as-is
+                }
                 const body = {
                     name: fd.get('name'),
                     price: parseFloat(fd.get('price')) || 0,
                     category: fd.get('category') || 'general',
-                    image: fd.get('image') || '',
+                    image: finalImage,
                     description: fd.get('description') || '',
                     video_url: fd.get('video_url') || '',
                     business_id: parseInt(businessId),
@@ -1053,10 +1064,75 @@ window.closeEditBusinessModal = function() {
                 showToast('Error de conexión al subir imagen', 'error');
             });
         }
+
+        function handleMultipleImageUpload(files) {
+            if (!files || files.length === 0) return;
+            const imageFiles = Array.from(files).filter(f => f.type.startsWith('image/'));
+            if (imageFiles.length === 0) { showToast('Solo se permiten imágenes', 'error'); return; }
+            if (imageFiles.length > 5) { showToast('Máximo 5 imágenes por producto', 'error'); return; }
+
+            if (uploadProgress) uploadProgress.classList.remove('hidden');
+            let uploadedCount = 0;
+            const allUrls = [];
+
+            imageFiles.forEach((file, idx) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (uploadPreview) {
+                        if (idx === 0) uploadPreview.innerHTML = '';
+                        const div = document.createElement('div');
+                        div.className = 'prod-upload-preview';
+                        div.style.cssText = 'display:inline-block;position:relative;margin:4px;';
+                        div.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid ${idx===0?'#006EE3':'#e2e8f0'};">
+                            ${idx===0?'<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:4px;">Principal</span>':''}
+                            <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;">&times;</button>`;
+                        uploadPreview.appendChild(div);
+                    }
+                };
+                reader.readAsDataURL(file);
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('product_type', 'marketplace');
+                const token = getToken();
+
+                fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token },
+                    body: formData,
+                })
+                .then(res => res.json())
+                .then(data => {
+                    uploadedCount++;
+                    if (data.url) allUrls.push(data.url);
+                    if (uploadedCount === imageFiles.length) {
+                        if (uploadProgress) uploadProgress.classList.add('hidden');
+                        if (allUrls.length > 0) {
+                            uploadedImageUrl = allUrls[0];
+                            // Store all URLs in the image field as JSON array
+                            const allUrlsJSON = JSON.stringify(allUrls);
+                            if (prodImageInput) prodImageInput.value = allUrlsJSON;
+                            showToast(`${allUrls.length} imagen(es) subida(s) correctamente`, 'success');
+                        }
+                    }
+                })
+                .catch(() => {
+                    uploadedCount++;
+                    if (uploadedCount === imageFiles.length) {
+                        if (uploadProgress) uploadProgress.classList.add('hidden');
+                    }
+                });
+            });
+        }
         
         if (imageFileInput) {
             imageFileInput.addEventListener('change', (e) => {
-                handleImageUpload(e.target.files[0]);
+                const files = e.target.files;
+                if (files.length > 1) {
+                    handleMultipleImageUpload(files);
+                } else if (files.length === 1) {
+                    handleImageUpload(files[0]);
+                }
             });
         }
         

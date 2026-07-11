@@ -52,7 +52,9 @@ export async function onRequestGet(context) {
     const { id } = params;
 
     const property = await env.DB.prepare(`
-      SELECT p.*, u.name as owner_name, u.phone as owner_phone, u.whatsapp as owner_whatsapp, u.email as owner_email, u.avatar as owner_avatar, u.bio as owner_bio, u.plan_type as owner_plan_type
+      SELECT p.*, u.name as owner_name, u.phone as owner_phone, u.whatsapp as owner_whatsapp, u.email as owner_email, u.avatar as owner_avatar, u.bio as owner_bio, u.plan_type as owner_plan_type,
+             (SELECT url FROM property_images WHERE property_id = p.id AND is_cover = 1 LIMIT 1) as cover_image,
+             (SELECT COUNT(*) FROM property_images WHERE property_id = p.id) as image_count
       FROM properties p
       LEFT JOIN users u ON p.user_id = u.id
       WHERE p.id = ?

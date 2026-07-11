@@ -123,8 +123,10 @@ export async function onRequestGet(context) {
 
     // Fetch jobs
     const query = `
-      SELECT *
-      FROM job_listings
+      SELECT j.*,
+             b.logo as business_logo, b.title as business_title
+      FROM job_listings j
+      LEFT JOIN businesses b ON j.business_id = b.id
       WHERE ${whereClause}
       ORDER BY ${orderBy}
       LIMIT ? OFFSET ?

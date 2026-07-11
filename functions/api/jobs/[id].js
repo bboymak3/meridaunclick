@@ -49,7 +49,12 @@ export async function onRequestGet(context) {
   try {
     const { env, request } = context;
     const id = context.params.id;
-    const job = await env.DB.prepare('SELECT * FROM job_listings WHERE id = ?').bind(id).first();
+    const job = await env.DB.prepare(
+      `SELECT j.*, b.logo as business_logo, b.title as business_title
+       FROM job_listings j
+       LEFT JOIN businesses b ON j.business_id = b.id
+       WHERE j.id = ?`
+    ).bind(id).first();
     if (!job) {
       return new Response(JSON.stringify({ error: 'Empleo no encontrado' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }

@@ -1105,7 +1105,16 @@ async function loadFeaturedPropertiesSection() {
                 }
             }
         } catch (e) {
-            // If featured-items fails, show nothing
+            // If featured-items fails, try direct API
+        }
+
+        // Fallback: try direct API for approved properties
+        if (properties.length === 0) {
+            const selectedState = getSelectedState();
+            let endpoint = '/properties?status=approved&limit=6';
+            if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+            const data = await api.get(endpoint);
+            properties = data.properties || [];
         }
 
         if (loading) loading.remove();
@@ -1485,7 +1494,12 @@ async function loadFeaturedProducts() {
         if (emptyState) emptyState.classList.add('hidden');
         products = products.slice(0, 8);
         grid.innerHTML = products.map(p => {
-            const img = p.image || '';
+            // Handle image: could be JSON array or plain URL
+            let img = p.image || '';
+            try {
+                const parsed = JSON.parse(img);
+                if (Array.isArray(parsed) && parsed.length > 0) img = parsed[0];
+            } catch(e) {}
             const price = p.price > 0 ? '$' + Number(p.price).toLocaleString('es-VE') : 'Gratis';
             const bizName = p.business_name || '';
             const featuredBadge = p.featured ? '<span class="card-badge-featured"><i class="fas fa-star"></i></span>' : '';
@@ -1560,12 +1574,14 @@ async function loadFeaturedJobs() {
             const salary = j.salary ? '$' + Number(j.salary).toLocaleString('es-VE') : '';
             const typeLabel = (j.job_type || '').replace('_', ' ');
             const featuredBadge = j.featured ? '<span class="card-badge-featured"><i class="fas fa-star"></i></span>' : '';
+            const bizLogo = j.business_logo || '';
 
             return `
             <a href="empleo.html" class="business-card">
                 ${featuredBadge}
                 <div class="business-card-img">
-                    <div class="card-img-placeholder" style="background:linear-gradient(135deg,#17a2b8,#20c997);">
+                    ${bizLogo ? `<img src="${escapeHtml(bizLogo)}" alt="${escapeHtml(j.company_name || '')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` : ''}
+                    <div class="card-img-placeholder" style="${bizLogo ? 'display:none;' : ''}background:linear-gradient(135deg,#17a2b8,#20c997);">
                         <i class="fas fa-briefcase" style="color:#fff;font-size:2rem;"></i>
                     </div>
                     <div class="card-badges">
@@ -1574,8 +1590,8 @@ async function loadFeaturedJobs() {
                 </div>
                 <div class="business-card-body">
                     <h3 class="business-card-title">${escapeHtml(j.title)}</h3>
-                    <div class="business-card-location"><i class="fas fa-building"></i> ${escapeHtml(j.company_name || j.business_name || '')}</div>
-                    ${j.location ? `<div class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(j.location)}</div>` : ''}
+                    <div class="business-card-location"><i class="fas fa-building"></i> ${escapeHtml(j.company_name || j.business_name || j.business_title || '')}</div>
+                    ${j.city ? `<div class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(j.city)}</div>` : ''}
                     ${salary ? `<div class="business-card-price">${salary}</div>` : ''}
                 </div>
             </a>`;
