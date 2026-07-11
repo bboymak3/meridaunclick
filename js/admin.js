@@ -1055,6 +1055,67 @@ if (!window._renderVideoList) {
                 urlRow.appendChild(upBtn);
             }
         }
+
+        // ─── Gallery image handlers (add multiple) ───
+        const galleryFiles = document.getElementById('bizEditGalleryFiles');
+        const galleryCamera = document.getElementById('bizEditGalleryCamera');
+        const galleryURL = document.getElementById('bizEditGalleryURL');
+        const galleryURLBtn = document.getElementById('bizEditGalleryURLBtn');
+        const galleryStatus = document.getElementById('bizEditGalleryStatus');
+
+        async function uploadGalleryFile(file) {
+            if (!adminBizEditModal.dataset.businessId) return;
+            if (galleryStatus) galleryStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo ' + file.name + '...';
+            try {
+                const compressed = await compressImage(file);
+                const fd = new FormData();
+                fd.append('file', compressed);
+                fd.append('product_type', 'business_image');
+                const data = await api.postFormData('/upload', fd);
+                if (!data.url) throw new Error(data.error || 'Error al subir');
+                await api.post(`/images/${adminBizEditModal.dataset.businessId}`, { url: data.url, is_cover: 0 });
+                showToast('Imagen agregada', 'success');
+                loadBizEditGallery(parseInt(adminBizEditModal.dataset.businessId));
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            }
+            if (galleryStatus) galleryStatus.innerHTML = '';
+        }
+
+        if (galleryFiles) {
+            galleryFiles.addEventListener('change', function() {
+                Array.from(this.files).forEach(file => uploadGalleryFile(file));
+                this.value = '';
+            });
+        }
+        if (galleryCamera) {
+            galleryCamera.addEventListener('change', function() {
+                if (this.files[0]) uploadGalleryFile(this.files[0]);
+                this.value = '';
+            });
+        }
+        if (galleryURL && galleryURLBtn) {
+            const showBtn = () => { galleryURLBtn.style.display = galleryURL.value.trim() ? 'inline-block' : 'none'; };
+            galleryURL.addEventListener('input', showBtn);
+            galleryURL.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); galleryURLBtn.click(); } });
+            galleryURLBtn.addEventListener('click', async () => {
+                const url = galleryURL.value.trim();
+                if (!url || !adminBizEditModal.dataset.businessId) return;
+                galleryURLBtn.disabled = true;
+                galleryURLBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Agregando...';
+                try {
+                    await api.post(`/images/${adminBizEditModal.dataset.businessId}`, { url, is_cover: 0 });
+                    showToast('Imagen agregada por URL', 'success');
+                    galleryURL.value = '';
+                    galleryURLBtn.style.display = 'none';
+                    loadBizEditGallery(parseInt(adminBizEditModal.dataset.businessId));
+                } catch (err) {
+                    showToast('Error: ' + err.message, 'error');
+                }
+                galleryURLBtn.disabled = false;
+                galleryURLBtn.innerHTML = '<i class="fas fa-plus"></i> Agregar URL';
+            });
+        }
     }
 
     async function editBusiness(businessId) {
@@ -1288,16 +1349,16 @@ if (!window._renderVideoList) {
             adminBizEditModal.dataset.imageCount = images.length;
 
             if (images.length === 0) {
-                galleryEl.innerHTML = '<span style="color:#999;font-size:0.85rem;">Sin imágenes</span>';
+                galleryEl.innerHTML = '<div style="text-align:center;padding:16px;border:2px dashed #d1d5db;border-radius:10px;color:#94a3b8;font-size:0.85rem;"><i class="fas fa-images" style="font-size:1.5rem;display:block;margin-bottom:6px;"></i>Sin imágenes en la galería.<br><small>Usa los botones de abajo para agregar.</small></div>';
                 return;
             }
 
             galleryEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
                 images.map(img => `
-                    <div style="position:relative;display:inline-block;border-radius:8px;overflow:hidden;border:2px solid ${img.is_cover ? '#f59e0b' : '#e5e7eb'};">
-                        <img src="${img.url}" style="width:100px;height:80px;object-fit:cover;" onerror="this.style.display='none'">
-                        ${img.is_cover ? '<span style="position:absolute;top:2px;left:2px;background:#f59e0b;color:#fff;font-size:0.6rem;padding:1px 4px;border-radius:4px;">Portada</span>' : ''}
-                        <button type="button" onclick="window._adminDeleteBizImage(${businessId}, ${img.id})" style="position:absolute;top:2px;right:2px;background:rgba(220,53,69,0.9);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Eliminar">&times;</button>
+                    <div style="position:relative;display:inline-block;border-radius:8px;overflow:hidden;border:2px solid ${img.is_cover ? '#f59e0b' : '#e5e7eb'};transition:border-color 0.2s;">
+                        <img src="${img.url}" style="width:100px;height:80px;object-fit:cover;" onerror="this.style.display='none'" loading="lazy">
+                        ${img.is_cover ? '<span style="position:absolute;top:2px;left:2px;background:#f59e0b;color:#fff;font-size:0.6rem;padding:1px 4px;border-radius:4px;">Portada</span>' : `<button type="button" onclick="window._adminSetCover(${businessId}, ${img.id})" style="position:absolute;top:2px;left:2px;background:rgba(0,110,227,0.85);color:#fff;border:none;border-radius:4px;font-size:0.55rem;padding:1px 4px;cursor:pointer;" title="Poner como portada"><i class="fas fa-star"></i></button>`}
+                        <button type="button" onclick="window._adminDeleteBizImage(${businessId}, ${img.id})" style="position:absolute;bottom:2px;right:2px;background:rgba(220,53,69,0.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Eliminar"><i class="fas fa-trash"></i></button>
                     </div>
                 `).join('') +
                 '</div>';
@@ -1305,6 +1366,24 @@ if (!window._renderVideoList) {
             console.error('Error loading gallery:', err);
         }
     }
+
+    // Set image as cover
+    async function setCoverImage(businessId, imageId) {
+        try {
+            await api.put(`/images/${businessId}?image_id=${imageId}`, { is_cover: 1 });
+            showToast('Portada actualizada', 'success');
+            loadBizEditGallery(businessId);
+            // Also refresh the main image preview
+            const biz = await api.get(`/businesses/${businessId}`);
+            if (biz.image) {
+                const prev = document.getElementById('bizEditImagePreview');
+                if (prev) prev.innerHTML = '<img src="' + biz.image + '" style="width:100%;height:150px;object-fit:cover;border-radius:10px;">';
+            }
+        } catch (err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+    }
+    window._adminSetCover = setCoverImage;
 
     // Delete business image
     async function deleteBizImage(businessId, imageId) {

@@ -1408,6 +1408,27 @@
                         <input type="hidden" id="editBizVideoUrlHidden">
                     </div>
 
+                    <!-- Galería de Imágenes -->
+                    <div class="eb-section">
+                        <div class="eb-section-title"><i class="fas fa-images" style="color:#006EE3;"></i> Galería de Imágenes</div>
+                        <div id="ebBizGallery" style="min-height:40px;"></div>
+                        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                            <label class="btn btn-primary btn-sm" style="cursor:pointer;margin:0;">
+                                <i class="fas fa-plus"></i> Agregar Imágenes
+                                <input type="file" id="ebBizGalleryFiles" accept="image/*" multiple style="display:none;">
+                            </label>
+                            <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0;">
+                                <i class="fas fa-camera"></i> Tomar Foto
+                                <input type="file" id="ebBizGalleryCamera" accept="image/*" capture="environment" style="display:none;">
+                            </label>
+                            <span id="ebBizGalleryStatus" style="font-size:0.8rem;color:#6b7280;"></span>
+                        </div>
+                        <div style="margin-top:8px;display:flex;gap:6px;">
+                            <input type="url" id="ebBizGalleryURL" class="eb-input" placeholder="O pega URL de imagen">
+                            <button type="button" id="ebBizGalleryURLBtn" class="btn btn-primary btn-sm" style="display:none;white-space:nowrap;"><i class="fas fa-plus"></i></button>
+                        </div>
+                    </div>
+
                     <!-- Location -->
                     <div class="eb-section">
                         <div class="eb-section-title"><i class="fas fa-map-marker-alt"></i> Ubicacion</div>
@@ -1605,7 +1626,7 @@
     </div>
 
     <script src="js/app.js"></script>
-    <script src="js/dashboard.js?v=7"></script>
+    <script src="js/dashboard.js?v=8"></script>
     <script src="js/chat.js"></script>
 
     <script>

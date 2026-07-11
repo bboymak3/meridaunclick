@@ -2113,6 +2113,127 @@ window.closeEditBusinessModal = function() {
         preview.innerHTML = '<video src="' + url + '" controls></video>';
     }
 
+    // ─── Gallery functions for user edit modal ─────────
+    async function loadEditBizGallery(businessId) {
+        const galleryEl = document.getElementById('ebBizGallery');
+        if (!galleryEl || !businessId) return;
+        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        try {
+            const res = await fetch('/api/businesses/' + businessId, { headers: { 'Authorization': 'Bearer ' + token } });
+            const biz = await res.json();
+            const images = biz.images || [];
+            if (images.length === 0) {
+                galleryEl.innerHTML = '<div style="text-align:center;padding:16px;border:2px dashed #d1d5db;border-radius:10px;color:#94a3b8;font-size:0.85rem;"><i class="fas fa-images" style="font-size:1.5rem;display:block;margin-bottom:6px;"></i>Sin imágenes.<br><small>Usa los botones de abajo para agregar.</small></div>';
+                return;
+            }
+            galleryEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+                images.map(function(img) {
+                    return '<div style="position:relative;display:inline-block;border-radius:8px;overflow:hidden;border:2px solid ' + (img.is_cover ? '#f59e0b' : '#e5e7eb') + ';">' +
+                        '<img src="' + img.url + '" style="width:90px;height:72px;object-fit:cover;" loading="lazy" onerror="this.style.display=\'none\'">' +
+                        (img.is_cover ? '<span style="position:absolute;top:2px;left:2px;background:#f59e0b;color:#fff;font-size:0.6rem;padding:1px 4px;border-radius:4px;">Portada</span>' : '<button type="button" class="eb-gallery-cover-btn" data-biz="' + businessId + '" data-img="' + img.id + '" style="position:absolute;top:2px;left:2px;background:rgba(0,110,227,0.85);color:#fff;border:none;border-radius:4px;font-size:0.55rem;padding:1px 4px;cursor:pointer;" title="Portada"><i class="fas fa-star"></i></button>') +
+                        '<button type="button" class="eb-gallery-del-btn" data-biz="' + businessId + '" data-img="' + img.id + '" style="position:absolute;bottom:2px;right:2px;background:rgba(220,53,69,0.9);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Eliminar"><i class="fas fa-trash"></i></button>' +
+                        '</div>';
+                }).join('') + '</div>';
+            // Bind events
+            galleryEl.querySelectorAll('.eb-gallery-del-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() { deleteEditBizImage(this.dataset.biz, this.dataset.img); });
+            });
+            galleryEl.querySelectorAll('.eb-gallery-cover-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() { setEditBizCover(this.dataset.biz, this.dataset.img); });
+            });
+        } catch (err) {
+            galleryEl.innerHTML = '<span style="color:#999;font-size:0.82rem;">Error al cargar galería</span>';
+        }
+    }
+
+    async function uploadEditBizGalleryFile(file) {
+        var idEl = document.getElementById('editBizId');
+        if (!idEl || !idEl.value) return;
+        var bizId = idEl.value;
+        var statusEl = document.getElementById('ebBizGalleryStatus');
+        if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        try {
+            var fd = new FormData();
+            fd.append('file', file);
+            fd.append('product_type', 'business_image');
+            var res = await fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
+            var data = await res.json();
+            if (!data.url) throw new Error(data.error || 'Error');
+            await fetch('/api/images/' + bizId, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ url: data.url, is_cover: 0 }) });
+            showToast('Imagen agregada', 'success');
+            loadEditBizGallery(bizId);
+        } catch (err) {
+            showToast('Error: ' + err.message, 'error');
+        }
+        if (statusEl) statusEl.innerHTML = '';
+    }
+
+    async function deleteEditBizImage(bizId, imgId) {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        try {
+            await fetch('/api/images/' + bizId + '?image_id=' + imgId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+            showToast('Imagen eliminada', 'success');
+            loadEditBizGallery(bizId);
+        } catch (err) { showToast('Error al eliminar', 'error'); }
+    }
+
+    async function setEditBizCover(bizId, imgId) {
+        var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        try {
+            await fetch('/api/images/' + bizId + '?image_id=' + imgId, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ is_cover: 1 }) });
+            showToast('Portada actualizada', 'success');
+            loadEditBizGallery(bizId);
+        } catch (err) { showToast('Error', 'error'); }
+    }
+
+    // Bind gallery events once DOM is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        var galleryFiles = document.getElementById('ebBizGalleryFiles');
+        var galleryCamera = document.getElementById('ebBizGalleryCamera');
+        var galleryURL = document.getElementById('ebBizGalleryURL');
+        var galleryURLBtn = document.getElementById('ebBizGalleryURLBtn');
+
+        if (galleryFiles) {
+            galleryFiles.addEventListener('change', function() {
+                Array.from(this.files).forEach(function(f) { uploadEditBizGalleryFile(f); });
+                this.value = '';
+            });
+        }
+        if (galleryCamera) {
+            galleryCamera.addEventListener('change', function() {
+                if (this.files[0]) uploadEditBizGalleryFile(this.files[0]);
+                this.value = '';
+            });
+        }
+        if (galleryURL && galleryURLBtn) {
+            galleryURL.addEventListener('input', function() { galleryURLBtn.style.display = this.value.trim() ? 'inline-block' : 'none'; });
+            galleryURL.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); galleryURLBtn.click(); } });
+            galleryURLBtn.addEventListener('click', async function() {
+                var url = galleryURL.value.trim();
+                var idEl = document.getElementById('editBizId');
+                if (!url || !idEl || !idEl.value) return;
+                var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+                this.disabled = true; this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                try {
+                    await fetch('/api/images/' + idEl.value, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url, is_cover: 0 }) });
+                    showToast('Imagen agregada', 'success');
+                    galleryURL.value = ''; galleryURLBtn.style.display = 'none';
+                    loadEditBizGallery(idEl.value);
+                } catch (err) { showToast('Error', 'error'); }
+                this.disabled = false; this.innerHTML = '<i class="fas fa-plus"></i>';
+            });
+        }
+    });
+
+    // Load gallery when edit modal opens (hook into _openEditBizModal)
+    var _origOpen = window.openEditBusinessModal;
+    window.openEditBusinessModal = function(id) {
+        _origOpen(id);
+        // Load gallery after a small delay to let data load
+        setTimeout(function() { loadEditBizGallery(id); }, 800);
+    };
+
     window.saveEditBusiness = async function() {
         const id = document.getElementById('editBizId').value;
         if (!id) return;
