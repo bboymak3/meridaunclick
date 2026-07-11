@@ -48,10 +48,38 @@ async function ensureTable(db) {
         created_at TEXT DEFAULT (datetime('now'))
       )
     `).run();
-  } catch (e) { /* table may exist with different schema - try altering */ }
-  // If table exists but user_id is NOT NULL, we need to handle it gracefully
-  // The INSERT will use NULL for anonymous which works if column allows it
+  } catch (e) { /* table may exist */ }
   try { await db.prepare('CREATE INDEX IF NOT EXISTS idx_pc_product ON product_comments(product_id)').run(); } catch (e) {}
+
+  // Migration: if table was created with user_id NOT NULL, recreate it
+  try {
+    // Try inserting a test row with NULL user_id - if it fails, migrate
+    const testResult = await db.prepare(
+      "INSERT INTO product_comments (product_id, user_id, content) VALUES (0, NULL, '_migrate_check')"
+    ).run();
+    // If succeeded, delete the test row
+    await db.prepare('DELETE FROM product_comments WHERE content = ?').bind('_migrate_check').run();
+  } catch (migrateErr) {
+    // NOT NULL constraint failed - need to migrate
+    try {
+      await db.prepare(`
+        CREATE TABLE IF NOT EXISTS product_comments_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          product_id INTEGER NOT NULL,
+          user_id INTEGER,
+          content TEXT NOT NULL,
+          created_at TEXT DEFAULT (datetime('now'))
+        )
+      `).run();
+      await db.prepare(`
+        INSERT INTO product_comments_new (id, product_id, user_id, content, created_at)
+        SELECT id, product_id, user_id, content, created_at FROM product_comments
+      `).run();
+      await db.prepare('DROP TABLE product_comments').run();
+      await db.prepare('ALTER TABLE product_comments_new RENAME TO product_comments').run();
+      await db.prepare('CREATE INDEX IF NOT EXISTS idx_pc_product ON product_comments(product_id)').run();
+    } catch (e) { /* migration failed, will use user_id=0 fallback */ }
+  }
 }
 
 // GET: List comments for a product
