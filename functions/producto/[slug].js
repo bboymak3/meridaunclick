@@ -18,7 +18,8 @@ export async function onRequestGet(context) {
               b.phone as business_phone, b.whatsapp as business_whatsapp,
               b.instagram as business_instagram, b.facebook as business_facebook,
               b.twitter as business_twitter, b.tiktok as business_tiktok,
-              b.youtube as business_youtube, b.video_url as business_video_url
+              b.youtube as business_youtube, b.video_url as business_video_url,
+              (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as business_logo
        FROM products p
        LEFT JOIN businesses b ON p.business_id = b.id
        WHERE p.slug = ? AND (p.status = 'approved' OR p.status IS NULL)`
@@ -32,7 +33,8 @@ export async function onRequestGet(context) {
                   b.city, b.state, b.whatsapp as business_whatsapp,
                   b.instagram as business_instagram, b.facebook as business_facebook,
                   b.twitter as business_twitter, b.tiktok as business_tiktok,
-                  b.youtube as business_youtube, b.video_url as business_video_url
+                  b.youtube as business_youtube, b.video_url as business_video_url,
+                  (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as business_logo
            FROM products p
            LEFT JOIN businesses b ON p.business_id = b.id
            WHERE p.id = ? AND (p.status = 'approved' OR p.status IS NULL)`
@@ -398,7 +400,10 @@ export async function onRequestGet(context) {
 
         <div class="pd-card">
             <div class="pd-body" style="padding-top:24px;">
-                ${bizLink ? `<a href="${bizLink}" class="pd-biz-name"><i class="fas fa-store"></i> ${esc(product.business_name || 'Negocio')}${product.city ? ' · ' + esc(product.city) : ''}</a>` : (product.business_name ? `<div class="pd-biz-name"><i class="fas fa-store"></i> ${esc(product.business_name)}</div>` : '')}
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                    ${product.business_logo ? `<img src="${esc(product.business_logo)}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
+                    ${bizLink ? `<a href="${bizLink}" class="pd-biz-name" style="margin:0;"><i class="fas fa-store"></i> ${esc(product.business_name || 'Negocio')}${product.city ? ' · ' + esc(product.city) : ''}</a>` : (product.business_name ? `<div class="pd-biz-name" style="margin:0;"><i class="fas fa-store"></i> ${esc(product.business_name)}</div>` : '')}
+                </div>
                 <h1 class="pd-title">${esc(title)}</h1>
                 ${price ? `<div class="pd-price">${price}</div>` : ''}
             </div>
@@ -445,7 +450,7 @@ export async function onRequestGet(context) {
                 <div class="pd-biz-section-label"><i class="fas fa-store"></i> Negocio Asociado</div>
                 ${bizLink ? `
                 <a href="${bizLink}" class="pd-biz-card">
-                    <div class="pd-biz-icon"><i class="fas fa-store"></i></div>
+                    ${product.business_logo ? `<img src="${esc(product.business_logo)}" alt="" style="width:50px;height:50px;border-radius:13px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : `<div class="pd-biz-icon"><i class="fas fa-store"></i></div>`}
                     <div class="pd-biz-info">
                         <div class="pd-biz-name-card">${esc(product.business_name)}</div>
                         ${product.city ? `<div class="pd-biz-loc"><i class="fas fa-map-marker-alt" style="font-size:0.6rem;"></i> ${esc(product.city)}${product.state ? ', ' + esc(product.state) : ''}</div>` : ''}
@@ -453,7 +458,7 @@ export async function onRequestGet(context) {
                     <div class="pd-biz-arrow"><i class="fas fa-chevron-right"></i></div>
                 </a>` : `
                 <div class="pd-biz-card" style="cursor:default;">
-                    <div class="pd-biz-icon"><i class="fas fa-store"></i></div>
+                    ${product.business_logo ? `<img src="${esc(product.business_logo)}" alt="" style="width:50px;height:50px;border-radius:13px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : `<div class="pd-biz-icon"><i class="fas fa-store"></i></div>`}
                     <div class="pd-biz-info">
                         <div class="pd-biz-name-card">${esc(product.business_name)}</div>
                         ${product.city ? `<div class="pd-biz-loc"><i class="fas fa-map-marker-alt" style="font-size:0.6rem;"></i> ${esc(product.city)}${product.state ? ', ' + esc(product.state) : ''}</div>` : ''}
@@ -480,19 +485,12 @@ export async function onRequestGet(context) {
             <hr class="pd-divider">
             <div class="pd-comments" id="pdCommentsSection">
                 <div class="pd-comments-title"><i class="fas fa-comments"></i> Comentarios</div>
-                <div id="pdCommentAuth">
-                    <div class="pd-comment-login-msg" id="pdCommentLoginMsg">
-                        <a href="/login.html?redirect=" + encodeURIComponent(location.href)">Inicia sesion</a> para comentar este producto
-                    </div>
-                </div>
-                <div id="pdCommentFormWrap" style="display:none;">
-                    <div class="pd-comment-form">
-                        <input type="text" class="pd-comment-input" id="pdCommentInput" placeholder="Escribe tu comentario..." maxlength="1000">
-                        <button class="pd-comment-btn" id="pdCommentBtn" onclick="submitProductComment()"><i class="fas fa-paper-plane"></i> Enviar</button>
-                    </div>
+                <div class="pd-comment-form">
+                    <input type="text" class="pd-comment-input" id="pdCommentInput" placeholder="Escribe tu comentario..." maxlength="1000">
+                    <button class="pd-comment-btn" id="pdCommentBtn" onclick="submitProductComment()"><i class="fas fa-paper-plane"></i> Enviar</button>
                 </div>
                 <div class="pd-comments-list" id="pdCommentsList">
-                    <div class="pd-comments-loading" id="pdCommentsLoading"><i class="fas fa-spinner fa-spin"></i> Cargando comentarios...</div>
+                    <div class="pd-comments-loading"><i class="fas fa-spinner fa-spin"></i> Cargando comentarios...</div>
                 </div>
             </div>
         </div>
@@ -527,25 +525,8 @@ export async function onRequestGet(context) {
     var pdCommentInput = document.getElementById('pdCommentInput');
     var pdCommentBtn = document.getElementById('pdCommentBtn');
     var pdCommentsList = document.getElementById('pdCommentsList');
-    var pdCommentFormWrap = document.getElementById('pdCommentFormWrap');
-    var pdCommentLoginMsg = document.getElementById('pdCommentLoginMsg');
-    var pdCommentAuth = document.getElementById('pdCommentAuth');
-
-    function checkCommentAuth() {
-        try {
-            var token = localStorage.getItem('authToken');
-            if (!token) return false;
-            var payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-            if (payload.exp && payload.exp < Math.floor(Date.now()/1000)) return false;
-            return true;
-        } catch(e) { return false; }
-    }
 
     function initCommentSection() {
-        if (checkCommentAuth()) {
-            pdCommentAuth.style.display = 'none';
-            pdCommentFormWrap.style.display = 'block';
-        }
         loadProductComments();
     }
 
@@ -560,14 +541,17 @@ export async function onRequestGet(context) {
                     return;
                 }
                 data.comments.forEach(function(c) {
-                    var initial = (c.user_name || 'A').charAt(0).toUpperCase();
+                    var isAnon = !c.user_name || c.user_name === 'Anonimo';
+                    var initial = isAnon ? '?' : c.user_name.charAt(0).toUpperCase();
+                    var displayName = isAnon ? 'Anonimo' : escapeHtml(c.user_name);
                     var timeAgo = getTimeAgo(c.created_at);
+                    var avatarStyle = isAnon ? 'background:#94a3b8;' : '';
                     var div = document.createElement('div');
                     div.className = 'pd-comment-item';
-                    div.innerHTML = '<div class="pd-comment-avatar">' + initial + '</div>' +
+                    div.innerHTML = '<div class="pd-comment-avatar" style="' + avatarStyle + '">' + initial + '</div>' +
                         '<div class="pd-comment-body">' +
                             '<div class="pd-comment-header">' +
-                                '<span class="pd-comment-name">' + escapeHtml(c.user_name) + '</span>' +
+                                '<span class="pd-comment-name">' + displayName + '</span>' +
                                 '<span class="pd-comment-badge">Comentario</span>' +
                                 '<span class="pd-comment-date">' + timeAgo + '</span>' +
                             '</div>' +
@@ -584,15 +568,17 @@ export async function onRequestGet(context) {
     function submitProductComment() {
         var content = pdCommentInput.value.trim();
         if (!content) return;
-        var token = localStorage.getItem('authToken');
-        if (!token) { window.location.href = '/login.html?redirect=' + encodeURIComponent(location.href); return; }
 
         pdCommentBtn.disabled = true;
         pdCommentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
+        var token = localStorage.getItem('authToken');
+        var headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
         fetch('/api/product-comments', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            headers: headers,
             body: JSON.stringify({ product_id: pdProductId, content: content })
         })
         .then(function(r) { return r.json(); })

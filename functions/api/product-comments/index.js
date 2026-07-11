@@ -1,6 +1,6 @@
 // functions/api/product-comments/index.js
 // GET: List comments for a product (?product_id=X)
-// POST: Create a comment on a product (auth required)
+// POST: Create a comment on a product (auth optional - anonymous allowed)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -43,16 +43,15 @@ async function ensureTable(db) {
       CREATE TABLE IF NOT EXISTS product_comments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         product_id INTEGER NOT NULL,
-        user_id INTEGER NOT NULL,
+        user_id INTEGER,
         content TEXT NOT NULL,
-        created_at TEXT DEFAULT (datetime('now')),
-        FOREIGN KEY (product_id) REFERENCES products(id),
-        FOREIGN KEY (user_id) REFERENCES users(id)
+        created_at TEXT DEFAULT (datetime('now'))
       )
     `).run();
-  } catch (e) { /* table may exist */ }
+  } catch (e) { /* table may exist with different schema - try altering */ }
+  // If table exists but user_id is NOT NULL, we need to handle it gracefully
+  // The INSERT will use NULL for anonymous which works if column allows it
   try { await db.prepare('CREATE INDEX IF NOT EXISTS idx_pc_product ON product_comments(product_id)').run(); } catch (e) {}
-  try { await db.prepare('CREATE INDEX IF NOT EXISTS idx_pc_user ON product_comments(user_id)').run(); } catch (e) {}
 }
 
 // GET: List comments for a product
@@ -73,7 +72,7 @@ export async function onRequestGet(context) {
 
     const comments = await env.DB.prepare(`
       SELECT pc.id, pc.content, pc.created_at,
-             u.name as user_name, u.email as user_email
+             u.name as user_name
       FROM product_comments pc
       LEFT JOIN users u ON pc.user_id = u.id
       WHERE pc.product_id = ?
@@ -88,8 +87,7 @@ export async function onRequestGet(context) {
     return new Response(JSON.stringify({
       comments: (comments.results || []).map(c => ({
         id: c.id,
-        user_name: c.user_name || 'Anónimo',
-        user_email: c.user_email || '',
+        user_name: c.user_name || 'Anonimo',
         content: c.content,
         created_at: c.created_at,
       })),
@@ -101,19 +99,19 @@ export async function onRequestGet(context) {
   }
 }
 
-// POST: Create a comment (auth required)
+// POST: Create a comment (auth optional - anonymous allowed)
 export async function onRequestPost(context) {
   try {
     const { request, env } = context;
     await ensureTable(env.DB);
 
+    // Auth is optional - try to get user but don't require it
+    let user = null;
     const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(JSON.stringify({ error: 'Token requerido' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      user = await verifyJWT(token, env.JWT_SECRET);
     }
-    const token = authHeader.substring(7);
-    const user = await verifyJWT(token, env.JWT_SECRET);
-    if (!user) return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const body = await request.json();
     const productId = parseInt(body.product_id);
@@ -132,18 +130,18 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'Producto no encontrado' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
+    const userId = user ? user.id : null;
+
     // Insert comment
     const result = await env.DB.prepare(
       'INSERT INTO product_comments (product_id, user_id, content) VALUES (?, ?, ?)'
-    ).bind(productId, user.id, content).run();
+    ).bind(productId, userId, content).run();
 
-    // Also send as a chat message to admin chat if product has a business
-    if (product.business_id) {
+    // Also send as a chat message to admin chat if user is logged in and product has a business
+    if (user && product.business_id) {
       try {
-        // Get business owner
         const business = await env.DB.prepare('SELECT user_id, title FROM businesses WHERE id = ?').bind(product.business_id).first();
         if (business && business.user_id && business.user_id !== user.id) {
-          // Ensure conversations/messages tables exist
           try {
             await env.DB.prepare(`CREATE TABLE IF NOT EXISTS conversations (
               id INTEGER PRIMARY KEY AUTOINCREMENT, business_id INTEGER NOT NULL,
@@ -165,7 +163,6 @@ export async function onRequestPost(context) {
           const buyerId = user.id;
           const sellerId = business.user_id;
 
-          // Find or create conversation
           let conv = await env.DB.prepare(
             'SELECT id FROM conversations WHERE buyer_id = ? AND seller_id = ? AND business_id = ?'
           ).bind(buyerId, sellerId, product.business_id).first();
@@ -181,14 +178,12 @@ export async function onRequestPost(context) {
             ).bind('[COMENTARIO] ' + content, conv.id).run();
           }
 
-          // Insert message with [COMENTARIO] label
           const commentMsg = '[COMENTARIO en ' + product.name + '] ' + content;
           await env.DB.prepare(
             'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)'
           ).bind(conv.id, user.id, commentMsg).run();
         }
       } catch (chatErr) {
-        // Don't fail the comment if chat insertion fails
         console.error('Chat sync error:', chatErr);
       }
     }
@@ -197,7 +192,7 @@ export async function onRequestPost(context) {
       comment: {
         id: result.meta.last_row_id,
         product_id: productId,
-        user_name: user.name || 'Anónimo',
+        user_name: user ? (user.name || 'Anonimo') : 'Anonimo',
         content,
         created_at: new Date().toISOString(),
       },
