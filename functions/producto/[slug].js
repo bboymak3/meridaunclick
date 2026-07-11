@@ -52,11 +52,20 @@ export async function onRequestGet(context) {
     }
 
     // Parse image: could be JSON array or plain URL
+    let productImages = [];
     let productImage = product.image || '';
     try {
         const parsed = JSON.parse(productImage);
-        if (Array.isArray(parsed) && parsed.length > 0) productImage = parsed[0];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            productImages = parsed.filter(u => u && u.trim());
+        }
     } catch(e) {}
+    // If not JSON array, treat as single image
+    if (productImages.length === 0 && productImage) {
+        productImages = [productImage];
+    }
+    // First image is the main one
+    const mainImage = productImages[0] || '';
 
     const baseUrl = 'https://holax.com';
     const title = product.name || 'Producto';
@@ -64,7 +73,7 @@ export async function onRequestGet(context) {
     const description = product.description
       ? product.description.substring(0, 160)
       : `${title}${price ? ' - ' + price : ''} - Disponible en HOLAX Marketplace, Venezuela.`;
-    const imageUrl = productImage || `${baseUrl}/logo.png`;
+    const imageUrl = mainImage || `${baseUrl}/logo.png`;
     const canonicalUrl = `${baseUrl}/producto/${product.slug}`;
 
     // Fetch 3 related products - try same category first, fallback to same business, then any
@@ -367,12 +376,21 @@ export async function onRequestGet(context) {
                 ${price ? `<div class="pd-price">${price}</div>` : ''}
             </div>
 
-            <div class="pd-img">
-                ${productImage
-                    ? `<img src="${esc(productImage)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'pd-img-ph\\'><i class=\\'fas fa-image\\'></i></div>'">`
+            <div class="pd-img" id="pdMainImgWrap">
+                ${mainImage
+                    ? `<img id="pdMainImg" src="${esc(mainImage)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'pd-img-ph\\'><i class=\\'fas fa-image\\'></i></div>'">`
                     : `<div class="pd-img-ph"><i class="fas fa-image"></i></div>`}
                 <span class="pd-cat-badge ${catBadge}"><i class="fas ${catIcon}"></i> ${catLabel}</span>
             </div>
+            ${productImages.length > 1 ? `
+            <div style="padding:12px 24px 0;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;" id="pdThumbs">
+                ${productImages.map((img, i) => `
+                    <div onclick="document.getElementById('pdMainImg').src='${esc(img).replace(/'/g, "\\'")}';document.querySelectorAll('#pdThumbs .pd-thumb').forEach(function(t){t.style.opacity='0.5';t.style.borderColor='#e2e8f0';});this.style.opacity='1';this.style.borderColor='#006EE3';"
+                         class="pd-thumb" style="flex-shrink:0;width:64px;height:64px;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid ${i===0?'#006EE3':'#e2e8f0'};opacity:${i===0?'1':'0.5'};transition:all .2s;">
+                        <img src="${esc(img)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.display='none'">
+                    </div>
+                `).join('')}
+            </div>` : ''}
 
             ${product.video_url ? `
             <div style="padding:20px 24px 0;">

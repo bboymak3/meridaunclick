@@ -1845,11 +1845,26 @@ if (!window._renderVideoList) {
         const b2URLInput = document.getElementById('b2EditImageURL');
         if (b2URLInput) b2URLInput.addEventListener('input', () => {
             const url = b2URLInput.value.trim();
-            const preview = document.getElementById('b2EditImagePreview');
+            if (!url) return;
             const editModal2 = document.getElementById('b2EditModal');
-            if (preview && url) {
-                preview.innerHTML = `<img src="${url}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
-                if (editModal2) editModal2.dataset.currentImage = url;
+            const preview = document.getElementById('b2EditImagePreview');
+            // Add URL to images array
+            let images = [];
+            try { images = JSON.parse(editModal2?.dataset?.currentImages || '[]'); } catch(e) {}
+            if (!images.includes(url)) {
+                images.push(url);
+                editModal2.dataset.currentImages = JSON.stringify(images);
+                editModal2.dataset.currentImage = images[0] || '';
+            }
+            // Show preview
+            if (preview) {
+                preview.innerHTML = images.map((img, i) => `
+                    <div style="display:inline-block;position:relative;margin:4px;">
+                        <img src="${escapeHtml(img)}" style="width:120px;height:100px;object-fit:cover;border-radius:8px;border:2px solid ${i===0?'#006EE3':'#e2e8f0'};" onerror="this.parentElement.remove()">
+                        ${i === 0 ? '<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.6rem;padding:1px 6px;border-radius:4px;">Principal</span>' : ''}
+                        <button type="button" onclick="window._b2RemoveImage(${i})" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;line-height:20px;text-align:center;">&times;</button>
+                    </div>
+                `).join('');
             }
         });
     }
@@ -1873,7 +1888,10 @@ if (!window._renderVideoList) {
                 tbody.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-state-sm"><p>No hay productos.</p></div></td></tr>';
             } else {
                 tbody.innerHTML = products.map(p => {
-                    const imgHTML = p.image ? `<img src="${escapeHtml(p.image)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">` : '<i class="fas fa-box" style="color:#ccc;font-size:1.2rem;"></i>';
+                    // Parse image: could be JSON array or plain URL
+                    let thumbUrl = p.image || '';
+                    try { const parsed = JSON.parse(thumbUrl); if (Array.isArray(parsed) && parsed.length > 0) thumbUrl = parsed[0]; } catch(e) {}
+                    const imgHTML = thumbUrl ? `<img src="${escapeHtml(thumbUrl)}" alt="" style="width:36px;height:36px;object-fit:cover;border-radius:6px;" onerror="this.style.display='none'">` : '<i class="fas fa-box" style="color:#ccc;font-size:1.2rem;"></i>';
                     const statusBadge = getStatusBadge(p.status || 'pending');
                     return `<tr>
                         <td>${p.id}</td>
@@ -1931,6 +1949,7 @@ if (!window._renderVideoList) {
         const statusEl = document.getElementById('b2EditImageStatus');
         if (statusEl) statusEl.innerHTML = '';
         editModal.dataset.currentImage = '';
+        editModal.dataset.currentImages = '[]';
 
         // Load businesses for selector
         try {
@@ -1960,13 +1979,28 @@ if (!window._renderVideoList) {
                 document.getElementById('b2EditDescription').value = product.description || '';
                 if (product.business_id) document.getElementById('b2EditBusiness').value = product.business_id;
 
-                // Handle image
-                const imageURL = product.image || '';
-                const urlInput = document.getElementById('b2EditImageURL');
-                if (urlInput) urlInput.value = imageURL;
-                editModal.dataset.currentImage = imageURL;
-                if (preview && imageURL) {
-                    preview.innerHTML = `<img src="${imageURL}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">`;
+                // Handle image - parse JSON array or single URL
+                let images = [];
+                const rawImage = product.image || '';
+                try {
+                    const parsed = JSON.parse(rawImage);
+                    if (Array.isArray(parsed)) images = parsed.filter(u => u && u.trim());
+                } catch(e) {}
+                if (images.length === 0 && rawImage) images = [rawImage];
+
+                // Store all images in dataset
+                editModal.dataset.currentImages = JSON.stringify(images);
+                editModal.dataset.currentImage = images[0] || '';
+
+                // Show all images as previews with delete buttons
+                if (preview && images.length > 0) {
+                    preview.innerHTML = images.map((img, i) => `
+                        <div style="display:inline-block;position:relative;margin:4px;">
+                            <img src="${escapeHtml(img)}" style="width:120px;height:100px;object-fit:cover;border-radius:8px;border:2px solid ${i===0?'#006EE3':'#e2e8f0'};" onerror="this.parentElement.remove()">
+                            ${i === 0 ? '<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.6rem;padding:1px 6px;border-radius:4px;">Principal</span>' : ''}
+                            <button type="button" onclick="window._b2RemoveImage(${i})" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;line-height:20px;text-align:center;">&times;</button>
+                        </div>
+                    `).join('');
                 }
             } catch (err) {
                 showToast('Error al cargar producto', 'error');
@@ -1982,6 +2016,29 @@ if (!window._renderVideoList) {
         editModal.dataset.productId = productId || '';
         editModal.classList.remove('hidden');
     }
+
+    // Remove an image from the B2 edit modal
+    window._b2RemoveImage = function(index) {
+        const editModal = document.getElementById('b2EditModal');
+        if (!editModal) return;
+        try {
+            let images = JSON.parse(editModal.dataset.currentImages || '[]');
+            images.splice(index, 1);
+            editModal.dataset.currentImages = JSON.stringify(images);
+            editModal.dataset.currentImage = images[0] || '';
+            // Re-render previews
+            const preview = document.getElementById('b2EditImagePreview');
+            if (preview) {
+                preview.innerHTML = images.map((img, i) => `
+                    <div style="display:inline-block;position:relative;margin:4px;">
+                        <img src="${escapeHtml(img)}" style="width:120px;height:100px;object-fit:cover;border-radius:8px;border:2px solid ${i===0?'#006EE3':'#e2e8f0'};" onerror="this.parentElement.remove()">
+                        ${i === 0 ? '<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.6rem;padding:1px 6px;border-radius:4px;">Principal</span>' : ''}
+                        <button type="button" onclick="window._b2RemoveImage(${i})" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;line-height:20px;text-align:center;">&times;</button>
+                    </div>
+                `).join('');
+            }
+        } catch(e) {}
+    };
 
     async function handleB2ImageUpload(file) {
         if (!file) return;
@@ -2010,9 +2067,24 @@ if (!window._renderVideoList) {
             const data = await response.json();
 
             if (data.url) {
-                if (preview) preview.innerHTML = `<img src="${data.url}" style="max-width:150px;max-height:120px;border-radius:8px;object-fit:cover;">`;
+                // Add to existing images array
+                let images = [];
+                try { images = JSON.parse(editModal?.dataset?.currentImages || '[]'); } catch(e) {}
+                images.push(data.url);
+                editModal.dataset.currentImages = JSON.stringify(images);
+                editModal.dataset.currentImage = images[0] || '';
+
+                // Re-render all previews
+                if (preview) {
+                    preview.innerHTML = images.map((img, i) => `
+                        <div style="display:inline-block;position:relative;margin:4px;">
+                            <img src="${escapeHtml(img)}" style="width:120px;height:100px;object-fit:cover;border-radius:8px;border:2px solid ${i===0?'#006EE3':'#e2e8f0'};" onerror="this.parentElement.remove()">
+                            ${i === 0 ? '<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.6rem;padding:1px 6px;border-radius:4px;">Principal</span>' : ''}
+                            <button type="button" onclick="window._b2RemoveImage(${i})" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;line-height:20px;text-align:center;">&times;</button>
+                        </div>
+                    `).join('');
+                }
                 if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Imagen subida';
-                if (editModal) editModal.dataset.currentImage = data.url;
                 // Clear URL input when file is uploaded
                 const urlInput = document.getElementById('b2EditImageURL');
                 if (urlInput) urlInput.value = '';
@@ -2036,10 +2108,14 @@ if (!window._renderVideoList) {
         const description = document.getElementById('b2EditDescription')?.value?.trim() || '';
         const business_id = document.getElementById('b2EditBusiness')?.value || '';
 
-        // Get image: prefer uploaded file, fallback to URL input
-        const uploadedImage = editModal?.dataset?.currentImage || '';
+        // Get images: use the full array from dataset, or URL input as fallback
+        let images = [];
+        try { images = JSON.parse(editModal?.dataset?.currentImages || '[]'); } catch(e) {}
         const urlImage = document.getElementById('b2EditImageURL')?.value?.trim() || '';
-        const image = uploadedImage || urlImage;
+        if (images.length === 0 && urlImage) images = [urlImage];
+
+        // Build image value: JSON array if multiple, single URL if one
+        const image = images.length > 1 ? JSON.stringify(images) : (images[0] || '');
 
         if (!name) { showToast('El nombre es requerido', 'error'); return; }
 
