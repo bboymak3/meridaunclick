@@ -65,22 +65,22 @@ export async function onRequestGet(context) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${escapeHtml(description)}">
-    <title>${escapeHtml(title)} - HOLAX | Directorio de Negocios en Venezuela</title>
+    <title>${escapeHtml(title)} - HolaX | Directorio de Negocios en Venezuela</title>
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="${canonicalUrl}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="business.business">
-    <meta property="og:title" content="${escapeHtml(title)} - HOLAX">
+    <meta property="og:title" content="${escapeHtml(title)} - HolaX">
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:image" content="${imageUrl}">
     <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:site_name" content="HOLAX">
+    <meta property="og:site_name" content="HolaX">
     <meta property="og:locale" content="es_VE">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${escapeHtml(title)} - HOLAX">
+    <meta name="twitter:title" content="${escapeHtml(title)} - HolaX">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${imageUrl}">
 
@@ -404,8 +404,8 @@ export async function onRequestGet(context) {
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="/index.html" class="nav-logo">
-                <img src="https://aunclick.pages.dev/images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HOLAX</span>
+                <img src="https://aunclick.pages.dev/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HolaX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">

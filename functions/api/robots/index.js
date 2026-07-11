@@ -3,7 +3,7 @@
 // Fallback: static robots.txt at root should also exist via _redirects
 
 export async function onRequestGet() {
-  const robotsTxt = `# HOLAX - Directorio Nacional de Negocios de Venezuela
+  const robotsTxt = `# HolaX - Directorio Nacional de Negocios de Venezuela
 # https://holax.com
 
 User-agent: *

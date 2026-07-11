@@ -1,5 +1,5 @@
 /**
- * HOLAX - Core Application Module
+ * HolaX - Core Application Module
  * Common module loaded on ALL pages
  * Directorio Nacional de Negocios de Venezuela
  */
@@ -84,9 +84,9 @@ function updateBrandDisplay(stateName) {
   });
   // Update page title dynamically
   if (stateName) {
-    document.title = stateName + ' HOLAX - Directorio de Negocios';
+    document.title = stateName + ' HolaX - Directorio de Negocios';
   } else {
-    document.title = 'HOLAX - Directorio de Negocios en Venezuela';
+    document.title = 'HolaX - Directorio de Negocios en Venezuela';
   }
 }
 
@@ -700,7 +700,7 @@ function shareBusinessWhatsApp(business) {
     msg += `📌 ${type}\n`;
     if (business.city) msg += `📍 ${business.city}${business.state ? ', ' + business.state : ''}\n`;
     msg += `\n🔗 ${url}`;
-    msg += `\n\n📌 Publicado en HOLAX`;
+    msg += `\n\n📌 Publicado en HolaX`;
 
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -791,7 +791,7 @@ document.addEventListener('click', (e) => {
         shareBusinessWhatsApp(business);
     }).catch(() => {
         // Minimal share with just the link
-        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en HOLAX:\nhttps://holax.com/negocio/' + businessId)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en HolaX:\nhttps://holax.com/negocio/' + businessId)}`, '_blank');
     });
 });
 

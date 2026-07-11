@@ -1,5 +1,5 @@
 /**
- * HOLAX - AI Chatbot Widget Module
+ * HolaX - AI Chatbot Widget Module
  * Floating AI chatbot using z-ai-web-dev-sdk via a proxy API endpoint
  * Checks admin_settings for ai_chatbot_enabled before rendering
  */
@@ -49,7 +49,7 @@
               <i class="fas fa-robot"></i>
             </div>
             <div>
-              <h3>Asistente HOLAX</h3>
+              <h3>Asistente HolaX</h3>
               <span class="ai-chat-status"><i class="fas fa-circle"></i> En línea</span>
             </div>
           </div>
@@ -781,7 +781,7 @@
     if (!settings.enabled) return;
 
     // Set welcome message
-    welcomeMessage = settings.welcome || '¡Hola! 👋 Soy el asistente de HOLAX. Puedo ayudarte a encontrar negocios, eventos y ofertas en Venezuela. ¿En qué te puedo ayudar?';
+    welcomeMessage = settings.welcome || '¡Hola! 👋 Soy el asistente de HolaX. Puedo ayudarte a encontrar negocios, eventos y ofertas en Venezuela. ¿En qué te puedo ayudar?';
 
     // Load chat history
     loadChatHistory();

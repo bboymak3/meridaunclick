@@ -72,7 +72,7 @@ export async function onRequestGet(context) {
     const price = product.price ? `$${Number(product.price).toLocaleString('es-VE')}` : '';
     const description = product.description
       ? product.description.substring(0, 160)
-      : `${title}${price ? ' - ' + price : ''} - Disponible en HOLAX Marketplace, Venezuela.`;
+      : `${title}${price ? ' - ' + price : ''} - Disponible en HolaX Marketplace, Venezuela.`;
     const imageUrl = mainImage || `${baseUrl}/logo.png`;
     const canonicalUrl = `${baseUrl}/producto/${product.slug}`;
 
@@ -154,7 +154,7 @@ export async function onRequestGet(context) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${esc(title)}${price ? ' - ' + price : ''} - HOLAX Marketplace</title>
+    <title>${esc(title)}${price ? ' - ' + price : ''} - HolaX Marketplace</title>
     <meta name="description" content="${esc(description)}">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="${canonicalUrl}">
@@ -163,12 +163,12 @@ export async function onRequestGet(context) {
     <meta property="og:description" content="${esc(description)}">
     <meta property="og:image" content="${imageUrl}">
     <meta property="og:url" content="${canonicalUrl}">
-    <meta property="og:site_name" content="HOLAX Marketplace">
+    <meta property="og:site_name" content="HolaX Marketplace">
     <meta property="og:locale" content="es_VE">
     <meta property="product:price:amount" content="${product.price || '0'}">
     <meta property="product:price:currency" content="USD">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${esc(title)} - HOLAX">
+    <meta name="twitter:title" content="${esc(title)} - HolaX">
     <meta name="twitter:description" content="${esc(description)}">
     <meta name="twitter:image" content="${imageUrl}">
     <link rel="stylesheet" href="/css/styles.css?v=4">
@@ -295,10 +295,36 @@ export async function onRequestGet(context) {
         .pd-video iframe { width:100%; aspect-ratio:16/9; display:block; }
         .pd-video iframe[data-tiktok] { aspect-ratio:9/16; max-width:320px; margin:0 auto; }
 
+        /* === COMMENTS SECTION === */
+        .pd-comments { padding:20px 24px 24px; }
+        .pd-comments-title { font-size:1.15rem; font-weight:700; color:#0f172a; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+        .pd-comments-title i { color:#006EE3; }
+        .pd-comment-form { display:flex; gap:10px; margin-bottom:20px; }
+        .pd-comment-input { flex:1; padding:12px 16px; border:2px solid #e2e8f0; border-radius:12px; font-size:0.95rem; font-family:inherit; resize:none; outline:none; transition:border-color .2s; min-height:44px; max-height:120px; }
+        .pd-comment-input:focus { border-color:#006EE3; }
+        .pd-comment-input::placeholder { color:#94a3b8; }
+        .pd-comment-btn { padding:12px 20px; background:#006EE3; color:#fff; border:none; border-radius:12px; font-size:0.95rem; font-weight:600; cursor:pointer; transition:all .2s; font-family:inherit; white-space:nowrap; }
+        .pd-comment-btn:hover { background:#005bb5; }
+        .pd-comment-btn:disabled { background:#94a3b8; cursor:not-allowed; }
+        .pd-comment-login-msg { padding:16px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; text-align:center; color:#64748b; font-size:0.95rem; margin-bottom:16px; }
+        .pd-comment-login-msg a { color:#006EE3; font-weight:600; text-decoration:none; }
+        .pd-comment-login-msg a:hover { text-decoration:underline; }
+        .pd-comments-list { display:flex; flex-direction:column; gap:12px; }
+        .pd-comment-item { display:flex; gap:12px; padding:14px; background:#f8fafc; border-radius:14px; border:1px solid #f1f5f9; }
+        .pd-comment-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,#006EE3,#3B9AFF); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:0.85rem; flex-shrink:0; }
+        .pd-comment-body { flex:1; min-width:0; }
+        .pd-comment-header { display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap; }
+        .pd-comment-name { font-weight:600; font-size:0.9rem; color:#0f172a; }
+        .pd-comment-date { font-size:0.78rem; color:#94a3b8; }
+        .pd-comment-text { font-size:0.95rem; color:#334155; line-height:1.5; word-wrap:break-word; }
+        .pd-comment-badge { display:inline-block; padding:2px 8px; background:#EFF6FF; color:#006EE3; font-size:0.7rem; font-weight:600; border-radius:6px; }
+        .pd-comments-empty { text-align:center; padding:24px; color:#94a3b8; font-size:0.95rem; }
+        .pd-comments-loading { text-align:center; padding:20px; color:#94a3b8; font-size:0.9rem; }
         @media (max-width:640px) {
             .pd-wrap { padding:15px 12px 54px; }
             .pd-body { padding:18px 18px 21px; }
             .pd-biz-section { padding:15px 18px; }
+            .pd-comments { padding:16px 18px 20px; }
             .pd-title { font-size:1.5rem; }
             .pd-price { font-size:1.55rem; }
             .pd-img { height:270px; }
@@ -316,13 +342,14 @@ export async function onRequestGet(context) {
             .pd-biz-name-card { font-size:1.15rem; }
             .pd-biz-loc { font-size:0.9rem; }
             .pd-cat-badge { font-size:0.9rem; padding:5px 12px; }
+            .pd-comment-form { flex-direction:column; }
         }
     </style>
 </head>
 <body>
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <a href="/" class="nav-logo"><img src="https://aunclick.pages.dev/images/logoprincipal.jpeg" alt="HOLAX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;"> <span class="brand-name">HOLAX</span></a>
+            <a href="/" class="nav-logo"><img src="https://aunclick.pages.dev/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;"> <span class="brand-name">HolaX</span></a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
             </button>
@@ -449,6 +476,25 @@ export async function onRequestGet(context) {
                     ${youtube ? `<a href="${esc(youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#ff0000;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-youtube" style="font-size:1.5rem;"></i> YouTube</a>` : ''}
                 </div>
             </div>`; })()}
+
+            <hr class="pd-divider">
+            <div class="pd-comments" id="pdCommentsSection">
+                <div class="pd-comments-title"><i class="fas fa-comments"></i> Comentarios</div>
+                <div id="pdCommentAuth">
+                    <div class="pd-comment-login-msg" id="pdCommentLoginMsg">
+                        <a href="/login.html?redirect=" + encodeURIComponent(location.href)">Inicia sesion</a> para comentar este producto
+                    </div>
+                </div>
+                <div id="pdCommentFormWrap" style="display:none;">
+                    <div class="pd-comment-form">
+                        <input type="text" class="pd-comment-input" id="pdCommentInput" placeholder="Escribe tu comentario..." maxlength="1000">
+                        <button class="pd-comment-btn" id="pdCommentBtn" onclick="submitProductComment()"><i class="fas fa-paper-plane"></i> Enviar</button>
+                    </div>
+                </div>
+                <div class="pd-comments-list" id="pdCommentsList">
+                    <div class="pd-comments-loading" id="pdCommentsLoading"><i class="fas fa-spinner fa-spin"></i> Cargando comentarios...</div>
+                </div>
+            </div>
         </div>
 
         ${relatedHtml}
@@ -457,7 +503,7 @@ export async function onRequestGet(context) {
     <script>
     function shareProduct(){
         if(navigator.share){navigator.share({title:'${escJs(title)}',text:'${escJs(product.description||title)}',url:location.href}).catch(function(){});}
-        else{window.open('https://wa.me/?text='+encodeURIComponent('${escJs(title)} - En HOLAX Marketplace')+'%20'+encodeURIComponent(location.href),'_blank');}
+        else{window.open('https://wa.me/?text='+encodeURIComponent('${escJs(title)} - En HolaX Marketplace')+'%20'+encodeURIComponent(location.href),'_blank');}
     }
     // Navbar dropdown toggle
     document.querySelectorAll('.nav-dropdown-toggle').forEach(function(btn){
@@ -475,6 +521,127 @@ export async function onRequestGet(context) {
     if(navToggle&&navMenu){navToggle.addEventListener('click',function(){navMenu.classList.toggle('active');});}
     </script>
     <script src="/js/app.js"></script>
+    <script>
+    // === PRODUCT COMMENTS ===
+    var pdProductId = ${product.id};
+    var pdCommentInput = document.getElementById('pdCommentInput');
+    var pdCommentBtn = document.getElementById('pdCommentBtn');
+    var pdCommentsList = document.getElementById('pdCommentsList');
+    var pdCommentFormWrap = document.getElementById('pdCommentFormWrap');
+    var pdCommentLoginMsg = document.getElementById('pdCommentLoginMsg');
+    var pdCommentAuth = document.getElementById('pdCommentAuth');
+
+    function checkCommentAuth() {
+        try {
+            var token = localStorage.getItem('authToken');
+            if (!token) return false;
+            var payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+            if (payload.exp && payload.exp < Math.floor(Date.now()/1000)) return false;
+            return true;
+        } catch(e) { return false; }
+    }
+
+    function initCommentSection() {
+        if (checkCommentAuth()) {
+            pdCommentAuth.style.display = 'none';
+            pdCommentFormWrap.style.display = 'block';
+        }
+        loadProductComments();
+    }
+
+    function loadProductComments() {
+        fetch('/api/product-comments?product_id=' + pdProductId)
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var list = pdCommentsList;
+                list.innerHTML = '';
+                if (!data.comments || data.comments.length === 0) {
+                    list.innerHTML = '<div class="pd-comments-empty"><i class="far fa-comment-dots" style="font-size:1.5rem;opacity:0.4;display:block;margin-bottom:8px;"></i>Sin comentarios aun. Se el primero en opinar!</div>';
+                    return;
+                }
+                data.comments.forEach(function(c) {
+                    var initial = (c.user_name || 'A').charAt(0).toUpperCase();
+                    var timeAgo = getTimeAgo(c.created_at);
+                    var div = document.createElement('div');
+                    div.className = 'pd-comment-item';
+                    div.innerHTML = '<div class="pd-comment-avatar">' + initial + '</div>' +
+                        '<div class="pd-comment-body">' +
+                            '<div class="pd-comment-header">' +
+                                '<span class="pd-comment-name">' + escapeHtml(c.user_name) + '</span>' +
+                                '<span class="pd-comment-badge">Comentario</span>' +
+                                '<span class="pd-comment-date">' + timeAgo + '</span>' +
+                            '</div>' +
+                            '<div class="pd-comment-text">' + escapeHtml(c.content) + '</div>' +
+                        '</div>';
+                    list.appendChild(div);
+                });
+            })
+            .catch(function() {
+                pdCommentsList.innerHTML = '';
+            });
+    }
+
+    function submitProductComment() {
+        var content = pdCommentInput.value.trim();
+        if (!content) return;
+        var token = localStorage.getItem('authToken');
+        if (!token) { window.location.href = '/login.html?redirect=' + encodeURIComponent(location.href); return; }
+
+        pdCommentBtn.disabled = true;
+        pdCommentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        fetch('/api/product-comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({ product_id: pdProductId, content: content })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            pdCommentBtn.disabled = false;
+            pdCommentBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar';
+            if (data.comment) {
+                pdCommentInput.value = '';
+                loadProductComments();
+            } else if (data.error) {
+                alert(data.error);
+            }
+        })
+        .catch(function() {
+            pdCommentBtn.disabled = false;
+            pdCommentBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar';
+            alert('Error al enviar comentario');
+        });
+    }
+
+    function getTimeAgo(dateStr) {
+        if (!dateStr) return '';
+        try {
+            var now = new Date();
+            var d = new Date(dateStr + (dateStr.includes('Z') || dateStr.includes('+') ? '' : 'T00:00:00'));
+            if (isNaN(d.getTime())) return dateStr;
+            var diff = Math.floor((now - d) / 1000);
+            if (diff < 60) return 'Ahora mismo';
+            if (diff < 3600) return Math.floor(diff/60) + ' min';
+            if (diff < 86400) return Math.floor(diff/3600) + 'h';
+            if (diff < 604800) return Math.floor(diff/86400) + 'd';
+            return d.getDate() + '/' + (d.getMonth()+1) + '/' + d.getFullYear();
+        } catch(e) { return dateStr; }
+    }
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Enter key to submit
+    if (pdCommentInput) {
+        pdCommentInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitProductComment(); }
+        });
+    }
+
+    initCommentSection();
+    </script>
     <script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${product.business_id},event_type:'view',source:'product'})}).catch(function(){})},0);</script>
 </body>
 </html>`;
