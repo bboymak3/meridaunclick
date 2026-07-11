@@ -274,17 +274,68 @@ export async function onRequestGet(context) {
     // Stats
     let allTotal = total;
     let commentTotal = 0;
+    let pcTotal = 0;
     try {
       const allCountResult = await env.DB.prepare('SELECT COUNT(*) as total FROM conversations').first();
       allTotal = allCountResult ? allCountResult.total : 0;
       const commentCountResult = await env.DB.prepare("SELECT COUNT(*) as total FROM conversations WHERE last_message LIKE '[COMENTARIO]%'").first();
       commentTotal = commentCountResult ? commentCountResult.total : 0;
+      const pcCountResult = await env.DB.prepare('SELECT COUNT(*) as total FROM product_comments').first();
+      pcTotal = pcCountResult ? pcCountResult.total : 0;
     } catch (e) {}
 
+    // Also fetch product_comments that don't have a conversation (orphan comments)
+    let orphanComments = [];
+    if (filterType === 'all' || filterType === 'comment') {
+      try {
+        const pcFilter = search
+          ? 'AND (u.name LIKE ? OR p.name LIKE ? OR pc.content LIKE ?)'
+          : '';
+        const pcBindings = search ? [`%${search}%`, `%${search}%`, `%${search}%`] : [];
+
+        orphanComments = await env.DB.prepare(`
+          SELECT pc.id, pc.content, pc.created_at,
+                 pc.product_id, pc.user_id as buyer_id,
+                 0 as seller_id, pc.product_id as business_id,
+                 p.name as product_name, p.business_id as real_business_id,
+                 b.title as business_title, b.slug as business_slug,
+                 u.name as buyer_name, u.email as buyer_email,
+                 1 as message_count,
+                 '[COMENTARIO] ' || pc.content as last_message,
+                 pc.created_at as last_message_at
+          FROM product_comments pc
+          LEFT JOIN products p ON pc.product_id = p.id
+          LEFT JOIN businesses b ON p.business_id = b.id
+          LEFT JOIN users u ON pc.user_id = u.id
+          WHERE 1=1 ${pcFilter}
+          ORDER BY pc.created_at DESC
+          LIMIT 20
+        `).bind(...pcBindings).all();
+        orphanComments = (orphanComments.results || []).map(c => ({
+          ...c,
+          business_id: c.real_business_id || c.business_id,
+          seller_name: null,
+          seller_email: null,
+        }));
+      } catch (e) { /* ignore */ }
+    }
+
+    // Merge: conversations + orphan comments (conversations first, then orphan by date)
+    const allConvs = [...(conversations.results || []), ...orphanComments];
+    // Sort merged results by date
+    allConvs.sort((a, b) => {
+      const da = a.last_message_at || a.created_at || '';
+      const db = b.last_message_at || b.created_at || '';
+      return db.localeCompare(da);
+    });
+    // Paginate merged results
+    const paginatedConvs = allConvs.slice(offset, offset + limit);
+    const mergedTotal = allConvs.length;
+
     return new Response(JSON.stringify({
-      conversations: conversations.results || [],
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
-      stats: { total_conversations: total, all_conversations: allTotal, comment_conversations: commentTotal, business_conversations: allTotal - commentTotal },
+      conversations: paginatedConvs,
+      pagination: { page, limit, total: mergedTotal, totalPages: Math.ceil(mergedTotal / limit) || 1 },
+      stats: { total_conversations: total, all_conversations: allTotal, comment_conversations: commentTotal + pcTotal, business_conversations: allTotal - commentTotal, product_comments_total: pcTotal },
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Admin chat-logs error:', error);
