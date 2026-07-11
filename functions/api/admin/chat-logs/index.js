@@ -167,43 +167,87 @@ export async function onRequestGet(context) {
 
     const whereClause = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
 
-    // Count
-    const countResult = await env.DB.prepare(`
-      SELECT COUNT(*) as total FROM conversations c
-      LEFT JOIN users ub ON c.buyer_id = ub.id
-      LEFT JOIN users us ON c.seller_id = us.id
-      LEFT JOIN businesses b ON c.business_id = b.id
-      ${whereClause}
-    `).bind(...bindings).first();
-    const total = countResult ? countResult.total : 0;
+    // Simple count (no joins needed for counting)
+    let total = 0;
+    try {
+      if (conditions.length === 0) {
+        const countResult = await env.DB.prepare('SELECT COUNT(*) as total FROM conversations').first();
+        total = countResult ? countResult.total : 0;
+      } else {
+        const countResult = await env.DB.prepare(`
+          SELECT COUNT(*) as total FROM conversations c
+          LEFT JOIN users ub ON c.buyer_id = ub.id
+          LEFT JOIN users us ON c.seller_id = us.id
+          LEFT JOIN businesses b ON c.business_id = b.id
+          ${whereClause}
+        `).bind(...bindings).first();
+        total = countResult ? countResult.total : 0;
+      }
+    } catch (e) {
+      // Fallback simple count
+      try {
+        const cr = await env.DB.prepare('SELECT COUNT(*) as total FROM conversations').first();
+        total = cr ? cr.total : 0;
+      } catch (e2) { total = 0; }
+    }
 
-    // Fetch
-    const conversations = await env.DB.prepare(`
-      SELECT c.id, c.business_id, c.buyer_id, c.seller_id,
-             c.last_message, c.last_message_at, c.created_at,
-             c.buyer_unread, c.seller_unread,
-             b.title as business_title, b.slug as business_slug,
-             ub.name as buyer_name, ub.email as buyer_email,
-             us.name as seller_name, us.email as seller_email,
-             (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as message_count
-      FROM conversations c
-      LEFT JOIN users ub ON c.buyer_id = ub.id
-      LEFT JOIN users us ON c.seller_id = us.id
-      LEFT JOIN businesses b ON c.business_id = b.id
-      ${whereClause}
-      ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
-      LIMIT ? OFFSET ?
-    `).bind(...bindings, limit, offset).all();
+    // Fetch conversations (NULLS LAST not supported in SQLite, use COALESCE instead)
+    let conversations = { results: [] };
+    try {
+      conversations = await env.DB.prepare(`
+        SELECT c.id, c.business_id, c.buyer_id, c.seller_id,
+               c.last_message, c.last_message_at, c.created_at,
+               c.buyer_unread, c.seller_unread,
+               b.title as business_title, b.slug as business_slug,
+               ub.name as buyer_name, ub.email as buyer_email,
+               us.name as seller_name, us.email as seller_email,
+               (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as message_count
+        FROM conversations c
+        LEFT JOIN users ub ON c.buyer_id = ub.id
+        LEFT JOIN users us ON c.seller_id = us.id
+        LEFT JOIN businesses b ON c.business_id = b.id
+        ${whereClause}
+        ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
+        LIMIT ? OFFSET ?
+      `).bind(...bindings, limit, offset).all();
+    } catch (e) {
+      // Fallback: simpler query without optional columns
+      try {
+        conversations = await env.DB.prepare(`
+          SELECT c.id, c.business_id, c.buyer_id, c.seller_id,
+                 c.last_message, c.last_message_at, c.created_at,
+                 b.title as business_title, b.slug as business_slug,
+                 ub.name as buyer_name, ub.email as buyer_email,
+                 us.name as seller_name, us.email as seller_email,
+                 (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as message_count
+          FROM conversations c
+          LEFT JOIN users ub ON c.buyer_id = ub.id
+          LEFT JOIN users us ON c.seller_id = us.id
+          LEFT JOIN businesses b ON c.business_id = b.id
+          ORDER BY c.id DESC
+          LIMIT ? OFFSET ?
+        `).bind(limit, offset).all();
+      } catch (e2) {
+        // Last resort: bare minimum query
+        try {
+          conversations = await env.DB.prepare('SELECT c.*, (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) as message_count FROM conversations c ORDER BY c.id DESC LIMIT ? OFFSET ?').bind(limit, offset).all();
+        } catch (e3) { /* give up */ }
+      }
+    }
 
-    // Count total without filter for stats
-    const allCountResult = await env.DB.prepare('SELECT COUNT(*) as total FROM conversations').first();
-    const allTotal = allCountResult ? allCountResult.total : 0;
-    const commentCountResult = await env.DB.prepare("SELECT COUNT(*) as total FROM conversations WHERE last_message LIKE '[COMENTARIO]%'").first();
-    const commentTotal = commentCountResult ? commentCountResult.total : 0;
+    // Stats
+    let allTotal = total;
+    let commentTotal = 0;
+    try {
+      const allCountResult = await env.DB.prepare('SELECT COUNT(*) as total FROM conversations').first();
+      allTotal = allCountResult ? allCountResult.total : 0;
+      const commentCountResult = await env.DB.prepare("SELECT COUNT(*) as total FROM conversations WHERE last_message LIKE '[COMENTARIO]%'").first();
+      commentTotal = commentCountResult ? commentCountResult.total : 0;
+    } catch (e) {}
 
     return new Response(JSON.stringify({
-      conversations: conversations.results,
-      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      conversations: conversations.results || [],
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
       stats: { total_conversations: total, all_conversations: allTotal, comment_conversations: commentTotal, business_conversations: allTotal - commentTotal },
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {

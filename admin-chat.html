@@ -494,12 +494,23 @@
                 const data = await api.get('/admin/chat-logs?' + params.toString());
 
                 if (loading) loading.style.display = 'none';
+
+                // Debug: check if API returned error
+                if (data.error) {
+                    list.innerHTML = '<p style="color:#dc2626;text-align:center;padding:20px;">Error del servidor: ' + esc(data.error) + (data.debug ? '<br><small>' + esc(data.debug) + '</small>' : '') + '</p>';
+                    return;
+                }
+
                 const convs = data.conversations || [];
 
                 // Update stats on config view
-                if (page === 1) {
+                if (page === 1 && data.stats) {
                     const statTotal = document.getElementById('statTotalConvs');
-                    if (statTotal && data.stats) statTotal.textContent = data.stats.total_conversations || 0;
+                    if (statTotal) statTotal.textContent = data.stats.all_conversations || 0;
+                    const statComment = document.getElementById('statCommentConvs');
+                    if (statComment) statComment.textContent = data.stats.comment_conversations || 0;
+                    const statBusiness = document.getElementById('statBusinessConvs');
+                    if (statBusiness) statBusiness.textContent = data.stats.business_conversations || 0;
                 }
 
                 if (convs.length === 0) {
