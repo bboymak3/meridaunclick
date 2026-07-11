@@ -101,15 +101,18 @@ export async function onRequestGet(context) {
         return new Response(JSON.stringify({ error: 'Conversación no encontrada' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       }
 
-      // Get all messages
+      // Get all messages (LEFT JOIN to include anonymous sender_id=0)
       const msgs = await env.DB.prepare(`
         SELECT m.id, m.sender_id, m.content, m.is_read, m.created_at,
                u.name as sender_name
         FROM messages m
-        JOIN users u ON m.sender_id = u.id
+        LEFT JOIN users u ON m.sender_id = u.id
         WHERE m.conversation_id = ?
         ORDER BY m.created_at ASC
       `).bind(convId).all();
+
+      // Detect if this is a product comment conversation
+      const isComment = (conv.last_message || '').startsWith('[COMENTARIO]');
 
       return new Response(JSON.stringify({
         conversation: {
@@ -117,7 +120,8 @@ export async function onRequestGet(context) {
           business_id: conv.business_id,
           business_title: conv.business_title,
           business_slug: conv.business_slug,
-          buyer: { id: conv.buyer_id, name: conv.buyer_name, email: conv.buyer_email },
+          is_comment,
+          buyer: { id: conv.buyer_id, name: conv.buyer_id === 0 ? 'Anonimo' : (conv.buyer_name || 'Anonimo'), email: conv.buyer_email },
           seller: { id: conv.seller_id, name: conv.seller_name, email: conv.seller_email },
           created_at: conv.created_at,
           last_message_at: conv.last_message_at,
@@ -126,7 +130,7 @@ export async function onRequestGet(context) {
         messages: msgs.results.map(m => ({
           id: m.id,
           sender_id: m.sender_id,
-          sender_name: m.sender_name,
+          sender_name: m.sender_name || (m.sender_id === 0 ? 'Anonimo' : 'Usuario'),
           content: m.content,
           is_read: m.is_read,
           created_at: m.created_at,
@@ -134,14 +138,22 @@ export async function onRequestGet(context) {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // ─── List all conversations with search ───────────────────
+    // ─── List all conversations with search and filter ────────
     const search = params.get('search') || '';
+    const filterType = params.get('filter') || 'all'; // all | comment | business
     const page = parseInt(params.get('page')) || 1;
     const limit = Math.min(parseInt(params.get('limit')) || 20, 50);
     const offset = (page - 1) * limit;
 
     const conditions = [];
     const bindings = [];
+
+    // Filter by source type
+    if (filterType === 'comment') {
+      conditions.push(`c.last_message LIKE '[COMENTARIO]%'`);
+    } else if (filterType === 'business') {
+      conditions.push(`(c.last_message IS NULL OR c.last_message NOT LIKE '[COMENTARIO]%')`);
+    }
 
     if (search) {
       conditions.push(`(
@@ -183,10 +195,16 @@ export async function onRequestGet(context) {
       LIMIT ? OFFSET ?
     `).bind(...bindings, limit, offset).all();
 
+    // Count total without filter for stats
+    const allCountResult = await env.DB.prepare('SELECT COUNT(*) as total FROM conversations').first();
+    const allTotal = allCountResult ? allCountResult.total : 0;
+    const commentCountResult = await env.DB.prepare("SELECT COUNT(*) as total FROM conversations WHERE last_message LIKE '[COMENTARIO]%'").first();
+    const commentTotal = commentCountResult ? commentCountResult.total : 0;
+
     return new Response(JSON.stringify({
       conversations: conversations.results,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      stats: { total_conversations: total },
+      stats: { total_conversations: total, all_conversations: allTotal, comment_conversations: commentTotal, business_conversations: allTotal - commentTotal },
     }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
     console.error('Admin chat-logs error:', error);

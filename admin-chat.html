@@ -116,22 +116,31 @@
                                 <div class="admin-stat-label">Total Conversaciones</div>
                             </div>
                         </div>
-                        <div class="admin-stat-card" style="border-left:4px solid #2563eb;cursor:pointer;" onclick="showChatLogs()">
+                        <div class="admin-stat-card" style="border-left:4px solid #8b5cf6;cursor:pointer;" onclick="showChatLogs('comment')">
+                            <div class="admin-stat-icon" style="background:#f5f3ff;color:#8b5cf6;">
+                                <i class="fas fa-comment-dots"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-number" id="statCommentConvs">-</div>
+                                <div class="admin-stat-label">Comentarios de Producto</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card" style="border-left:4px solid #2563eb;cursor:pointer;" onclick="showChatLogs('business')">
                             <div class="admin-stat-icon" style="background:#eff6ff;color:#2563eb;">
+                                <i class="fas fa-store"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <div class="admin-stat-number" id="statBusinessConvs">-</div>
+                                <div class="admin-stat-label">Chats de Negocio</div>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card" style="border-left:4px solid #f59e0b;">
+                            <div class="admin-stat-icon" style="background:#fffbeb;color:#f59e0b;">
                                 <i class="fas fa-database"></i>
                             </div>
                             <div class="admin-stat-info">
                                 <div class="admin-stat-number" id="statTotalMsgs">-</div>
                                 <div class="admin-stat-label">Total Mensajes</div>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card" style="border-left:4px solid #f59e0b;">
-                            <div class="admin-stat-icon" style="background:#fffbeb;color:#f59e0b;">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <div class="admin-stat-info">
-                                <div class="admin-stat-number" style="font-size:0.9rem;line-height:1.3;">Respaldo<br>Automático</div>
-                                <div class="admin-stat-label">Todos los chats se guardan</div>
                             </div>
                         </div>
                     </div>
@@ -207,6 +216,18 @@
                     <!-- Search bar -->
                     <div class="admin-card" style="margin-top:12px;margin-bottom:16px;">
                         <div class="admin-card-body" style="padding:14px 18px;">
+                            <!-- Filter buttons -->
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;" id="chatFilterBtns">
+                                <button class="btn btn-primary btn-sm" data-filter="all" onclick="setChatFilter('all')">
+                                    <i class="fas fa-comments"></i> Todos
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-filter="comment" onclick="setChatFilter('comment')">
+                                    <i class="fas fa-comment-dots"></i> Comentarios de Producto
+                                </button>
+                                <button class="btn btn-outline btn-sm" data-filter="business" onclick="setChatFilter('business')">
+                                    <i class="fas fa-store"></i> Chats de Negocio
+                                </button>
+                            </div>
                             <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
                                 <div style="position:relative;flex:1;min-width:220px;">
                                     <i class="fas fa-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
@@ -357,12 +378,14 @@
             pageTitle.textContent = 'Chat';
         };
 
-        window.showChatLogs = function(searchTerm) {
+        window.showChatLogs = function(filterOrSearch) {
             configView.classList.add('hidden');
             logsView.classList.add('active');
             pageTitle.textContent = 'Registro de Chats';
-            if (searchTerm !== undefined) {
-                document.getElementById('chatLogsSearch').value = searchTerm;
+            if (typeof filterOrSearch === 'string' && (filterOrSearch === 'comment' || filterOrSearch === 'business' || filterOrSearch === 'all')) {
+                setChatFilter(filterOrSearch);
+            } else if (filterOrSearch !== undefined) {
+                document.getElementById('chatLogsSearch').value = filterOrSearch;
             }
             loadChatLogs(1);
         };
@@ -432,6 +455,20 @@
 
         // ─── Chat Logs ──────────────────────────────────────
         let logsPage = 1;
+        let currentFilter = 'all';
+
+        window.setChatFilter = function(filter) {
+            currentFilter = filter;
+            // Update button styles
+            document.querySelectorAll('#chatFilterBtns button').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.className = 'btn btn-primary btn-sm';
+                } else {
+                    btn.className = 'btn btn-outline btn-sm';
+                }
+            });
+            loadChatLogs(1);
+        };
 
         async function loadChatLogs(page) {
             logsPage = page || 1;
@@ -453,6 +490,7 @@
             try {
                 const params = new URLSearchParams({ page: logsPage, limit: 20 });
                 if (search) params.set('search', search);
+                if (currentFilter && currentFilter !== 'all') params.set('filter', currentFilter);
                 const data = await api.get('/admin/chat-logs?' + params.toString());
 
                 if (loading) loading.style.display = 'none';
@@ -470,20 +508,24 @@
                 }
 
                 list.innerHTML = convs.map(c => {
-                    const buyerColor = '#2563eb';
-                    const sellerColor = '#006EE3';
+                    const isComment = (c.last_message || '').startsWith('[COMENTARIO]');
                     const date = formatDate(c.last_message_at || c.created_at);
+                    const buyerDisplay = c.buyer_id === 0 ? 'Anónimo' : (c.buyer_name || 'Anónimo');
+                    const typeBadge = isComment
+                        ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#f5f3ff;color:#8b5cf6;padding:2px 8px;border-radius:8px;font-size:0.7rem;font-weight:600;"><i class="fas fa-comment-dots"></i> Comentario</span>'
+                        : '<span style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#2563eb;padding:2px 8px;border-radius:8px;font-size:0.7rem;font-weight:600;"><i class="fas fa-store"></i> Negocio</span>';
+                    const cleanMsg = (c.last_message || '').replace(/^\[COMENTARIO[^\]]*\]\s*/, '').replace(/^\[COMENTARIO en [^\]]*\]\s*[^\s]*:\s*/, '');
                     return `
                     <div class="conv-row" onclick="openConversation(${c.id})">
-                        <div class="conv-avatar" style="background:#e0e7ff;color:#4338ca;">${(c.buyer_name||'?')[0].toUpperCase()}</div>
+                        <div class="conv-avatar" style="background:${isComment ? '#f5f3ff' : '#e0e7ff'};color:${isComment ? '#8b5cf6' : '#4338ca'};">${(buyerDisplay||'?')[0].toUpperCase()}</div>
                         <div class="conv-info">
-                            <div class="conv-names">${esc(c.buyer_name||'Anónimo')} <i class="fas fa-exchange-alt" style="font-size:0.7rem;color:#d1d5db;margin:0 4px;"></i> ${esc(c.seller_name||'Anónimo')}</div>
+                            <div class="conv-names">${esc(buyerDisplay)} <i class="fas fa-exchange-alt" style="font-size:0.7rem;color:#d1d5db;margin:0 4px;"></i> ${esc(c.seller_name||'Vendedor')} ${typeBadge}</div>
                             <div class="conv-meta">
-                                <span style="color:#2563eb;"><i class="fas fa-user"></i> Comprador</span>
+                                <span style="color:${isComment ? '#8b5cf6' : '#2563eb'};"><i class="fas ${isComment ? 'fa-comment-dots' : 'fa-user'}"></i> ${isComment ? (c.buyer_id === 0 ? 'Anónimo' : 'Comprador') : 'Comprador'}</span>
                                 <span style="color:#006EE3;"><i class="fas fa-store"></i> Vendedor</span>
                                 ${c.business_title ? `<span><i class="fas fa-building"></i> ${esc(c.business_title)}</span>` : ''}
                             </div>
-                            ${c.last_message ? `<div class="conv-last-msg"><i class="fas fa-comment-dots" style="color:#d1d5db;margin-right:4px;"></i>${esc(c.last_message)}</div>` : ''}
+                            ${c.last_message ? `<div class="conv-last-msg"><i class="fas fa-comment-dots" style="color:#d1d5db;margin-right:4px;"></i>${esc(cleanMsg || c.last_message)}</div>` : ''}
                         </div>
                         <div class="conv-stats">
                             <span class="conv-msg-count">${c.message_count || 0} msgs</span>
@@ -533,16 +575,18 @@
 
                 if (!conv) { titleEl.textContent = 'No encontrada'; return; }
 
-                titleEl.textContent = (conv.buyer_name||'Anónimo') + ' ↔ ' + (conv.seller_name||'Anónimo');
+                titleEl.textContent = (conv.buyer.name||'Anónimo') + ' ↔ ' + (conv.seller.name||'Vendedor');
+                const commentBadge = conv.is_comment ? ' <span style="background:#f5f3ff;color:#8b5cf6;padding:2px 10px;border-radius:8px;font-size:0.75rem;font-weight:600;"><i class="fas fa-comment-dots"></i> Comentario de Producto</span>' : '';
                 metaEl.innerHTML = `
-                    ${conv.business_title ? `<i class="fas fa-building"></i> <a href="/negocio/${conv.business_slug||conv.business_id}" target="_blank" style="color:#2563eb;">${esc(conv.business_title)}</a> &nbsp;|&nbsp; ` : ''}
-                    <i class="fas fa-user"></i> ${esc(conv.buyer_name||'')} (${esc(conv.buyer_email||'')}) &nbsp;|&nbsp;
-                    <i class="fas fa-store"></i> ${esc(conv.seller_name||'')} (${esc(conv.seller_email||'')}) &nbsp;|&nbsp;
+                    ${commentBadge}
+                    ${conv.business_title ? `<br><i class="fas fa-building"></i> <a href="/negocio/${conv.business_slug||conv.business_id}" target="_blank" style="color:#2563eb;">${esc(conv.business_title)}</a> &nbsp;|&nbsp; ` : '<br>'}
+                    <i class="fas fa-user"></i> ${esc(conv.buyer.name||'Anónimo')} (${esc(conv.buyer.email||'N/A')}) &nbsp;|&nbsp;
+                    <i class="fas fa-store"></i> ${esc(conv.seller.name||'Vendedor')} (${esc(conv.seller.email||'')}) &nbsp;|&nbsp;
                     <i class="fas fa-calendar"></i> ${formatDate(conv.created_at)} &nbsp;|&nbsp;
                     <i class="fas fa-comment"></i> ${conv.message_count} mensajes
                 `;
                 badgesEl.innerHTML = `
-                    <a href="/negocio/${conv.business_slug||conv.business_id}" target="_blank" class="btn btn-xs btn-outline" title="Ver negocio"><i class="fas fa-external-link-alt"></i> Negocio</a>
+                    ${conv.business_slug ? `<a href="/negocio/${conv.business_slug}" target="_blank" class="btn btn-xs btn-outline" title="Ver negocio"><i class="fas fa-external-link-alt"></i> Negocio</a>` : ''}
                 `;
 
                 if (msgsLoading) msgsLoading.style.display = 'none';
@@ -604,15 +648,19 @@
             try {
                 const data = await api.get('/admin/chat-logs?limit=1');
                 if (data.stats) {
-                    document.getElementById('statTotalConvs').textContent = data.stats.total_conversations || 0;
+                    document.getElementById('statTotalConvs').textContent = data.stats.all_conversations || 0;
+                    document.getElementById('statCommentConvs').textContent = data.stats.comment_conversations || 0;
+                    document.getElementById('statBusinessConvs').textContent = data.stats.business_conversations || 0;
                 }
-                // Count total messages from the first page result
+                // Count total messages
                 const dataAll = await api.get('/admin/chat-logs?limit=50&page=1');
                 let totalMsgs = 0;
                 (dataAll.conversations || []).forEach(c => { totalMsgs += (c.message_count || 0); });
                 document.getElementById('statTotalMsgs').textContent = totalMsgs;
             } catch(e) {
                 document.getElementById('statTotalConvs').textContent = '0';
+                document.getElementById('statCommentConvs').textContent = '0';
+                document.getElementById('statBusinessConvs').textContent = '0';
                 document.getElementById('statTotalMsgs').textContent = '0';
             }
         }
