@@ -19,7 +19,7 @@ export async function onRequestGet(context) {
               b.instagram as business_instagram, b.facebook as business_facebook,
               b.twitter as business_twitter, b.tiktok as business_tiktok,
               b.youtube as business_youtube, b.video_url as business_video_url,
-              (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as business_logo
+              b.logo as business_logo
        FROM products p
        LEFT JOIN businesses b ON p.business_id = b.id
        WHERE p.slug = ? AND (p.status = 'approved' OR p.status IS NULL)`
@@ -34,7 +34,7 @@ export async function onRequestGet(context) {
                   b.instagram as business_instagram, b.facebook as business_facebook,
                   b.twitter as business_twitter, b.tiktok as business_tiktok,
                   b.youtube as business_youtube, b.video_url as business_video_url,
-                  (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as business_logo
+                  b.logo as business_logo
            FROM products p
            LEFT JOIN businesses b ON p.business_id = b.id
            WHERE p.id = ? AND (p.status = 'approved' OR p.status IS NULL)`
