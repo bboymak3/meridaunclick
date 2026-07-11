@@ -572,7 +572,7 @@ export async function onRequestGet(context) {
         pdCommentBtn.disabled = true;
         pdCommentBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
-        var token = localStorage.getItem('authToken');
+        var token = localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken');
         var headers = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = 'Bearer ' + token;
 
