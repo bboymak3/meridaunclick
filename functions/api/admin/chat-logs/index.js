@@ -76,6 +76,42 @@ export async function onRequestGet(context) {
     const url = new URL(request.url);
     const params = url.searchParams;
 
+    // ─── Debug mode: show raw table info ─────────
+    if (params.get('debug') === '1') {
+      let tableInfo = {};
+      try {
+        const tables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('conversations','messages','product_comments')").all();
+        tableInfo.tables = tables.results.map(t => t.name);
+      } catch(e) { tableInfo.tables_error = e.message; }
+
+      try {
+        const convCount = await env.DB.prepare('SELECT COUNT(*) as c FROM conversations').first();
+        tableInfo.conversations_count = convCount ? convCount.c : 0;
+      } catch(e) { tableInfo.conversations_error = e.message; }
+
+      try {
+        const msgCount = await env.DB.prepare('SELECT COUNT(*) as c FROM messages').first();
+        tableInfo.messages_count = msgCount ? msgCount.c : 0;
+      } catch(e) { tableInfo.messages_error = e.message; }
+
+      try {
+        const pcCount = await env.DB.prepare('SELECT COUNT(*) as c FROM product_comments').first();
+        tableInfo.product_comments_count = pcCount ? pcCount.c : 0;
+      } catch(e) { tableInfo.product_comments_error = e.message; }
+
+      try {
+        const sample = await env.DB.prepare('SELECT c.id, c.buyer_id, c.seller_id, c.business_id, c.last_message, c.last_message_at FROM conversations ORDER BY c.id DESC LIMIT 3').all();
+        tableInfo.sample_conversations = sample.results;
+      } catch(e) { tableInfo.sample_error = e.message; }
+
+      try {
+        const convInfo = await env.DB.prepare("PRAGMA table_info(conversations)").all();
+        tableInfo.conversations_columns = convInfo.results.map(r => r.name);
+      } catch(e) { tableInfo.columns_error = e.message; }
+
+      return new Response(JSON.stringify({ debug: tableInfo, user_role: user.role }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // ─── If conversation_id provided, return messages ─────────
     const conversationId = params.get('conversation_id');
     if (conversationId) {
