@@ -49,7 +49,7 @@ export async function onRequestGet(context) {
       });
     }
 
-    const baseUrl = 'https://holax.com';
+    const baseUrl = 'https://aunclick.pages.dev';
     const title = business.title || 'Negocio';
     const description = business.description
       ? business.description.substring(0, 160)
@@ -94,7 +94,7 @@ export async function onRequestGet(context) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>U</text></svg>">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <style>
 /* === Business Ficha - 30% Larger === */
 .business-detail-page .compact-info-card {
@@ -679,11 +679,11 @@ function normalizeSocialUrl(value, platform) {
   const v = value.trim();
   if (v.startsWith('http://') || v.startsWith('https://')) return v;
   let clean = v.replace(/^@/, '');
-  clean = clean.replace(/^(facebook\.com\/?|www\.facebook\.com\/?)/i, '');
-  clean = clean.replace(/^(instagram\.com\/?|www\.instagram\.com\/?)/i, '');
-  clean = clean.replace(/^(x\.com\/?|twitter\.com\/?|www\.twitter\.com\/?)/i, '');
-  clean = clean.replace(/^(tiktok\.com\/?|www\.tiktok\.com\/?)/i, '');
-  clean = clean.replace(/^(youtube\.com\/?|www\.youtube\.com\/?)/i, '');
+  clean = clean.replace(/^(facebook\.com\/?|www\.facebook\.com\/?|facebook\/)/i, '');
+  clean = clean.replace(/^(instagram\.com\/?|www\.instagram\.com\/?|instagram\/)/i, '');
+  clean = clean.replace(/^(x\.com\/?|twitter\.com\/?|www\.twitter\.com\/?|twitter\/)/i, '');
+  clean = clean.replace(/^(tiktok\.com\/?|www\.tiktok\.com\/?|tiktok\/)/i, '');
+  clean = clean.replace(/^(youtube\.com\/?|www\.youtube\.com\/?|youtube\/)/i, '');
   clean = clean.replace(/^@/, '');
   switch (platform) {
     case 'instagram': return `https://www.instagram.com/${clean}`;

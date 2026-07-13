@@ -842,8 +842,8 @@ ${images.results.length > 1 ? `
             <div class="lp-section-label">Galeria</div>
             <h2 class="lp-section-title">Nuestras Fotos</h2>
         </div>
-        <div class="lp-gallery-grid">
-            ${(() => { const galleryLabels = ['fachada del local','interior del negocio','nuestros productos','area de atencion','detalles del establecimiento','ambiente general','nuestro equipo','vista externa','instalaciones','galeria adicional']; const allGalleryUrls = images.results.map(i => i.url); return `<div data-gallery='${JSON.stringify(allGalleryUrls)}'>` + images.results.map((img, i) => `<img src="${escapeHtml(img.url)}" alt="${escapeHtml(title)} - ${galleryLabels[i % galleryLabels.length]} en ${escapeHtml(business.city || 'Venezuela')}" class="lp-gallery-img" loading="lazy" style="cursor:zoom-in;" onclick="openLpLightbox(this, this.closest('[data-gallery]'))">`).join('') + '</div>'; })()}
+        <div class="lp-gallery-grid" data-gallery='${JSON.stringify(images.results.map(i => i.url))}'>
+            ${(() => { const galleryLabels = ['fachada del local','interior del negocio','nuestros productos','area de atencion','detalles del establecimiento','ambiente general','nuestro equipo','vista externa','instalaciones','galeria adicional']; return images.results.map((img, i) => `<img src="${escapeHtml(img.url)}" alt="${escapeHtml(title)} - ${galleryLabels[i % galleryLabels.length]} en ${escapeHtml(business.city || 'Venezuela')}" class="lp-gallery-img" loading="lazy" style="cursor:zoom-in;" onclick="openLpLightbox(this, this.closest('[data-gallery]'))">`).join(''); })()}
         </div>
     </div>
 </section>
@@ -1107,12 +1107,12 @@ function normalizeSocialUrl(value, platform) {
   const v = value.trim();
   if (v.startsWith('http://') || v.startsWith('https://')) return v;
   let clean = v.replace(/^@/, '');
-  // Strip common prefixes users type by mistake: "facebook.com/", "instagram.com/", etc.
-  clean = clean.replace(/^(facebook\.com\/?|www\.facebook\.com\/?)/i, '');
-  clean = clean.replace(/^(instagram\.com\/?|www\.instagram\.com\/?)/i, '');
-  clean = clean.replace(/^(x\.com\/?|twitter\.com\/?|www\.twitter\.com\/?)/i, '');
-  clean = clean.replace(/^(tiktok\.com\/?|www\.tiktok\.com\/?)/i, '');
-  clean = clean.replace(/^(youtube\.com\/?|www\.youtube\.com\/?)/i, '');
+  // Strip common prefixes users type by mistake: "facebook.com/", "instagram.com/", "facebook/", etc.
+  clean = clean.replace(/^(facebook\.com\/?|www\.facebook\.com\/?|facebook\/)/i, '');
+  clean = clean.replace(/^(instagram\.com\/?|www\.instagram\.com\/?|instagram\/)/i, '');
+  clean = clean.replace(/^(x\.com\/?|twitter\.com\/?|www\.twitter\.com\/?|twitter\/)/i, '');
+  clean = clean.replace(/^(tiktok\.com\/?|www\.tiktok\.com\/?|tiktok\/)/i, '');
+  clean = clean.replace(/^(youtube\.com\/?|www\.youtube\.com\/?|youtube\/)/i, '');
   clean = clean.replace(/^@/, ''); // Remove @ again if it appeared after stripping
   switch (platform) {
     case 'instagram': return `https://www.instagram.com/${clean}`;

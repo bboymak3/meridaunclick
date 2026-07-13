@@ -69,7 +69,7 @@ export async function onRequestGet(context) {
     // First image is the main one
     const mainImage = productImages[0] || '';
 
-    const baseUrl = 'https://holax.com';
+    const baseUrl = 'https://aunclick.pages.dev';
     const title = product.name || 'Producto';
     const price = product.price ? `$${Number(product.price).toLocaleString('es-VE')}` : '';
     const description = product.description
@@ -131,10 +131,19 @@ export async function onRequestGet(context) {
         const rpSlug = rp.slug || rp.id;
         const rpBadge = getCatBadge(rp.category);
         const rpIcon = getCatIcon(rp.category);
+        // Parse image: could be JSON array or plain URL
+        let rpImg = '';
+        if (rp.image) {
+          try {
+            const parsed = JSON.parse(rp.image);
+            if (Array.isArray(parsed) && parsed.length > 0) rpImg = parsed[0];
+          } catch(e) {}
+          if (!rpImg && String(rp.image).startsWith('http')) rpImg = rp.image;
+        }
         return `
           <a href="/producto/${rpSlug}" class="rp-card">
             <div class="rp-card-img">
-              ${rp.image ? `<img src="${esc(rp.image)}" alt="${esc(rp.name)}" loading="lazy">` : `<div class="rp-card-ph"><i class="fas fa-image"></i></div>`}
+              ${rpImg ? `<img src="${esc(rpImg)}" alt="${esc(rp.name)}" loading="lazy" onerror="this.style.display='none'">` : `<div class="rp-card-ph"><i class="fas fa-image"></i></div>`}
               <span class="rp-badge ${rpBadge}"><i class="fas ${rpIcon}"></i></span>
             </div>
             <div class="rp-card-body">
