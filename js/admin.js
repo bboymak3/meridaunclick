@@ -1838,7 +1838,11 @@ if (!window._renderVideoList) {
         // B2 Image upload handlers
         const b2FileInput = document.getElementById('b2EditImageFile');
         const b2CameraInput = document.getElementById('b2EditImageCamera');
-        if (b2FileInput) b2FileInput.addEventListener('change', (e) => handleB2ImageUpload(e.target.files[0]));
+        if (b2FileInput) b2FileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(f => handleB2ImageUpload(f));
+            e.target.value = '';
+        });
         if (b2CameraInput) b2CameraInput.addEventListener('change', (e) => handleB2ImageUpload(e.target.files[0]));
 
         // B2 Image URL handler
@@ -1971,7 +1975,8 @@ if (!window._renderVideoList) {
         // If editing, load product data
         if (productId) {
             try {
-                const product = await api.get(`/marketplace/${productId}`);
+                const data = await api.get(`/marketplace/${productId}`);
+                const product = data.product || data;
                 document.getElementById('b2EditName').value = product.name || '';
                 document.getElementById('b2EditPrice').value = product.price || 0;
                 document.getElementById('b2EditCategory').value = product.category || 'general';
@@ -2114,8 +2119,8 @@ if (!window._renderVideoList) {
         const urlImage = document.getElementById('b2EditImageURL')?.value?.trim() || '';
         if (images.length === 0 && urlImage) images = [urlImage];
 
-        // Build image value: JSON array if multiple, single URL if one
-        const image = images.length > 1 ? JSON.stringify(images) : (images[0] || '');
+        // Always save as JSON array so the product detail page shows all images
+        const image = images.length > 0 ? JSON.stringify(images) : '';
 
         if (!name) { showToast('El nombre es requerido', 'error'); return; }
 
