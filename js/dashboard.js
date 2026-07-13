@@ -930,6 +930,7 @@ window.closeEditBusinessModal = function() {
                                     <td>${statusLabel}</td>
                                     <td>${formatDate(p.created_at)}</td>
                                     <td class="dash-actions">
+                                        <button class="btn-icon" onclick="editProduct(${p.id})" title="Editar" style="color:#006EE3;"><i class="fas fa-pen"></i></button>
                                         <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                                     </td>
                                 </tr>`;
@@ -954,17 +955,31 @@ window.closeEditBusinessModal = function() {
         const overlay = modal.querySelector('.modal-overlay');
         const form = document.getElementById('productForm');
 
-        if (close) close.addEventListener('click', () => modal.classList.add('hidden'));
-        if (cancel) cancel.addEventListener('click', () => modal.classList.add('hidden'));
-        if (overlay) overlay.addEventListener('click', () => modal.classList.add('hidden'));
+        function resetModal() {
+            modal.classList.add('hidden');
+            editingProductId = null;
+            form.reset();
+            productImageUrls = [];
+            syncImageField();
+            if (uploadPreview) uploadPreview.innerHTML = '';
+            document.getElementById('prodVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
+            const mTitle = document.getElementById('productModalTitle');
+            if (mTitle) mTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Publicar Producto';
+            const mSave = document.getElementById('productModalSave');
+            if (mSave) mSave.innerHTML = '<i class="fas fa-save"></i> Publicar';
+        }
+
+        if (close) close.addEventListener('click', resetModal);
+        if (cancel) cancel.addEventListener('click', resetModal);
+        if (overlay) overlay.addEventListener('click', resetModal);
 
         if (save) save.addEventListener('click', async () => {
             if (!form.checkValidity()) { form.reportValidity(); return; }
 
-            // Validate business selection
+            // Validate business selection (only for new products)
             const businessSelect = document.getElementById('prodBusiness');
             const businessId = businessSelect ? businessSelect.value : '';
-            if (!businessId) {
+            if (!editingProductId && !businessId) {
                 showToast('Debes seleccionar un negocio. Si no tienes uno, regístralo primero desde "Nuevo Negocio".', 'error');
                 return;
             }
@@ -995,17 +1010,31 @@ window.closeEditBusinessModal = function() {
                     image: finalImage,
                     description: fd.get('description') || '',
                     video_url: videoUrls.length > 0 ? JSON.stringify(videoUrls) : '',
-                    business_id: parseInt(businessId),
                 };
-                await api.post('/marketplace', body);
-                showToast('Producto enviado para aprobación. Será visible una vez aprobado por un administrador.', 'success');
+
+                if (editingProductId) {
+                    // UPDATE existing product
+                    await api.put(`/marketplace/${editingProductId}`, body);
+                    showToast('Producto actualizado correctamente', 'success');
+                } else {
+                    // CREATE new product
+                    body.business_id = parseInt(businessId);
+                    await api.post('/marketplace', body);
+                    showToast('Producto enviado para aprobación. Será visible una vez aprobado por un administrador.', 'success');
+                }
                 modal.classList.add('hidden');
                 form.reset();
                 productImageUrls = [];
+                editingProductId = null;
                 syncImageField();
                 if (uploadPreview) uploadPreview.innerHTML = '';
                 // Reset video list to single input
                 document.getElementById('prodVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
+                // Reset modal title and button
+                const mTitle = document.getElementById('productModalTitle');
+                if (mTitle) mTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Publicar Producto';
+                const mSave = document.getElementById('productModalSave');
+                if (mSave) mSave.innerHTML = '<i class="fas fa-save"></i> Publicar';
                 loadMyProducts();
             } catch (error) {
                 showToast(error.message || 'Error al publicar producto', 'error');
@@ -1169,7 +1198,15 @@ window.closeEditBusinessModal = function() {
     window.openProductModal = async function () {
         const modal = document.getElementById('productModal');
         if (modal) modal.classList.remove('hidden');
+        editingProductId = null;
+        // Reset modal title and button
+        const mTitle = document.getElementById('productModalTitle');
+        if (mTitle) mTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Publicar Producto';
+        const mSave = document.getElementById('productModalSave');
+        if (mSave) mSave.innerHTML = '<i class="fas fa-save"></i> Publicar';
         if (window.resetProductImages) window.resetProductImages();
+        // Reset video list
+        document.getElementById('prodVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
         
         // Load user's businesses into selector
         try {
@@ -1211,6 +1248,131 @@ window.closeEditBusinessModal = function() {
             loadMyProducts();
         } catch (error) {
             showToast(error.message || 'Error al eliminar', 'error');
+        }
+    };
+
+    // ─── Edit Product ─────────────────────────────────────
+    let editingProductId = null;
+
+    window.editProduct = async function (id) {
+        try {
+            const data = await api.get(`/marketplace/${id}`);
+            const p = data.product;
+            if (!p) { showToast('Producto no encontrado', 'error'); return; }
+
+            editingProductId = id;
+            const modal = document.getElementById('productModal');
+            modal.classList.remove('hidden');
+
+            // Update title
+            const title = document.getElementById('productModalTitle');
+            if (title) title.innerHTML = '<i class="fas fa-pen"></i> Editar Producto';
+
+            // Update save button
+            const saveBtn = document.getElementById('productModalSave');
+            if (saveBtn) saveBtn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
+
+            // Fill form fields
+            document.getElementById('prodName').value = p.name || '';
+            document.getElementById('prodPrice').value = p.price || '';
+            document.getElementById('prodCategory').value = p.category || 'general';
+            document.getElementById('prodDescription').value = p.description || '';
+
+            // Load businesses and select the right one
+            try {
+                const user = getCachedUser();
+                const businessesData = await api.get(`/businesses?user_id=${user.id}&limit=50`);
+                const businesses = businessesData.businesses || businessesData.results || businessesData || [];
+                const select = document.getElementById('prodBusiness');
+                if (select) {
+                    select.innerHTML = '<option value="">Publicar como usuario independiente</option>';
+                    businesses.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.title || b.name || `Negocio #${b.id}`;
+                        if (String(b.id) === String(p.business_id)) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+                    select.disabled = false;
+                }
+            } catch(e) { console.log('Could not load businesses:', e); }
+
+            // Parse existing images into the array
+            let existingImages = [];
+            try {
+                const parsed = JSON.parse(p.image || '[]');
+                if (Array.isArray(parsed)) existingImages = parsed.filter(u => u && u.trim());
+            } catch(e) {
+                if (p.image && p.image.trim()) existingImages = [p.image];
+            }
+            productImageUrls = [...existingImages];
+            syncImageField();
+
+            // Show existing image previews with delete buttons
+            const preview = document.getElementById('prodUploadPreview');
+            if (preview) {
+                preview.innerHTML = '';
+                productImageUrls.forEach((url, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'prod-upload-preview';
+                    div.style.cssText = 'display:inline-block;position:relative;margin:4px;';
+                    div.dataset.imgIndex = idx;
+                    div.innerHTML = `<img src="${url}" alt="Foto ${idx+1}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid ${idx===0?'#006EE3':'#e2e8f0'};" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23e2e8f0%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2254%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>Sin imagen</text></svg>'">
+                        ${idx===0?'<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:4px;">Principal</span>':''}
+                        <button type="button" onclick="removeProductImage(${idx})" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;">&times;</button>`;
+                    preview.appendChild(div);
+                });
+            }
+
+            // Load existing videos
+            let existingVideos = [];
+            try {
+                const parsed = JSON.parse(p.video_url || '[]');
+                if (Array.isArray(parsed)) existingVideos = parsed.filter(v => v && v.trim());
+            } catch(e) {
+                if (p.video_url && p.video_url.trim()) existingVideos = [p.video_url];
+            }
+            const videoList = document.getElementById('prodVideoList');
+            if (videoList) {
+                if (existingVideos.length > 0) {
+                    videoList.innerHTML = existingVideos.map(v => `
+                        <div class="profile-input-group" style="margin-bottom:8px;display:flex;gap:6px;align-items:center;">
+                            <div class="profile-input-wrapper" style="flex:1;"><i class="fas fa-video"></i>
+                            <input type="url" class="prod-video-url" value="${v}" placeholder="URL de video...">
+                            </div>
+                            <button type="button" onclick="this.parentElement.remove()" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.8rem;"><i class="fas fa-times"></i></button>
+                        </div>
+                    `).join('');
+                } else {
+                    videoList.innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
+                }
+            }
+
+        } catch (error) {
+            console.error('Error loading product for edit:', error);
+            showToast(error.message || 'Error al cargar producto', 'error');
+        }
+    };
+
+    window.removeProductImage = function(idx) {
+        if (idx >= 0 && idx < productImageUrls.length) {
+            productImageUrls.splice(idx, 1);
+            syncImageField();
+            // Re-render previews
+            const preview = document.getElementById('prodUploadPreview');
+            if (preview) {
+                preview.innerHTML = '';
+                productImageUrls.forEach((url, i) => {
+                    const div = document.createElement('div');
+                    div.className = 'prod-upload-preview';
+                    div.style.cssText = 'display:inline-block;position:relative;margin:4px;';
+                    div.innerHTML = `<img src="${url}" alt="Foto ${i+1}" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid ${i===0?'#006EE3':'#e2e8f0'};" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%22 height=%22100%22><rect fill=%22%23e2e8f0%22 width=%22100%22 height=%22100%22/><text x=%2250%22 y=%2254%22 text-anchor=%22middle%22 fill=%22%2394a3b8%22 font-size=%2212%22>Sin imagen</text></svg>'">
+                        ${i===0?'<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:4px;">Principal</span>':''}
+                        <button type="button" onclick="removeProductImage(${i})" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;">&times;</button>`;
+                    preview.appendChild(div);
+                });
+            }
+            showToast('Foto eliminada', 'success');
         }
     };
 
