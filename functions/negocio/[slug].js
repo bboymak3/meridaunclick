@@ -516,7 +516,7 @@ export async function onRequestGet(context) {
 
                 <div class="business-gallery" id="businessGallery">
                     <div class="gallery-main">
-                        <img id="mainImage" src="" alt="" class="gallery-main-img">
+                        <img id="mainImage" src="" alt="" class="gallery-main-img" style="cursor:zoom-in;" onclick="document.getElementById('lightbox').classList.remove('hidden')">
                         <button class="gallery-nav gallery-prev" id="galleryPrev" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
                         <button class="gallery-nav gallery-next" id="galleryNext" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
                         <div class="gallery-counter"><span id="galleryCurrent">1</span> / <span id="galleryTotal">1</span></div>
@@ -547,7 +547,7 @@ export async function onRequestGet(context) {
                     </div>
                 </div>
 
-                ${(() => { const instagram = business.instagram; const facebook = business.facebook; const twitter = business.twitter; const tiktok = business.tiktok; const youtube = business.youtube; const hasSocial = instagram || facebook || twitter || tiktok || youtube; if (!hasSocial && !business.slug) return ''; return `
+                ${(() => { const instagram = normalizeSocialUrl(business.instagram, 'instagram'); const facebook = normalizeSocialUrl(business.facebook, 'facebook'); const twitter = normalizeSocialUrl(business.twitter, 'twitter'); const tiktok = normalizeSocialUrl(business.tiktok, 'tiktok'); const youtube = normalizeSocialUrl(business.youtube, 'youtube'); const hasSocial = instagram || facebook || twitter || tiktok || youtube; if (!hasSocial && !business.slug) return ''; return `
                 <div class="pd-social-section" style="padding:20px 24px;">
                   <div style="font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
                     <i class="fas fa-share-nodes" style="color:#006EE3;"></i> Redes Sociales y Web
@@ -672,6 +672,27 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function normalizeSocialUrl(value, platform) {
+  if (!value) return '';
+  const v = value.trim();
+  if (v.startsWith('http://') || v.startsWith('https://')) return v;
+  let clean = v.replace(/^@/, '');
+  clean = clean.replace(/^(facebook\.com\/?|www\.facebook\.com\/?)/i, '');
+  clean = clean.replace(/^(instagram\.com\/?|www\.instagram\.com\/?)/i, '');
+  clean = clean.replace(/^(x\.com\/?|twitter\.com\/?|www\.twitter\.com\/?)/i, '');
+  clean = clean.replace(/^(tiktok\.com\/?|www\.tiktok\.com\/?)/i, '');
+  clean = clean.replace(/^(youtube\.com\/?|www\.youtube\.com\/?)/i, '');
+  clean = clean.replace(/^@/, '');
+  switch (platform) {
+    case 'instagram': return `https://www.instagram.com/${clean}`;
+    case 'facebook': return `https://www.facebook.com/${clean}`;
+    case 'twitter': return `https://x.com/${clean}`;
+    case 'tiktok': return `https://www.tiktok.com/@${clean}`;
+    case 'youtube': return `https://www.youtube.com/@${clean}`;
+    default: return v;
+  }
 }
 
 function escapeJs(str) {
