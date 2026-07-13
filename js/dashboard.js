@@ -1116,10 +1116,8 @@ window.closeEditBusinessModal = function() {
                     if (uploadedCount === imageFiles.length) {
                         if (uploadProgress) uploadProgress.classList.add('hidden');
                         if (allUrls.length > 0) {
-                            uploadedImageUrl = allUrls[0];
-                            // Store all URLs in the image field as JSON array
-                            const allUrlsJSON = JSON.stringify(allUrls);
-                            if (prodImageInput) prodImageInput.value = allUrlsJSON;
+                            uploadedImageUrl = JSON.stringify(allUrls);
+                            if (prodImageInput) prodImageInput.value = uploadedImageUrl;
                             showToast(`${allUrls.length} imagen(es) subida(s) correctamente`, 'success');
                         }
                     }
