@@ -1,5 +1,5 @@
 const CACHE_NAME = 'holax-v2';
-const BASE = 'https://aunclick.pages.dev';
+const BASE = '';
 const OFFLINE_URL = '/index.html';
 
 self.addEventListener('install', (event) => {

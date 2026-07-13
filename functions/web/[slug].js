@@ -173,6 +173,21 @@ export async function onRequestGet(context) {
             background-size: cover; background-position: center;
             opacity: 0.15;
         }
+        .lp-hero-banner {
+            position: absolute; inset: 0;
+            background-size: cover; background-position: center;
+            background-repeat: no-repeat;
+        }
+        .lp-hero-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.6) 100%);
+        }
+        .lp-hero-logo {
+            max-height: 100px; max-width: 280px; width: auto;
+            border-radius: 16px; object-fit: contain;
+            filter: drop-shadow(0 4px 12px rgba(0,0,0,0.4));
+            margin-bottom: 20px;
+        }
         .lp-hero-pattern {
             position: absolute; inset: 0; opacity: 0.05;
             background-image: radial-gradient(circle at 25px 25px, white 2%, transparent 0%);
@@ -339,7 +354,7 @@ export async function onRequestGet(context) {
             border: 1px solid #e5e7eb; transition: transform 0.2s, box-shadow 0.2s;
         }
         .lp-product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
-        .lp-product-img { width: 100%; height: 180px; object-fit: cover; background: #f1f5f9; }
+        .lp-product-img { width: 100%; height: 220px; object-fit: cover; background: #f1f5f9; }
         .lp-product-body { padding: 18px; }
         .lp-product-name {
             font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 6px;
@@ -508,7 +523,7 @@ export async function onRequestGet(context) {
 <!-- NAV -->
 <nav class="lp-nav" id="lpNav">
     <a href="${baseUrl}/index.html" class="lp-nav-brand">
-        <img src="${baseUrl}/images/logoprincipal.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:6px;"> HolaX
+        <img src="/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:6px;"> HolaX
     </a>
     <div class="lp-nav-links">
         <a href="#about">Nosotros</a>
@@ -522,9 +537,13 @@ export async function onRequestGet(context) {
 
 <!-- HERO -->
 <section class="lp-hero" id="hero">
-    ${business.cover_image ? '<div class="lp-hero-bg"></div>' : ''}
-    <div class="lp-hero-pattern"></div>
+    ${business.banner ? `
+        <div class="lp-hero-banner" style="background-image:url('${escapeHtml(business.banner)}');"></div>
+        <div class="lp-hero-overlay"></div>
+        <div class="lp-hero-pattern"></div>
+    ` : (business.cover_image ? '<div class="lp-hero-bg"></div><div class="lp-hero-pattern"></div>' : '<div class="lp-hero-pattern"></div>')}
     <div class="lp-hero-content">
+        ${business.logo ? `<img src="${escapeHtml(business.logo)}" alt="${escapeHtml(title)}" class="lp-hero-logo">` : ''}
         <div class="lp-hero-badge">
             <i class="fas fa-map-marker-alt"></i>
             ${escapeHtml(business.city || '')}${business.state ? ', ' + escapeHtml(business.state) : ''}
@@ -637,7 +656,7 @@ ${products.results.length > 0 ? `
         <div class="lp-products-grid">
             ${products.results.map(p => `
                 <div class="lp-product-card">
-                    ${p.image ? `<img src="${escapeHtml(p.image)}" alt="${escapeHtml(p.name)}" class="lp-product-img" loading="lazy" onerror="this.style.display='none'">` : '<div style="height:180px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="font-size:2.5rem;color:#cbd5e1;"></i></div>'}
+                    ${(() => { let imgSrc = ''; if (p.image) { try { const arr = JSON.parse(p.image); if (Array.isArray(arr) && arr.length > 0) imgSrc = arr[0]; else if (typeof p.image === 'string' && p.image.startsWith('http')) imgSrc = p.image; } catch(e) { if (p.image.startsWith('http')) imgSrc = p.image; } } return imgSrc ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)}" class="lp-product-img" loading="lazy" onerror="this.style.display='none'">` : '<div style="height:220px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="font-size:2.5rem;color:#cbd5e1;"></i></div>'; })()}
                     <div class="lp-product-body">
                         <div class="lp-product-name">${escapeHtml(p.name)}</div>
                         ${p.description ? `<div class="lp-product-desc">${escapeHtml(p.description)}</div>` : ''}
@@ -865,7 +884,7 @@ window.addEventListener('scroll', () => {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'public, max-age=300',
         'Link': `<${baseUrl}/negocio/${business.slug}>; rel="canonical"`,
       },
     });

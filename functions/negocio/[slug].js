@@ -404,7 +404,7 @@ export async function onRequestGet(context) {
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="/index.html" class="nav-logo">
-                <img src="https://aunclick.pages.dev/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <img src="/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
                 <span class="brand-name"><span id="brandCity"></span> HolaX</span>
             </a>
             <div class="location-selector" id="locationSelector">

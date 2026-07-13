@@ -18,4 +18,4 @@ Disallow: /*?page=
 Disallow: /*?sort=
 
 # Sitemap dinámico
-Sitemap: https://aunclick.pages.dev/api/sitemap
+Sitemap: /sitemap.xml

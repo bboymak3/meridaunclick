@@ -363,7 +363,7 @@ export async function onRequestGet(context) {
 <body>
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <a href="/" class="nav-logo"><img src="https://aunclick.pages.dev/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;"> <span class="brand-name">HolaX</span></a>
+            <a href="/" class="nav-logo"><img src="/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;"> <span class="brand-name">HolaX</span></a>
             <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
                 <i class="fas fa-bars"></i>
             </button>

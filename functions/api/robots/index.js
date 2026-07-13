@@ -23,7 +23,7 @@ Disallow: /*?page=
 Disallow: /*?sort=
 
 # Sitemap
-Sitemap: https://holax.com/api/sitemap`;
+Sitemap: /sitemap.xml`;
 
   return new Response(robotsTxt, {
     status: 200,

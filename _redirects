@@ -5,7 +5,7 @@
 /robots.txt /api/robots 200
 
 # SEO: redirigir www a apex (sin www)
-https://www.aunclick.pages.dev/* https://aunclick.pages.dev/:splat 301
+https://www.aunclick.pages.dev/* /:splat 301
 
 # Redirecciones de páginas antiguas o renombradas
 /reservar.html /reservas.html 301
