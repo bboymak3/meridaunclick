@@ -960,8 +960,9 @@ window.closeEditBusinessModal = function() {
             editingProductId = null;
             form.reset();
             productImageUrls = [];
-            syncImageField();
-            if (uploadPreview) uploadPreview.innerHTML = '';
+            if (window.syncProductImageField) window.syncProductImageField();
+            const up = document.getElementById('prodUploadPreview');
+            if (up) up.innerHTML = '';
             document.getElementById('prodVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
             const mTitle = document.getElementById('productModalTitle');
             if (mTitle) mTitle.innerHTML = '<i class="fas fa-plus-circle"></i> Publicar Producto';
@@ -1026,8 +1027,9 @@ window.closeEditBusinessModal = function() {
                 form.reset();
                 productImageUrls = [];
                 editingProductId = null;
-                syncImageField();
-                if (uploadPreview) uploadPreview.innerHTML = '';
+                if (window.syncProductImageField) window.syncProductImageField();
+                const up = document.getElementById('prodUploadPreview');
+                if (up) up.innerHTML = '';
                 // Reset video list to single input
                 document.getElementById('prodVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
                 // Reset modal title and button
@@ -1044,21 +1046,7 @@ window.closeEditBusinessModal = function() {
         // ─── Image Upload Handler ─────────────────────────
         const imageFileInput = document.getElementById('prodImageFile');
         const attachFileInput = document.getElementById('prodAttachFile');
-        const uploadPreview = document.getElementById('prodUploadPreview');
         const uploadProgress = document.getElementById('prodUploadProgress');
-        const prodImageInput = document.getElementById('prodImage');
-        let productImageUrls = []; // Accumulate all uploaded image URLs
-
-        function syncImageField() {
-            const val = productImageUrls.length > 0 ? JSON.stringify(productImageUrls) : '';
-            if (prodImageInput) prodImageInput.value = val;
-        }
-
-        window.resetProductImages = function() {
-            productImageUrls = [];
-            syncImageField();
-            if (uploadPreview) uploadPreview.innerHTML = '';
-        };
 
         function handleImageUpload(file) {
             if (!file) return;
@@ -1072,14 +1060,15 @@ window.closeEditBusinessModal = function() {
             // Show preview
             const reader = new FileReader();
             reader.onload = function(e) {
-                if (uploadPreview) {
-                    if (productImageUrls.length === 0) uploadPreview.innerHTML = '';
+                const up = document.getElementById('prodUploadPreview');
+                if (up) {
+                    if (productImageUrls.length === 0) up.innerHTML = '';
                     const div = document.createElement('div');
                     div.className = 'prod-upload-preview';
                     div.style.cssText = 'display:inline-block;position:relative;margin:4px;';
                     div.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid #006EE3;">
                         <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;">&times;</button>`;
-                    uploadPreview.appendChild(div);
+                    up.appendChild(div);
                 }
             };
             reader.readAsDataURL(file);
@@ -1103,7 +1092,7 @@ window.closeEditBusinessModal = function() {
                 if (uploadProgress) uploadProgress.classList.add('hidden');
                 if (data.url) {
                     productImageUrls.push(data.url);
-                    syncImageField();
+                    if (window.syncProductImageField) window.syncProductImageField();
                     showToast(`Imagen subida (${productImageUrls.length} en total)`, 'success');
                 } else {
                     showToast(data.error || 'Error al subir imagen', 'error');
@@ -1128,15 +1117,15 @@ window.closeEditBusinessModal = function() {
             imageFiles.forEach((file, idx) => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    if (uploadPreview) {
-                        if (idx === 0) uploadPreview.innerHTML = '';
+                    const up = document.getElementById('prodUploadPreview');
+                    if (up) {
+                        if (idx === 0 && productImageUrls.length === 0) up.innerHTML = '';
                         const div = document.createElement('div');
                         div.className = 'prod-upload-preview';
                         div.style.cssText = 'display:inline-block;position:relative;margin:4px;';
-                        div.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid ${idx===0?'#006EE3':'#e2e8f0'};">
-                            ${idx===0?'<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:4px;">Principal</span>':''}
+                        div.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid #e2e8f0;">
                             <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;">&times;</button>`;
-                        uploadPreview.appendChild(div);
+                        up.appendChild(div);
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1159,7 +1148,7 @@ window.closeEditBusinessModal = function() {
                         if (uploadProgress) uploadProgress.classList.add('hidden');
                         if (allUrls.length > 0) {
                             allUrls.forEach(u => productImageUrls.push(u));
-                            syncImageField();
+                            if (window.syncProductImageField) window.syncProductImageField();
                             showToast(`${productImageUrls.length} imagen(es) en total`, 'success');
                         }
                     }
@@ -1205,7 +1194,6 @@ window.closeEditBusinessModal = function() {
         const mSave = document.getElementById('productModalSave');
         if (mSave) mSave.innerHTML = '<i class="fas fa-save"></i> Publicar';
         if (window.resetProductImages) window.resetProductImages();
-        // Reset video list
         document.getElementById('prodVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
         
         // Load user's businesses into selector
@@ -1253,6 +1241,20 @@ window.closeEditBusinessModal = function() {
 
     // ─── Edit Product ─────────────────────────────────────
     let editingProductId = null;
+    let productImageUrls = []; // Shared array for product images (create + edit)
+
+    window.syncProductImageField = function() {
+        const inp = document.getElementById('prodImage');
+        const val = productImageUrls.length > 0 ? JSON.stringify(productImageUrls) : '';
+        if (inp) inp.value = val;
+    };
+
+    window.resetProductImages = function() {
+        productImageUrls = [];
+        window.syncProductImageField();
+        const up = document.getElementById('prodUploadPreview');
+        if (up) up.innerHTML = '';
+    };
 
     window.editProduct = async function (id) {
         try {
@@ -1306,7 +1308,7 @@ window.closeEditBusinessModal = function() {
                 if (p.image && p.image.trim()) existingImages = [p.image];
             }
             productImageUrls = [...existingImages];
-            syncImageField();
+            window.syncProductImageField();
 
             // Show existing image previews with delete buttons
             const preview = document.getElementById('prodUploadPreview');
@@ -1357,7 +1359,7 @@ window.closeEditBusinessModal = function() {
     window.removeProductImage = function(idx) {
         if (idx >= 0 && idx < productImageUrls.length) {
             productImageUrls.splice(idx, 1);
-            syncImageField();
+            window.syncProductImageField();
             // Re-render previews
             const preview = document.getElementById('prodUploadPreview');
             if (preview) {
