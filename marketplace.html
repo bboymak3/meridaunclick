@@ -1262,8 +1262,18 @@
                 const productSlug = product.slug || productId;
                 const productUrl = '/producto/' + productSlug;
 
-                const imageHtml = product.image
-                    ? '<a href="' + productUrl + '"><img src="' + escapeHtml(product.image) + '" alt="' + escapeHtml(product.name) + '" loading="lazy"></a>'
+                // Parse image: could be JSON array string or plain URL
+                let productImg = '';
+                if (product.image) {
+                    try {
+                        const parsed = JSON.parse(product.image);
+                        if (Array.isArray(parsed) && parsed.length > 0) productImg = parsed[0];
+                    } catch(e) {}
+                    if (!productImg && product.image.startsWith('http')) productImg = product.image;
+                }
+
+                const imageHtml = productImg
+                    ? '<a href="' + productUrl + '"><img src="' + escapeHtml(productImg) + '" alt="' + escapeHtml(product.name) + '" loading="lazy" onerror="this.style.display=\'none\'"></a>'
                     : '<a href="' + productUrl + '" class="mp-card-image-placeholder"><i class="fas fa-image"></i><span>Sin imagen</span></a>';
 
                 // WhatsApp: use business WhatsApp if available

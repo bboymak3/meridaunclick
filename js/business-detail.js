@@ -703,7 +703,16 @@ async function loadBusinessProducts(businessId) {
         if (viewAll) viewAll.href = `/marketplace.html?business_id=${businessId}`;
 
         grid.innerHTML = products.map(p => {
-            const imgSrc = p.image || 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="%23f1f5f9"><rect width="200" height="160"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14" font-family="sans-serif">Sin imagen</text></svg>');
+            // Parse image: could be JSON array string or plain URL
+            let imgSrc = '';
+            if (p.image) {
+                try {
+                    const parsed = JSON.parse(p.image);
+                    if (Array.isArray(parsed) && parsed.length > 0) imgSrc = parsed[0];
+                } catch(e) {}
+                if (!imgSrc && p.image.startsWith('http')) imgSrc = p.image;
+            }
+            if (!imgSrc) imgSrc = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="%23f1f5f9"><rect width="200" height="160"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14" font-family="sans-serif">Sin imagen</text></svg>');
             const productSlug = p.slug || p.id;
             const productUrl = `/producto/${productSlug}`;
             const productPrice = p.price ? `$${Number(p.price).toLocaleString('es-VE')}` : '';
