@@ -156,6 +156,7 @@ export async function onRequestGet(context) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <title>${esc(title)}${price ? ' - ' + price : ''} - HolaX Marketplace</title>
     <meta name="description" content="${esc(description)}">
     <meta name="robots" content="index, follow">

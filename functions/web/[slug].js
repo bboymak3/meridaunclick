@@ -102,6 +102,7 @@ export async function onRequestGet(context) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="description" content="${escapeHtml(metaDescription)}">
     <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')}</title>
     <meta name="robots" content="index, follow">
@@ -574,6 +575,41 @@ export async function onRequestGet(context) {
             0%, 100% { box-shadow: 0 4px 20px rgba(37,211,102,0.4); }
             50% { box-shadow: 0 4px 30px rgba(37,211,102,0.6), 0 0 0 8px rgba(37,211,102,0.1); }
         }
+
+        /* === LIGHTBOX === */
+        .lp-lightbox {
+            display: none; position: fixed; inset: 0; z-index: 9999;
+            background: rgba(0,0,0,0.92); align-items: center; justify-content: center;
+            cursor: zoom-out; -webkit-tap-highlight-color: transparent;
+        }
+        .lp-lightbox.active { display: flex; }
+        .lp-lightbox img {
+            max-width: 92vw; max-height: 90vh; border-radius: 12px;
+            object-fit: contain; box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            cursor: default;
+        }
+        .lp-lightbox-close {
+            position: absolute; top: 20px; right: 24px;
+            background: rgba(255,255,255,0.15); border: none; color: #fff;
+            width: 44px; height: 44px; border-radius: 50%; font-size: 1.4rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .lp-lightbox-close:hover { background: rgba(255,255,255,0.3); }
+        .lp-lightbox-nav {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,255,255,0.12); border: none; color: #fff;
+            width: 48px; height: 48px; border-radius: 50%; font-size: 1.2rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .lp-lightbox-nav:hover { background: rgba(255,255,255,0.3); }
+        .lp-lightbox-prev { left: 16px; }
+        .lp-lightbox-next { right: 16px; }
+        .lp-lightbox-counter {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -716,7 +752,7 @@ ${products.results.length > 0 ? `
             ${products.results.map(p => `
                 <div class="lp-product-card">
                     <a href="${p.slug ? `${baseUrl}/producto/${p.slug}` : '#'}" class="lp-product-link"${p.slug ? ' target="_blank" rel="noopener"' : ''}>
-                    ${(() => { let imgSrc = ''; if (p.image) { try { const arr = JSON.parse(p.image); if (Array.isArray(arr) && arr.length > 0) imgSrc = arr[0]; else if (typeof p.image === 'string' && p.image.startsWith('http')) imgSrc = p.image; } catch(e) { if (p.image.startsWith('http')) imgSrc = p.image; } } return imgSrc ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)} - ${escapeHtml(title)}" class="lp-product-img" loading="lazy" onerror="this.style.display='none'">` : '<div style="height:220px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="font-size:2.5rem;color:#cbd5e1;"></i></div>'; })()}
+                    ${(() => { let imgs = []; if (p.image) { try { const arr = JSON.parse(p.image); if (Array.isArray(arr)) imgs = arr.filter(u => u); else if (typeof p.image === 'string' && p.image.startsWith('http')) imgs = [p.image]; } catch(e) { if (p.image.startsWith('http')) imgs = [p.image]; } } const imgSrc = imgs[0] || ''; const dataImgs = imgs.length > 1 ? ` data-imgs='${JSON.stringify(imgs)}'` : (imgSrc ? ` data-imgs='["${imgSrc.replace(/'/g, "\\'")}"]'` : ''); return imgSrc ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)} - ${escapeHtml(title)}" class="lp-product-img" loading="lazy" style="cursor:zoom-in;" onerror="this.style.display='none'" onclick="event.preventDefault();event.stopPropagation();openLpLightbox(this)"${dataImgs}>` : '<div style="height:220px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="font-size:2.5rem;color:#cbd5e1;"></i></div>'; })()}
                     <div class="lp-product-body">
                         <div class="lp-product-name">${escapeHtml(p.name)}</div>
                         ${p.description ? `<div class="lp-product-desc">${escapeHtml(p.description)}</div>` : ''}
@@ -807,7 +843,7 @@ ${images.results.length > 1 ? `
             <h2 class="lp-section-title">Nuestras Fotos</h2>
         </div>
         <div class="lp-gallery-grid">
-            ${(() => { const galleryLabels = ['fachada del local','interior del negocio','nuestros productos','area de atencion','detalles del establecimiento','ambiente general','nuestro equipo','vista externa','instalaciones','galeria adicional']; return images.results.map((img, i) => `<img src="${escapeHtml(img.url)}" alt="${escapeHtml(title)} - ${galleryLabels[i % galleryLabels.length]} en ${escapeHtml(business.city || 'Venezuela')}" class="lp-gallery-img" loading="lazy">`).join(''); })()}
+            ${(() => { const galleryLabels = ['fachada del local','interior del negocio','nuestros productos','area de atencion','detalles del establecimiento','ambiente general','nuestro equipo','vista externa','instalaciones','galeria adicional']; const allGalleryUrls = images.results.map(i => i.url); return `<div data-gallery='${JSON.stringify(allGalleryUrls)}'>` + images.results.map((img, i) => `<img src="${escapeHtml(img.url)}" alt="${escapeHtml(title)} - ${galleryLabels[i % galleryLabels.length]} en ${escapeHtml(business.city || 'Venezuela')}" class="lp-gallery-img" loading="lazy" style="cursor:zoom-in;" onclick="openLpLightbox(this, this.closest('[data-gallery]'))">`).join('') + '</div>'; })()}
         </div>
     </div>
 </section>
@@ -938,6 +974,56 @@ window.addEventListener('scroll', () => {
 });
 </script>
 <script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${business.id},event_type:'view',source:'landing'})}).catch(function(){})},0);</script>
+
+<!-- LIGHTBOX -->
+<div class="lp-lightbox" id="lpLightbox" onclick="if(event.target===this)closeLpLightbox()">
+    <button class="lp-lightbox-close" onclick="closeLpLightbox()" aria-label="Cerrar"><i class="fas fa-times"></i></button>
+    <button class="lp-lightbox-nav lp-lightbox-prev" onclick="event.stopPropagation();navLpLightbox(-1)" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
+    <img id="lpLightboxImg" src="" alt="">
+    <button class="lp-lightbox-nav lp-lightbox-next" onclick="event.stopPropagation();navLpLightbox(1)" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
+    <div class="lp-lightbox-counter" id="lpLightboxCounter"></div>
+</div>
+<script>
+(function(){
+    var currentImgs=[], currentIdx=0;
+    window.openLpLightbox=function(el, galleryEl){
+        var imgs=[];
+        if(el.dataset.imgs){try{imgs=JSON.parse(el.dataset.imgs);}catch(e){}}
+        if(!imgs.length && galleryEl && galleryEl.dataset.gallery){try{imgs=JSON.parse(galleryEl.dataset.gallery);}catch(e){}}
+        if(!imgs.length && el.src) imgs=[el.src];
+        if(!imgs.length) return;
+        currentImgs=imgs;
+        currentIdx=imgs.indexOf(el.src);
+        if(currentIdx<0) currentIdx=0;
+        showLpLightbox();
+    };
+    function showLpLightbox(){
+        var lb=document.getElementById('lpLightbox');
+        var img=document.getElementById('lpLightboxImg');
+        var ctr=document.getElementById('lpLightboxCounter');
+        img.src=currentImgs[currentIdx];
+        ctr.textContent=currentImgs.length>1?(currentIdx+1)+' / '+currentImgs.length:'';
+        lb.classList.add('active');
+        document.body.style.overflow='hidden';
+    }
+    window.closeLpLightbox=function(){
+        document.getElementById('lpLightbox').classList.remove('active');
+        document.body.style.overflow='';
+    };
+    window.navLpLightbox=function(dir){
+        if(currentImgs.length<2) return;
+        currentIdx=(currentIdx+dir+currentImgs.length)%currentImgs.length;
+        showLpLightbox();
+    };
+    document.addEventListener('keydown',function(e){
+        var lb=document.getElementById('lpLightbox');
+        if(!lb||!lb.classList.contains('active')) return;
+        if(e.key==='Escape') closeLpLightbox();
+        if(e.key==='ArrowLeft') navLpLightbox(-1);
+        if(e.key==='ArrowRight') navLpLightbox(1);
+    });
+})();
+</script>
 </body>
 </html>`;
 
@@ -1020,7 +1106,14 @@ function normalizeSocialUrl(value, platform) {
   if (!value) return '';
   const v = value.trim();
   if (v.startsWith('http://') || v.startsWith('https://')) return v;
-  const clean = v.replace(/^@/, '');
+  let clean = v.replace(/^@/, '');
+  // Strip common prefixes users type by mistake: "facebook.com/", "instagram.com/", etc.
+  clean = clean.replace(/^(facebook\.com\/?|www\.facebook\.com\/?)/i, '');
+  clean = clean.replace(/^(instagram\.com\/?|www\.instagram\.com\/?)/i, '');
+  clean = clean.replace(/^(x\.com\/?|twitter\.com\/?|www\.twitter\.com\/?)/i, '');
+  clean = clean.replace(/^(tiktok\.com\/?|www\.tiktok\.com\/?)/i, '');
+  clean = clean.replace(/^(youtube\.com\/?|www\.youtube\.com\/?)/i, '');
+  clean = clean.replace(/^@/, ''); // Remove @ again if it appeared after stripping
   switch (platform) {
     case 'instagram': return `https://www.instagram.com/${clean}`;
     case 'facebook': return `https://www.facebook.com/${clean}`;
@@ -1039,15 +1132,26 @@ function getVideoEmbed(url) {
   }
   // YouTube
   const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) return getLazyIframe(`https://www.youtube.com/embed/${ytMatch[1]}`, 'Ver video en YouTube');
+  if (ytMatch) return getThumbnailEmbed(`https://www.youtube.com/embed/${ytMatch[1]}`, `https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`, 'Ver video en YouTube');
   // YouTube Shorts
   const ytShortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
-  if (ytShortsMatch) return getLazyIframe(`https://www.youtube.com/embed/${ytShortsMatch[1]}`, 'Ver video en YouTube');
+  if (ytShortsMatch) return getThumbnailEmbed(`https://www.youtube.com/embed/${ytShortsMatch[1]}`, `https://img.youtube.com/vi/${ytShortsMatch[1]}/hqdefault.jpg`, 'Ver video en YouTube');
   // TikTok
   const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
   if (ttMatch) return getLazyIframe(`https://www.tiktok.com/embed/v2/${ttMatch[1]}`, 'Ver video en TikTok');
   // Generic iframe
   return getLazyIframe(url, 'Reproducir video');
+}
+
+function getThumbnailEmbed(iframeSrc, thumbSrc, label) {
+  const id = 'vid_' + Math.random().toString(36).substring(2, 9);
+  return `<div id="${id}" data-src="${escapeHtml(iframeSrc)}" onclick="this.innerHTML='<iframe src=\\'' + this.dataset.src + '\\' style=\\'width:100%;aspect-ratio:9/16;border:none;border-radius:16px;\\' allowfullscreen></iframe>';this.style.cursor='default';" style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);aspect-ratio:9/16;background:#000;cursor:pointer;position:relative;">
+    <img src="${escapeHtml(thumbSrc)}" alt="${escapeHtml(label)}" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.25);transition:background 0.2s;" onmouseover="this.style.background='rgba(0,0,0,0.4)'" onmouseout="this.style.background='rgba(0,0,0,0.25)'">
+        <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.3);"><i class="fas fa-play" style="font-size:1.5rem;color:#0f172a;margin-left:4px;"></i></div>
+    </div>
+    <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);color:#fff;font-size:0.82rem;font-weight:600;text-shadow:0 1px 4px rgba(0,0,0,0.5);">${escapeHtml(label)}</div>
+</div>`;
 }
 
 function getLazyIframe(src, label) {
