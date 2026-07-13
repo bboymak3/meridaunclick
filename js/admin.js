@@ -1835,6 +1835,19 @@ if (!window._renderVideoList) {
         const searchInput = document.getElementById('b2SearchInput');
         if (searchInput) searchInput.addEventListener('input', debounce(() => { b2Page = 1; loadB2Products(); }, 400));
 
+        // B2 Add Video button
+        const b2AddVideoBtn = document.getElementById('b2AddVideoBtn');
+        if (b2AddVideoBtn) {
+            b2AddVideoBtn.addEventListener('click', () => {
+                const list = document.getElementById('b2EditVideoList');
+                const div = document.createElement('div');
+                div.className = 'profile-input-group';
+                div.style.cssText = 'margin-bottom:8px;display:flex;gap:6px;align-items:center;';
+                div.innerHTML = '<div class="profile-input-wrapper" style="flex:1;"><i class="fas fa-video"></i><input type="url" class="b2-video-url" placeholder="Otro video..."></div><button type="button" onclick="this.parentElement.remove()" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.8rem;"><i class="fas fa-times"></i></button>';
+                list.appendChild(div);
+            });
+        }
+
         // B2 Image upload handlers
         const b2FileInput = document.getElementById('b2EditImageFile');
         const b2CameraInput = document.getElementById('b2EditImageCamera');
@@ -1984,6 +1997,18 @@ if (!window._renderVideoList) {
                 document.getElementById('b2EditDescription').value = product.description || '';
                 if (product.business_id) document.getElementById('b2EditBusiness').value = product.business_id;
 
+                // Load existing videos
+                let existingVideos = [];
+                try { const p = JSON.parse(product.video_url || '[]'); if (Array.isArray(p)) existingVideos = p.filter(v => v && v.trim()); } catch(e) { if (product.video_url && product.video_url.trim()) existingVideos = [product.video_url]; }
+                const videoList = document.getElementById('b2EditVideoList');
+                if (videoList) {
+                    if (existingVideos.length > 0) {
+                        videoList.innerHTML = existingVideos.map(v => `<div class="profile-input-group" style="margin-bottom:8px;display:flex;gap:6px;align-items:center;"><div class="profile-input-wrapper" style="flex:1;"><i class="fas fa-video"></i><input type="url" class="b2-video-url" value="${escapeHtml(v)}" placeholder="URL de video..."></div><button type="button" onclick="this.parentElement.remove()" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.8rem;"><i class="fas fa-times"></i></button></div>`).join('');
+                    } else {
+                        videoList.innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="b2-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
+                    }
+                }
+
                 // Handle image - parse JSON array or single URL
                 let images = [];
                 const rawImage = product.image || '';
@@ -2013,9 +2038,11 @@ if (!window._renderVideoList) {
             }
         } else {
             document.getElementById('b2EditForm').reset();
-            // Clear the URL input specifically (reset may not clear all)
             const urlInput = document.getElementById('b2EditImageURL');
             if (urlInput) urlInput.value = '';
+            // Reset video list to single input
+            const vl = document.getElementById('b2EditVideoList');
+            if (vl) vl.innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="b2-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
         }
 
         editModal.dataset.productId = productId || '';
@@ -2127,7 +2154,13 @@ if (!window._renderVideoList) {
         if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...'; }
 
         try {
-            const body = { name, price, category, image, status, description };
+            // Collect all video URLs
+            const videoUrls = [];
+            document.querySelectorAll('#b2EditModal .b2-video-url').forEach(inp => {
+                const v = (inp.value || '').trim();
+                if (v) videoUrls.push(v);
+            });
+            const body = { name, price, category, image, description, video_url: videoUrls.length > 0 ? JSON.stringify(videoUrls) : '', status };
             if (business_id) body.business_id = parseInt(business_id);
 
             if (productId) {
