@@ -972,23 +972,29 @@ window.closeEditBusinessModal = function() {
             try {
                 const fd = new FormData(form);
                 const rawImage = uploadedImageUrl || fd.get('image') || '';
-                // If image is a JSON array, use first URL as main image
+                // Send all images as JSON array (first is main)
                 let finalImage = rawImage;
                 try {
                     const parsed = JSON.parse(rawImage);
                     if (Array.isArray(parsed) && parsed.length > 0) {
-                        finalImage = parsed[0]; // First image as main
+                        finalImage = JSON.stringify(parsed); // Keep full array
                     }
                 } catch(e) {
-                    // Not JSON, use as-is
+                    // Not JSON, use as-is (single URL)
                 }
+                // Collect all video URLs
+                const videoUrls = [];
+                document.querySelectorAll('#prodVideoList .prod-video-url').forEach(inp => {
+                    const v = (inp.value || '').trim();
+                    if (v) videoUrls.push(v);
+                });
                 const body = {
                     name: fd.get('name'),
                     price: parseFloat(fd.get('price')) || 0,
                     category: fd.get('category') || 'general',
                     image: finalImage,
                     description: fd.get('description') || '',
-                    video_url: fd.get('video_url') || '',
+                    video_url: videoUrls.length > 0 ? JSON.stringify(videoUrls) : '',
                     business_id: parseInt(businessId),
                 };
                 await api.post('/marketplace', body);
@@ -997,6 +1003,8 @@ window.closeEditBusinessModal = function() {
                 form.reset();
                 uploadedImageUrl = '';
                 if (uploadPreview) uploadPreview.innerHTML = '';
+                // Reset video list to single input
+                document.getElementById('prodVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
                 loadMyProducts();
             } catch (error) {
                 showToast(error.message || 'Error al publicar producto', 'error');
@@ -1145,8 +1153,6 @@ window.closeEditBusinessModal = function() {
 
     // Wire up header button
     const btnNewProduct = document.getElementById('btnNewProduct');
-
-    window.openProductModal = async function () {
         const modal = document.getElementById('productModal');
         if (modal) modal.classList.remove('hidden');
         
