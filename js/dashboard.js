@@ -971,7 +971,7 @@ window.closeEditBusinessModal = function() {
 
             try {
                 const fd = new FormData(form);
-                const rawImage = uploadedImageUrl || fd.get('image') || '';
+                const rawImage = (productImageUrls.length > 0) ? JSON.stringify(productImageUrls) : (fd.get('image') || '');
                 // Send all images as JSON array (first is main)
                 let finalImage = rawImage;
                 try {
@@ -1001,7 +1001,8 @@ window.closeEditBusinessModal = function() {
                 showToast('Producto enviado para aprobación. Será visible una vez aprobado por un administrador.', 'success');
                 modal.classList.add('hidden');
                 form.reset();
-                uploadedImageUrl = '';
+                productImageUrls = [];
+                syncImageField();
                 if (uploadPreview) uploadPreview.innerHTML = '';
                 // Reset video list to single input
                 document.getElementById('prodVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo..."></div></div>';
@@ -1017,7 +1018,18 @@ window.closeEditBusinessModal = function() {
         const uploadPreview = document.getElementById('prodUploadPreview');
         const uploadProgress = document.getElementById('prodUploadProgress');
         const prodImageInput = document.getElementById('prodImage');
-        let uploadedImageUrl = '';
+        let productImageUrls = []; // Accumulate all uploaded image URLs
+
+        function syncImageField() {
+            const val = productImageUrls.length > 0 ? JSON.stringify(productImageUrls) : '';
+            if (prodImageInput) prodImageInput.value = val;
+        }
+
+        window.resetProductImages = function() {
+            productImageUrls = [];
+            syncImageField();
+            if (uploadPreview) uploadPreview.innerHTML = '';
+        };
 
         function handleImageUpload(file) {
             if (!file) return;
@@ -1028,16 +1040,17 @@ window.closeEditBusinessModal = function() {
                 return;
             }
             
-            // Show preview immediately
+            // Show preview
             const reader = new FileReader();
             reader.onload = function(e) {
                 if (uploadPreview) {
-                    uploadPreview.innerHTML = `
-                        <img src="${e.target.result}" alt="Preview">
-                        <div class="prod-upload-filename">
-                            <i class="fas fa-check-circle" style="color:#006EE3;"></i> ${file.name}
-                            <button class="prod-upload-remove" type="button" onclick="this.closest('.prod-upload-preview').innerHTML='';uploadedImageUrl='';document.getElementById('prodImage').value='';">&times;</button>
-                        </div>`;
+                    if (productImageUrls.length === 0) uploadPreview.innerHTML = '';
+                    const div = document.createElement('div');
+                    div.className = 'prod-upload-preview';
+                    div.style.cssText = 'display:inline-block;position:relative;margin:4px;';
+                    div.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:2px solid #006EE3;">
+                        <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:0.7rem;cursor:pointer;">&times;</button>`;
+                    uploadPreview.appendChild(div);
                 }
             };
             reader.readAsDataURL(file);
@@ -1060,9 +1073,9 @@ window.closeEditBusinessModal = function() {
             .then(data => {
                 if (uploadProgress) uploadProgress.classList.add('hidden');
                 if (data.url) {
-                    uploadedImageUrl = data.url;
-                    if (prodImageInput) prodImageInput.value = data.url;
-                    showToast('Imagen subida correctamente', 'success');
+                    productImageUrls.push(data.url);
+                    syncImageField();
+                    showToast(`Imagen subida (${productImageUrls.length} en total)`, 'success');
                 } else {
                     showToast(data.error || 'Error al subir imagen', 'error');
                 }
@@ -1116,9 +1129,9 @@ window.closeEditBusinessModal = function() {
                     if (uploadedCount === imageFiles.length) {
                         if (uploadProgress) uploadProgress.classList.add('hidden');
                         if (allUrls.length > 0) {
-                            uploadedImageUrl = JSON.stringify(allUrls);
-                            if (prodImageInput) prodImageInput.value = uploadedImageUrl;
-                            showToast(`${allUrls.length} imagen(es) subida(s) correctamente`, 'success');
+                            allUrls.forEach(u => productImageUrls.push(u));
+                            syncImageField();
+                            showToast(`${productImageUrls.length} imagen(es) en total`, 'success');
                         }
                     }
                 })
@@ -1139,6 +1152,7 @@ window.closeEditBusinessModal = function() {
                 } else if (files.length === 1) {
                     handleImageUpload(files[0]);
                 }
+                imageFileInput.value = '';
             });
         }
         
@@ -1155,6 +1169,7 @@ window.closeEditBusinessModal = function() {
     window.openProductModal = async function () {
         const modal = document.getElementById('productModal');
         if (modal) modal.classList.remove('hidden');
+        if (window.resetProductImages) window.resetProductImages();
         
         // Load user's businesses into selector
         try {
