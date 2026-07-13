@@ -1153,6 +1153,8 @@ window.closeEditBusinessModal = function() {
 
     // Wire up header button
     const btnNewProduct = document.getElementById('btnNewProduct');
+
+    window.openProductModal = async function () {
         const modal = document.getElementById('productModal');
         if (modal) modal.classList.remove('hidden');
         
@@ -1198,6 +1200,168 @@ window.closeEditBusinessModal = function() {
             showToast(error.message || 'Error al eliminar', 'error');
         }
     };
+
+    // ─── Product: Add Video button ────────────────────────────
+    const prodAddVideoBtn = document.getElementById('prodAddVideoBtn');
+    if (prodAddVideoBtn) {
+        prodAddVideoBtn.addEventListener('click', () => {
+            const list = document.getElementById('prodVideoList');
+            const div = document.createElement('div');
+            div.className = 'profile-input-group';
+            div.style.cssText = 'margin-bottom:8px;display:flex;gap:6px;align-items:center;';
+            div.innerHTML = '<div class="profile-input-wrapper" style="flex:1;"><i class="fas fa-video"></i><input type="url" class="prod-video-url" placeholder="Otro video..."></div><button type="button" onclick="this.parentElement.remove()" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.8rem;"><i class="fas fa-times"></i></button>';
+            list.appendChild(div);
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // JOB MODAL
+    // ═══════════════════════════════════════════════════════════════
+    function setupJobModal() {
+        const modal = document.getElementById('jobModal');
+        if (!modal) return;
+
+        const close = document.getElementById('jobModalClose');
+        const cancel = document.getElementById('jobModalCancel');
+        const overlay = modal.querySelector('.modal-overlay');
+        const save = document.getElementById('jobModalSave');
+        const quickAction = document.getElementById('quickActionJob');
+
+        [close, cancel].forEach(el => { if (el) el.addEventListener('click', () => modal.classList.add('hidden')); });
+        if (overlay) overlay.addEventListener('click', () => modal.classList.add('hidden'));
+        if (quickAction) quickAction.addEventListener('click', (e) => { e.preventDefault(); openJobModal(); });
+
+        // Add video button
+        const addVideoBtn = document.getElementById('jobAddVideoBtn');
+        if (addVideoBtn) {
+            addVideoBtn.addEventListener('click', () => {
+                const list = document.getElementById('jobVideoList');
+                const div = document.createElement('div');
+                div.className = 'profile-input-group';
+                div.style.cssText = 'margin-bottom:8px;display:flex;gap:6px;align-items:center;';
+                div.innerHTML = '<div class="profile-input-wrapper" style="flex:1;"><i class="fas fa-video"></i><input type="url" class="job-video-url" placeholder="Otro video..."></div><button type="button" onclick="this.parentElement.remove()" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.8rem;"><i class="fas fa-times"></i></button>';
+                list.appendChild(div);
+            });
+        }
+
+        // Image upload for jobs
+        const jobImageInput = document.getElementById('jobImageFile');
+        let jobUploadedUrls = [];
+        if (jobImageInput) {
+            jobImageInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files).filter(f => f.type.startsWith('image/'));
+                if (files.length === 0) return;
+                if (files.length > 5) { showToast('Máximo 5 imágenes', 'error'); return; }
+                const preview = document.getElementById('jobUploadPreview');
+                const progress = document.getElementById('jobUploadProgress');
+                if (progress) progress.classList.remove('hidden');
+                let count = 0;
+                jobUploadedUrls = [];
+                if (preview) preview.innerHTML = '';
+                files.forEach((file, idx) => {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        if (preview) {
+                            const d = document.createElement('div');
+                            d.style.cssText = 'position:relative;display:inline-block;';
+                            d.innerHTML = `<img src="${ev.target.result}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid ${idx===0?'#006EE3':'#e2e8f0'};">
+                                ${idx===0?'<span style="position:absolute;top:2px;left:2px;background:#006EE3;color:#fff;font-size:0.6rem;padding:1px 5px;border-radius:4px;">Principal</span>':''}
+                                <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:0.65rem;cursor:pointer;">&times;</button>`;
+                            preview.appendChild(d);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    fd.append('product_type', 'job');
+                    const token = localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken');
+                    fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd })
+                    .then(r => r.json())
+                    .then(data => {
+                        count++;
+                        if (data.url) jobUploadedUrls.push(data.url);
+                        if (count === files.length) {
+                            if (progress) progress.classList.add('hidden');
+                            if (jobUploadedUrls.length > 0) showToast(`${jobUploadedUrls.length} imagen(es) subida(s)`, 'success');
+                        }
+                    })
+                    .catch(() => { count++; if (count === files.length && progress) progress.classList.add('hidden'); });
+                });
+            });
+        }
+
+        // Save job
+        if (save) save.addEventListener('click', async () => {
+            const form = document.getElementById('jobForm');
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+            const businessSelect = document.getElementById('jobBusiness');
+            if (!businessSelect.value) { showToast('Selecciona un negocio', 'error'); return; }
+            const selectedOpt = businessSelect.options[businessSelect.selectedIndex];
+            const companyName = selectedOpt ? selectedOpt.textContent : '';
+            const videoUrls = [];
+            document.querySelectorAll('#jobVideoList .job-video-url').forEach(inp => {
+                const v = (inp.value || '').trim();
+                if (v) videoUrls.push(v);
+            });
+            try {
+                const body = {
+                    title: document.getElementById('jobTitle').value.trim(),
+                    job_type: document.getElementById('jobType').value,
+                    salary: document.getElementById('jobSalary').value.trim() || null,
+                    state: document.getElementById('jobState').value.trim(),
+                    city: document.getElementById('jobCity').value.trim() || null,
+                    description: document.getElementById('jobDescription').value.trim() || null,
+                    requirements: document.getElementById('jobRequirements').value.trim() || null,
+                    benefits: document.getElementById('jobBenefits').value.trim() || null,
+                    contact_email: document.getElementById('jobEmail').value.trim() || null,
+                    contact_phone: document.getElementById('jobPhone').value.trim() || null,
+                    company_name: companyName,
+                    images: jobUploadedUrls.length > 0 ? JSON.stringify(jobUploadedUrls) : null,
+                    video_url: videoUrls.length > 0 ? JSON.stringify(videoUrls) : null,
+                };
+                await api.post('/jobs', body);
+                showToast('Oferta de empleo enviada para aprobación.', 'success');
+                modal.classList.add('hidden');
+                form.reset();
+                jobUploadedUrls = [];
+                const preview = document.getElementById('jobUploadPreview');
+                if (preview) preview.innerHTML = '';
+                document.getElementById('jobVideoList').innerHTML = '<div class="profile-input-group" style="margin-bottom:8px;"><div class="profile-input-wrapper"><i class="fas fa-video"></i><input type="url" class="job-video-url" placeholder="YouTube, TikTok o URL de video..."></div></div>';
+            } catch (error) {
+                showToast(error.message || 'Error al publicar empleo', 'error');
+            }
+        });
+    }
+
+    window.openJobModal = async function () {
+        const modal = document.getElementById('jobModal');
+        if (modal) modal.classList.remove('hidden');
+        try {
+            const user = getCachedUser();
+            const businessesData = await api.get(`/businesses?user_id=${user.id}&status=approved&limit=50`);
+            const businesses = businessesData.businesses || businessesData.results || businessesData || [];
+            const select = document.getElementById('jobBusiness');
+            if (select) {
+                if (businesses.length === 0) {
+                    select.innerHTML = '<option value="">-- No tienes negocios aprobados --</option>';
+                    select.disabled = true;
+                } else {
+                    select.innerHTML = '<option value="" disabled selected>Selecciona un negocio</option>';
+                    businesses.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = b.title || b.name || `Negocio #${b.id}`;
+                        select.appendChild(opt);
+                    });
+                    select.disabled = false;
+                }
+            }
+        } catch (e) {
+            console.log('Could not load businesses for job modal:', e);
+        }
+    };
+
+    setupJobModal();
 
     // ─── Utility: escape HTML attributes ──────────────────────────
     function escapeAttr(str) {

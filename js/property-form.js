@@ -12,7 +12,7 @@
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-    const TOTAL_STEPS = 5;
+    const TOTAL_STEPS = 6;
 
     // ─── Type Mapping (Spanish display -> DB enum) ──────────────
     const TIPO_MAP = {
@@ -345,6 +345,7 @@
     }
 
     function goToStep(step) {
+        // step 6 = videos section
         if (step < 1 || step > TOTAL_STEPS) return;
 
         // Hide current section
@@ -814,6 +815,16 @@
             floors: pisos || null,
             ...features,
         };
+
+        // Collect video URLs
+        const videoUrls = [];
+        document.querySelectorAll('.property-video-url').forEach(inp => {
+            const v = (inp.value || '').trim();
+            if (v) videoUrls.push(v);
+        });
+        if (videoUrls.length > 0) {
+            propertyData.video_url = JSON.stringify(videoUrls);
+        }
 
         // Submit
         isSubmitting = true;

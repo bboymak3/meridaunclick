@@ -297,6 +297,18 @@ export async function onRequestGet(context) {
         .pd-video iframe { width:100%; aspect-ratio:16/9; display:block; }
         .pd-video iframe[data-tiktok] { aspect-ratio:9/16; max-width:320px; margin:0 auto; }
 
+        /* === LIGHTBOX === */
+        .pd-lightbox { display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);align-items:center;justify-content:center;flex-direction:column; }
+        .pd-lightbox.active { display:flex; }
+        .pd-lightbox img { max-width:92vw;max-height:82vh;object-fit:contain;border-radius:8px; }
+        .pd-lightbox-close { position:absolute;top:16px;right:20px;background:none;border:none;color:#fff;font-size:2rem;cursor:pointer;z-index:10001;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .2s; }
+        .pd-lightbox-close:hover { background:rgba(255,255,255,0.15); }
+        .pd-lightbox-nav { position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.12);border:none;color:#fff;font-size:1.5rem;cursor:pointer;width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s;z-index:10001; }
+        .pd-lightbox-nav:hover { background:rgba(255,255,255,0.3); }
+        .pd-lightbox-prev { left:16px; }
+        .pd-lightbox-next { right:16px; }
+        .pd-lightbox-counter { color:rgba(255,255,255,0.7);font-size:0.85rem;margin-top:12px; }
+
         /* === COMMENTS SECTION === */
         .pd-comments { padding:20px 24px 24px; }
         .pd-comments-title { font-size:1.15rem; font-weight:700; color:#0f172a; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
@@ -408,7 +420,7 @@ export async function onRequestGet(context) {
                 ${price ? `<div class="pd-price">${price}</div>` : ''}
             </div>
 
-            <div class="pd-img" id="pdMainImgWrap">
+            <div class="pd-img" id="pdMainImgWrap" onclick="openLightbox(0)" style="cursor:pointer;">
                 ${mainImage
                     ? `<img id="pdMainImg" src="${esc(mainImage)}" alt="${esc(title)}" onerror="this.parentElement.innerHTML='<div class=\\'pd-img-ph\\'><i class=\\'fas fa-image\\'></i></div>'">`
                     : `<div class="pd-img-ph"><i class="fas fa-image"></i></div>`}
@@ -417,19 +429,25 @@ export async function onRequestGet(context) {
             ${productImages.length > 1 ? `
             <div style="padding:12px 24px 0;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;" id="pdThumbs">
                 ${productImages.map((img, i) => `
-                    <div onclick="document.getElementById('pdMainImg').src='${esc(img).replace(/'/g, "\\'")}';document.querySelectorAll('#pdThumbs .pd-thumb').forEach(function(t){t.style.opacity='0.5';t.style.borderColor='#e2e8f0';});this.style.opacity='1';this.style.borderColor='#006EE3';"
+                    <div onclick="event.stopPropagation();document.getElementById('pdMainImg').src='${esc(img).replace(/'/g, "\\'")}';document.querySelectorAll('#pdThumbs .pd-thumb').forEach(function(t){t.style.opacity='0.5';t.style.borderColor='#e2e8f0';});this.style.opacity='1';this.style.borderColor='#006EE3';window._pdActiveImg=${i};"
                          class="pd-thumb" style="flex-shrink:0;width:64px;height:64px;border-radius:10px;overflow:hidden;cursor:pointer;border:2px solid ${i===0?'#006EE3':'#e2e8f0'};opacity:${i===0?'1':'0.5'};transition:all .2s;">
                         <img src="${esc(img)}" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.display='none'">
                     </div>
                 `).join('')}
             </div>` : ''}
 
-            ${product.video_url ? `
-            <div style="padding:20px 24px 0;">
-                <div class="pd-video" style="max-width:100%;">
-                  ${getVideoEmbed(product.video_url)}
-                </div>
-            </div>` : ''}
+            ${(() => {
+                let videoHtml = '';
+                let vids = [];
+                try { const p = JSON.parse(product.video_url); if (Array.isArray(p)) vids = p; } catch(e) {}
+                if (vids.length === 0 && product.video_url) vids = [product.video_url];
+                if (vids.length > 0) {
+                    videoHtml = '<div style="padding:20px 24px 0;">';
+                    vids.forEach(v => { videoHtml += '<div class="pd-video" style="max-width:100%;margin-bottom:12px;">' + getVideoEmbed(v) + '</div>'; });
+                    videoHtml += '</div>';
+                }
+                return videoHtml;
+            })()}
 
             <div class="pd-body">
                 <p class="pd-desc">${esc(product.description || 'Sin descripcion disponible.')}</p>
@@ -624,6 +642,59 @@ export async function onRequestGet(context) {
     initCommentSection();
     </script>
     <script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${product.business_id},event_type:'view',source:'product'})}).catch(function(){})},0);</script>
+
+    <!-- Lightbox -->
+    <div class="pd-lightbox" id="pdLightbox">
+        <button class="pd-lightbox-close" onclick="closeLightbox()">&times;</button>
+        <button class="pd-lightbox-nav pd-lightbox-prev" onclick="event.stopPropagation();navLightbox(-1)"><i class="fas fa-chevron-left"></i></button>
+        <img id="pdLightboxImg" src="" alt="">
+        <button class="pd-lightbox-nav pd-lightbox-next" onclick="event.stopPropagation();navLightbox(1)"><i class="fas fa-chevron-right"></i></button>
+        <div class="pd-lightbox-counter" id="pdLightboxCounter"></div>
+    </div>
+
+    <script>
+    var _pdImages = ${JSON.stringify(productImages)};
+    var _pdActiveImg = 0;
+
+    function openLightbox(idx) {
+        if (_pdImages.length === 0) return;
+        _pdActiveImg = idx || 0;
+        updateLightbox();
+        document.getElementById('pdLightbox').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeLightbox() {
+        document.getElementById('pdLightbox').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    function navLightbox(dir) {
+        _pdActiveImg = (_pdActiveImg + dir + _pdImages.length) % _pdImages.length;
+        updateLightbox();
+    }
+    function updateLightbox() {
+        var lb = document.getElementById('pdLightbox');
+        var img = document.getElementById('pdLightboxImg');
+        var ctr = document.getElementById('pdLightboxCounter');
+        if (_pdImages[_pdActiveImg]) {
+            img.src = _pdImages[_pdActiveImg];
+            img.style.display = '';
+        } else {
+            img.style.display = 'none';
+        }
+        ctr.textContent = (_pdActiveImg + 1) + ' / ' + _pdImages.length;
+        lb.querySelector('.pd-lightbox-prev').style.display = _pdImages.length > 1 ? '' : 'none';
+        lb.querySelector('.pd-lightbox-next').style.display = _pdImages.length > 1 ? '' : 'none';
+    }
+    document.getElementById('pdLightbox').addEventListener('click', function(e) {
+        if (e.target === this) closeLightbox();
+    });
+    document.addEventListener('keydown', function(e) {
+        if (!document.getElementById('pdLightbox').classList.contains('active')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') navLightbox(-1);
+        if (e.key === 'ArrowRight') navLightbox(1);
+    });
+    </script>
 </body>
 </html>`;
 

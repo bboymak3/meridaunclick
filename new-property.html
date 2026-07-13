@@ -571,6 +571,18 @@
     <script src="js/property-form.js"></script>
 
     <script>
+    // Add property video button
+    document.getElementById('addPropertyVideoBtn').addEventListener('click', function() {
+        var list = document.getElementById('propertyVideoList');
+        var div = document.createElement('div');
+        div.className = 'pf-url-input-row';
+        div.style.marginBottom = '10px';
+        div.innerHTML = '<div class="pf-url-input-wrapper"><i class="fas fa-video"></i><input type="url" class="property-video-url" placeholder="YouTube, TikTok o URL de video (.mp4)"></div><button type="button" class="pf-btn pf-btn-add-url" onclick="this.parentElement.remove();" title="Eliminar video" style="background:#ef4444;"><i class="fas fa-trash"></i></button>';
+        list.appendChild(div);
+    });
+    </script>
+
+    <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/sw.js').catch(() => {});

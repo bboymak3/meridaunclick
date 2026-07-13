@@ -254,8 +254,10 @@ export async function onRequestPost(context) {
         requirements,
         benefits,
         status,
-        user_id
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+        user_id,
+        images,
+        video_url
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
       businessRow.id,
       company_name.trim(),
@@ -270,10 +272,16 @@ export async function onRequestPost(context) {
       body.requirements || null,
       body.benefits || null,
       'pending',
-      payload.id
+      payload.id,
+      body.images || null,
+      body.video_url || null
     ).run();
 
     const jobId = result.meta.last_row_id;
+
+    // Ensure images and video_url columns exist
+    try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN images TEXT`).run(); } catch(e) {}
+    try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN video_url TEXT`).run(); } catch(e) {}
 
     // Set expiration for basic users (20 days)
     try {

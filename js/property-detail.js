@@ -394,6 +394,24 @@ const PropertyDetail = (function () {
             initGalleryNav(images);
         }
 
+        // ─── Videos ────────────────────────────────────────────
+        if (p.video_url) {
+            let vids = [];
+            try { const parsed = JSON.parse(p.video_url); if (Array.isArray(parsed)) vids = parsed; } catch(e) {}
+            if (vids.length === 0 && p.video_url) vids = [p.video_url];
+            if (vids.length > 0) {
+                const gallerySection = document.querySelector('.property-gallery') || document.getElementById('propertyGallery');
+                if (gallerySection) {
+                    const videoContainer = document.createElement('div');
+                    videoContainer.style.cssText = 'padding:0 16px 16px;';
+                    vids.forEach(v => {
+                        videoContainer.innerHTML += '<div style="border-radius:12px;overflow:hidden;margin-bottom:10px;">' + getVideoEmbedProperty(v) + '</div>';
+                    });
+                    gallerySection.after(videoContainer);
+                }
+            }
+        }
+
         // Gallery badges (type, operation, featured, status)
         if (galleryBadges) {
             let badges = '';
@@ -873,3 +891,17 @@ const PropertyDetail = (function () {
         shareWhatsApp,
     };
 })();
+
+function getVideoEmbedProperty(url) {
+    if (!url) return '';
+    const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    if (ytMatch) return '<iframe src="https://www.youtube.com/embed/' + ytMatch[1] + '" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block;"></iframe>';
+    const ytShortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+    if (ytShortsMatch) return '<iframe src="https://www.youtube.com/embed/' + ytShortsMatch[1] + '" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block;"></iframe>';
+    const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+    if (ttMatch) return '<iframe src="https://www.tiktok.com/embed/v2/' + ttMatch[1] + '" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:9/16;max-width:320px;margin:0 auto;display:block;"></iframe>';
+    if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) {
+        return '<video src="' + url + '" controls playsinline preload="metadata" style="width:100%;border-radius:12px;background:#000;"></video>';
+    }
+    return '<iframe src="' + url + '" frameborder="0" allowfullscreen style="width:100%;aspect-ratio:16/9;display:block;"></iframe>';
+}

@@ -253,6 +253,14 @@ export async function onRequestPost(context) {
 
     const propertyId = result.meta.last_row_id;
 
+    // Save video_url if provided (add column if missing)
+    if (body.video_url) {
+      try {
+        await env.DB.prepare(`ALTER TABLE properties ADD COLUMN video_url TEXT`).run();
+      } catch(e) { /* column may already exist */ }
+      await env.DB.prepare(`UPDATE properties SET video_url = ? WHERE id = ?`).bind(body.video_url, propertyId).run();
+    }
+
     // Set expiration for basic users (20 days)
     try {
       const userRow = await env.DB.prepare('SELECT plan_type FROM users WHERE id = ?').bind(payload.id).first();
