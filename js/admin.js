@@ -1848,6 +1848,43 @@ if (!window._renderVideoList) {
             });
         }
 
+        // B2 Upload Video File
+        const b2VideoFileInput = document.getElementById('b2EditVideoFile');
+        if (b2VideoFileInput) {
+            b2VideoFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const statusEl = document.getElementById('b2EditVideoStatus');
+                if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo video...';
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('product_type', 'video');
+                    const token = localStorage.getItem(TOKEN_KEY);
+                    const resp = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` },
+                        body: formData
+                    });
+                    const data = await resp.json();
+                    if (data.url) {
+                        const list = document.getElementById('b2EditVideoList');
+                        const div = document.createElement('div');
+                        div.className = 'profile-input-group';
+                        div.style.cssText = 'margin-bottom:8px;display:flex;gap:6px;align-items:center;';
+                        div.innerHTML = `<div class="profile-input-wrapper" style="flex:1;"><i class="fas fa-film"></i><input type="url" class="b2-video-url" value="${escapeHtml(data.url)}" readonly style="background:#f0fdf4;"></div><button type="button" onclick="this.parentElement.remove()" style="background:#ef4444;color:#fff;border:none;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:0.8rem;"><i class="fas fa-times"></i></button>`;
+                        list.appendChild(div);
+                        if (statusEl) statusEl.innerHTML = '<i class="fas fa-check" style="color:#28a745;"></i> Video subido correctamente';
+                    } else {
+                        if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> ' + (data.error || 'Error al subir');
+                    }
+                } catch(err) {
+                    if (statusEl) statusEl.innerHTML = '<i class="fas fa-exclamation-triangle" style="color:#dc3545;"></i> Error de conexión';
+                }
+                e.target.value = '';
+            });
+        }
+
         // B2 Image upload handlers
         const b2FileInput = document.getElementById('b2EditImageFile');
         const b2CameraInput = document.getElementById('b2EditImageCamera');
