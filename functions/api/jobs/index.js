@@ -133,7 +133,7 @@ export async function onRequestGet(context) {
     // Fetch jobs with business info
     const query = `
       SELECT j.*,
-             b.logo as business_logo, b.title as business_title
+             b.logo as business_logo, b.title as business_title, b.slug as business_slug
       FROM job_listings j
       LEFT JOIN businesses b ON j.business_id = b.id
       WHERE ${whereClause}
