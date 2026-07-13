@@ -43,16 +43,16 @@ export async function onRequestGet(context) {
       `SELECT url, is_cover FROM images WHERE business_id = ? ORDER BY is_cover DESC, id ASC LIMIT 10`
     ).bind(business.id).all();
 
-    const baseUrl = 'https://holax.com';
+    const baseUrl = 'https://aunclick.pages.dev';
     const title = business.title || 'Negocio';
     const fullDescription = business.description || '';
     const metaDescription = fullDescription
       ? fullDescription.substring(0, 160)
       : `Visita ${title} - ${business.category_name || 'Negocio'} en ${business.city || 'Venezuela'}. ${fullDescription ? fullDescription.substring(0, 100) : ''}`;
-    const imageUrl = business.cover_image || `${baseUrl}/logo.png`;
+    const imageUrl = business.cover_image || business.logo || `${baseUrl}/images/favicon.jpeg`;
     const whatsappNumber = (business.whatsapp || business.phone || '').replace(/[^0-9]/g, '');
     const whatsappLink = whatsappNumber
-      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, vi tu pagina web en HolaX y me interesa conocer mas sobre ' + title)}`
+      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, vi tu pagina web en AuNClick y me interesa conocer mas sobre ' + title)}`
       : '#';
     const phoneClean = (business.phone || '').replace(/[^0-9]/g, '');
     const mapQuery = encodeURIComponent(`${business.address || ''} ${business.city || ''} ${business.state || ''} Venezuela`);
@@ -96,8 +96,8 @@ export async function onRequestGet(context) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${escapeHtml(metaDescription)}">
-    <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')} | HolaX</title>
-    <meta name="robots" content="noindex, nofollow">
+    <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')}</title>
+    <meta name="robots" content="index, follow">
     <link rel="canonical" href="${baseUrl}/negocio/${business.slug}">
 
     <!-- Open Graph -->
@@ -522,8 +522,8 @@ export async function onRequestGet(context) {
 
 <!-- NAV -->
 <nav class="lp-nav" id="lpNav">
-    <a href="${baseUrl}/index.html" class="lp-nav-brand">
-        <img src="/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:6px;"> HolaX
+    <a href="${baseUrl}/" class="lp-nav-brand">
+        <img src="/images/favicon.jpeg" alt="AuNClick" style="height:32px;width:auto;border-radius:6px;margin-right:6px;"> AuNClick
     </a>
     <div class="lp-nav-links">
         <a href="#about">Nosotros</a>
@@ -568,6 +568,7 @@ export async function onRequestGet(context) {
 <section class="lp-section ${fullDescription ? '' : 'lp-section-grey'}" id="about">
     <div class="lp-container">
         <div class="lp-section-header">
+            ${business.logo ? `<img src="${escapeHtml(business.logo)}" alt="${escapeHtml(title)}" style="max-height:80px;max-width:200px;width:auto;border-radius:12px;object-fit:contain;margin-bottom:16px;box-shadow:0 4px 16px rgba(0,0,0,0.08);">` : ''}
             <div class="lp-section-label">Quienes Somos</div>
             <h2 class="lp-section-title">Conoce ${escapeHtml(title)}</h2>
             <p class="lp-section-desc">${fullDescription ? escapeHtml(fullDescription.substring(0, 120)) + '...' : 'Nos dedicamos a ofrecer los mejores servicios en ' + (business.city || 'Venezuela') + '.'}</p>
@@ -847,9 +848,9 @@ ${(business.lat || business.latitude || business.address) ? `
 
 <!-- FOOTER -->
 <footer class="lp-footer">
-    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">HolaX</a></p>
+    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">AuNClick</a></p>
     <div class="lp-footer-links">
-        <a href="${baseUrl}/negocio/${business.slug}" target="_blank">Ver en HolaX</a>
+        <a href="${baseUrl}/negocio/${business.slug}" target="_blank">Ver en AuNClick</a>
         ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
         ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
     </div>

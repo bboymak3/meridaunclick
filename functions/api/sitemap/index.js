@@ -40,6 +40,13 @@ export async function onRequestGet(context) {
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>
   </url>\n`;
+        // Also add the standalone landing page for each business
+        dynamicUrls += `  <url>
+    <loc>${baseUrl}/web/${biz.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <priority>0.9</priority>
+    <changefreq>weekly</changefreq>
+  </url>\n`;
       }
 
       // Also add legacy redirect URLs for businesses without slug
@@ -98,7 +105,7 @@ ${staticUrls}${dynamicUrls}</urlset>`;
       status: 200,
       headers: {
         'Content-Type': 'application/xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=3600',
+        'Cache-Control': 'public, max-age=300',
       },
     });
   } catch (error) {
