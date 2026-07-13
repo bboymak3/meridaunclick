@@ -56,6 +56,13 @@ export async function onRequestGet(context) {
       : '#';
     const phoneClean = (business.phone || '').replace(/[^0-9]/g, '');
     const mapQuery = encodeURIComponent(`${business.address || ''} ${business.city || ''} ${business.state || ''} Venezuela`);
+    const socialUrls = {
+      instagram: normalizeSocialUrl(business.instagram, 'instagram'),
+      facebook: normalizeSocialUrl(business.facebook, 'facebook'),
+      twitter: normalizeSocialUrl(business.twitter, 'twitter'),
+      tiktok: normalizeSocialUrl(business.tiktok, 'tiktok'),
+      youtube: normalizeSocialUrl(business.youtube, 'youtube'),
+    };
 
     // Generate "Why choose us" points from business data
     const whyUs = [];
@@ -85,7 +92,7 @@ export async function onRequestGet(context) {
     if (business.schedule) faqs.push({ q: `Cual es el horario de atencion?`, a: `Nuestro horario de atencion es: ${business.schedule}. Te recomendamos contactarnos por WhatsApp para confirmar disponibilidad.` });
     if (business.has_delivery) faqs.push({ q: `Hacen delivery?`, a: `Si! ${title} cuenta con servicio de delivery. Contactanos por WhatsApp para hacer tu pedido y te lo llevamos a la puerta de tu casa.` });
     if (business.has_card) faqs.push({ q: `Aceptan pagos con tarjeta?`, a: `Si, aceptamos pagos con tarjeta de credito y debito para tu mayor comodidad.` });
-    faqs.push({ q: `Tienen redes sociales?`, a: `Puedes seguirnos${business.instagram ? ' en Instagram: ' + business.instagram : ''}${business.facebook ? ' y en Facebook: ' + business.facebook : ''}. Ahi publicamos nuestras novedades y promociones.` });
+    faqs.push({ q: `Tienen redes sociales?`, a: `Puedes seguirnos${socialUrls.instagram ? ' en Instagram: ' + socialUrls.instagram : ''}${socialUrls.facebook ? ' y en Facebook: ' + socialUrls.facebook : ''}. Ahi publicamos nuestras novedades y promociones.` });
 
     // Generate services from description keywords
     const services = extractServices(fullDescription, business);
@@ -147,7 +154,7 @@ export async function onRequestGet(context) {
       }
       if (business.schedule) ld.openingHours = business.schedule;
       if (business.logo) ld.image = [business.logo, imageUrl].filter(Boolean);
-      const sameAs = [business.instagram, business.facebook, business.twitter, business.tiktok, business.youtube, business.website].filter(Boolean);
+      const sameAs = [socialUrls.instagram, socialUrls.facebook, socialUrls.twitter, socialUrls.tiktok, socialUrls.youtube, business.website].filter(Boolean);
       if (sameAs.length) ld.sameAs = sameAs;
       return ld;
     })())}</script>
@@ -454,13 +461,14 @@ export async function onRequestGet(context) {
 
         /* === GALLERY === */
         .lp-gallery-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;
         }
         .lp-gallery-img {
-            width: 100%; height: 180px; object-fit: cover;
+            width: 100%; height: auto; aspect-ratio: 4/3; object-fit: contain;
             border-radius: 12px; cursor: pointer; transition: transform 0.3s;
+            background: #f8fafb;
         }
-        .lp-gallery-img:hover { transform: scale(1.03); }
+        .lp-gallery-img:hover { transform: scale(1.02); }
 
         /* === FAQ === */
         .lp-faq-list { max-width: 700px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
@@ -825,7 +833,7 @@ ${images.results.length > 1 ? `
 </section>
 
 <!-- SOCIAL -->
-${(business.instagram || business.facebook || business.twitter || business.tiktok || business.youtube || business.slug) ? `
+${(socialUrls.instagram || socialUrls.facebook || socialUrls.twitter || socialUrls.tiktok || socialUrls.youtube || business.slug) ? `
 <section class="lp-section lp-section-grey">
     <div class="lp-container">
         <div class="lp-section-header">
@@ -834,11 +842,11 @@ ${(business.instagram || business.facebook || business.twitter || business.tikto
         </div>
         <div class="lp-social-grid">
             ${business.slug ? `<a href="${baseUrl}/negocio/${escapeHtml(business.slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#006EE3,#0ea5e9);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fas fa-store" style="font-size:1.75rem;"></i> Ficha del Negocio</a>` : ''}
-            ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-instagram" style="font-size:1.75rem;"></i> Instagram</a>` : ''}
-            ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#1877f2;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-facebook-f" style="font-size:1.75rem;"></i> Facebook</a>` : ''}
-            ${business.twitter ? `<a href="${escapeHtml(business.twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-x-twitter" style="font-size:1.75rem;"></i> X (Twitter)</a>` : ''}
-            ${business.tiktok ? `<a href="${escapeHtml(business.tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#010101;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-tiktok" style="font-size:1.75rem;"></i> TikTok</a>` : ''}
-            ${business.youtube ? `<a href="${escapeHtml(business.youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#ff0000;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-youtube" style="font-size:1.75rem;"></i> YouTube</a>` : ''}
+            ${socialUrls.instagram ? `<a href="${escapeHtml(socialUrls.instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-instagram" style="font-size:1.75rem;"></i> Instagram</a>` : ''}
+            ${socialUrls.facebook ? `<a href="${escapeHtml(socialUrls.facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#1877f2;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-facebook-f" style="font-size:1.75rem;"></i> Facebook</a>` : ''}
+            ${socialUrls.twitter ? `<a href="${escapeHtml(socialUrls.twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-x-twitter" style="font-size:1.75rem;"></i> X (Twitter)</a>` : ''}
+            ${socialUrls.tiktok ? `<a href="${escapeHtml(socialUrls.tiktok)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#010101;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-tiktok" style="font-size:1.75rem;"></i> TikTok</a>` : ''}
+            ${socialUrls.youtube ? `<a href="${escapeHtml(socialUrls.youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#ff0000;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-youtube" style="font-size:1.75rem;"></i> YouTube</a>` : ''}
         </div>
     </div>
 </section>
@@ -903,8 +911,8 @@ ${(business.lat || business.latitude || business.address) ? `
     <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">AuNClick</a></p>
     <div class="lp-footer-links">
         <a href="${baseUrl}/negocio/${business.slug}" target="_blank">Ver en AuNClick</a>
-        ${business.instagram ? `<a href="${escapeHtml(business.instagram)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
-        ${business.facebook ? `<a href="${escapeHtml(business.facebook)}" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
+        ${socialUrls.instagram ? `<a href="${escapeHtml(socialUrls.instagram)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
+        ${socialUrls.facebook ? `<a href="${escapeHtml(socialUrls.facebook)}" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
     </div>
     <div class="lp-footer-copy">&copy; ${new Date().getFullYear()} ${escapeHtml(title)}. Todos los derechos reservados.</div>
 </footer>
@@ -1006,6 +1014,21 @@ function escapeHtml(str) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function normalizeSocialUrl(value, platform) {
+  if (!value) return '';
+  const v = value.trim();
+  if (v.startsWith('http://') || v.startsWith('https://')) return v;
+  const clean = v.replace(/^@/, '');
+  switch (platform) {
+    case 'instagram': return `https://www.instagram.com/${clean}`;
+    case 'facebook': return `https://www.facebook.com/${clean}`;
+    case 'twitter': return `https://x.com/${clean}`;
+    case 'tiktok': return `https://www.tiktok.com/@${clean}`;
+    case 'youtube': return `https://www.youtube.com/@${clean}`;
+    default: return v;
+  }
 }
 
 function getVideoEmbed(url) {
