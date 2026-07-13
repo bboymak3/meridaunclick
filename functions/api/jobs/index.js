@@ -75,7 +75,7 @@ export async function onRequestGet(context) {
     const bindings = [];
 
     if (status) {
-      conditions.push('status = ?');
+      conditions.push('j.status = ?');
       bindings.push(status);
     }
     // Filter expired posts for public views

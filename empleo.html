@@ -1283,6 +1283,9 @@
                 };
             }
 
+            // Expose globally for onclick handlers
+            window.fetchJobs = fetchJobs;
+
             // ─── Init ─────────────────────────────────────────
             document.addEventListener('DOMContentLoaded', () => {
                 syncStateFilter();
