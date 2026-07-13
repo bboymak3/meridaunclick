@@ -225,7 +225,7 @@
         <div class="nav-container">
             <a href="index.html" class="nav-logo">
                 <img src="images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HolaX</span>
+                <span class="brand-name"><span id="brandCity"></span> HolaX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
@@ -382,7 +382,7 @@
                                 </div>
                                 <span class="quick-action-label">Publicar Producto</span>
                             </a>
-                            <a href="empleo.html" class="quick-action-card qa-empleo">
+                            <a href="#" class="quick-action-card qa-empleo" id="quickActionJob">
                                 <div class="quick-action-icon">
                                     <i class="fas fa-briefcase"></i>
                                 </div>
@@ -1154,17 +1154,17 @@
                         </div>
                     </div>
                     <div class="profile-form-section">
-                        <div class="profile-form-section-title"><i class="fas fa-camera"></i> <span>Imagen del Producto</span></div>
+                        <div class="profile-form-section-title"><i class="fas fa-camera"></i> <span>Fotos del Producto</span></div>
                         <div class="profile-input-group">
                             <div class="profile-input-wrapper"><i class="fas fa-link"></i>
                             <input type="url" id="prodImage" name="image" placeholder="O pega una URL de imagen aquí">
                             </div>
-                            <small class="profile-input-hint">O sube una imagen desde tu dispositivo</small>
+                            <small class="profile-input-hint">Sube hasta 5 fotos. La primera será la principal. Arrastra para reordenar.</small>
                         </div>
                         <div class="prod-upload-area" id="prodUploadArea">
                             <div class="prod-upload-btns">
                                 <label class="btn btn-primary btn-sm prod-upload-label" for="prodImageFile">
-                                    <i class="fas fa-camera"></i> Tomar Foto / Galería
+                                    <i class="fas fa-images"></i> Agregar Fotos
                                 </label>
                                 <input type="file" id="prodImageFile" name="image_file" accept="image/*" multiple style="display:none;">
                                 <label class="btn btn-secondary btn-sm prod-upload-label" for="prodAttachFile">
@@ -1172,11 +1172,23 @@
                                 </label>
                                 <input type="file" id="prodAttachFile" name="attach_file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none;">
                             </div>
-                            <div class="prod-upload-preview" id="prodUploadPreview"></div>
+                            <div class="prod-upload-preview" id="prodUploadPreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
                             <div class="prod-upload-progress hidden" id="prodUploadProgress">
-                                <i class="fas fa-spinner fa-spin"></i> Subiendo imagen...
+                                <i class="fas fa-spinner fa-spin"></i> Subiendo imagen(es)...
                             </div>
                         </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-video"></i> <span>Videos del Producto</span></div>
+                        <div id="prodVideoList">
+                            <div class="profile-input-group" style="margin-bottom:8px;">
+                                <div class="profile-input-wrapper"><i class="fas fa-video"></i>
+                                <input type="url" class="prod-video-url" placeholder="YouTube, TikTok o URL de video directo...">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="prodAddVideoBtn" class="btn btn-outline btn-sm" style="margin-bottom:8px;"><i class="fas fa-plus"></i> Agregar otro video</button>
+                        <small class="profile-input-hint">Puedes agregar múltiples videos (YouTube, TikTok, URLs directas .mp4)</small>
                     </div>
                     <div class="profile-form-section">
                         <div class="profile-form-section-title"><i class="fas fa-align-left"></i> <span>Descripción</span></div>
@@ -1184,20 +1196,139 @@
                             <textarea id="prodDescription" name="description" rows="3" placeholder="Describe tu producto..." maxlength="500"></textarea>
                         </div>
                     </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="productModalCancel">Cancelar</button>
+                <button class="btn btn-primary" id="productModalSave"><i class="fas fa-save"></i> Publicar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Modal -->
+    <div class="modal hidden" id="jobModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+            <div class="modal-header">
+                <h3><i class="fas fa-briefcase"></i> Publicar Empleo</h3>
+                <button class="modal-close" id="jobModalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="jobForm" class="profile-form">
                     <div class="profile-form-section">
-                        <div class="profile-form-section-title"><i class="fas fa-video"></i> <span>Video del Producto</span></div>
+                        <div class="profile-form-section-title"><i class="fas fa-store"></i> <span>Empresa</span></div>
                         <div class="profile-input-group">
-                            <label for="prodVideo">Video del Producto (YouTube/TikTok URL)</label>
-                            <div class="profile-input-wrapper"><i class="fas fa-video"></i>
-                            <input type="url" id="prodVideo" name="video_url" placeholder="https://youtube.com/watch?v=... o https://tiktok.com/...">
+                            <label for="jobBusiness">Negocio / Empresa *</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-store"></i>
+                            <select id="jobBusiness" name="business_id" required>
+                                <option value="">Selecciona un negocio registrado</option>
+                            </select>
+                            </div>
+                            <small class="profile-input-hint">Solo negocios aprobados. Si no ves tu negocio, regístralo primero.</small>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-briefcase"></i> <span>Información del Empleo</span></div>
+                        <div class="profile-input-group">
+                            <label for="jobTitle">Título del empleo *</label>
+                            <div class="profile-input-wrapper"><i class="fas fa-briefcase"></i>
+                            <input type="text" id="jobTitle" name="title" required placeholder="Ej: Chef de Cocina">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label for="jobType">Tipo de empleo *</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-clock"></i>
+                                <select id="jobType" name="job_type" required>
+                                    <option value="tiempo_completo">Tiempo Completo</option>
+                                    <option value="medio_tiempo">Medio Tiempo</option>
+                                    <option value="contrato">Contrato</option>
+                                    <option value="remoto">Remoto</option>
+                                    <option value="freelance">Freelance</option>
+                                </select>
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label for="jobSalary">Salario ($)</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-dollar-sign"></i>
+                                <input type="text" id="jobSalary" name="salary" placeholder="Ej: $500 - $800">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label for="jobState">Estado *</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-map-marker-alt"></i>
+                                <input type="text" id="jobState" name="state" required placeholder="Ej: Mérida">
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label for="jobCity">Ciudad</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-city"></i>
+                                <input type="text" id="jobCity" name="city" placeholder="Ej: Mérida">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-align-left"></i> <span>Descripción y Requisitos</span></div>
+                        <div class="profile-textarea-wrapper">
+                            <textarea id="jobDescription" name="description" rows="3" placeholder="Describe el puesto de trabajo..." maxlength="2000"></textarea>
+                        </div>
+                        <div class="profile-textarea-wrapper" style="margin-top:10px;">
+                            <textarea id="jobRequirements" name="requirements" rows="2" placeholder="Requisitos del puesto (experiencia, habilidades...)"></textarea>
+                        </div>
+                        <div class="profile-textarea-wrapper" style="margin-top:10px;">
+                            <textarea id="jobBenefits" name="benefits" rows="2" placeholder="Beneficios ofrecidos"></textarea>
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-camera"></i> <span>Fotos del Empleo</span></div>
+                        <small class="profile-input-hint" style="display:block;margin-bottom:8px;">Sube imágenes del lugar de trabajo, equipo, etc. (máx 5)</small>
+                        <div class="prod-upload-btns">
+                            <label class="btn btn-primary btn-sm prod-upload-label" for="jobImageFile">
+                                <i class="fas fa-images"></i> Agregar Fotos
+                            </label>
+                            <input type="file" id="jobImageFile" accept="image/*" multiple style="display:none;">
+                        </div>
+                        <div id="jobUploadPreview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+                        <div class="prod-upload-progress hidden" id="jobUploadProgress">
+                            <i class="fas fa-spinner fa-spin"></i> Subiendo imagen(es)...
+                        </div>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-video"></i> <span>Videos del Empleo</span></div>
+                        <div id="jobVideoList">
+                            <div class="profile-input-group" style="margin-bottom:8px;">
+                                <div class="profile-input-wrapper"><i class="fas fa-video"></i>
+                                <input type="url" class="job-video-url" placeholder="YouTube, TikTok o URL de video...">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="jobAddVideoBtn" class="btn btn-outline btn-sm" style="margin-bottom:8px;"><i class="fas fa-plus"></i> Agregar otro video</button>
+                    </div>
+                    <div class="profile-form-section">
+                        <div class="profile-form-section-title"><i class="fas fa-address-card"></i> <span>Contacto</span></div>
+                        <div class="form-row">
+                            <div class="profile-input-group">
+                                <label for="jobEmail">Email de contacto</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-envelope"></i>
+                                <input type="email" id="jobEmail" name="contact_email" placeholder="rrhh@empresa.com">
+                                </div>
+                            </div>
+                            <div class="profile-input-group">
+                                <label for="jobPhone">Teléfono</label>
+                                <div class="profile-input-wrapper"><i class="fas fa-phone"></i>
+                                <input type="tel" id="jobPhone" name="contact_phone" placeholder="+58 412 1234567">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="productModalCancel">Cancelar</button>
-                <button class="btn btn-primary" id="productModalSave"><i class="fas fa-save"></i> Publicar</button>
+                <button class="btn btn-secondary" id="jobModalCancel">Cancelar</button>
+                <button class="btn btn-primary" id="jobModalSave"><i class="fas fa-save"></i> Publicar Empleo</button>
             </div>
         </div>
     </div>

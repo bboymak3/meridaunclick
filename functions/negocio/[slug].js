@@ -405,7 +405,7 @@ export async function onRequestGet(context) {
         <div class="nav-container">
             <a href="/index.html" class="nav-logo">
                 <img src="https://aunclick.pages.dev/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
-                <span class="brand-name"><i class="fas fa-map-marker-alt brand-location-icon" style="font-size:0.7em;opacity:0.6;"></i> <span id="brandCity"></span> HolaX</span>
+                <span class="brand-name"><span id="brandCity"></span> HolaX</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">

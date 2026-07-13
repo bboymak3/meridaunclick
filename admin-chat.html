@@ -168,6 +168,29 @@
                         </div>
                     </div>
 
+                    <!-- Anonymous Comments Toggle -->
+                    <div class="admin-card" style="margin-bottom:20px;">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-user-secret" style="color:#8b5cf6;"></i> Mensajes Anónimos en Productos</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <p style="font-size:0.88rem;color:#6b7280;margin-bottom:14px;">
+                                Controla si los usuarios no registrados pueden dejar comentarios en los productos. Los comentarios anónimos aparecerán etiquetados como "Anónimo" en el chat de admin.
+                            </p>
+                            <div style="display:flex;align-items:center;gap:14px;">
+                                <label class="toggle-switch" style="position:relative;display:inline-block;width:52px;height:28px;flex-shrink:0;">
+                                    <input type="checkbox" id="anonCommentsToggle" data-key="anonymous_comments_enabled" style="opacity:0;width:0;height:0;">
+                                    <span style="position:absolute;cursor:pointer;inset:0;background:#cbd5e1;border-radius:28px;transition:all 0.3s;" id="anonToggleTrack"></span>
+                                    <span style="position:absolute;content:'';height:22px;width:22px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:all 0.3s;box-shadow:0 1px 3px rgba(0,0,0,0.2);" id="anonToggleThumb"></span>
+                                </label>
+                                <div>
+                                    <div id="anonToggleLabel" style="font-weight:600;font-size:0.9rem;color:#111;">Activados</div>
+                                    <div style="font-size:0.78rem;color:#94a3b8;" id="anonToggleDesc">Cualquier persona puede comentar en productos</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Chat Mode Config -->
                     <div class="admin-card">
                         <div class="admin-card-header">
@@ -398,6 +421,55 @@
         // Enter key on quick search
         const quickInput = document.getElementById('chatLogsQuickSearch');
         if (quickInput) quickInput.addEventListener('keydown', e => { if (e.key === 'Enter') quickSearchChats(); });
+
+        // ─── Anonymous Comments Toggle ──────────────────────
+        const anonToggle = document.getElementById('anonCommentsToggle');
+        const anonTrack = document.getElementById('anonToggleTrack');
+        const anonThumb = document.getElementById('anonToggleThumb');
+        const anonLabel = document.getElementById('anonToggleLabel');
+        const anonDesc = document.getElementById('anonToggleDesc');
+
+        function updateAnonToggleUI(isEnabled) {
+            if (isEnabled) {
+                anonToggle.checked = true;
+                anonTrack.style.background = '#8b5cf6';
+                anonThumb.style.transform = 'translateX(24px)';
+                anonLabel.textContent = 'Activados';
+                anonLabel.style.color = '#111';
+                anonDesc.textContent = 'Cualquier persona puede comentar en productos';
+            } else {
+                anonToggle.checked = false;
+                anonTrack.style.background = '#cbd5e1';
+                anonThumb.style.transform = 'translateX(0)';
+                anonLabel.textContent = 'Desactivados';
+                anonLabel.style.color = '#94a3b8';
+                anonDesc.textContent = 'Solo usuarios registrados pueden comentar';
+            }
+        }
+
+        if (anonToggle) {
+            anonToggle.addEventListener('change', async function() {
+                const val = this.checked ? '1' : '0';
+                updateAnonToggleUI(this.checked);
+                try {
+                    await api.put('/settings', { anonymous_comments_enabled: val });
+                    showToast(this.checked ? 'Comentarios anónimos activados' : 'Comentarios anónimos desactivados', 'success');
+                } catch(e) {
+                    showToast('Error al guardar: ' + e.message, 'error');
+                    updateAnonToggleUI(!this.checked);
+                }
+            });
+        }
+
+        // Load anonymous setting
+        async function loadAnonSetting() {
+            try {
+                const settings = await api.get('/settings');
+                const enabled = settings.anonymous_comments_enabled !== '0';
+                updateAnonToggleUI(enabled);
+            } catch(e) {}
+        }
+        loadAnonSetting();
 
         // ─── Chat Settings ──────────────────────────────────
         async function loadSettings() {

@@ -73,6 +73,7 @@ const DEFAULT_SETTINGS = {
   bookings_enabled: '0',
   points_enabled: '0',
   emergency_enabled: '1',
+  anonymous_comments_enabled: '1',
   // Points configuration
   points_per_visit: '10',
   points_per_review: '20',
