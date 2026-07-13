@@ -883,6 +883,7 @@ function initMobileSearchModal() {
 // ─── Hero Banner Loader ─────────────────────────────────
 async function loadHeroBanner() {
     const heroBg = document.getElementById('idxHeroBg');
+    const heroLogo = document.getElementById('idxHeroLogo');
     if (!heroBg) return;
     try {
         const resp = await fetch('/api/settings/public');
@@ -893,6 +894,10 @@ async function loadHeroBanner() {
             heroBg.style.backgroundSize = 'cover';
             heroBg.style.backgroundPosition = 'center';
             heroBg.style.backgroundRepeat = 'no-repeat';
+        }
+        if (data.hero_logo_url && heroLogo) {
+            heroLogo.src = data.hero_logo_url;
+            heroLogo.style.display = 'block';
         }
     } catch(e) {
         // Silent fail — default CSS gradient applies

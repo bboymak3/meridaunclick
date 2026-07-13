@@ -3849,7 +3849,45 @@ if (!window._renderVideoList) {
         if (btn) btn.style.display = 'none';
     };
 
-    // Override loadSettings to also show banner preview
+    // ─── Logo Management ────────────────────────────────
+    window.handleAdminLogoSelect = async function(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { showToast('Max 2MB para el logo', 'error'); input.value = ''; return; }
+
+        try {
+            showToast('Subiendo logo...', 'info');
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('product_type', 'logo');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                document.getElementById('setting_hero_logo_url').value = result.url;
+                const img = document.getElementById('adminLogoImg');
+                const icon = document.getElementById('adminLogoPlaceholderIcon');
+                const btn = document.getElementById('adminLogoRemoveBtn');
+                if (img) { img.src = result.url; img.style.display = 'block'; }
+                if (icon) icon.style.display = 'none';
+                if (btn) btn.style.display = 'inline-flex';
+                showToast('Logo subido. Guarda la configuración para aplicarlo.', 'success');
+            }
+        } catch(e) {
+            showToast('Error al subir logo: ' + e.message, 'error');
+        }
+        input.value = '';
+    };
+
+    window.removeAdminLogo = function() {
+        document.getElementById('setting_hero_logo_url').value = '';
+        const img = document.getElementById('adminLogoImg');
+        const icon = document.getElementById('adminLogoPlaceholderIcon');
+        const btn = document.getElementById('adminLogoRemoveBtn');
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (icon) icon.style.display = '';
+        if (btn) btn.style.display = 'none';
+    };
+
+    // Override loadSettings to also show banner + logo preview
     const _origLoadSettings = loadSettings;
     loadSettings = async function() {
         await _origLoadSettings();
@@ -3859,6 +3897,15 @@ if (!window._renderVideoList) {
             const icon = document.getElementById('adminBannerPlaceholderIcon');
             const btn = document.getElementById('adminBannerRemoveBtn');
             if (img) { img.src = bannerUrl; img.style.display = 'block'; }
+            if (icon) icon.style.display = 'none';
+            if (btn) btn.style.display = 'inline-flex';
+        }
+        const logoUrl = document.getElementById('setting_hero_logo_url')?.value;
+        if (logoUrl) {
+            const img = document.getElementById('adminLogoImg');
+            const icon = document.getElementById('adminLogoPlaceholderIcon');
+            const btn = document.getElementById('adminLogoRemoveBtn');
+            if (img) { img.src = logoUrl; img.style.display = 'block'; }
             if (icon) icon.style.display = 'none';
             if (btn) btn.style.display = 'inline-flex';
         }

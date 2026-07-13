@@ -80,10 +80,15 @@ const DEFAULT_SETTINGS = {
   points_per_booking: '15',
   // Hero banner
   hero_banner_url: '',
+  // Hero logo (overlays on banner)
+  hero_logo_url: '',
 };
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
-const ALLOWED_KEYS = Object.keys(DEFAULT_SETTINGS);
+// Also allow hero_logo_url even if it was added after initial seed
+const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url'];
+// Deduplicate
+const ALLOWED_KEYS_SET = [...new Set(ALLOWED_KEYS)];
 
 // ─── Ensure the admin_settings table exists ───────────────────────
 async function ensureSettingsTable(env) {
@@ -158,7 +163,7 @@ export async function onRequestGet(context) {
 
     return new Response(JSON.stringify({
       settings,
-      allowed_keys: ALLOWED_KEYS,
+      allowed_keys: ALLOWED_KEYS_SET,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -218,7 +223,7 @@ export async function onRequestPut(context) {
     const rejected = [];
 
     for (const [key, value] of Object.entries(body)) {
-      if (ALLOWED_KEYS.includes(key)) {
+      if (ALLOWED_KEYS_SET.includes(key)) {
         updates[key] = String(value); // All values stored as TEXT
       } else {
         rejected.push(key);
@@ -226,7 +231,7 @@ export async function onRequestPut(context) {
     }
 
     if (Object.keys(updates).length === 0) {
-      return new Response(JSON.stringify({ error: 'No se proporcionaron claves válidas para actualizar', allowed_keys: ALLOWED_KEYS }), {
+      return new Response(JSON.stringify({ error: 'No se proporcionaron claves válidas para actualizar', allowed_keys: ALLOWED_KEYS_SET }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
