@@ -83,7 +83,7 @@ export async function onRequestGet(context) {
     const bindings = [];
 
     if (status) {
-      conditions.push('j.status = ?');
+      conditions.push('job_listings.status = ?');
       bindings.push(status);
     }
     // Filter expired posts for public views
@@ -124,18 +124,20 @@ export async function onRequestGet(context) {
     else if (sort === 'oldest') orderBy = 'created_at ASC';
     else orderBy = 'created_at DESC';
 
-    // Count total
+    // Count total (no JOIN needed)
     const countQuery = `SELECT COUNT(*) as total FROM job_listings WHERE ${whereClause}`;
     const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();
     const total = countResult.total;
 
-    // Fetch jobs
+    // Fetch jobs with business info
+    const conditions2 = conditions.map(c => c.replace(/job_listings\./g, 'j.'));
+    const whereClause2 = conditions2.length > 0 ? conditions2.join(' AND ') : '1=1';
     const query = `
       SELECT j.*,
              b.logo as business_logo, b.title as business_title
       FROM job_listings j
       LEFT JOIN businesses b ON j.business_id = b.id
-      WHERE ${whereClause}
+      WHERE ${whereClause2}
       ORDER BY ${orderBy}
       LIMIT ? OFFSET ?
     `;
@@ -155,8 +157,8 @@ export async function onRequestGet(context) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Jobs GET error v2:', error);
-    let errorMsg = 'Error interno del servidor v2';
+    console.error('Jobs GET error v3:', error);
+    let errorMsg = 'Error interno del servidor v3';
     if (error.message && error.message.includes('no such table')) {
       errorMsg = 'Error: La tabla de job_listings no existe. Ejecuta el schema.sql en tu D1.';
     } else if (error.message) {
