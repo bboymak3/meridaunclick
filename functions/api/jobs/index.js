@@ -55,6 +55,13 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Ensure required columns exist
+    try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN status TEXT DEFAULT 'pending'`).run(); } catch(e) {}
+    try { await env.DB.prepare('ALTER TABLE job_listings ADD COLUMN views INTEGER DEFAULT 0').run(); } catch(e) {}
+    try { await env.DB.prepare("ALTER TABLE job_listings ADD COLUMN expires_at TEXT").run(); } catch(e) {}
+    try { await env.DB.prepare('ALTER TABLE job_listings ADD COLUMN images TEXT').run(); } catch(e) {}
+    try { await env.DB.prepare('ALTER TABLE job_listings ADD COLUMN video_url TEXT').run(); } catch(e) {}
+
     const url = new URL(request.url);
     const params = url.searchParams;
 
