@@ -98,10 +98,10 @@ export async function onRequestGet(context) {
     <meta name="description" content="${escapeHtml(metaDescription)}">
     <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')}</title>
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="${baseUrl}/negocio/${business.slug}">
+    <link rel="canonical" href="${baseUrl}/web/${business.slug}">
 
     <!-- Open Graph -->
-    <meta property="og:type" content="business.business">
+    <meta property="og:type" content="website">
     <meta property="og:title" content="${escapeHtml(title)} - ${escapeHtml(business.category_name || '')} en ${escapeHtml(business.city || '')}">
     <meta property="og:description" content="${escapeHtml(metaDescription)}">
     <meta property="og:image" content="${imageUrl}">
@@ -117,6 +117,51 @@ export async function onRequestGet(context) {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- JSON-LD Structured Data: LocalBusiness -->
+    <script type="application/ld+json">${JSON.stringify((() => {
+      const ld = {
+        "@context": "https://schema.org",
+        "@type": "LocalBusiness",
+        "name": title,
+        "url": `${baseUrl}/web/${business.slug}`,
+        "image": imageUrl
+      };
+      if (fullDescription) ld.description = fullDescription;
+      if (whatsappNumber) ld.telephone = '+' + whatsappNumber;
+      if (business.address) {
+        ld.address = {
+          "@type": "PostalAddress",
+          "streetAddress": business.address,
+          "addressLocality": business.city || undefined,
+          "addressRegion": business.state || undefined,
+          "addressCountry": "VE"
+        };
+      }
+      if (business.lat || business.latitude) {
+        ld.geo = {
+          "@type": "GeoCoordinates",
+          "latitude": Number(business.lat || business.latitude),
+          "longitude": Number(business.lng || business.longitude)
+        };
+      }
+      if (business.schedule) ld.openingHours = business.schedule;
+      if (business.logo) ld.image = [business.logo, imageUrl].filter(Boolean);
+      const sameAs = [business.instagram, business.facebook, business.twitter, business.tiktok, business.youtube, business.website].filter(Boolean);
+      if (sameAs.length) ld.sameAs = sameAs;
+      return ld;
+    })())}</script>
+
+    <!-- JSON-LD FAQ -->
+    ${faqs.length > 0 ? `<script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faqs.slice(0, 6).map(f => ({
+        "@type": "Question",
+        "name": f.q,
+        "acceptedAnswer": { "@type": "Answer", "text": f.a }
+      }))
+    })}</script>` : ''}
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -352,8 +397,13 @@ export async function onRequestGet(context) {
         .lp-product-card {
             background: #fff; border-radius: 16px; overflow: hidden;
             border: 1px solid #e5e7eb; transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
         }
         .lp-product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.08); }
+        .lp-product-link {
+            display: block; color: inherit; text-decoration: none;
+        }
+        .lp-product-link:hover { color: inherit; text-decoration: none; }
         .lp-product-img { width: 100%; height: 220px; object-fit: cover; background: #f1f5f9; }
         .lp-product-body { padding: 18px; }
         .lp-product-name {
@@ -657,12 +707,14 @@ ${products.results.length > 0 ? `
         <div class="lp-products-grid">
             ${products.results.map(p => `
                 <div class="lp-product-card">
-                    ${(() => { let imgSrc = ''; if (p.image) { try { const arr = JSON.parse(p.image); if (Array.isArray(arr) && arr.length > 0) imgSrc = arr[0]; else if (typeof p.image === 'string' && p.image.startsWith('http')) imgSrc = p.image; } catch(e) { if (p.image.startsWith('http')) imgSrc = p.image; } } return imgSrc ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)}" class="lp-product-img" loading="lazy" onerror="this.style.display='none'">` : '<div style="height:220px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="font-size:2.5rem;color:#cbd5e1;"></i></div>'; })()}
+                    <a href="${p.slug ? `${baseUrl}/producto/${p.slug}` : '#'}" class="lp-product-link"${p.slug ? ' target="_blank" rel="noopener"' : ''}>
+                    ${(() => { let imgSrc = ''; if (p.image) { try { const arr = JSON.parse(p.image); if (Array.isArray(arr) && arr.length > 0) imgSrc = arr[0]; else if (typeof p.image === 'string' && p.image.startsWith('http')) imgSrc = p.image; } catch(e) { if (p.image.startsWith('http')) imgSrc = p.image; } } return imgSrc ? `<img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(p.name)} - ${escapeHtml(title)}" class="lp-product-img" loading="lazy" onerror="this.style.display='none'">` : '<div style="height:220px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;"><i class="fas fa-image" style="font-size:2.5rem;color:#cbd5e1;"></i></div>'; })()}
                     <div class="lp-product-body">
                         <div class="lp-product-name">${escapeHtml(p.name)}</div>
                         ${p.description ? `<div class="lp-product-desc">${escapeHtml(p.description)}</div>` : ''}
                         ${p.price ? `<div class="lp-product-price">${escapeHtml(String(p.price))}</div>` : ''}
                     </div>
+                    </a>
                     ${whatsappNumber ? `<div class="lp-product-footer"><a href="${whatsappLink}" target="_blank" rel="noopener" class="lp-product-wa"><i class="fab fa-whatsapp"></i> Consultar</a></div>` : ''}
                 </div>
             `).join('')}
@@ -747,7 +799,7 @@ ${images.results.length > 1 ? `
             <h2 class="lp-section-title">Nuestras Fotos</h2>
         </div>
         <div class="lp-gallery-grid">
-            ${images.results.map((img, i) => `<img src="${escapeHtml(img.url)}" alt="${escapeHtml(title)} foto ${i + 1}" class="lp-gallery-img" loading="lazy">`).join('')}
+            ${(() => { const galleryLabels = ['fachada del local','interior del negocio','nuestros productos','area de atencion','detalles del establecimiento','ambiente general','nuestro equipo','vista externa','instalaciones','galeria adicional']; return images.results.map((img, i) => `<img src="${escapeHtml(img.url)}" alt="${escapeHtml(title)} - ${galleryLabels[i % galleryLabels.length]} en ${escapeHtml(business.city || 'Venezuela')}" class="lp-gallery-img" loading="lazy">`).join(''); })()}
         </div>
     </div>
 </section>
@@ -802,14 +854,14 @@ ${(() => {
     urls = urls.filter(u => u);
     if (!urls.length) return '';
     return `
-<section class="lp-section">
+<section class="lp-section" id="videos">
     <div class="lp-container" style="text-align:center;">
         <div class="lp-section-header">
             <div class="lp-section-label">Video${urls.length > 1 ? 's' : ''}</div>
             <h2 class="lp-section-title">Conoce Nuestro Trabajo</h2>
         </div>
-        <div style="${urls.length > 1 ? 'display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;' : 'max-width:320px;margin:0 auto;'}border-radius:16px;overflow:hidden;">
-            ${urls.map(u => '<div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);">' + getVideoEmbed(u) + '</div>').join('')}
+        <div style="${urls.length > 1 ? 'display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;' : 'max-width:320px;margin:0 auto;'}">
+            ${urls.map(u => getVideoEmbed(u)).join('')}
         </div>
     </div>
 </section>`;
@@ -886,7 +938,7 @@ window.addEventListener('scroll', () => {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300',
-        'Link': `<${baseUrl}/negocio/${business.slug}>; rel="canonical"`,
+        'Link': `<${baseUrl}/web/${business.slug}>; rel="canonical"`,
       },
     });
   } catch (error) {
@@ -958,16 +1010,26 @@ function escapeHtml(str) {
 
 function getVideoEmbed(url) {
   if (!url) return '';
-  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) return `<iframe src="https://www.youtube.com/embed/${ytMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
-  // YouTube Shorts: youtube.com/shorts/XXX
-  const ytShortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
-  if (ytShortsMatch) return `<iframe src="https://www.youtube.com/embed/${ytShortsMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
-  const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
-  if (ttMatch) return `<iframe src="https://www.tiktok.com/embed/v2/${ttMatch[1]}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
-  // Direct video files (R2 uploads): .mp4, .webm, .ogg, .mov
+  // Direct video files (R2 uploads): .mp4, .webm, .ogg, .mov — these are lightweight, load normally
   if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) {
-    return `<video src="${escapeHtml(url)}" controls playsinline preload="metadata" style="width:100%;border-radius:12px;background:#000;"></video>`;
+    return `<div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);"><video src="${escapeHtml(url)}" controls playsinline preload="metadata" style="width:100%;border-radius:16px;background:#000;"></video></div>`;
   }
-  return `<iframe src="${escapeHtml(url)}" width="100%" style="aspect-ratio:9/16;" frameborder="0" allowfullscreen></iframe>`;
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) return getLazyIframe(`https://www.youtube.com/embed/${ytMatch[1]}`, 'Ver video en YouTube');
+  // YouTube Shorts
+  const ytShortsMatch = url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]+)/);
+  if (ytShortsMatch) return getLazyIframe(`https://www.youtube.com/embed/${ytShortsMatch[1]}`, 'Ver video en YouTube');
+  // TikTok
+  const ttMatch = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+  if (ttMatch) return getLazyIframe(`https://www.tiktok.com/embed/v2/${ttMatch[1]}`, 'Ver video en TikTok');
+  // Generic iframe
+  return getLazyIframe(url, 'Reproducir video');
+}
+
+function getLazyIframe(src, label) {
+  const id = 'vid_' + Math.random().toString(36).substring(2, 9);
+  return `<div id="${id}" onclick="this.innerHTML='<iframe src=\\'' + this.dataset.src + '\\' style=\\'width:100%;aspect-ratio:9/16;border:none;border-radius:16px;\\' allowfullscreen></iframe>';this.style.cursor='default';" data-src="${escapeHtml(src)}" style="border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.1);aspect-ratio:9/16;background:#0f172a;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity 0.2s;">
+    <div style="text-align:center;color:#fff;"><div style="width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;"><i class="fas fa-play" style="font-size:1.5rem;margin-left:4px;"></i></div><div style="font-size:0.85rem;font-weight:600;opacity:0.8;">${escapeHtml(label)}</div></div>
+  </div>`;
 }
