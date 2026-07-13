@@ -78,66 +78,65 @@ export async function onRequestGet(context) {
     const userId = params.get('user_id');
     const businessId = params.get('business_id');
 
-    // Build conditions
+    // Build conditions — use full table name to avoid ambiguity in JOINs
     const conditions = [];
     const bindings = [];
 
     if (status) {
-      conditions.push('job_listings.status = ?');
+      conditions.push('j.status = ?');
       bindings.push(status);
     }
     // Filter expired posts for public views
     if (status === 'approved') {
-      conditions.push("(expires_at IS NULL OR expires_at > datetime('now'))");
+      conditions.push("(j.expires_at IS NULL OR j.expires_at > datetime('now'))");
     }
 
     if (businessId) {
-      conditions.push('business_id = ?');
+      conditions.push('j.business_id = ?');
       bindings.push(parseInt(businessId));
     }
 
     if (userId) {
-      conditions.push('user_id = ?');
+      conditions.push('j.user_id = ?');
       bindings.push(parseInt(userId));
     }
 
     if (state) {
-      conditions.push('state = ?');
+      conditions.push('j.state = ?');
       bindings.push(state);
     }
 
     if (jobType) {
-      conditions.push('job_type = ?');
+      conditions.push('j.job_type = ?');
       bindings.push(jobType);
     }
 
     if (search) {
-      conditions.push('(title LIKE ? OR company_name LIKE ? OR description LIKE ? OR city LIKE ?)');
+      conditions.push('(j.title LIKE ? OR j.company_name LIKE ? OR j.description LIKE ? OR j.city LIKE ?)');
       bindings.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
 
     // Sort
-    let orderBy = 'created_at DESC';
-    if (sort === 'views') orderBy = 'views DESC';
-    else if (sort === 'oldest') orderBy = 'created_at ASC';
-    else orderBy = 'created_at DESC';
+    let orderBy = 'j.created_at DESC';
+    if (sort === 'views') orderBy = 'j.views DESC';
+    else if (sort === 'oldest') orderBy = 'j.created_at ASC';
+    else orderBy = 'j.created_at DESC';
 
-    // Count total (no JOIN needed)
-    const countQuery = `SELECT COUNT(*) as total FROM job_listings WHERE ${whereClause}`;
+    // Count total (no JOIN, so strip alias)
+    const countWhere = whereClause.replace(/j\./g, 'job_listings.');
+    const countQuery = `SELECT COUNT(*) as total FROM job_listings WHERE ${countWhere}`;
     const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();
     const total = countResult.total;
 
     // Fetch jobs with business info
-    const conditions2 = conditions.map(c => c.replace(/job_listings\./g, 'j.'));
-    const whereClause2 = conditions2.length > 0 ? conditions2.join(' AND ') : '1=1';
     const query = `
       SELECT j.*,
              b.logo as business_logo, b.title as business_title
       FROM job_listings j
       LEFT JOIN businesses b ON j.business_id = b.id
-      WHERE ${whereClause2}
+      WHERE ${whereClause}
       ORDER BY ${orderBy}
       LIMIT ? OFFSET ?
     `;
