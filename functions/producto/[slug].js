@@ -412,9 +412,12 @@ export async function onRequestGet(context) {
 
         <div class="pd-card">
             <div class="pd-body" style="padding-top:24px;">
-                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
                     ${product.business_logo ? `<img src="${esc(product.business_logo)}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
-                    ${bizLink ? `<a href="${bizLink}" class="pd-biz-name" style="margin:0;"><i class="fas fa-store"></i> ${esc(product.business_name || 'Negocio')}${product.city ? ' · ' + esc(product.city) : ''}</a>` : (product.business_name ? `<div class="pd-biz-name" style="margin:0;"><i class="fas fa-store"></i> ${esc(product.business_name)}</div>` : '')}
+                    <div>
+                        ${bizLink ? `<a href="${bizLink}" class="pd-biz-name" style="margin:0;display:block;"><i class="fas fa-store"></i> ${esc(product.business_name || 'Negocio')}${product.city ? ' · ' + esc(product.city) : ''}</a>` : (product.business_name ? `<div class="pd-biz-name" style="margin:0;display:block;"><i class="fas fa-store"></i> ${esc(product.business_name)}</div>` : '')}
+                        ${product.created_at ? (() => { try { const pd = new Date(product.created_at + (product.created_at.includes('T') ? '' : 'T00:00:00')); const pds = pd.toLocaleDateString('es-VE', { year:'numeric', month:'long', day:'numeric' }); if (!pds.includes('NaN')) return `<div style="font-size:.8rem;color:#94a3b8;margin-top:2px;"><i class="far fa-clock"></i> Publicado ${pds}</div>`; } catch(e){} return ''; })() : ''}
+                    </div>
                 </div>
                 <h1 class="pd-title">${esc(title)}</h1>
                 ${price ? `<div class="pd-price">${price}</div>` : ''}
@@ -453,7 +456,7 @@ export async function onRequestGet(context) {
                 <p class="pd-desc">${esc(product.description || 'Sin descripcion disponible.')}</p>
                 <div class="pd-meta">
                     <div class="pd-meta-chip"><i class="fas fa-tag"></i> ${catLabel}</div>
-                    ${(product.created_at && fmtDate(product.created_at) && !fmtDate(product.created_at).includes('NaN')) ? `<div class="pd-meta-chip"><i class="far fa-clock"></i> ${fmtDate(product.created_at)}</div>` : ''}
+
                     ${waNumber ? `<div class="pd-meta-chip"><i class="fab fa-whatsapp"></i> WhatsApp</div>` : ''}
                 </div>
                 <div class="pd-actions">
