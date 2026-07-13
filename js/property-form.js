@@ -1052,6 +1052,31 @@
             }
         }
 
+        // Load existing videos
+        if (property.video_url) {
+            let existingVideos = [];
+            try {
+                const parsed = JSON.parse(property.video_url);
+                if (Array.isArray(parsed)) existingVideos = parsed;
+            } catch (e) {}
+            if (existingVideos.length === 0 && property.video_url && property.video_url.startsWith('http')) {
+                existingVideos = [property.video_url];
+            }
+            if (existingVideos.length > 0) {
+                const videoList = document.getElementById('propertyVideoList');
+                if (videoList) {
+                    videoList.innerHTML = '';
+                    existingVideos.forEach(function(vUrl) {
+                        const div = document.createElement('div');
+                        div.className = 'pf-url-input-row';
+                        div.style.marginBottom = '10px';
+                        div.innerHTML = '<div class="pf-url-input-wrapper"><i class="fas fa-video"></i><input type="url" class="property-video-url" value="' + vUrl + '" placeholder="YouTube, TikTok o URL de video (.mp4)"></div><button type="button" class="pf-btn pf-btn-add-url" onclick="this.parentElement.remove();" title="Eliminar video" style="background:#ef4444;"><i class="fas fa-trash"></i></button>';
+                        videoList.appendChild(div);
+                    });
+                }
+            }
+        }
+
         // Load existing images
         if (property.images && property.images.length > 0) {
             uploadedImages = property.images.map((img) => ({

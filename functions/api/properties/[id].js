@@ -116,7 +116,7 @@ export async function onRequestPut(context) {
       'bedrooms', 'bathrooms', 'parking_spaces', 'area', 'area_unit',
       'year_built', 'floors', 'has_pool', 'has_garden', 'has_ac',
       'has_kitchen', 'has_furniture', 'has_security', 'has_elevator',
-      'featured',
+      'featured', 'video_url',
     ];
 
     const setClauses = [];
