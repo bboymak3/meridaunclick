@@ -1,6 +1,7 @@
 // functions/api/jobs/index.js
 // GET: List job listings (with filters)
 // POST: Create job listing (requires auth)
+// v2 - fixed ambiguous column + auto-create missing columns
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -154,8 +155,8 @@ export async function onRequestGet(context) {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    console.error('Jobs GET error:', error);
-    let errorMsg = 'Error interno del servidor';
+    console.error('Jobs GET error v2:', error);
+    let errorMsg = 'Error interno del servidor v2';
     if (error.message && error.message.includes('no such table')) {
       errorMsg = 'Error: La tabla de job_listings no existe. Ejecuta el schema.sql en tu D1.';
     } else if (error.message) {
