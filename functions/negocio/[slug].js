@@ -90,6 +90,60 @@ export async function onRequestGet(context) {
     <meta property="business:contact_data:region" content="${escapeHtml(business.state || '')}">
     <meta property="business:contact_data:country_name" content="${escapeHtml(business.country || 'Venezuela')}">
 
+    <!-- JSON-LD: LocalBusiness / MedicalBusiness + BreadcrumbList -->
+    <script type="application/ld+json">${JSON.stringify((() => {
+      const isMedical = business.category_name && (business.category_name.toLowerCase().includes('médic') || business.category_name.toLowerCase().includes('medic'));
+      const ld = {
+        "@context": "https://schema.org",
+        "@type": isMedical ? "MedicalBusiness" : "LocalBusiness",
+        "name": title,
+        "url": canonicalUrl,
+        "image": imageUrl,
+        "description": description
+      };
+      if (business.category_name) ld.category = business.category_name;
+      const phoneClean = (business.phone || '').replace(/[^0-9]/g, '');
+      const waClean = (business.whatsapp || business.phone || '').replace(/[^0-9]/g, '');
+      if (waClean) ld.telephone = '+' + waClean;
+      if (business.address) {
+        ld.address = {
+          "@type": "PostalAddress",
+          "streetAddress": business.address,
+          "addressLocality": business.city || undefined,
+          "addressRegion": business.state || undefined,
+          "addressCountry": "VE"
+        };
+      }
+      if (business.lat || business.latitude) {
+        ld.geo = {
+          "@type": "GeoCoordinates",
+          "latitude": Number(business.lat || business.latitude),
+          "longitude": Number(business.lng || business.longitude)
+        };
+      }
+      if (business.logo) ld.logo = business.logo;
+      const sameAs = [];
+      if (business.instagram) sameAs.push(normalizeSocialUrl(business.instagram, 'instagram'));
+      if (business.facebook) sameAs.push(normalizeSocialUrl(business.facebook, 'facebook'));
+      if (business.twitter) sameAs.push(normalizeSocialUrl(business.twitter, 'twitter'));
+      if (business.tiktok) sameAs.push(normalizeSocialUrl(business.tiktok, 'tiktok'));
+      if (business.youtube) sameAs.push(normalizeSocialUrl(business.youtube, 'youtube'));
+      if (business.website) sameAs.push(business.website);
+      if (sameAs.length) ld.sameAs = sameAs;
+      if (business.schedule) ld.openingHours = business.schedule;
+      return ld;
+    })())}</script>
+    <script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://aunclick.pages.dev/" },
+        { "@type": "ListItem", "position": 2, "name": "Negocios", "item": "https://aunclick.pages.dev/search.html" },
+        ${business.category_name ? `{ "@type": "ListItem", "position": 3, "name": ${JSON.stringify(business.category_name)}, "item": "https://aunclick.pages.dev/categoria/${encodeURIComponent((business.category_name || '').toLowerCase().replace(/[^a-z0-9áéíóúñü]+/g, '-').replace(/^-|-$/g, ''))}" },` : ''}
+        { "@type": "ListItem", "position": ${business.category_name ? 4 : 3}, "name": ${JSON.stringify(title)}, "item": canonicalUrl }
+      ]
+    })}</script>
+
     <link rel="stylesheet" href="/css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -460,6 +514,7 @@ export async function onRequestGet(context) {
             <nav class="breadcrumb" aria-label="Breadcrumb">
                 <a href="/index.html"><i class="fas fa-home"></i> Inicio</a>
                 <a href="/search.html">Negocios</a>
+                ${business.category_name ? `<a href="/categoria/${encodeURIComponent((business.category_name || '').toLowerCase().replace(/[^a-z0-9áéíóúñü]+/g, '-').replace(/^-|-$/g, ''))}">${escapeHtml(business.category_name)}</a>` : ''}
                 <span id="breadcrumbTitle">${escapeHtml(title)}</span>
             </nav>
 

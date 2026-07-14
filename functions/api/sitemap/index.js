@@ -40,13 +40,6 @@ export async function onRequestGet(context) {
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>
   </url>\n`;
-        // Also add the standalone landing page for each business
-        dynamicUrls += `  <url>
-    <loc>${baseUrl}/web/${biz.slug}</loc>
-    <lastmod>${lastmod}</lastmod>
-    <priority>0.9</priority>
-    <changefreq>weekly</changefreq>
-  </url>\n`;
       }
 
       // Also add legacy redirect URLs for businesses without slug
@@ -84,6 +77,82 @@ export async function onRequestGet(context) {
       }
     } catch (e) {
       // Products table may not have slug column yet
+    }
+
+    // Fetch all categories with businesses
+    try {
+      const categories = await env.DB.prepare(
+        `SELECT c.slug, MAX(b.updated_at) as last_updated
+         FROM categories c
+         INNER JOIN businesses b ON b.category_id = c.id AND b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != ''
+         GROUP BY c.id
+         ORDER BY last_updated DESC`
+      ).all();
+
+      for (const cat of categories.results) {
+        const lastmod = cat.last_updated ? cat.last_updated.substring(0, 10) : '';
+        dynamicUrls += `  <url>
+    <loc>${baseUrl}/categoria/${cat.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <priority>0.7</priority>
+    <changefreq>weekly</changefreq>
+  </url>\n`;
+      }
+    } catch (e) {
+      // Categories may not exist
+    }
+
+    // Fetch all states with businesses
+    try {
+      const states = await env.DB.prepare(
+        `SELECT LOWER(REPLACE(REPLACE(
+           CASE state
+             WHEN 'Anzoátegui' THEN 'anzoategui'
+             WHEN 'Bolívar' THEN 'bolivar'
+             WHEN 'Carabobo' THEN 'carabobo'
+             WHEN 'Falcón' THEN 'falcon'
+             WHEN 'Guárico' THEN 'guarico'
+             WHEN 'Mérida' THEN 'merida'
+             WHEN 'Miranda' THEN 'miranda'
+             WHEN 'Monagas' THEN 'monagas'
+             WHEN 'Nueva Esparta' THEN 'nueva-esparta'
+             WHEN 'Portuguesa' THEN 'portuguesa'
+             WHEN 'Sucre' THEN 'sucre'
+             WHEN 'Táchira' THEN 'tachira'
+             WHEN 'Trujillo' THEN 'trujillo'
+             WHEN 'Yaracuy' THEN 'yaracuy'
+             WHEN 'Zulia' THEN 'zulia'
+             WHEN 'Barinas' THEN 'barinas'
+             WHEN 'Aragua' THEN 'aragua'
+             WHEN 'Lara' THEN 'lara'
+             WHEN 'Vargas' THEN 'vargas'
+             WHEN 'Distrito Capital' THEN 'distrito-capital'
+             WHEN 'Amazonas' THEN 'amazonas'
+             WHEN 'Apure' THEN 'apure'
+             WHEN 'Cojedes' THEN 'cojedes'
+             WHEN 'Delta Amacuro' THEN 'delta-amacuro'
+             ELSE LOWER(REPLACE(state, ' ', '-'))
+           END
+         , 'á','a'), 'é','e'), 'í','i'), 'ó','o'), 'ú','u'), 'ñ','n') as state_slug,
+           MAX(b.updated_at) as last_updated
+         FROM businesses b
+         WHERE b.status = 'approved' AND b.state IS NOT NULL AND b.state != ''
+         GROUP BY b.state
+         ORDER BY last_updated DESC`
+      ).all();
+
+      for (const st of states.results) {
+        if (!st.state_slug) continue;
+        const lastmod = st.last_updated ? st.last_updated.substring(0, 10) : '';
+        dynamicUrls += `  <url>
+    <loc>${baseUrl}/estado/${st.state_slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <priority>0.6</priority>
+    <changefreq>weekly</changefreq>
+  </url>\n`;
+      }
+    } catch (e) {
+      // States may not exist
     }
 
     // Build static page URLs

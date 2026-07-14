@@ -106,7 +106,7 @@ export async function onRequestGet(context) {
     <meta name="description" content="${escapeHtml(metaDescription)}">
     <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')}</title>
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="${baseUrl}/web/${business.slug}">
+    <link rel="canonical" href="${baseUrl}/negocio/${business.slug}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
@@ -132,7 +132,7 @@ export async function onRequestGet(context) {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
         "name": title,
-        "url": `${baseUrl}/web/${business.slug}`,
+        "url": `${baseUrl}/negocio/${business.slug}`,
         "image": imageUrl
       };
       if (fullDescription) ld.description = fullDescription;
@@ -1032,7 +1032,7 @@ window.addEventListener('scroll', () => {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300',
-        'Link': `<${baseUrl}/web/${business.slug}>; rel="canonical"`,
+        'Link': `<${baseUrl}/negocio/${business.slug}>; rel="canonical"`,
       },
     });
   } catch (error) {

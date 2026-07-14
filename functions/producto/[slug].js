@@ -183,6 +183,36 @@ export async function onRequestGet(context) {
     <meta name="twitter:title" content="${esc(title)} - HolaX">
     <meta name="twitter:description" content="${esc(description)}">
     <meta name="twitter:image" content="${imageUrl}">
+    <!-- JSON-LD: Product + BreadcrumbList -->
+    <script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": title,
+      "description": product.description || description,
+      "image": productImages.length > 0 ? productImages : [imageUrl],
+      "url": canonicalUrl,
+      "brand": product.business_name ? { "@type": "Brand", "name": product.business_name } : undefined,
+      "offers": {
+        "@type": "Offer",
+        "price": product.price || "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "seller": {
+          "@type": "Organization",
+          "name": product.business_name || "HolaX"
+        }
+      }
+    })}</script>
+    <script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://aunclick.pages.dev/" },
+        { "@type": "ListItem", "position": 2, "name": "Marketplace", "item": "https://aunclick.pages.dev/marketplace.html" },
+        ${product.category ? `{ "@type": "ListItem", "position": 3, "name": ${JSON.stringify(product.category)}, "item": "https://aunclick.pages.dev/marketplace.html?categoria=${encodeURIComponent(product.category)}" },` : ''}
+        { "@type": "ListItem", "position": ${product.category ? 4 : 3}, "name": ${JSON.stringify(title)}, "item": canonicalUrl }
+      ]
+    })}</script>
     <link rel="stylesheet" href="/css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="manifest" href="/manifest.json">
