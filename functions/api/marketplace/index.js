@@ -80,7 +80,14 @@ export async function onRequestGet(context) {
     const offset = (page - 1) * limit;
     const search = params.get('search');
     const sort = params.get('sort') || 'newest';
-    const allProducts = params.get('all') === 'true'; // Admin mode: show all statuses
+    // Admin mode requires admin authentication
+    let allProducts = false;
+    if (params.get('all') === 'true') {
+      const user = await getUserFromRequest(request, env);
+      if (user && user.role === 'admin') {
+        allProducts = true;
+      }
+    }
     const statusFilter = params.get('status');
 
     const conditions = [];

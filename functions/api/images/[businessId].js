@@ -185,9 +185,9 @@ export async function onRequestDelete(context) {
 
     // Delete file from R2
     try {
-      const urlObj = new URL(image.url);
-      const key = urlObj.pathname.substring(1);
-      await env.R2.delete(key);
+      const match = image.url.match(/[?&]key=([^&]+)/);
+      const key = match ? match[1] : null;
+      if (key) await env.R2.delete(key);
     } catch (e) {
       // Ignore R2 deletion errors
     }

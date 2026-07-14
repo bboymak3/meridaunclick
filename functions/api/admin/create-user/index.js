@@ -1,11 +1,7 @@
 // functions/api/admin/create-user/index.js
-// POST: Admin creates a new user account
+// POST: Admin creates a new user account (ADMIN ONLY)
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+import { corsHeaders, requireAdmin, errorResponse, corsResponse, jsonResponse } from '../../_lib/auth.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
@@ -21,42 +17,38 @@ export async function onRequestPost(context) {
   try {
     const { request, env } = context;
 
+    // REQUIRE ADMIN AUTH
+    const { user, error } = await requireAdmin(request, env);
+    if (error) return error;
+
     if (!env.DB) {
-      return new Response(JSON.stringify({ error: 'Base de datos no disponible' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('Base de datos no disponible', 500);
     }
 
-    const body = await request.json();
+    let body;
+    try { body = await request.json(); } catch { return errorResponse('JSON invalido', 400); }
     const { name, email, phone, password, role } = body;
 
     if (!name || !email || !password) {
-      return new Response(JSON.stringify({ error: 'Nombre, email y contraseña son requeridos' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('Nombre, email y contrasena son requeridos', 400);
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return new Response(JSON.stringify({ error: 'Formato de email inválido' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('Formato de email invalido', 400);
     }
 
     if (password.length < 6) {
-      return new Response(JSON.stringify({ error: 'La contraseña debe tener al menos 6 caracteres' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('La contrasena debe tener al menos 6 caracteres', 400);
     }
 
-    const validRoles = ['user', 'admin', 'agent'];
-    const assignedRole = validRoles.includes(role) ? role : 'user';
+    // Only admins can assign admin role
+    const validRoles = ['user', 'agent'];
+    const assignedRole = (user.role === 'admin' && role === 'admin') ? 'admin' : (validRoles.includes(role) ? role : 'user');
 
     const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
     if (existing) {
-      return new Response(JSON.stringify({ error: 'Ya existe un usuario con este email' }), {
-        status: 409, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('Ya existe un usuario con este email', 409);
     }
 
     const passwordHash = await sha256(password);
@@ -67,16 +59,12 @@ export async function onRequestPost(context) {
 
     const userId = result.meta.last_row_id;
 
-    return new Response(JSON.stringify({
+    return jsonResponse({
       message: `Usuario "${name}" creado exitosamente con rol "${assignedRole}"`,
       user: { id: userId, name, email, role: assignedRole, phone },
-    }), {
-      status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    }, 201);
   } catch (error) {
     console.error('Admin create user error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse('Error interno del servidor', 500);
   }
 }

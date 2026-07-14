@@ -217,6 +217,7 @@ window.closeEditBusinessModal = function() {
     const adminTabSettings = document.getElementById('adminTabSettings');
     const adminUsersBody = document.getElementById('adminUsersBody');
     const adminUsersSearchInput = document.getElementById('adminUsersSearchInput');
+    let adminPremiumBadge = null;
 
     // ─── Initialize ─────────────────────────────────────────────
     async function initDashboard() {
@@ -2959,7 +2960,7 @@ window.closeEditBusinessModal = function() {
     const quickActionProduct = document.getElementById('quickActionProduct');
     const adminTabPremium = document.getElementById('adminTabPremium');
     const adminPremiumBody = document.getElementById('adminPremiumBody');
-    const adminPremiumBadge = document.getElementById('adminPremiumBadge');
+    adminPremiumBadge = document.getElementById('adminPremiumBadge');
 
     let selectedVoucherFile = null;
 

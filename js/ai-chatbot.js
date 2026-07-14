@@ -238,7 +238,7 @@
     addMessageToDOM(text, 'user');
 
     // Save to history
-    messages.push({ role: 'user', text: text });
+    messages.push({ role: 'user', text: text, timestamp: Date.now() });
 
     // Show typing indicator
     showTypingIndicator();
@@ -256,7 +256,7 @@
       addMessageToDOM(reply, 'bot');
 
       // Save bot message
-      messages.push({ role: 'bot', text: reply });
+      messages.push({ role: 'bot', text: reply, timestamp: Date.now() });
 
       // Persist to localStorage
       saveChatHistory();
@@ -269,7 +269,7 @@
       }
 
       addMessageToDOM(errorMsg, 'bot');
-      messages.push({ role: 'bot', text: errorMsg });
+      messages.push({ role: 'bot', text: errorMsg, timestamp: Date.now() });
       saveChatHistory();
     } finally {
       isSending = false;

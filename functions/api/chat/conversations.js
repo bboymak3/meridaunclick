@@ -118,7 +118,7 @@ export async function onRequestGet(context) {
         LEFT JOIN users u_seller ON c.seller_id = u_seller.id
         WHERE (c.buyer_id = ? OR c.seller_id = ?)
         ${unreadOnly ? 'AND ((c.buyer_id = ? AND c.buyer_unread > 0) OR (c.seller_id = ? AND c.seller_unread > 0))' : ''}
-        ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC
+        ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
       `).bind(user.id, user.id, user.id, user.id).all();
     } catch (e) {
       // Query may fail if table schema doesn't match — return empty
@@ -190,6 +190,17 @@ export async function onRequestPost(context) {
 
     await ensureTables(env.DB);
 
+    // Get business and seller
+    const business = await env.DB.prepare('SELECT id, user_id, title, status FROM businesses WHERE id = ?').bind(business_id).first();
+    if (!business) {
+      return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Don't allow chatting with yourself
+    if (business.user_id === user.id) {
+      return new Response(JSON.stringify({ error: 'No puedes enviar un mensaje sobre tu propia propiedad' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
     // ─── Check chat mode setting ──────────────────────────────
     try {
       const chatSettings = await env.DB.prepare(
@@ -221,17 +232,6 @@ export async function onRequestPost(context) {
       }
     } catch (e) {
       // If settings table doesn't exist, allow chat (fail open)
-    }
-
-    // Get business and seller
-    const business = await env.DB.prepare('SELECT id, user_id, title, status FROM businesses WHERE id = ?').bind(business_id).first();
-    if (!business) {
-      return new Response(JSON.stringify({ error: 'Propiedad no encontrada' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-    }
-
-    // Don't allow chatting with yourself
-    if (business.user_id === user.id) {
-      return new Response(JSON.stringify({ error: 'No puedes enviar un mensaje sobre tu propia propiedad' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const buyerId = user.id;

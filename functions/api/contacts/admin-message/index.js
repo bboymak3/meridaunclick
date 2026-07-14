@@ -1,11 +1,7 @@
 // functions/api/contacts/admin-message/index.js
-// POST: Admin sends a message to a user (creates a contact record)
+// POST: Admin sends a message to a user (ADMIN ONLY)
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+import { corsHeaders, requireAdmin, errorResponse, jsonResponse } from '../../_lib/auth.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
@@ -15,43 +11,40 @@ export async function onRequestPost(context) {
   try {
     const { request, env } = context;
 
+    // REQUIRE ADMIN AUTH
+    const { error } = await requireAdmin(request, env);
+    if (error) return error;
+
     if (!env.DB) {
-      return new Response(JSON.stringify({ error: 'Base de datos no disponible' }), {
-        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('Base de datos no disponible', 500);
     }
 
-    const body = await request.json();
+    let body;
+    try { body = await request.json(); } catch { return errorResponse('JSON invalido', 400); }
     const { user_id, subject, message } = body;
 
     if (!user_id || !subject || !message) {
-      return new Response(JSON.stringify({ error: 'user_id, subject y message son requeridos' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return errorResponse('user_id, subject y message son requeridos', 400);
     }
 
     // Get user info for the contact record
     const user = await env.DB.prepare('SELECT name, email, phone FROM users WHERE id = ?').bind(user_id).first();
 
+    // Use correct column names for contacts table (sender_name, sender_email, sender_phone)
     await env.DB.prepare(
-      'INSERT INTO contacts (business_id, name, email, phone, message, is_read, status) VALUES (?, ?, ?, ?, ?, 0, ?)'
+      'INSERT INTO contacts (business_id, sender_name, sender_email, sender_phone, message, is_read, status) VALUES (?, ?, ?, ?, ?, 0, ?)'
     ).bind(
-      null, // no specific business
-      `Admin → ${user?.name || 'Usuario'}`,
+      null,
+      `Admin -> ${user?.name || 'Usuario'}`,
       user?.email || '',
       user?.phone || '',
       `[${subject}] ${message}`,
-      0,
       'nuevo'
     ).run();
 
-    return new Response(JSON.stringify({ message: 'Mensaje enviado correctamente' }), {
-      status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return jsonResponse({ message: 'Mensaje enviado correctamente' }, 201);
   } catch (error) {
     console.error('Admin message error:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return errorResponse('Error interno del servidor', 500);
   }
 }

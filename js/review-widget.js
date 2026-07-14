@@ -870,7 +870,7 @@
 
     // Get business_id from URL params
     const urlParams = new URLSearchParams(window.location.search);
-    businessId = urlParams.get('id');
+    businessId = urlParams.get('id') || window.__BUSINESS_ID;
 
     if (!businessId) return;
 

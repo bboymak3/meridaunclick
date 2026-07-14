@@ -1,14 +1,10 @@
+import { requireAdmin, errorResponse, corsHeaders } from '../_lib/auth.js';
+
 // functions/api/debug/map-check.js
 // GET: Diagnose map-related issues — check businesses, data integrity, and common errors
 // Usage: /api/debug/map-check
 //        /api/debug/map-check?business_id=123
 //        /api/debug/map-check?check=businesses|database|all
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
@@ -17,6 +13,8 @@ export async function onRequestOptions() {
 export async function onRequestGet(context) {
   try {
     const { request, env } = context;
+    const { error: authError } = await requireAdmin(request, env);
+    if (authError) return authError;
     const url = new URL(request.url);
     const params = url.searchParams;
     const businessId = params.get('business_id');

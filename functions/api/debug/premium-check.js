@@ -1,13 +1,9 @@
+import { requireAdmin, errorResponse, corsHeaders } from '../_lib/auth.js';
+
 // functions/api/debug/premium-check.js
 // GET: Validate premium vs basic plan logic for a business
 // Usage: /api/debug/premium-check?business_id=16
 //        /api/debug/premium-check?slug=tienda-pura-sangre
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
@@ -15,7 +11,9 @@ export async function onRequestOptions() {
 
 export async function onRequestGet(context) {
   try {
-    const { env } = context;
+    const { env, request } = context;
+    const { error: authError } = await requireAdmin(request, env);
+    if (authError) return authError;
     const url = new URL(context.request.url);
     const businessId = url.searchParams.get('business_id');
     const slug = url.searchParams.get('slug');

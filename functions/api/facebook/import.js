@@ -43,7 +43,6 @@ function parseBusinessFromText(text) {
 
   const lower = text.toLowerCase();
   const result = {
-    business_type: 'otro',
     business_type: 'venta',
     bedrooms: null,
     bathrooms: null,
@@ -284,16 +283,15 @@ async function runImport(env) {
       try {
         const insertResult = await env.DB.prepare(`
           INSERT INTO businesses (
-            user_id, title, description, business_type, business_type,
+            user_id, title, description, business_type,
             price, currency, address, city, state,
             bedrooms, bathrooms, area, area_unit, status,
             created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `).bind(
           adminUserId,
           title,
           message.substring(0, 3000),
-          parsed.business_type,
           parsed.business_type,
           parsed.price,
           parsed.currency,

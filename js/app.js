@@ -1224,7 +1224,7 @@ async function loadSiteStats() {
         if (params.categoria && document.getElementById('sCategoria')) document.getElementById('sCategoria').value = params.categoria;
         if (params.city && document.getElementById('sCiudad')) document.getElementById('sCiudad').value = params.city;
         if (params.business_type && document.getElementById('sTipoNegocio')) document.getElementById('sTipoNegocio').value = params.business_type;
-        if (params.search && document.getElementById('sBusqueda')) document.getElementById('sBusqueda').value = params.search;
+        if (params.search && document.getElementById('sQuery')) document.getElementById('sQuery').value = params.search;
 
         // Search button
         const searchBtn = document.getElementById('searchBtn');
@@ -1308,7 +1308,7 @@ async function loadSiteStats() {
         const categoria = document.getElementById('sCategoria')?.value || '';
         const ciudad = document.getElementById('sCiudad')?.value?.trim() || '';
         const tipoNegocio = document.getElementById('sTipoNegocio')?.value || '';
-        const q = document.getElementById('sBusqueda')?.value?.trim() || '';
+        const q = document.getElementById('sQuery')?.value?.trim() || '';
         const sort = document.getElementById('sSort')?.value || document.getElementById('sOrdenar')?.value || '';
 
         // Build API endpoint
@@ -1345,7 +1345,7 @@ async function loadSiteStats() {
                 if (categoria) tags += `<span class="active-filter-tag"><i class="fas fa-tag"></i> ${categoria} <button onclick="this.parentElement.remove(); document.getElementById('sCategoria').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
                 if (ciudad) tags += `<span class="active-filter-tag"><i class="fas fa-map-marker-alt"></i> ${ciudad} <button onclick="this.parentElement.remove(); document.getElementById('sCiudad').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
                 if (tipoNegocio) tags += `<span class="active-filter-tag">${getBusinessTypeLabel(tipoNegocio)} <button onclick="this.parentElement.remove(); document.getElementById('sTipoNegocio').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
-                if (q) tags += `<span class="active-filter-tag"><i class="fas fa-search"></i> "${truncateText(q, 20)}" <button onclick="this.parentElement.remove(); document.getElementById('sBusqueda').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+                if (q) tags += `<span class="active-filter-tag"><i class="fas fa-search"></i> "${truncateText(q, 20)}" <button onclick="this.parentElement.remove(); document.getElementById('sQuery').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
                 activeFiltersEl.innerHTML = tags;
                 if (clearFiltersBtn) {
                     clearFiltersBtn.classList.toggle('hidden', !tags);

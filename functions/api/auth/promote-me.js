@@ -74,7 +74,12 @@ export async function onRequestPost(context) {
       });
     }
 
-    const jwtSecret = env.JWT_SECRET || 'aunclick_default_secret_2024';
+    const jwtSecret = env.JWT_SECRET;
+    if (!jwtSecret) {
+      return new Response(JSON.stringify({ error: 'Servicio no configurado' }), {
+        status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Auth required
     const authHeader = request.headers.get('Authorization');
@@ -111,31 +116,16 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Check if ALL existing admins have default/placeholder credentials
-    // (password = sha256("admin123") or sha256("Admin123"))
-    const defaultHash1 = await sha256('admin123');
-    const defaultHash2 = await sha256('Admin123');
-    const allDefault = admins.every(a => a.password_hash === defaultHash1 || a.password_hash === defaultHash2);
-
-    if (allDefault) {
-      // Demote default admins to 'user' and promote the requesting user
-      for (const admin of admins) {
-        await env.DB.prepare('UPDATE users SET role = ? WHERE id = ?').bind('user', admin.id).run();
-      }
-      return await promoteUser(env, user, jwtSecret);
-    }
-
-    // Admins with real passwords exist - deny
+    // Admins exist - deny
     return new Response(JSON.stringify({
       error: 'Ya existe un administrador activo en el sistema.',
-      admin_email: admins[0].email,
     }), {
       status: 403,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error('Promote error:', error);
-    return new Response(JSON.stringify({ error: 'Error interno del servidor', debug: error.message }), {
+    return new Response(JSON.stringify({ error: 'Error interno del servidor' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

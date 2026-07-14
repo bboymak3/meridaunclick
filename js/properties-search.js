@@ -160,7 +160,7 @@
                             <span class="card-badge badge-operation">${oLabel}</span>
                             ${featuredBadge}
                         </div>
-                        <button class="btn-favorite property-card-fav" data-property-id="${property.id}" aria-label="Agregar a favoritos" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(${property.id});">
+                        <button class="btn-favorite property-card-fav" data-property-id="${property.id}" aria-label="Agregar a favoritos" onclick="event.preventDefault(); event.stopPropagation(); fetch('/api/property-favorites',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('meridaunclick_token')},body:JSON.stringify({property_id:${property.id}})}).then(r=>r.json()).then(d=>{this.classList.toggle('active');}).catch(()=>{})">
                             <i class="far fa-heart"></i>
                         </button>
                     </div>

@@ -71,6 +71,7 @@ export async function onRequestGet(context) {
     // Mask the token for display
     if (config.page_access_token) {
       config.page_access_token_masked = config.page_access_token.substring(0, 10) + '...' + config.page_access_token.substring(config.page_access_token.length - 6);
+      delete config.page_access_token;
     }
 
     return new Response(JSON.stringify({ config }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });

@@ -105,16 +105,19 @@ function populateBusinessDetail(b) {
             }
             const customDiv = document.createElement('div');
             customDiv.innerHTML = b.custom_html;
+            // Sanitize: remove all script tags to prevent stored XSS
+            customDiv.querySelectorAll('script').forEach(s => s.remove());
+            // Also remove dangerous event handlers and attributes
+            customDiv.querySelectorAll('*').forEach(el => {
+                for (const attr of el.attributes) {
+                    if (attr.name.startsWith('on') || attr.value.toLowerCase().includes('javascript:')) {
+                        el.removeAttribute(attr.name);
+                    }
+                }
+            });
             while (customDiv.firstChild) {
                 contentEl.appendChild(customDiv.firstChild);
             }
-            // Execute any scripts
-            customDiv.querySelectorAll('script').forEach(oldScript => {
-                const newScript = document.createElement('script');
-                if (oldScript.src) newScript.src = oldScript.src;
-                else newScript.textContent = oldScript.textContent;
-                document.body.appendChild(newScript);
-            });
             // Update breadcrumb
             const breadcrumbTitle = document.getElementById('breadcrumbTitle');
             if (breadcrumbTitle) breadcrumbTitle.textContent = b.title || 'Negocio';

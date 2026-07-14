@@ -1,8 +1,7 @@
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+// functions/api/businesses/featured/clear.js
+// PUT: Clear all featured businesses (ADMIN ONLY)
+
+import { corsHeaders, requireAdmin, errorResponse, jsonResponse } from '../../_lib/auth.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
@@ -10,13 +9,20 @@ export async function onRequestOptions() {
 
 export async function onRequestPut(context) {
   try {
-    const { env } = context;
+    const { request, env } = context;
+
+    // REQUIRE ADMIN AUTH
+    const { error } = await requireAdmin(request, env);
+    if (error) return error;
+
     if (!env.DB) {
-      return new Response(JSON.stringify({ error: 'DB not available' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return errorResponse('DB not available', 500);
     }
+
     await env.DB.prepare('UPDATE businesses SET featured = 0 WHERE featured = 1').run();
-    return new Response(JSON.stringify({ message: 'Featured cleared' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    return jsonResponse({ message: 'Featured cleared' });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    console.error('Featured clear error:', err);
+    return errorResponse('Error interno del servidor', 500);
   }
 }

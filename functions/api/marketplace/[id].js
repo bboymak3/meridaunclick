@@ -97,6 +97,14 @@ export async function onRequestPut(context) {
       });
     }
 
+    // Check ownership
+    if (user.role !== 'admin' && user.id !== product.user_id) {
+      return new Response(JSON.stringify({ error: 'No tienes permiso para editar este producto' }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const body = await request.json();
 
     // Allowed fields for update
@@ -172,6 +180,14 @@ export async function onRequestDelete(context) {
     if (!product) {
       return new Response(JSON.stringify({ error: 'Producto no encontrado' }), {
         status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Check ownership
+    if (user.role !== 'admin' && user.id !== product.user_id) {
+      return new Response(JSON.stringify({ error: 'No tienes permiso para eliminar este producto' }), {
+        status: 403,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }

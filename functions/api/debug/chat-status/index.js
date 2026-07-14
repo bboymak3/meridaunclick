@@ -1,9 +1,17 @@
+import { requireAdmin, errorResponse, corsHeaders } from '../../_lib/auth.js';
+
 // functions/api/debug/chat-status/index.js
-// Public debug endpoint to check chat tables status
+// Debug endpoint to check chat tables status (admin only)
+
+export async function onRequestOptions() {
+  return new Response(null, { headers: corsHeaders });
+}
 
 export async function onRequestGet(context) {
   try {
-    const { env } = context;
+    const { env, request } = context;
+    const { error: authError } = await requireAdmin(request, env);
+    if (authError) return authError;
     const info = {};
 
     // Check tables exist

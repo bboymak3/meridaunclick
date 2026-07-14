@@ -1,18 +1,16 @@
+import { requireAdmin, errorResponse, corsHeaders } from '../_lib/auth.js';
+
 // functions/api/debug/health.js
 // GET: System health check - validates D1, R2, bindings, and tables
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
 }
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { env, request } = context;
+  const { error: authError } = await requireAdmin(request, env);
+  if (authError) return authError;
   const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),

@@ -73,7 +73,7 @@ export async function onRequestGet(context) {
     ).bind(id).all();
 
     // Increment views
-    await env.DB.prepare('UPDATE businesses SET views = views + 1 WHERE id = ?').bind(id).run();
+    await env.DB.prepare("UPDATE businesses SET views = views + 1 WHERE id = ? AND status = 'approved'").bind(id).run();
 
     return new Response(JSON.stringify({
       ...business,
@@ -131,11 +131,23 @@ export async function onRequestPut(context) {
       'twitter', 'tiktok', 'youtube', 'video_url', 'logo', 'banner',
       'email_contact', 'schedule',
       'has_parking', 'has_wifi', 'has_card', 'has_delivery', 'has_outdoor',
-      'featured', 'status', 'custom_html',
+      'custom_html',
     ];
 
     const setClauses = [];
     const bindings = [];
+
+    // Admin-only fields: featured, status
+    if (user.role === 'admin') {
+      if (body.featured !== undefined) {
+        setClauses.push('featured = ?');
+        bindings.push(body.featured ? 1 : 0);
+      }
+      if (body.status !== undefined) {
+        setClauses.push('status = ?');
+        bindings.push(body.status);
+      }
+    }
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
