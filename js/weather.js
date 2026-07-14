@@ -215,14 +215,19 @@
             // Sort alphabetically by state name
             results.sort((a, b) => a.state.name.localeCompare(b.state.name, 'es'));
 
-            // Render cards
+            // Render cards (original set)
+            const fragment = document.createDocumentFragment();
             for (const r of results) {
-                const card = buildCard(r.state, { current_weather: r });
-                track.appendChild(card);
+                fragment.appendChild(buildCard(r.state, { current_weather: r }));
             }
+            track.appendChild(fragment);
 
-            // Setup carousel navigation
-            setupNav(track);
+            // Duplicate the set for seamless infinite loop
+            const clone = track.innerHTML;
+            track.insertAdjacentHTML('beforeend', clone);
+
+            // Setup marquee behavior
+            setupMarquee(track);
 
         } catch (err) {
             console.error('[Weather] Error:', err);
@@ -230,62 +235,16 @@
         }
     }
 
-    // ─── Carousel scroll navigation ───────────────────────────────
-    function setupNav(track) {
-        const prevBtn = document.getElementById('weatherPrev');
-        const nextBtn = document.getElementById('weatherNext');
-        if (!prevBtn || !nextBtn) return;
-
-        const scrollAmount = () => {
-            // Scroll approximately 3 cards
-            const card = track.querySelector('.weather-card');
-            if (!card) return 300;
-            return (card.offsetWidth + 10) * 3; // width + gap
-        };
-
-        prevBtn.addEventListener('click', () => {
-            track.scrollBy({ left: -scrollAmount(), behavior: 'smooth' });
+    // ─── Infinite marquee scroll ───────────────────────────────────
+    function setupMarquee(track) {
+        // Pause on hover/touch
+        track.addEventListener('mouseenter', () => track.classList.add('weather-paused'));
+        track.addEventListener('mouseleave', () => track.classList.remove('weather-paused'));
+        track.addEventListener('touchstart', () => track.classList.add('weather-paused'), { passive: true });
+        track.addEventListener('touchend', () => {
+            // Resume after a short delay on mobile
+            setTimeout(() => track.classList.remove('weather-paused'), 2000);
         });
-
-        nextBtn.addEventListener('click', () => {
-            track.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
-        });
-
-        // Touch/swipe support (native via overflow-x: auto already works)
-        // Auto-scroll slowly
-        let autoScrollTimer = null;
-        let userInteracted = false;
-
-        const startAutoScroll = () => {
-            if (autoScrollTimer) clearInterval(autoScrollTimer);
-            autoScrollTimer = setInterval(() => {
-                if (userInteracted) return;
-                const maxScroll = track.scrollWidth - track.clientWidth;
-                if (track.scrollLeft >= maxScroll - 2) {
-                    // Reset to start
-                    track.scrollTo({ left: 0, behavior: 'smooth' });
-                } else {
-                    track.scrollBy({ left: scrollAmount(), behavior: 'smooth' });
-                }
-            }, 5000);
-        };
-
-        // Pause auto-scroll on user interaction
-        track.addEventListener('mousedown', () => { userInteracted = true; });
-        track.addEventListener('touchstart', () => { userInteracted = true; }, { passive: true });
-        prevBtn.addEventListener('click', () => { userInteracted = true; });
-        nextBtn.addEventListener('click', () => { userInteracted = true; });
-
-        // Resume after 15s of inactivity
-        let resumeTimer;
-        const resetResume = () => {
-            clearTimeout(resumeTimer);
-            resumeTimer = setTimeout(() => { userInteracted = false; }, 15000);
-        };
-        track.addEventListener('scroll', resetResume, { passive: true });
-
-        startAutoScroll();
-        resetResume();
     }
 
     // ─── Initialize when DOM is ready ─────────────────────────────
