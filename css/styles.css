@@ -1474,10 +1474,14 @@ strong {
     opacity: 1;
 }
 
-/* When mobile search modal is open, hide card badges & share buttons so they
+/* When mobile search modal is open, hide card badges & floating buttons so they
    don't poke through the overlay on some mobile browsers */
 body.search-modal-open .btn-share-wa-card,
-body.search-modal-open .card-badge {
+body.search-modal-open .card-badge,
+body.search-modal-open .btn-favorite,
+body.search-modal-open .business-card-video-badge,
+body.search-modal-open .ai-chat-btn-pulse,
+body.search-modal-open .cb-chat-btn {
     visibility: hidden !important;
     pointer-events: none !important;
 }
