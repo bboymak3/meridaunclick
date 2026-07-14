@@ -2442,6 +2442,7 @@ body.search-modal-open .cb-chat-btn {
     border: 1px solid #e5e7eb;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
 }
 .business-card:hover {
     transform: translateY(-2px);
@@ -2712,7 +2713,7 @@ body.search-modal-open .cb-chat-btn {
 .card-badge-featured {
     position: absolute;
     top: 8px;
-    right: 8px;
+    left: 8px;
     z-index: 3;
     width: 28px;
     height: 28px;
