@@ -1481,6 +1481,7 @@ body.search-modal-open .card-badge,
 body.search-modal-open .btn-favorite,
 body.search-modal-open .business-card-video-badge,
 body.search-modal-open .ai-chat-btn-pulse,
+body.search-modal-open .ai-chat-btn,
 body.search-modal-open .cb-chat-btn {
     visibility: hidden !important;
     pointer-events: none !important;
