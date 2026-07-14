@@ -1139,6 +1139,14 @@ strong {
     animation: fadeInUp 0.8s ease-out;
 }
 
+.idx-hero-logo {
+    max-height: 80px;
+    width: auto;
+    margin: 140px auto 16px;
+    border-radius: 8px;
+    filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
 .idx-hero-badge {
     display: inline-flex;
     align-items: center;
@@ -1897,6 +1905,11 @@ strong {
 
 /* --- Responsive: Tablet & Mobile (≤768px) --- */
 @media (max-width: 768px) {
+    .idx-hero-logo {
+        margin: 100px auto 12px;
+        max-height: 65px;
+    }
+
     .idx-hero-title {
         font-size: 2.2rem;
     }
@@ -2044,6 +2057,11 @@ strong {
 
 /* --- Responsive: Mobile --- */
 @media (max-width: 480px) {
+    .idx-hero-logo {
+        margin: 80px auto 10px;
+        max-height: 55px;
+    }
+
     .idx-hero {
         min-height: auto;
         padding: 0;
