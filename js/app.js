@@ -880,6 +880,21 @@ function initMobileSearchModal() {
     });
 }
 
+// ─── Hero Logo Positioning (PC + Mobile) ──────────────────
+function positionHeroLogo(logo) {
+    const w = window.innerWidth;
+    if (w <= 480) {
+        logo.style.marginTop = '80px';
+        logo.style.maxHeight = '55px';
+    } else if (w <= 768) {
+        logo.style.marginTop = '100px';
+        logo.style.maxHeight = '65px';
+    } else {
+        logo.style.marginTop = '140px';
+        logo.style.maxHeight = '80px';
+    }
+}
+
 // ─── Hero Banner Loader ─────────────────────────────────
 async function loadHeroBanner() {
     const heroBg = document.getElementById('idxHeroBg');
@@ -898,6 +913,9 @@ async function loadHeroBanner() {
         if (data.hero_logo_url && heroLogo) {
             heroLogo.src = data.hero_logo_url;
             heroLogo.style.display = 'block';
+            // Lower logo on all screen sizes
+            positionHeroLogo(heroLogo);
+            window.addEventListener('resize', () => positionHeroLogo(heroLogo));
         }
     } catch(e) {
         // Silent fail — default CSS gradient applies
