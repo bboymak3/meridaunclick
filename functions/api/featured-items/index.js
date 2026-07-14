@@ -134,7 +134,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    const validTypes = ['business', 'product', 'job', 'property'];
+    const validTypes = ['business', 'product', 'job', 'property', 'medical'];
     if (!validTypes.includes(item_type)) {
       return new Response(JSON.stringify({ error: `item_type inválido. Valores: ${validTypes.join(', ')}` }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -142,7 +142,7 @@ export async function onRequestPost(context) {
     }
 
     // Set featured flag on the actual item
-    if (item_type === 'business') {
+    if (item_type === 'business' || item_type === 'medical') {
       try { await env.DB.prepare('UPDATE businesses SET featured = 1 WHERE id = ?').bind(parseInt(item_id)).run(); } catch(e) {}
     } else if (item_type === 'product') {
       try { await env.DB.prepare('UPDATE products SET featured = 1 WHERE id = ?').bind(parseInt(item_id)).run(); } catch(e) {}
@@ -220,7 +220,7 @@ export async function onRequestDelete(context) {
     const item = await env.DB.prepare('SELECT * FROM featured_items WHERE id = ?').bind(parseInt(id)).first();
     if (item) {
       // Remove featured flag from the actual item
-      if (item.item_type === 'business') {
+      if (item.item_type === 'business' || item.item_type === 'medical') {
         await env.DB.prepare('UPDATE businesses SET featured = 0, featured_at = NULL WHERE id = ?').bind(item.item_id).run();
       } else if (item.item_type === 'product') {
         await env.DB.prepare('UPDATE products SET featured = 0, featured_at = NULL WHERE id = ?').bind(item.item_id).run();

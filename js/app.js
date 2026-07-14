@@ -987,6 +987,12 @@ document.addEventListener('DOMContentLoaded', () => {
         loadFeaturedProperties();
     }
 
+    // Load featured medical businesses on index page
+    const featuredMedicalGrid = document.getElementById('featuredMedicalGrid');
+    if (featuredMedicalGrid) {
+        loadFeaturedMedical();
+    }
+
     // Load stats on index page
     const statProperties = document.getElementById('statProperties');
     if (statProperties) {
@@ -1074,6 +1080,70 @@ async function loadFeaturedProperties() {
         if (loading) loading.remove();
         if (emptyState) emptyState.style.display = '';
         console.error('Error loading featured businesses:', error);
+    }
+}
+
+// ─── Index Page: Featured Medical Businesses ─────────────
+async function loadFeaturedMedical() {
+    const grid = document.getElementById('featuredMedicalGrid');
+    const emptyState = document.getElementById('medicalEmpty');
+    const loading = document.getElementById('medicalLoading');
+    if (!grid) return;
+
+    const medicalSlugs = ['medicina-servicio-medico', 'clinicas-hospitales', 'farmacias', 'dentistas'];
+
+    try {
+        // First try featured_items with item_type=medical
+        let businesses = [];
+        try {
+            const selectedState = getSelectedState();
+            const featuredData = await api.get('/featured-items?item_type=medical');
+            const featuredItems = featuredData.featured_items || [];
+            if (featuredItems.length > 0) {
+                const bizIds = featuredItems.map(f => f.item_id);
+                const bizPromises = bizIds.map(id => api.get(`/businesses/${id}`).catch(() => null));
+                const bizResults = await Promise.all(bizPromises);
+                businesses = bizResults.filter(b => b && b.status === 'approved');
+                if (selectedState) {
+                    businesses = businesses.filter(b => b.state === selectedState);
+                }
+            }
+        } catch (e) {
+            // fallback below
+        }
+
+        // Fallback: fetch featured medical businesses from API
+        if (businesses.length === 0) {
+            const selectedState = getSelectedState();
+            let endpoint = '/businesses?status=approved&categoria=medicina-servicio-medico&limit=6&featured=1';
+            if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
+            let data = await api.get(endpoint);
+            businesses = data.businesses || [];
+
+            // If no featured medical, try without featured flag but include related medical categories
+            if (businesses.length === 0) {
+                let endpoint2 = '/businesses?status=approved&limit=6';
+                if (selectedState) endpoint2 += `&state=${encodeURIComponent(selectedState)}`;
+                data = await api.get(endpoint2);
+                const allBiz = data.businesses || [];
+                businesses = allBiz.filter(b => b.category_slug && medicalSlugs.includes(b.category_slug));
+            }
+        }
+
+        if (loading) loading.remove();
+
+        if (businesses.length === 0) {
+            if (emptyState) emptyState.style.display = '';
+            return;
+        }
+
+        if (emptyState) emptyState.style.display = 'none';
+        businesses = businesses.slice(0, 6);
+        grid.innerHTML = businesses.map(b => createBusinessCard(b)).join('');
+    } catch (error) {
+        if (loading) loading.remove();
+        if (emptyState) emptyState.style.display = '';
+        console.error('Error loading featured medical businesses:', error);
     }
 }
 

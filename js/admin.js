@@ -2742,6 +2742,112 @@ if (!window._renderVideoList) {
 
     window._adminSaveFeatured = saveFeaturedBusinesses;
 
+    // ─── Featured Medical Businesses Selector ────────────────
+    const MEDICAL_SLUGS = ['medicina-servicio-medico', 'clinicas-hospitales', 'farmacias', 'dentistas'];
+
+    async function loadFeaturedMedicalSelector() {
+        const container = document.getElementById('featuredMedicalContainer');
+        if (!container) return;
+
+        try {
+            // Fetch all approved businesses from medical categories
+            const data = await api.get('/businesses?status=approved&limit=200');
+            const allBusinesses = data.businesses || [];
+            const businesses = allBusinesses.filter(b => b.category_slug && MEDICAL_SLUGS.includes(b.category_slug));
+
+            if (businesses.length === 0) {
+                container.innerHTML = '<p style="color:#9ca3af;font-size:0.85rem;">No hay negocios médicos aprobados.</p>';
+                return;
+            }
+
+            // Get currently featured medical from featured_items
+            const featuredData = await api.get('/featured-items?item_type=medical');
+            const featured = featuredData.featured_items || [];
+            const featuredIds = new Set(featured.map(f => f.item_id));
+
+            let html = '<div style="display:flex;flex-direction:column;gap:8px;">';
+
+            html += '<div style="margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Servicios médicos actualmente destacados:</div>';
+
+            const featuredBiz = businesses.filter(b => featuredIds.has(b.id));
+            featuredBiz.forEach(b => {
+                html += `<label style="display:flex;align-items:center;gap:10px;padding:10px;border:2px solid #e74c3c;border-radius:10px;background:#fef2f2;cursor:pointer;">
+                    <input type="checkbox" class="featured-medical-checkbox" value="${b.id}" checked style="width:18px;height:18px;accent-color:#e74c3c;">
+                    <img src="${b.cover_image || (b.images && b.images[0] && b.images[0].url) || ''}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;" onerror="this.style.display='none'">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.88rem;">${escapeHtml(b.title)}</div>
+                        <div style="font-size:0.78rem;color:#6b7280;">${escapeHtml(b.category_name || b.city || '')}</div>
+                    </div>
+                </label>`;
+            });
+
+            const nonFeatured = businesses.filter(b => !featuredIds.has(b.id));
+            if (nonFeatured.length > 0) {
+                html += '<div style="margin-top:12px;margin-bottom:8px;font-size:0.82rem;color:#6b7280;font-weight:600;">Otros servicios médicos (selecciona para destacar):</div>';
+                nonFeatured.forEach(b => {
+                    html += `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:10px;cursor:pointer;">
+                        <input type="checkbox" class="featured-medical-checkbox" value="${b.id}" style="width:18px;height:18px;accent-color:#e74c3c;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(b.title)}</div>
+                            <div style="font-size:0.78rem;color:#6b7280;">${escapeHtml(b.category_name || b.city || '')}</div>
+                        </div>
+                    </label>`;
+                });
+            }
+
+            html += '</div>';
+            html += '<button class="btn btn-primary" style="margin-top:16px;background:linear-gradient(135deg,#e74c3c,#c0392b);" onclick="window._adminSaveFeaturedMedical()"><i class="fas fa-save"></i> Guardar Médicos Destacados</button>';
+
+            container.innerHTML = html;
+
+            // Limit to 6 checkboxes
+            const checkboxes = container.querySelectorAll('.featured-medical-checkbox');
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', () => {
+                    const checked = container.querySelectorAll('.featured-medical-checkbox:checked');
+                    if (checked.length > 6) {
+                        cb.checked = false;
+                        showToast('Máximo 6 servicios médicos destacados', 'warning');
+                    }
+                });
+            });
+        } catch (err) {
+            console.error('Error loading medical selector:', err);
+            container.innerHTML = '<p style="color:#e74c3c;font-size:0.85rem;">Error al cargar servicios médicos.</p>';
+        }
+    }
+
+    async function saveFeaturedMedical() {
+        const container = document.getElementById('featuredMedicalContainer');
+        if (!container) return;
+
+        const checked = container.querySelectorAll('.featured-medical-checkbox:checked');
+        const selectedIds = Array.from(checked).map(cb => parseInt(cb.value));
+
+        try {
+            // Remove existing medical featured items
+            const existing = await api.get('/featured-items?item_type=medical');
+            for (const item of (existing.featured_items || [])) {
+                try { await api.delete(`/featured-items?id=${item.id}`); } catch(e) {}
+            }
+
+            // Add new featured medical items
+            for (const id of selectedIds) {
+                await api.post('/featured-items', {
+                    item_type: 'medical',
+                    item_id: id
+                });
+            }
+
+            showToast(`${selectedIds.length} servicio(s) médico(s) destacado(s) guardado(s)`, 'success');
+            loadFeaturedMedicalSelector();
+        } catch (err) {
+            showToast('Error al guardar destacados médicos: ' + err.message, 'error');
+        }
+    }
+
+    window._adminSaveFeaturedMedical = saveFeaturedMedical;
+
     // ─── Settings Functions ───────────────────────────────────
     async function loadSettings() {
         try {
@@ -2772,6 +2878,7 @@ if (!window._renderVideoList) {
 
         // Load featured businesses selector
         loadFeaturedSelector();
+        loadFeaturedMedicalSelector();
         // Load featured products & properties selectors
         loadFeaturedProductsSelector();
         loadFeaturedPropertiesSelector();

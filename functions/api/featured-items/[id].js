@@ -79,7 +79,7 @@ export async function onRequestDelete(context) {
 
     // Unset featured flag on the actual item
     try {
-      if (item.item_type === 'business') {
+      if (item.item_type === 'business' || item.item_type === 'medical') {
         await env.DB.prepare('UPDATE businesses SET featured = 0 WHERE id = ?').bind(item.item_id).run();
       } else if (item.item_type === 'product') {
         await env.DB.prepare('UPDATE products SET featured = 0 WHERE id = ?').bind(item.item_id).run();
