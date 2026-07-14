@@ -2728,9 +2728,10 @@ if (!window._renderVideoList) {
             // Clear featured flag on all businesses
             try { await api.put('/businesses/featured/clear', {}); } catch(e) {}
 
-            // Set featured for selected businesses
+            // Set featured for selected businesses (both flag + featured_items record)
             for (const id of selectedIds) {
                 await api.put(`/businesses/${id}`, { featured: 1 });
+                await api.post('/featured-items', { item_type: 'business', item_id: id });
             }
 
             showToast(`${selectedIds.length} negocio(s) destacado(s) guardado(s)`, 'success');
