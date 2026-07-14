@@ -1052,11 +1052,13 @@ async function loadFeaturedProperties() {
         // Fallback: try direct API with featured=1 flag
         if (businesses.length === 0) {
             // No featured businesses in this state — load any approved businesses from the state
+            // Exclude medical category (they have their own dedicated section)
             const selectedState = getSelectedState();
             let endpoint = '/businesses?status=approved&limit=12';
             if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
             const data = await api.get(endpoint);
-            businesses = data.businesses || [];
+            const allBiz = data.businesses || [];
+            businesses = allBiz.filter(b => b.category_slug !== 'medicina-servicio-medico');
         }
 
         if (loading) loading.remove();

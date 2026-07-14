@@ -997,13 +997,13 @@
 
         } catch (error) {
             showToast(error.message || 'Error al guardar el negocio', 'error');
-        } finally {
             isSubmitting = false;
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `<i class="fas fa-paper-plane"></i> <span id="submitBtnText">${editingBusinessId ? 'Guardar Cambios' : 'Publicar Negocio'}</span>`;
             }
         }
+        // Note: on success, we redirect — no need to reset isSubmitting
     }
 
     // ─── Form Error Helper ──────────────────────────────────────
