@@ -1090,7 +1090,7 @@ async function loadFeaturedMedical() {
     const loading = document.getElementById('medicalLoading');
     if (!grid) return;
 
-    const medicalSlugs = ['medicina-servicio-medico', 'clinicas-hospitales', 'farmacias', 'dentistas'];
+    const MEDICAL_SLUG = 'medicina-servicio-medico';
 
     try {
         // First try featured_items with item_type=medical
@@ -1126,7 +1126,7 @@ async function loadFeaturedMedical() {
                 if (selectedState) endpoint2 += `&state=${encodeURIComponent(selectedState)}`;
                 data = await api.get(endpoint2);
                 const allBiz = data.businesses || [];
-                businesses = allBiz.filter(b => b.category_slug && medicalSlugs.includes(b.category_slug));
+                businesses = allBiz.filter(b => b.category_slug === MEDICAL_SLUG);
             }
         }
 

@@ -2743,17 +2743,16 @@ if (!window._renderVideoList) {
     window._adminSaveFeatured = saveFeaturedBusinesses;
 
     // ─── Featured Medical Businesses Selector ────────────────
-    const MEDICAL_SLUGS = ['medicina-servicio-medico', 'clinicas-hospitales', 'farmacias', 'dentistas'];
+    const MEDICAL_SLUG = 'medicina-servicio-medico';
 
     async function loadFeaturedMedicalSelector() {
         const container = document.getElementById('featuredMedicalContainer');
         if (!container) return;
 
         try {
-            // Fetch all approved businesses from medical categories
-            const data = await api.get('/businesses?status=approved&limit=200');
-            const allBusinesses = data.businesses || [];
-            const businesses = allBusinesses.filter(b => b.category_slug && MEDICAL_SLUGS.includes(b.category_slug));
+            // Fetch only businesses with medicina-servicio-medico category
+            const data = await api.get('/businesses?status=approved&categoria=medicina-servicio-medico&limit=200');
+            const businesses = data.businesses || [];
 
             if (businesses.length === 0) {
                 container.innerHTML = '<p style="color:#9ca3af;font-size:0.85rem;">No hay negocios médicos aprobados.</p>';
