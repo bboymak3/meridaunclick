@@ -2,7 +2,7 @@
 // One-time script to backfill slugs for existing businesses and products
 // REQUIRES ADMIN AUTH
 
-import { requireAdmin, errorResponse, jsonResponse } from '../_lib/auth.js';
+import { requireAdmin, errorResponse, jsonResponse } from '../../_lib/auth.js';
 
 export async function onRequestGet(context) {
   try {

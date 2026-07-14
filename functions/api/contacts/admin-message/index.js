@@ -1,7 +1,7 @@
 // functions/api/contacts/admin-message/index.js
 // POST: Admin sends a message to a user (ADMIN ONLY)
 
-import { corsHeaders, requireAdmin, errorResponse, jsonResponse } from '../../_lib/auth.js';
+import { corsHeaders, requireAdmin, errorResponse, jsonResponse } from '../../../_lib/auth.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });

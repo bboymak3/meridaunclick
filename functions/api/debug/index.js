@@ -1,4 +1,4 @@
-import { requireAdmin, errorResponse, corsHeaders } from '../_lib/auth.js';
+import { requireAdmin, errorResponse, corsHeaders } from '../../_lib/auth.js';
 
 // functions/api/debug/index.js
 // GET /api/debug - Comprehensive system diagnostic endpoint

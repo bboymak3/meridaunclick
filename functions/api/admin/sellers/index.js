@@ -1,7 +1,7 @@
 // functions/api/admin/sellers/index.js
 // GET: List all seller profiles (admin only)
 
-import { corsHeaders, requireAdmin, errorResponse, corsResponse, jsonResponse } from '../../_lib/auth.js';
+import { corsHeaders, requireAdmin, errorResponse, corsResponse, jsonResponse } from '../../../_lib/auth.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });

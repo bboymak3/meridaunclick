@@ -1,4 +1,4 @@
-import { requireAdmin, errorResponse, corsHeaders } from '../../_lib/auth.js';
+import { requireAdmin, errorResponse, corsHeaders } from '../../../_lib/auth.js';
 
 // functions/api/debug/chat-status/index.js
 // Debug endpoint to check chat tables status (admin only)

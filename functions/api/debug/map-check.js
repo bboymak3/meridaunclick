@@ -1,4 +1,4 @@
-import { requireAdmin, errorResponse, corsHeaders } from '../_lib/auth.js';
+import { requireAdmin, errorResponse, corsHeaders } from '../../_lib/auth.js';
 
 // functions/api/debug/map-check.js
 // GET: Diagnose map-related issues — check businesses, data integrity, and common errors
@@ -160,7 +160,6 @@ export async function onRequestGet(context) {
               price: prop.price,
               price_type: typeof prop.price,
               currency: prop.currency,
-              business_type: prop.business_type,
               business_type: prop.business_type,
               cover_image: prop.cover_image,
               cover_image_type: typeof prop.cover_image,

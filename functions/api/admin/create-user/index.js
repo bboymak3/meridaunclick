@@ -1,7 +1,7 @@
 // functions/api/admin/create-user/index.js
 // POST: Admin creates a new user account (ADMIN ONLY)
 
-import { corsHeaders, requireAdmin, errorResponse, corsResponse, jsonResponse } from '../../_lib/auth.js';
+import { corsHeaders, requireAdmin, errorResponse, corsResponse, jsonResponse } from '../../../_lib/auth.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });

@@ -1,7 +1,7 @@
 // functions/api/businesses/featured/clear.js
 // PUT: Clear all featured businesses (ADMIN ONLY)
 
-import { corsHeaders, requireAdmin, errorResponse, jsonResponse } from '../../_lib/auth.js';
+import { corsHeaders, requireAdmin, errorResponse, jsonResponse } from '../../../_lib/auth.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });

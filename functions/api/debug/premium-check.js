@@ -1,4 +1,4 @@
-import { requireAdmin, errorResponse, corsHeaders } from '../_lib/auth.js';
+import { requireAdmin, errorResponse, corsHeaders } from '../../_lib/auth.js';
 
 // functions/api/debug/premium-check.js
 // GET: Validate premium vs basic plan logic for a business

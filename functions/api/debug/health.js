@@ -1,4 +1,4 @@
-import { requireAdmin, errorResponse, corsHeaders } from '../_lib/auth.js';
+import { requireAdmin, errorResponse, corsHeaders } from '../../_lib/auth.js';
 
 // functions/api/debug/health.js
 // GET: System health check - validates D1, R2, bindings, and tables
