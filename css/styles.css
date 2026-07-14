@@ -1074,9 +1074,11 @@ strong {
     transition: opacity 0.5s ease;
 }
 
-/* When a banner image is set, add dark overlay for text readability */
+/* Crop banner: 15% top & bottom on desktop */
 .idx-hero-bg[style*="background-image"] {
     background-color: rgba(0, 0, 0, 0.35);
+    background-position: center 15%;
+    background-size: 100% 130%;
 }
 
 .idx-hero-bg::before {
@@ -2078,6 +2080,12 @@ body.search-modal-open .cb-chat-btn {
     .idx-hero {
         min-height: auto;
         padding: 0;
+    }
+
+    /* Crop banner: 10% top & bottom on mobile */
+    .idx-hero-bg[style*="background-image"] {
+        background-position: center 10%;
+        background-size: 100% 120%;
     }
 
     .idx-hero-content {
