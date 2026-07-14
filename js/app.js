@@ -416,28 +416,7 @@ function showWebPageSelector() {
 }
 
 // ─── Add Web Page Menu Item ────────────────────────────────────
-function addWebPageMenuItem() {
-    const existing = document.getElementById('navWebPageItem');
-    if (existing) return;
-    const dropdownMenu = document.querySelector('.nav-dropdown-menu');
-    if (!dropdownMenu) return;
-    const divider = dropdownMenu.querySelector('.nav-dropdown-divider');
-    const webLi = document.createElement('li');
-    webLi.id = 'navWebPageItem';
-    webLi.innerHTML = `<a href="#" class="nav-link" id="navWebPageBtn" style="color:#0ea5e9;"><i class="fas fa-globe"></i> Pagina Web</a>`;
-    if (divider) {
-        dropdownMenu.insertBefore(webLi, divider);
-    } else {
-        dropdownMenu.appendChild(webLi);
-    }
-    const webBtn = document.getElementById('navWebPageBtn');
-    if (webBtn) {
-        webBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showWebPageSelector();
-        });
-    }
-}
+// addWebPageMenuItem removed — button no longer needed in nav
 
 // ─── Navigation ────────────────────────────────────────────────
 function updateNav() {
@@ -478,9 +457,6 @@ function updateNav() {
             adminLinkItem.remove();
         }
 
-        // Add "Crear Pagina Web" in "Más" dropdown for logged-in users
-        addWebPageMenuItem();
-
     } else {
         navLoginItem.classList.remove('hidden');
         navUserItem.classList.add('hidden');
@@ -489,16 +465,13 @@ function updateNav() {
         const adminLinkItem = document.getElementById('navAdminItem');
         if (adminLinkItem) adminLinkItem.remove();
 
-        // Also show web page link for non-logged users
-        addWebPageMenuItem();
-
         // Make "Publicar" link require login
         const publishLinks = document.querySelectorAll('a[href="new-business.html"]');
         publishLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
                 const redirect = encodeURIComponent('new-business.html');
-                window.location.href = `login.html?redirect=${redirect}`;
+                window.location.href = `/login.html?redirect=${redirect}`;
             });
         });
     }
@@ -614,7 +587,7 @@ async function toggleFavorite(businessId) {
     if (!isAuthenticated()) {
         showToast('Inicia sesión para guardar favoritos', 'warning');
         setTimeout(() => {
-            window.location.href = `login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+            window.location.href = `/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}`;
         }, 1500);
         return;
     }
@@ -815,7 +788,7 @@ function getSearchParams() {
 function requireAuth() {
     if (!isAuthenticated()) {
         const redirect = encodeURIComponent(window.location.pathname + window.location.search);
-        window.location.href = `login.html?redirect=${redirect}`;
+        window.location.href = `/login.html?redirect=${redirect}`;
         return false;
     }
     return true;
@@ -826,7 +799,7 @@ function handleLogout() {
     removeToken();
     showToast('Has cerrado sesión', 'info');
     setTimeout(() => {
-        window.location.href = 'index.html';
+        window.location.href = '/index.html';
     }, 1000);
 }
 
@@ -1296,7 +1269,7 @@ async function loadSiteStats() {
         const clearFiltersBtn = document.getElementById('clearFiltersBtn');
         if (clearFiltersBtn) {
             clearFiltersBtn.addEventListener('click', () => {
-                window.location.href = 'search.html';
+                window.location.href = '/search.html';
             });
         }
 

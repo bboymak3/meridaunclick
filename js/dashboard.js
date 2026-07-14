@@ -227,7 +227,7 @@ window.closeEditBusinessModal = function() {
         currentUser = await getCurrentUser();
         if (!currentUser) {
             removeToken();
-            window.location.href = 'login.html';
+            window.location.href = '/login.html';
             return;
         }
 

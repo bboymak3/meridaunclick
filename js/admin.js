@@ -204,7 +204,7 @@ if (!window._renderVideoList) {
     async function init() {
         // Check auth
         if (!isAuthenticated()) {
-            window.location.href = 'login.html';
+            window.location.href = '/login.html';
             return;
         }
 
@@ -215,7 +215,7 @@ if (!window._renderVideoList) {
         if (!user || (user.role !== 'admin' && user.role !== 'agent')) {
             showToast('Acceso denegado. Solo administradores o agentes.', 'error');
             setTimeout(() => {
-                window.location.href = 'index.html';
+                    window.location.href = '/index.html';
             }, 1500);
             return;
         }
