@@ -2453,7 +2453,7 @@ body.search-modal-open .cb-chat-btn {
     color: inherit;
 }
 .business-card-image {
-    height: 160px;
+    aspect-ratio: 4 / 5;
     overflow: hidden;
     position: relative;
     background: #f0f0f0;
@@ -2461,7 +2461,8 @@ body.search-modal-open .cb-chat-btn {
 .business-card-image img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    object-position: center;
     transition: transform 0.3s;
 }
 .business-card:hover .business-card-image img {
@@ -2585,17 +2586,11 @@ body.search-modal-open .cb-chat-btn {
         grid-template-columns: repeat(2, 1fr);
         gap: 10px;
     }
-    .business-card-image {
-        height: 140px;
-    }
 }
 @media (max-width: 480px) {
     .business-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
-    }
-    .business-card-image {
-        height: 120px;
     }
     .business-card-body {
         padding: 8px 10px;
