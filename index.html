@@ -252,6 +252,31 @@
         </div>
     </section>
 
+    <!-- ===== WEATHER CAROUSEL ===== -->
+    <section class="weather-carousel-section" id="weatherCarouselSection">
+        <div class="container">
+            <div class="weather-carousel-header">
+                <div class="weather-carousel-title">
+                    <i class="fas fa-cloud-sun"></i>
+                    <span>Clima en Venezuela</span>
+                </div>
+                <div class="weather-carousel-nav">
+                    <button class="weather-nav-btn" id="weatherPrev" aria-label="Anterior">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="weather-nav-btn" id="weatherNext" aria-label="Siguiente">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="weather-carousel-track" id="weatherTrack">
+                <div class="weather-loading" id="weatherLoading">
+                    <i class="fas fa-spinner fa-spin"></i> Cargando clima...
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- ===== 2. FEATURED PROPERTIES ===== -->
     <section class="idx-section" id="featuredSection">
         <div class="container">
@@ -749,6 +774,7 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="js/app.js?v=2"></script>
+    <script src="js/weather.js?v=1"></script>
     <script src="js/home-map.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/ai-chatbot.js"></script>
