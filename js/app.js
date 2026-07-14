@@ -817,6 +817,7 @@ function initMobileSearchModal() {
         trigger.classList.add('active');
         if (backdrop) backdrop.classList.add('visible');
         document.body.style.overflow = 'hidden';
+        document.body.classList.add('search-modal-open');
     }
 
     function closeSearchModal() {
@@ -824,6 +825,7 @@ function initMobileSearchModal() {
         trigger.classList.remove('active');
         if (backdrop) backdrop.classList.remove('visible');
         document.body.style.overflow = '';
+        document.body.classList.remove('search-modal-open');
     }
 
     trigger.addEventListener('click', () => {

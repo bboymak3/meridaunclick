@@ -1474,6 +1474,14 @@ strong {
     opacity: 1;
 }
 
+/* When mobile search modal is open, hide card badges & share buttons so they
+   don't poke through the overlay on some mobile browsers */
+body.search-modal-open .btn-share-wa-card,
+body.search-modal-open .card-badge {
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 /* Quick links inside modal - hidden on desktop */
 .idx-quick-links-modal {
     display: none;
