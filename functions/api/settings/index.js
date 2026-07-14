@@ -82,11 +82,13 @@ const DEFAULT_SETTINGS = {
   hero_banner_url: '',
   // Hero logo (overlays on banner)
   hero_logo_url: '',
+  // Marketplace banner
+  marketplace_banner_url: '',
 };
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
 // Also allow hero_logo_url even if it was added after initial seed
-const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url'];
+const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url'];
 // Deduplicate
 const ALLOWED_KEYS_SET = [...new Set(ALLOWED_KEYS)];
 

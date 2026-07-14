@@ -897,6 +897,23 @@ async function loadHeroBanner() {
     }
 }
 
+// ─── Marketplace Banner (same pattern as hero banner) ────────
+async function loadMarketplaceBanner() {
+    const mpBg = document.getElementById('mpHeroBg');
+    if (!mpBg) return;
+    try {
+        const resp = await fetch('/api/settings/public');
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (data.marketplace_banner_url) {
+            mpBg.style.backgroundImage = `url(${data.marketplace_banner_url})`;
+            mpBg.style.backgroundSize = 'cover';
+            mpBg.style.backgroundPosition = 'center';
+            mpBg.style.backgroundRepeat = 'no-repeat';
+        }
+    } catch(e) {}
+}
+
 // ─── Initialization ────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
     // Update navigation bar
@@ -904,6 +921,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load hero banner from settings
     loadHeroBanner();
+
+    // Load marketplace banner from settings
+    loadMarketplaceBanner();
 
     // Initialize location selector (loads saved state, updates brand)
     initLocationSelector();

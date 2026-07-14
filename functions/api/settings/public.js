@@ -21,6 +21,7 @@ const PUBLIC_KEYS = [
   'site_name',
   'hero_banner_url',
   'hero_logo_url',
+  'marketplace_banner_url',
 ];
 
 export async function onRequestGet(context) {
@@ -54,6 +55,7 @@ export async function onRequestGet(context) {
       site_name: 'AuNclick',
       hero_banner_url: '',
       hero_logo_url: '',
+      marketplace_banner_url: '',
     };
 
     const response = {};

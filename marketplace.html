@@ -18,6 +18,26 @@
             overflow: hidden;
         }
 
+        /* Dynamic banner layer (same behavior as index hero) */
+        .mp-hero-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background-position: center 15%;
+            background-size: 100% 130%;
+            background-repeat: no-repeat;
+            transition: opacity 0.5s ease;
+        }
+        .mp-hero-bg[style*="background-image"] {
+            background-color: rgba(0, 0, 0, 0.35);
+        }
+        @media (max-width: 768px) {
+            .mp-hero-bg[style*="background-image"] {
+                background-position: center 10%;
+                background-size: 100% 120%;
+            }
+        }
+
         .mp-hero::before {
             content: '';
             position: absolute;
@@ -51,7 +71,7 @@
         .mp-hero-shapes {
             position: absolute;
             inset: 0;
-            z-index: 0;
+            z-index: 1;
             pointer-events: none;
             overflow: hidden;
         }
@@ -104,13 +124,15 @@
 
         .mp-hero .container {
             position: relative;
-            z-index: 1;
+            z-index: 2;
         }
 
         .mp-hero-content {
             text-align: center;
             max-width: 720px;
             margin: 0 auto;
+            position: relative;
+            z-index: 2;
         }
 
         .mp-hero-badge {
@@ -873,6 +895,7 @@
 
     <!-- Hero Section -->
     <section class="mp-hero">
+        <div class="mp-hero-bg" id="mpHeroBg"></div>
         <div class="mp-hero-shapes">
             <div class="shape shape-1"></div>
             <div class="shape shape-2"></div>
