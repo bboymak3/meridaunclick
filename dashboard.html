@@ -1155,13 +1155,13 @@
                     </div>
                     <div class="profile-form-section">
                         <div class="profile-form-section-title"><i class="fas fa-camera"></i> <span>Fotos del Producto</span></div>
-                        <div class="profile-input-group">
+                        <div class="profile-input-group" style="display:none;">
                             <div class="profile-input-wrapper"><i class="fas fa-link"></i>
-                            <input type="url" id="prodImage" name="image" placeholder="O pega una URL de imagen aquí">
+                            <input type="text" id="prodImage" name="image">
                             </div>
-                            <small class="profile-input-hint">Sube hasta 5 fotos. La primera será la principal. Arrastra para reordenar.</small>
                         </div>
                         <div class="prod-upload-area" id="prodUploadArea">
+                            <small class="profile-input-hint" style="display:block;margin-bottom:8px;">Sube hasta 5 fotos. La primera será la principal.</small>
                             <div class="prod-upload-btns">
                                 <label class="btn btn-primary btn-sm prod-upload-label" for="prodImageFile">
                                     <i class="fas fa-images"></i> Agregar Fotos
