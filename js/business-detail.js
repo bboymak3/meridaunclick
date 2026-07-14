@@ -393,7 +393,7 @@ function populateBusinessDetail(b) {
                 openMapModalBtn.onclick = () => {
                     const modal = document.getElementById('mapModal');
                     if (!modal) return;
-                    modal.classList.add('visible');
+                    modal.classList.add('active');
                     document.body.style.overflow = 'hidden';
 
                     // Create map in modal after a short delay for DOM to update
@@ -418,7 +418,7 @@ function populateBusinessDetail(b) {
                 mapModalClose.onclick = () => {
                     const modal = document.getElementById('mapModal');
                     if (modal) {
-                        modal.classList.remove('visible');
+                        modal.classList.remove('active');
                         document.body.style.overflow = '';
                     }
                 };
@@ -429,7 +429,7 @@ function populateBusinessDetail(b) {
             if (mapModal) {
                 mapModal.addEventListener('click', (e) => {
                     if (e.target === mapModal) {
-                        mapModal.classList.remove('visible');
+                        mapModal.classList.remove('active');
                         document.body.style.overflow = '';
                     }
                 });
