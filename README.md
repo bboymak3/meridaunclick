@@ -405,6 +405,47 @@ git push origin main
 
 ---
 
+## Registro de Bugs Conocidos (Audit 2026-07-14)
+
+### CRÍTICOS de Seguridad (15)
+1. `admin/create-user` sin autenticacion - cualquiera puede crear admin
+2. `admin/sellers` auth falsa (revisa header pero nunca verifica token)
+3. `featured/clear` sin auth - cualquiera borra featured
+4. `businesses/[id]` PUT permite status/featured a no-admin
+5. `marketplace/[id]` PUT/DELETE sin check de ownership
+6. `marketplace/index?all=true` filtra pending/rejected sin auth
+7. JWT secrets hardcodeados: 3 valores distintos como fallback
+8. `contacts/admin-message` sin auth + columnas SQL incorrectas
+9. `chat/conversations` POST - ReferenceError (business antes de definicion)
+10. `facebook/config` GET devuelve token sin enmascarar
+11. Todos `/debug/*` sin auth, exponen datos sensibles
+12. `backfill-slugs/RUN` salta auth por URL param
+13. `facebook/import` columna duplicada en INSERT
+14. `business-detail.js` XSS almacenado via custom_html con re-ejecucion de scripts
+15. `producto/[slug].js` XSS en thumbnail onclick (escape fallido)
+16. `promote-me` cualquier usuario puede promoverse a admin
+17. Password hashing SHA-256 sin salt
+
+### Bugs Funcionales Rotos (8)
+1. Marketplace upload/save usa token key `'token'` en vez de `'meridaunclick_token'`
+2. Dashboard admin crash: `adminPremiumBadge` TDZ (referenciado antes de declaracion)
+3. Search: `sBusqueda` no existe en DOM (deberia ser `sQuery`)
+4. AI chatbot: historial siempre descartado (falta `timestamp` en mensajes)
+5. Reviews nunca cargan en URLs por slug (solo leen `?id=`)
+6. search.html falta `<script src="js/map.js">` para mini-map
+7. `chat/messages.js` ruta incorrecta (falta `[id]`)
+8. `chat/conversations` usa `NULLS LAST` no soportado en SQLite/D1
+9. R2 archivos nunca se borran (TypeError con URL relativa en images/[businessId].js)
+10. `property-detail.js` favorites llama API de business favorites en vez de property
+
+### Alto Impacto (XSS en cliente)
+- map.js / home-map.js popups sin escapar
+- app.js createBusinessCard sin escape
+- chat.js nombres/mensajes sin escape
+- properties-search.js cards sin escape
+
+---
+
 ## Licencia
 
 Proyecto privado. Todos los derechos reservados.
