@@ -155,13 +155,14 @@ export async function onRequestGet(context) {
         results.push('SQL original tiene ' + originalSQL.length + ' caracteres');
 
         // Remove CHECK constraints from the SQL using regex
-        // Handle both inline CHECK (after column def) and table-level CHECK (comma-separated)
-        let newSQL = originalSQL;
+        // The CHECK has nested parens: CHECK(business_type IN ('a', 'b', ...))
+        // Pattern: (?:[^()]|\([^()]*\))*  handles one level of nesting
+        const checkPattern = /CHECK\s*\((?:[^()]|\([^()]*\))*\)/gi;
 
         // Remove table-level CHECK (preceded by comma, before closing paren)
-        newSQL = newSQL.replace(/,\s*CHECK\s*\([^)]*\)/gi, '');
+        let newSQL = originalSQL.replace(/,\s*CHECK\s*\((?:[^()]|\([^()]*\))*\)/gi, '');
         // Remove inline CHECK (after column def, no comma before)
-        newSQL = newSQL.replace(/\s+CHECK\s*\([^)]*\)/gi, '');
+        newSQL = newSQL.replace(/\s+CHECK\s*\((?:[^()]|\([^()]*\))*\)/gi, '');
 
         // Verify the regex worked
         if (newSQL.includes('CHECK')) {
