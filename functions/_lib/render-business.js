@@ -179,7 +179,7 @@ export function renderBusinessPage(env, business, options = {}) {
     <script type="application/ld+json">${(() => {
       const crumbs = [
         { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://aunclick.pages.dev/" },
-        { "@type": "ListItem", "position": 2, "name": ${JSON.stringify(sectionBreadcrumbText)}, "item": "https://aunclick.pages.dev/search.html" }
+        { "@type": "ListItem", "position": 2, "name": sectionBreadcrumbText, "item": "https://aunclick.pages.dev/search.html" }
       ];
       if (categoryBreadcrumb) {
         crumbs.push({ "@type": "ListItem", "position": 3, "name": categoryBreadcrumb.name, "item": categoryBreadcrumb.url.startsWith('http') ? categoryBreadcrumb.url : "https://aunclick.pages.dev" + categoryBreadcrumb.url });
