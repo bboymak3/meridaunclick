@@ -125,7 +125,73 @@ export async function onRequestGet(context) {
 
     results.push('categorias asignadas a tipos: ' + backfillCount);
 
-    // 5. Backfill business.business_type from category -> tipo_negocio
+    // 5. Remove CHECK constraint on business_type (only allows old values)
+    // In D1/SQLite we must recreate the table without the constraint
+    try {
+      // Check if constraint exists by trying an insert with a new-style slug
+      await env.DB.prepare(`
+        CREATE TABLE businesses_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER,
+          title TEXT,
+          slug TEXT UNIQUE,
+          description TEXT,
+          category_id INTEGER,
+          business_type TEXT DEFAULT 'negocio',
+          address TEXT,
+          city TEXT DEFAULT 'Mérida',
+          state TEXT DEFAULT 'Mérida',
+          country TEXT DEFAULT 'Venezuela',
+          lat REAL,
+          lng REAL,
+          phone TEXT,
+          whatsapp TEXT,
+          website TEXT,
+          instagram TEXT,
+          facebook TEXT,
+          twitter TEXT,
+          tiktok TEXT,
+          youtube TEXT,
+          email_contact TEXT,
+          schedule TEXT,
+          has_parking INTEGER DEFAULT 0,
+          has_wifi INTEGER DEFAULT 0,
+          has_card INTEGER DEFAULT 0,
+          has_delivery INTEGER DEFAULT 0,
+          has_outdoor INTEGER DEFAULT 0,
+          video_url TEXT,
+          logo TEXT,
+          banner TEXT,
+          featured INTEGER DEFAULT 0,
+          status TEXT DEFAULT 'pending',
+          price_range TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )
+      `).run();
+
+      // Copy all data
+      await env.DB.prepare(`
+        INSERT INTO businesses_new SELECT * FROM businesses
+      `).run();
+
+      // Swap tables
+      await env.DB.prepare('DROP TABLE businesses').run();
+      await env.DB.prepare('ALTER TABLE businesses_new RENAME TO businesses').run();
+
+      // Recreate indexes
+      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_slug ON businesses(slug)').run();
+      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_category ON businesses(category_id)').run();
+      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_status ON businesses(status)').run();
+      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_user ON businesses(user_id)').run();
+      await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_slug_unique ON businesses(slug)').run();
+
+      results.push('CHECK constraint eliminada de business_type (tabla recreada)');
+    } catch (e) {
+      results.push('error eliminando CHECK constraint (puede que ya no exista): ' + e.message);
+    }
+
+    // 6. Backfill business.business_type from category -> tipo_negocio
     // Update businesses that have business_type as generic values (negocio, otro) 
     // to use the tipo slug from their category
     const updatedBiz = await env.DB.prepare(`
@@ -141,7 +207,7 @@ export async function onRequestGet(context) {
     `).run();
     results.push('businesses actualizados con tipo correcto: ' + updatedBiz.meta.changes);
 
-    // 6. Verify results
+    // 7. Verify results
     const verify = await env.DB.prepare(`
       SELECT tn.name as tipo_nombre, tn.slug as tipo_slug, COUNT(c.id) as cat_count
       FROM tipos_negocio tn

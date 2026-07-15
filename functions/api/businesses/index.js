@@ -301,16 +301,23 @@ export async function onRequestPost(context) {
     }
 
     // Derive business_type from category's tipo_negocio (for SEO slug URLs)
+    // Allowed by old CHECK constraint: negocio, profesional, servicio, restaurante, tienda, otro
+    const ALLOWED_TYPES = ['negocio', 'profesional', 'servicio', 'restaurante', 'tienda', 'otro'];
     let finalBusinessType = business_type;
     if (!finalBusinessType || ['negocio', 'otro'].includes(finalBusinessType)) {
       try {
         const catTipo = await env.DB.prepare(
           'SELECT tn.slug FROM categories c JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id WHERE c.id = ?'
         ).bind(resolvedCategoryId).first();
-        finalBusinessType = catTipo ? catTipo.slug : 'negocio';
+        const derived = catTipo ? catTipo.slug : 'negocio';
+        // If constraint still exists, fall back to allowed value
+        finalBusinessType = ALLOWED_TYPES.includes(derived) ? derived : 'negocio';
       } catch (e) {
         finalBusinessType = 'negocio';
       }
+    } else if (!ALLOWED_TYPES.includes(finalBusinessType)) {
+      // New tipo slug sent but CHECK constraint may still exist — map to closest allowed
+      finalBusinessType = 'negocio';
     }
 
     // Generate unique slug from title
