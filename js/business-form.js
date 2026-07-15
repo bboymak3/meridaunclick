@@ -735,6 +735,10 @@
         e.preventDefault();
 
         if (isSubmitting) return;
+        isSubmitting = true;
+        if (submitBtn) {
+            submitBtn.disabled = true;
+        }
 
         // Clear previous errors
         document.querySelectorAll('.form-error').forEach(el => el.textContent = '');
@@ -798,6 +802,8 @@
         }
 
         if (hasError) {
+            isSubmitting = false;
+            if (submitBtn) submitBtn.disabled = false;
             showToast('Por favor corrige los errores en el formulario', 'error');
             // Scroll to first error
             const firstError = document.querySelector('.form-error:not(:empty)');
@@ -910,10 +916,8 @@
             }
         }
 
-        // Submit
-        isSubmitting = true;
+        // Submit (isSubmitting already set at top to prevent double-click)
         if (submitBtn) {
-            submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
         }
 
