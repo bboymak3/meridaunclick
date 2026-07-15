@@ -97,7 +97,7 @@ export function renderBusinessPage(env, business, options = {}) {
   const description = business.description
     ? business.description.substring(0, 160)
     : `Información sobre ${title} en ${business.city || 'Venezuela'}. Dirección, contacto, servicios y más.`;
-  const imageUrl = business.cover_image || `${baseUrl}/logo.png`;
+  const imageUrl = business.cover_image || `${baseUrl}/images/Holax.png`;
   const finalCanonical = canonicalUrl || `${baseUrl}${pathPrefix || '/negocio'}/${business.slug}`;
 
   // Breadcrumb helpers
