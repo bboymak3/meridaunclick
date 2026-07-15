@@ -1125,6 +1125,129 @@
         });
     }
 
+    // ─── Suggest Category Modal ──────────────────────────────
+    var catSelect = document.getElementById('propCategoria');
+    var suggestModal = document.getElementById('suggestCatModal');
+    var suggestOverlay = document.getElementById('suggestCatOverlay');
+    var suggestClose = document.getElementById('suggestCatClose');
+    var suggestCancel = document.getElementById('suggestCatCancel');
+    var suggestSubmit = document.getElementById('suggestCatSubmit');
+    var suggestName = document.getElementById('suggestCatName');
+    var suggestReason = document.getElementById('suggestCatReason');
+    var suggestError = document.getElementById('suggestCatError');
+
+    function openSuggestCatModal() {
+        if (!suggestModal) return;
+        suggestModal.classList.remove('hidden');
+        if (suggestName) suggestName.value = '';
+        if (suggestReason) suggestReason.value = '';
+        if (suggestError) suggestError.style.display = 'none';
+        if (suggestName) setTimeout(function() { suggestName.focus(); }, 100);
+    }
+
+    function closeSuggestCatModal() {
+        if (!suggestModal) return;
+        suggestModal.classList.add('hidden');
+        // Reset select to previous value or empty
+        if (catSelect) catSelect.value = '';
+    }
+
+    if (catSelect) {
+        catSelect.addEventListener('change', function() {
+            if (this.value === '__suggest__') {
+                openSuggestCatModal();
+            }
+        });
+    }
+
+    if (suggestOverlay) suggestOverlay.addEventListener('click', closeSuggestCatModal);
+    if (suggestClose) suggestClose.addEventListener('click', closeSuggestCatModal);
+    if (suggestCancel) suggestCancel.addEventListener('click', closeSuggestCatModal);
+
+    if (suggestSubmit) {
+        suggestSubmit.addEventListener('click', async function() {
+            var name = suggestName ? suggestName.value.trim() : '';
+            if (!name) {
+                if (suggestError) { suggestError.textContent = 'El nombre de la categoria es requerido.'; suggestError.style.display = 'block'; }
+                return;
+            }
+            suggestSubmit.disabled = true;
+            suggestSubmit.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            if (suggestError) suggestError.style.display = 'none';
+
+            try {
+                var headers = { 'Content-Type': 'application/json' };
+                var token = localStorage.getItem('aunclick_token');
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+
+                var resp = await fetch('/api/category-suggestions', {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({
+                        category_name: name,
+                        reason: suggestReason ? suggestReason.value.trim() : ''
+                    })
+                });
+                var data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Error al enviar sugerencia');
+
+                showToast(data.message || 'Solicitud enviada exitosamente', 'success');
+                closeSuggestCatModal();
+            } catch(e) {
+                if (suggestError) { suggestError.textContent = e.message || 'Error al enviar'; suggestError.style.display = 'block'; }
+            } finally {
+                suggestSubmit.disabled = false;
+                suggestSubmit.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Solicitud';
+            }
+        });
+    }
+
+    // ─── Slug Preview (dynamic URL generation) ───────────────
+    var titleInput = document.getElementById('propTitle');
+    var tipoSelect = document.getElementById('propTipoNegocio');
+    var slugPreview = document.getElementById('slugPreview');
+    var slugPreviewText = document.getElementById('slugPreviewText');
+
+    function slugifyText(text) {
+        return text.toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            .substring(0, 120);
+    }
+
+    function updateSlugPreview() {
+        if (!slugPreview || !slugPreviewText) return;
+        var title = titleInput ? titleInput.value.trim() : '';
+        var tipo = tipoSelect ? tipoSelect.value : '';
+        var cat = catSelect ? catSelect.options[catSelect.selectedIndex] : null;
+        var catName = (cat && cat.value && cat.value !== '__suggest__') ? cat.textContent : '';
+
+        if (!title) {
+            slugPreview.style.display = 'none';
+            return;
+        }
+
+        var slugName = slugifyText(title);
+        var slugTipo = slugifyText(tipo);
+        var slugCat = slugifyText(catName);
+
+        var urlParts = [];
+        if (slugTipo) urlParts.push(slugTipo);
+        if (slugCat) urlParts.push(slugCat);
+        urlParts.push(slugName);
+
+        var fullUrl = 'aunclick.pages.dev/' + urlParts.join('/');
+        slugPreviewText.textContent = fullUrl;
+        slugPreview.style.display = 'block';
+    }
+
+    if (titleInput) titleInput.addEventListener('input', updateSlugPreview);
+    if (tipoSelect) tipoSelect.addEventListener('change', updateSlugPreview);
+    if (catSelect) catSelect.addEventListener('change', updateSlugPreview);
+
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initForm);

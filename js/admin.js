@@ -285,7 +285,7 @@ if (!window._renderVideoList) {
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories') };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -293,7 +293,7 @@ if (!window._renderVideoList) {
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -342,6 +342,10 @@ if (!window._renderVideoList) {
                 break;
             case 'editbiz':
                 loadEditBizList();
+                break;
+            case 'categories':
+                loadAdmin2Categories();
+                loadAdmin2CatSuggestions();
                 break;
         }
 
@@ -4498,6 +4502,160 @@ if (!window._renderVideoList) {
             showToast('Error al cargar HTML: ' + e.message,'error');
         }
     };
+
+    // ─── Admin 2 Categories Management ────────────────────────
+    function _esc(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    async function loadAdmin2Categories() {
+        const tbody = document.getElementById('admin2CatTableBody');
+        if (!tbody) return;
+        try {
+            const data = await api.get('/categories');
+            const cats = data.categories || [];
+            if (!cats.length) {
+                tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-tags"></i><p>No hay categorías</p></div></td></tr>';
+                return;
+            }
+            let html = '';
+            cats.forEach(c => {
+                html += '<tr>';
+                html += '<td>' + c.id + '</td>';
+                html += '<td><strong>' + _esc(c.name) + '</strong></td>';
+                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc(c.slug) + '</td>';
+                html += '<td><i class="' + _esc(c.icon || 'fas fa-store') + '" style="color:' + _esc(c.color || '#607d8b') + ';"></i> <span style="font-size:0.75rem;color:#6b7280;">' + _esc(c.icon || '') + '</span></td>';
+                html += '<td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:' + _esc(c.color || '#607d8b') + ';vertical-align:middle;border:1px solid #e5e7eb;"></span></td>';
+                html += '<td>' + (c.business_count || 0) + '</td>';
+                html += '<td>' + c.sort_order + '</td>';
+                html += '<td><button onclick="admin2DeleteCat(' + c.id + ',\'' + _esc(c.name).replace(/'/g, "\\'") + '\')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.82rem;" title="Desactivar"><i class="fas fa-trash"></i></button></td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar</p></div></td></tr>';
+        }
+    }
+
+    async function loadAdmin2CatSuggestions() {
+        const container = document.getElementById('admin2CatSuggestionsList');
+        const countBadge = document.getElementById('admin2CatSuggCount');
+        const sideBadge = document.getElementById('adminCatSuggBadgeSide');
+        if (!container) return;
+        try {
+            const data = await api.get('/category-suggestions');
+            const suggestions = data.suggestions || [];
+            const pending = suggestions.filter(s => s.status === 'pending');
+
+            if (countBadge) countBadge.textContent = pending.length;
+            if (sideBadge) {
+                sideBadge.textContent = pending.length;
+                sideBadge.style.display = pending.length > 0 ? 'inline' : 'none';
+            }
+
+            if (!suggestions.length) {
+                container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-check-circle" style="font-size:1.5rem;color:#22c55e;"></i><p style="margin-top:8px;">No hay solicitudes pendientes</p></div>';
+                return;
+            }
+
+            let html = '';
+            suggestions.forEach(s => {
+                const statusColor = s.status === 'pending' ? '#f59e0b' : (s.status === 'approved' ? '#22c55e' : '#ef4444');
+                const statusLabel = s.status === 'pending' ? 'Pendiente' : (s.status === 'approved' ? 'Aprobada' : 'Rechazada');
+                html += '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;' + (s.status !== 'pending' ? 'opacity:0.6;' : '') + '">';
+                html += '<div style="flex:1;min-width:0;">';
+                html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+                html += '<strong>' + _esc(s.category_name) + '</strong>';
+                html += '<span style="font-size:0.7rem;padding:2px 8px;border-radius:99px;background:' + statusColor + '20;color:' + statusColor + ';font-weight:600;">' + statusLabel + '</span>';
+                html += '</div>';
+                if (s.reason) html += '<p style="font-size:0.82rem;color:#6b7280;margin:0;">' + _esc(s.reason) + '</p>';
+                html += '<p style="font-size:0.75rem;color:#94a3b8;margin:4px 0 0;">' + (s.user_name ? 'Por ' + _esc(s.user_name) : 'Anónimo') + ' &middot; ' + (s.created_at || '') + '</p>';
+                html += '</div>';
+                if (s.status === 'pending') {
+                    html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
+                    html += '<button onclick="admin2ApproveSugg(' + s.id + ')" class="btn btn-primary" style="background:#22c55e;border-color:#22c55e;padding:6px 12px;font-size:0.78rem;white-space:nowrap;"><i class="fas fa-check"></i> Aprobar</button>';
+                    html += '<button onclick="admin2RejectSugg(' + s.id + ')" class="btn" style="background:#ef4444;border-color:#ef4444;color:#fff;padding:6px 12px;font-size:0.78rem;white-space:nowrap;"><i class="fas fa-times"></i></button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        } catch(e) {
+            container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:16px;"><p style="font-size:0.82rem;">No se pudieron cargar las solicitudes.</p></div>';
+        }
+    }
+
+    // Make approve/reject accessible globally for onclick
+    window.admin2ApproveSugg = async function(id) {
+        try {
+            await api.put('/category-suggestions/' + id, { action: 'approve' });
+            showToast('Categoría creada exitosamente', 'success');
+            loadAdmin2Categories();
+            loadAdmin2CatSuggestions();
+        } catch(e) { showToast('Error: ' + (e.message || ''), 'error'); }
+    };
+    window.admin2RejectSugg = async function(id) {
+        if (!confirm('Rechazar esta solicitud?')) return;
+        try {
+            await api.put('/category-suggestions/' + id, { action: 'reject' });
+            showToast('Sugerencia rechazada', 'success');
+            loadAdmin2CatSuggestions();
+        } catch(e) { showToast('Error: ' + (e.message || ''), 'error'); }
+    };
+    window.admin2DeleteCat = async function(id, name) {
+        if (!confirm('Desactivar "' + name + '"?')) return;
+        try {
+            await api.delete('/categories/' + id);
+            showToast('Categoría desactivada', 'success');
+            loadAdmin2Categories();
+        } catch(e) { showToast('Error: ' + (e.message || ''), 'error'); }
+    };
+
+    // Setup create category button
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnCreate = document.getElementById('admin2BtnCreateCat');
+        const colorInput = document.getElementById('admin2NewCatColor');
+        const colorLabel = document.getElementById('admin2NewCatColorLabel');
+
+        if (colorInput && colorLabel) {
+            colorInput.addEventListener('input', function() { colorLabel.textContent = this.value; });
+        }
+
+        if (btnCreate) {
+            btnCreate.addEventListener('click', async function() {
+                const nameInput = document.getElementById('admin2NewCatName');
+                const iconInput = document.getElementById('admin2NewCatIcon');
+                const colorVal = document.getElementById('admin2NewCatColor');
+                const errorDiv = document.getElementById('admin2NewCatError');
+                const name = nameInput ? nameInput.value.trim() : '';
+                if (!name) {
+                    if (errorDiv) { errorDiv.textContent = 'El nombre es requerido.'; errorDiv.style.display = 'block'; }
+                    return;
+                }
+                btnCreate.disabled = true;
+                btnCreate.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+                if (errorDiv) errorDiv.style.display = 'none';
+                try {
+                    await api.post('/categories', {
+                        name: name,
+                        icon: iconInput ? iconInput.value.trim() : 'fas fa-store',
+                        color: colorVal ? colorVal.value : '#607d8b'
+                    });
+                    showToast('Categoría "' + name + '" creada', 'success');
+                    if (nameInput) nameInput.value = '';
+                    loadAdmin2Categories();
+                } catch(e) {
+                    const msg = e.message || 'Error al crear';
+                    if (errorDiv) { errorDiv.textContent = msg; errorDiv.style.display = 'block'; }
+                    showToast(msg, 'error');
+                } finally {
+                    btnCreate.disabled = false;
+                    btnCreate.innerHTML = '<i class="fas fa-plus"></i> Crear';
+                }
+            });
+        }
+    });
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {

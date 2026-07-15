@@ -3,6 +3,12 @@
  * Handles user dashboard and admin panel functionality
  */
 
+// Simple HTML escape helper (used inside IIFE)
+function _dashEscapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // Self-contained edit business modal opener — completely outside the IIFE
 // so it works even if the IIFE has errors.
 function _openEditBizModal(id) {
@@ -162,6 +168,9 @@ window.closeEditBusinessModal = function() {
 
 (function () {
     'use strict';
+
+    // Alias for HTML escaping inside this IIFE
+    var escapeHtml = _dashEscapeHtml;
 
     // ─── State ──────────────────────────────────────────────────
     let currentUser = null;
@@ -1831,7 +1840,7 @@ window.closeEditBusinessModal = function() {
         const activeTab = document.getElementById('adminTab' + name);
         if (activeTab) activeTab.classList.add('active');
 
-        const panels = ['Pending', 'All', 'Users', 'Settings'];
+        const panels = ['Pending', 'All', 'Users', 'Settings', 'Premium', 'EditBiz', 'Categories'];
         panels.forEach(p => {
             const panel = document.getElementById('adminPanel' + p);
             if (panel) {
@@ -3222,7 +3231,7 @@ window.closeEditBusinessModal = function() {
             adminTabPremium.classList.add('active');
 
             // Hide other panels
-            ['Pending', 'All', 'Users'].forEach(p => {
+            ['Pending', 'All', 'Users', 'Categories'].forEach(p => {
                 const panel = document.getElementById('adminPanel' + p);
                 if (panel) panel.classList.add('hidden');
             });
@@ -3794,6 +3803,193 @@ window.closeEditBusinessModal = function() {
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; }
     };
 
+    // ─── Admin Categories Management Tab ─────────────────────
+    function setupAdminCategoriesTab() {
+        var tab = document.getElementById('adminTabCategories');
+        if (!tab) return;
+
+        tab.addEventListener('click', function() {
+            // Deactivate all admin tabs
+            document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('active'); });
+            tab.classList.add('active');
+            // Hide all panels
+            ['Pending','All','Users','Settings','Premium','EditBiz'].forEach(function(p) {
+                var panel = document.getElementById('adminPanel' + p);
+                if (panel) panel.classList.add('hidden');
+            });
+            var catPanel = document.getElementById('adminPanelCategories');
+            if (catPanel) catPanel.classList.remove('hidden');
+
+            loadAdminCategories();
+            loadCategorySuggestions();
+        });
+
+        // Create category button
+        var btnCreate = document.getElementById('btnCreateCategory');
+        if (btnCreate) {
+            btnCreate.addEventListener('click', createNewCategory);
+        }
+
+        // Color picker label sync
+        var colorInput = document.getElementById('newCatColor');
+        var colorLabel = document.getElementById('newCatColorLabel');
+        if (colorInput && colorLabel) {
+            colorInput.addEventListener('input', function() { colorLabel.textContent = this.value; });
+        }
+    }
+
+    async function loadAdminCategories() {
+        var tbody = document.getElementById('adminCategoriesBody');
+        if (!tbody) return;
+        try {
+            var data = await api.get('/categories');
+            var cats = data.categories || [];
+            if (!cats.length) {
+                tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-tags"></i><p>No hay categorias</p></div></td></tr>';
+                return;
+            }
+            var html = '';
+            cats.forEach(function(c) {
+                html += '<tr style="font-size:0.85rem;">';
+                html += '<td>' + c.id + '</td>';
+                html += '<td><strong>' + escapeHtml(c.name) + '</strong></td>';
+                html += '<td style="color:#6b7280;font-size:0.78rem;">' + escapeHtml(c.slug) + '</td>';
+                html += '<td><i class="' + escapeHtml(c.icon || 'fas fa-store') + '" style="color:' + escapeHtml(c.color || '#607d8b') + ';"></i> <span style="font-size:0.75rem;color:#6b7280;">' + escapeHtml(c.icon || '') + '</span></td>';
+                html += '<td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:' + escapeHtml(c.color || '#607d8b') + ';vertical-align:middle;border:1px solid #e5e7eb;"></span></td>';
+                html += '<td>' + (c.business_count || 0) + '</td>';
+                html += '<td>' + c.sort_order + '</td>';
+                html += '<td>';
+                html += '<button onclick="deleteCategory(' + c.id + ',\'' + escapeHtml(c.name).replace(/'/g, "\\'") + '\')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.78rem;padding:2px 6px;" title="Desactivar"><i class="fas fa-trash"></i></button>';
+                html += '</td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:#f59e0b;"></i><p>Error al cargar categorias</p></div></td></tr>';
+        }
+    }
+
+    async function createNewCategory() {
+        var nameInput = document.getElementById('newCatName');
+        var iconInput = document.getElementById('newCatIcon');
+        var colorInput = document.getElementById('newCatColor');
+        var errorDiv = document.getElementById('newCatError');
+        var btn = document.getElementById('btnCreateCategory');
+
+        var name = nameInput ? nameInput.value.trim() : '';
+        if (!name) {
+            if (errorDiv) { errorDiv.textContent = 'El nombre es requerido.'; errorDiv.style.display = 'block'; }
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creando...';
+        if (errorDiv) errorDiv.style.display = 'none';
+
+        try {
+            var result = await api.post('/categories', {
+                name: name,
+                icon: iconInput ? iconInput.value.trim() : 'fas fa-store',
+                color: colorInput ? colorInput.value : '#607d8b'
+            });
+            showToast('Categoria "' + name + '" creada exitosamente', 'success');
+            if (nameInput) nameInput.value = '';
+            loadAdminCategories();
+        } catch(e) {
+            var msg = (e.message || 'Error al crear categoria');
+            if (errorDiv) { errorDiv.textContent = msg; errorDiv.style.display = 'block'; }
+            showToast(msg, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-plus"></i> Crear';
+        }
+    }
+
+    async function deleteCategory(id, name) {
+        if (!confirm('Desactivar la categoria "' + name + '"? Los negocios existentes no se eliminaran, pero la categoria dejara de aparecer en los filtros.')) return;
+        try {
+            await api.delete('/categories/' + id);
+            showToast('Categoria desactivada', 'success');
+            loadAdminCategories();
+        } catch(e) {
+            showToast('Error: ' + (e.message || ''), 'error');
+        }
+    }
+
+    async function loadCategorySuggestions() {
+        var container = document.getElementById('catSuggestionsList');
+        var countBadge = document.getElementById('catSuggCount');
+        var topBadge = document.getElementById('adminCatSuggBadge');
+        if (!container) return;
+
+        try {
+            var data = await api.get('/category-suggestions');
+            var suggestions = data.suggestions || [];
+
+            // Filter only pending
+            var pending = suggestions.filter(function(s) { return s.status === 'pending'; });
+
+            if (countBadge) countBadge.textContent = pending.length;
+            if (topBadge) {
+                topBadge.textContent = pending.length;
+                topBadge.style.display = pending.length > 0 ? 'inline' : 'none';
+            }
+
+            if (!suggestions.length) {
+                container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-check-circle" style="font-size:1.5rem;color:#22c55e;"></i><p style="margin-top:8px;">No hay solicitudes pendientes</p></div>';
+                return;
+            }
+
+            var html = '';
+            suggestions.forEach(function(s) {
+                var statusColor = s.status === 'pending' ? '#f59e0b' : (s.status === 'approved' ? '#22c55e' : '#ef4444');
+                var statusLabel = s.status === 'pending' ? 'Pendiente' : (s.status === 'approved' ? 'Aprobada' : 'Rechazada');
+                html += '<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;background:#fff;' + (s.status !== 'pending' ? 'opacity:0.6;' : '') + '">';
+                html += '<div style="flex:1;min-width:0;">';
+                html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">';
+                html += '<strong style="font-size:0.9rem;">' + escapeHtml(s.category_name) + '</strong>';
+                html += '<span style="font-size:0.7rem;padding:2px 8px;border-radius:99px;background:' + statusColor + '20;color:' + statusColor + ';font-weight:600;">' + statusLabel + '</span>';
+                html += '</div>';
+                if (s.reason) html += '<p style="font-size:0.82rem;color:#6b7280;margin:0;">' + escapeHtml(s.reason) + '</p>';
+                html += '<p style="font-size:0.75rem;color:#94a3b8;margin:4px 0 0;">' + (s.user_name ? 'Por ' + escapeHtml(s.user_name) : 'Usuario no registrado') + ' &middot; ' + (s.created_at || '') + '</p>';
+                html += '</div>';
+                if (s.status === 'pending') {
+                    html += '<div style="display:flex;gap:6px;flex-shrink:0;">';
+                    html += '<button onclick="approveCategorySuggestion(' + s.id + ')" style="background:#22c55e;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:0.78rem;cursor:pointer;white-space:nowrap;" title="Aprobar y crear categoria"><i class="fas fa-check"></i> Aprobar</button>';
+                    html += '<button onclick="rejectCategorySuggestion(' + s.id + ')" style="background:#ef4444;color:#fff;border:none;padding:6px 12px;border-radius:6px;font-size:0.78rem;cursor:pointer;white-space:nowrap;" title="Rechazar"><i class="fas fa-times"></i></button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            container.innerHTML = html;
+        } catch(e) {
+            // Table might not exist yet
+            container.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-info-circle"></i><p style="margin-top:8px;font-size:0.82rem;">No se pudieron cargar las solicitudes. Es posible que la tabla no exista aun en D1.</p></div>';
+        }
+    }
+
+    async function approveCategorySuggestion(id) {
+        try {
+            await api.put('/category-suggestions/' + id, { action: 'approve' });
+            showToast('Categoria creada a partir de la sugerencia', 'success');
+            loadCategorySuggestions();
+            loadAdminCategories();
+        } catch(e) {
+            showToast('Error: ' + (e.message || ''), 'error');
+        }
+    }
+
+    async function rejectCategorySuggestion(id) {
+        if (!confirm('Rechazar esta solicitud de categoria?')) return;
+        try {
+            await api.put('/category-suggestions/' + id, { action: 'reject' });
+            showToast('Sugerencia rechazada', 'success');
+            loadCategorySuggestions();
+        } catch(e) {
+            showToast('Error: ' + (e.message || ''), 'error');
+        }
+    }
+
     // Wire up the new tab into activateAdminTab
     const _origActivateAdminTab = activateAdminTab;
     activateAdminTab = function(name) {
@@ -3807,9 +4003,11 @@ window.closeEditBusinessModal = function() {
         _origSetupAdmin2();
         setupAdminSettingsTab();
         setupAdminEditBizTab();
+        setupAdminCategoriesTab();
     };
     if (document.getElementById('adminTabSettings')) setupAdminSettingsTab();
     if (document.getElementById('adminTabEditBiz')) setupAdminEditBizTab();
+    if (document.getElementById('adminTabCategories')) setupAdminCategoriesTab();
 
     // ─── Fix logo upload in old edit modal ──────────────────────
     // Setup logo file input listener for the old modal

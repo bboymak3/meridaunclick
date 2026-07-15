@@ -194,6 +194,7 @@
                                         <option value="encomiendas">Encomiendas</option>
                                         <option value="lavanderias">Lavanderías</option>
                                         <option value="otro">Otro</option>
+                                        <option value="__suggest__" style="color:#006EE3;font-weight:600;">+ Agregar nueva categoría</option>
                                     </select>
                                     <i class="fas fa-chevron-down pf-select-arrow"></i>
                                 </div>
@@ -601,6 +602,41 @@
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Suggest Category Modal -->
+    <div class="modal hidden" id="suggestCatModal">
+        <div class="modal-overlay" id="suggestCatOverlay"></div>
+        <div class="modal-content" style="max-width:480px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-lightbulb" style="color:#f59e0b;"></i> Sugerir Nueva Categoria</h3>
+                <button class="modal-close" id="suggestCatClose">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:20px;">
+                <p style="font-size:0.9rem;color:#4b5563;margin-bottom:16px;">No encuentras tu categoria? Sugiere una nueva y el administrador la revisara para agregarla al directorio.</p>
+                <div style="margin-bottom:14px;">
+                    <label style="display:block;font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:4px;">Nombre de la categoria *</label>
+                    <input type="text" id="suggestCatName" placeholder="Ej: Clinicas Dentales, Gasolineras, Spa..." style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:0.9rem;box-sizing:border-box;">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-size:0.85rem;font-weight:600;color:#374151;margin-bottom:4px;">Razon (opcional)</label>
+                    <textarea id="suggestCatReason" rows="3" placeholder="Explica brevemente por que necesitas esta categoria..." style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:0.9rem;box-sizing:border-box;resize:vertical;"></textarea>
+                </div>
+                <div id="suggestCatError" style="color:#dc2626;font-size:0.82rem;margin-bottom:8px;display:none;"></div>
+                <div style="display:flex;gap:10px;justify-content:flex-end;">
+                    <button type="button" class="btn btn-secondary btn-sm" id="suggestCatCancel">Cancelar</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="suggestCatSubmit" style="background:#006EE3;">
+                        <i class="fas fa-paper-plane"></i> Enviar Solicitud
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slug Preview -->
+    <div id="slugPreview" style="display:none;position:fixed;bottom:20px;right:20px;background:#1e293b;color:#e2e8f0;padding:12px 18px;border-radius:10px;font-size:0.82rem;max-width:400px;z-index:1000;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+        <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:4px;">URL preview:</div>
+        <div id="slugPreviewText" style="word-break:break-all;font-family:monospace;color:#38bdf8;">/negocio/mi-negocio</div>
+    </div>
+
     <!-- Leaflet CSS & JS for location picker map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -608,7 +644,8 @@
     <script src="https://unpkg.com/leaflet-control-geocoder@2.4.0/dist/Control.Geocoder.js"></script>
 
     <script src="js/app.js"></script>
-    <script src="js/business-form.js?v=2"></script>
+    <script src="js/dynamic-categories.js?v=1"></script>
+    <script src="js/business-form.js?v=3"></script>
 
     <script>
     if ('serviceWorker' in navigator) {
