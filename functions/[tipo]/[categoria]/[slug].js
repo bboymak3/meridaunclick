@@ -2,7 +2,7 @@
 // Universal business detail route: /:tipo-de-negocio/:categoria/:nombre-negocio
 // SEO-friendly URL structure for ALL businesses
 
-import { renderBusinessPage } from '../_lib/render-business.js';
+import { renderBusinessPage } from '../../_lib/render-business.js';
 
 function slugify(text) {
   if (!text) return '';
