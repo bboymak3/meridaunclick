@@ -206,7 +206,7 @@
                     + '<span class="map-popup-badge">' + typeLabel + '</span>'
                     + '</div>'
                     + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
-                    + '<a href="/negocio/' + (p.slug || p.id) + '" class="map-popup-link">Ver m\u00e1s <i class="fas fa-arrow-right"></i></a>'
+                    + '<a href="' + (p.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + (p.slug || p.id) + '" class="map-popup-link">Ver m\u00e1s <i class="fas fa-arrow-right"></i></a>'
                     + '</div>'
                     + '</div>';
 

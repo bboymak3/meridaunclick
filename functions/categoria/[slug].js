@@ -76,7 +76,7 @@ export async function onRequestGet(context) {
       const img = b.cover_image || b.logo || '';
       const waNum = (b.whatsapp || b.phone || '').replace(/[^0-9]/g, '');
       return `
-        <a href="/negocio/${b.slug}" class="cat-biz-card">
+        <a href="${b.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio'}/${b.slug}" class="cat-biz-card">
           <div class="cat-biz-img">
             ${img ? `<img src="${esc(img)}" alt="${esc(b.title)}" loading="lazy" onerror="this.style.display='none'">` : `<div class="cat-biz-ph"><i class="fas fa-store"></i></div>`}
             ${b.featured ? '<span class="cat-biz-featured"><i class="fas fa-star"></i></span>' : ''}

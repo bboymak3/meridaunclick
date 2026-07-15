@@ -199,7 +199,7 @@
                 + '<span class="map-popup-badge">' + typeLabel + '</span>'
                 + '</div>'
                 + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
-                + '<a href="/negocio/' + (business.slug || business.id) + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
+                + '<a href="' + (business.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + (business.slug || business.id) + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
                 + '</div>'
                 + '</div>';
 
@@ -577,7 +577,7 @@
                     if (currentMapType === 'properties') {
                         window.location.href = '/property-detail.html?id=' + id;
                     } else {
-                        window.location.href = '/negocio/' + (biz && biz.slug ? biz.slug : id);
+                        window.location.href = (biz && biz.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + (biz && biz.slug ? biz.slug : id);
                     }
                 }
             });

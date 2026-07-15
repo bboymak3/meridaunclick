@@ -658,7 +658,10 @@ function getBusinessTypeLabel(type) {
 // ─── Business URL Helper ─────────────────────────────────────
 function getBusinessUrl(business) {
     if (!business) return '#';
-    if (business.slug) return '/negocio/' + business.slug;
+    if (business.slug) {
+        const prefix = (business.category_slug === 'medicina-servicio-medico') ? '/medicina-servicio-medico' : '/negocio';
+        return prefix + '/' + business.slug;
+    }
     return '/business.html?id=' + business.id;
 }
 

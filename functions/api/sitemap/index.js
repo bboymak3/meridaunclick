@@ -29,13 +29,14 @@ export async function onRequestGet(context) {
     // Fetch all approved businesses with slugs
     try {
       const businesses = await env.DB.prepare(
-        "SELECT slug, updated_at FROM businesses WHERE status = 'approved' AND slug IS NOT NULL AND slug != '' ORDER BY updated_at DESC"
+        "SELECT b.slug, b.updated_at, c.slug as category_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
       ).all();
 
       for (const biz of businesses.results) {
         const lastmod = biz.updated_at ? biz.updated_at.substring(0, 10) : '';
+        const prefix = (biz.category_slug === 'medicina-servicio-medico') ? '/medicina-servicio-medico' : '/negocio';
         dynamicUrls += `  <url>
-    <loc>${baseUrl}/negocio/${biz.slug}</loc>
+    <loc>${baseUrl}${prefix}/${biz.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>
