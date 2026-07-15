@@ -51,40 +51,62 @@ export async function onRequestGet(context) {
       hasTiposTable = true;
     } catch (e) { /* table doesn't exist yet */ }
 
-    // Look up the category by slug
-    const catRow = await env.DB.prepare(
-      'SELECT id, slug, name, tipo_negocio_id FROM categories WHERE slug = ? AND is_active = 1'
-    ).bind(categoria).first();
+    // Look up the category by slug (avoid tipo_negocio_id — column may not exist yet)
+    let catRow;
+    try {
+      catRow = await env.DB.prepare(
+        'SELECT id, slug, name FROM categories WHERE slug = ? AND is_active = 1'
+      ).bind(categoria).first();
+    } catch (e) {
+      // If even the basic query fails, skip category filter
+      catRow = null;
+    }
 
-    // Build query based on what tables exist
-    const baseQuery = hasTiposTable ? BIZ_FULL : BIZ_SIMPLE;
+    // Try full query first (with tipos_negocio), fall back to simple if tables/columns missing
     let business;
 
-    if (catRow) {
-      business = await env.DB.prepare(
-        baseQuery + ' WHERE b.slug = ? AND b.status = \'approved\' AND c.id = ?'
-      ).bind(slug, catRow.id).first();
-    } else {
-      business = await env.DB.prepare(
-        baseQuery + ' WHERE b.slug = ? AND b.status = \'approved\''
-      ).bind(slug).first();
+    async function queryBusiness(query, ...bindArgs) {
+      return env.DB.prepare(query).bind(...bindArgs).first();
+    }
+
+    const whereClause = catRow
+      ? ' WHERE b.slug = ? AND b.status = \'approved\' AND c.id = ?'
+      : ' WHERE b.slug = ? AND b.status = \'approved\'';
+    const bindArgs = catRow ? [slug, catRow.id] : [slug];
+
+    // Try BIZ_FULL first, fall back to BIZ_SIMPLE
+    try {
+      if (hasTiposTable) {
+        business = await queryBusiness(BIZ_FULL + whereClause, ...bindArgs);
+      } else {
+        business = await queryBusiness(BIZ_SIMPLE + whereClause, ...bindArgs);
+      }
+    } catch (e) {
+      // BIZ_FULL failed (e.g. tipo_negocio_id column missing), try simple
+      try {
+        business = await queryBusiness(BIZ_SIMPLE + whereClause, ...bindArgs);
+      } catch (e2) {
+        business = null;
+      }
     }
 
     if (!business) {
       // Fallback: try by numeric ID
       const numericSlug = parseInt(slug);
       if (!isNaN(numericSlug)) {
-        const byId = await env.DB.prepare(
-          baseQuery + ' WHERE b.id = ? AND b.status = \'approved\''
-        ).bind(numericSlug).first();
-        if (byId) {
-          const correctTipo = byId.tipo_negocio_slug || slugify(byId.business_type || 'negocio');
-          const correctCat = byId.category_slug || 'otro';
-          return new Response('', {
-            status: 301,
-            headers: { 'Location': '/' + correctTipo + '/' + correctCat + '/' + byId.slug },
-          });
-        }
+        try {
+          const byId = await env.DB.prepare(
+            BIZ_SIMPLE + ' WHERE b.id = ? AND b.status = \'approved\''
+          ).bind(numericSlug).first();
+          if (byId) {
+            const correctTipo = byId.tipo_negocio_slug || slugify(byId.business_type || 'negocio');
+            const correctCat = byId.category_slug || 'otro';
+            return new Response('', {
+              status: 301,
+              headers: { 'Location': '/' + correctTipo + '/' + correctCat + '/' + byId.slug },
+            });
+          }
+        } catch (e) { /* ignore fallback errors */ }
       }
 
       return new Response('<h1>Negocio no encontrado</h1><p>El negocio que buscas no existe o fue eliminado.</p>', {
