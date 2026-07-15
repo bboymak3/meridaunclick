@@ -1,85 +1,109 @@
 /**
- * Un Click - Dynamic Category Loader
- * Replaces hardcoded category <option> lists with dynamic DB-loaded categories.
- * Loaded on pages that have category dropdowns.
+ * HolaX - Dynamic Category & Tipo de Negocio Loader
+ * Replaces hardcoded dropdowns with dynamic DB-loaded data.
+ * Supports cascading: tipo → categoria with SEO slug preview.
  *
- * Usage: Call window.loadDynamicCategories('#selectId') for each select,
- * or call window.loadAllDynamicCategories() to auto-detect and populate all.
+ * Usage:
+ *   window.loadAllDynamicCategories()  — auto-detect and populate all selects
+ *   window.loadDynamicCategories('#selectId')  — populate specific select
+ *   window.invalidateCategoryCache()  — force refetch
  */
 
 (function () {
     'use strict';
 
-    var _cachedCategories = null;
+    var _cachedTipos = null;   // Full tipos+categories tree
+    var _cachedFlat = null;    // Flat category list (for non-cascading pages)
 
-    // The known select IDs that hold business category dropdowns
-    var SELECT_IDS = [
-        'searchCategoria',   // index.html - hero search filter
-        'sCategoria',        // search.html - search page filter
-        'mapTipo',           // map.html - map category filter
-        'propCategoria',     // new-business.html - business form
-        'editBizCat'         // dashboard.html - edit business modal (user)
+    // Selects that use cascading tipo→categoria (new-business form)
+    var CASCADING_TIPO_IDS = ['propTipoNegocio'];
+    var CASCADING_CAT_IDS  = ['propCategoria'];
+
+    // Selects that use flat category list (search, dashboard, etc.)
+    var FLAT_SELECT_IDS = [
+        'searchCategoria',
+        'sCategoria',
+        'mapTipo',
+        'editBizCat'
     ];
 
+    // Slug preview element
+    var SLUG_PREVIEW_ID = 'slugPreviewText';
+    var TITLE_INPUT_ID = 'propTitle';
+
     /**
-     * Fetch categories from API (cached after first call).
-     * Returns Promise<Array> of { id, name, slug, icon, color, business_count }
+     * Fetch tipos with their categories from API (cached).
      */
-    async function fetchCategories() {
-        if (_cachedCategories) return _cachedCategories;
+    async function fetchTipos() {
+        if (_cachedTipos) return _cachedTipos;
         try {
-            var resp = await fetch('/api/categories');
+            var resp = await fetch('/api/tipos-negocio?include_categories=1');
             var data = await resp.json();
-            _cachedCategories = (data.categories || []);
-            return _cachedCategories;
+            _cachedTipos = (data.tipos || []);
+            return _cachedTipos;
         } catch (e) {
-            console.warn('Failed to load categories from API, using fallback.');
+            console.warn('Failed to load tipos de negocio:', e);
             return [];
         }
     }
 
     /**
-     * Populate a <select> element with dynamic categories.
-     * Preserves the first <option> (usually "Selecciona...").
-     * Adds "Agregar nueva categoria" option at the end.
-     *
-     * @param {string|HTMLElement} selectEl - CSS selector or DOM element
-     * @param {object} opts
-     * @param {boolean} opts.addSuggestOption - Add "+ Agregar nueva categoria" option
-     * @param {string} opts.currentValue - Pre-select this slug value (for edit mode)
+     * Fetch flat category list (for search/filter pages).
      */
-    async function loadDynamicCategories(selectEl, opts) {
-        opts = opts || {};
-        var el = typeof selectEl === 'string' ? document.querySelector(selectEl) : selectEl;
-        if (!el) return;
+    async function fetchFlatCategories() {
+        if (_cachedFlat) return _cachedFlat;
+        try {
+            var resp = await fetch('/api/categories');
+            var data = await resp.json();
+            _cachedFlat = (data.categories || []);
+            return _cachedFlat;
+        } catch (e) {
+            console.warn('Failed to load categories:', e);
+            return [];
+        }
+    }
 
-        var cats = await fetchCategories();
-
-        // Save the first placeholder option
+    /**
+     * Populate a tipo <select> with loaded tipos.
+     */
+    function populateTipoSelect(el, tipos) {
         var firstOption = el.querySelector('option:first-child');
-        var firstHtml = firstOption ? firstOption.outerHTML : '<option value="">Selecciona una categoria</option>';
-        var currentValue = opts.currentValue || el.value;
-
-        // Clear and rebuild
+        var firstHtml = firstOption ? firstOption.outerHTML : '<option value="">Selecciona un tipo de negocio</option>';
         el.innerHTML = firstHtml;
 
-        cats.forEach(function (c) {
+        tipos.forEach(function (t) {
+            var opt = document.createElement('option');
+            opt.value = t.slug;
+            opt.textContent = t.name;
+            opt.setAttribute('data-tipo-id', t.id);
+            el.appendChild(opt);
+        });
+    }
+
+    /**
+     * Populate a category <select> filtered by selected tipo.
+     */
+    function populateCategorySelect(el, categories, opts) {
+        opts = opts || {};
+        var firstHtml = '<option value="">Selecciona una categoria</option>';
+        el.innerHTML = firstHtml;
+
+        categories.forEach(function (c) {
             var opt = document.createElement('option');
             opt.value = c.slug;
             opt.textContent = c.name;
-            if (c.slug === currentValue) opt.selected = true;
+            if (opts.currentValue && c.slug === opts.currentValue) opt.selected = true;
             el.appendChild(opt);
         });
 
-        // Add "Otro" as fallback
-        var otroOpt = document.createElement('option');
-        otroOpt.value = 'otro';
-        otroOpt.textContent = 'Otro';
-        if ('otro' === currentValue) otroOpt.selected = true;
-        el.appendChild(otroOpt);
+        // Add "Otro" and suggest option for form selects
+        if (opts.isFormSelect) {
+            var otroOpt = document.createElement('option');
+            otroOpt.value = 'otro';
+            otroOpt.textContent = 'Otro';
+            if ('otro' === opts.currentValue) otroOpt.selected = true;
+            el.appendChild(otroOpt);
 
-        // Add suggest option
-        if (opts.addSuggestOption) {
             var suggestOpt = document.createElement('option');
             suggestOpt.value = '__suggest__';
             suggestOpt.textContent = '+ Agregar nueva categoria';
@@ -90,17 +114,16 @@
     }
 
     /**
-     * Populate all known category selects on the current page.
-     * The "suggest" option is only added to the business form select.
+     * Populate flat category selects (search, map, dashboard).
      */
-    async function loadAllDynamicCategories() {
-        var cats = await fetchCategories();
+    async function loadFlatSelects() {
+        var cats = await fetchFlatCategories();
 
-        SELECT_IDS.forEach(function (id) {
+        FLAT_SELECT_IDS.forEach(function (id) {
             var el = document.getElementById(id);
             if (!el) return;
 
-            var isFormSelect = (id === 'propCategoria');
+            var isFormSelect = (id === 'editBizCat');
             var firstOption = el.querySelector('option:first-child');
             var firstHtml = firstOption ? firstOption.outerHTML : '<option value="">Todas las categorias</option>';
             var currentValue = el.value;
@@ -132,27 +155,162 @@
     }
 
     /**
-     * Invalidate cache (call after admin creates a new category).
+     * Setup cascading tipo→categoria selects (new-business form).
+     */
+    async function loadCascadingSelects() {
+        var tipos = await fetchTipos();
+
+        CASCADING_TIPO_IDS.forEach(function (tipoId) {
+            var tipoEl = document.getElementById(tipoId);
+            if (!tipoEl) return;
+
+            populateTipoSelect(tipoEl, tipos);
+
+            // When tipo changes, filter categories
+            tipoEl.addEventListener('change', function () {
+                var selectedSlug = this.value;
+                var selectedTipo = tipos.find(function (t) { return t.slug === selectedSlug; });
+                var cats = (selectedTipo && selectedTipo.categories) ? selectedTipo.categories : [];
+
+                CASCADING_CAT_IDS.forEach(function (catId) {
+                    var catEl = document.getElementById(catId);
+                    if (catEl) {
+                        populateCategorySelect(catEl, cats, { isFormSelect: true });
+                    }
+                });
+
+                updateSlugPreview();
+            });
+        });
+
+        // Also listen to category change for slug preview
+        CASCADING_CAT_IDS.forEach(function (catId) {
+            var catEl = document.getElementById(catId);
+            if (catEl) {
+                catEl.addEventListener('change', updateSlugPreview);
+            }
+        });
+
+        // Listen to title input for slug preview
+        var titleInput = document.getElementById(TITLE_INPUT_ID);
+        if (titleInput) {
+            titleInput.addEventListener('input', updateSlugPreview);
+        }
+
+        // Initial slug preview update
+        updateSlugPreview();
+    }
+
+    /**
+     * Update the slug preview widget.
+     */
+    function updateSlugPreview() {
+        var previewEl = document.getElementById(SLUG_PREVIEW_ID);
+        var previewWrap = document.getElementById('slugPreview');
+        if (!previewEl || !previewWrap) return;
+
+        var tipoEl = document.getElementById('propTipoNegocio');
+        var catEl = document.getElementById('propCategoria');
+        var titleEl = document.getElementById(TITLE_INPUT_ID);
+
+        var tipo = tipoEl ? tipoEl.value : '';
+        var cat = catEl ? catEl.value : '';
+        var title = titleEl ? titleEl.value : '';
+
+        if (!tipo && !cat && !title) {
+            previewWrap.style.display = 'none';
+            return;
+        }
+
+        previewWrap.style.display = 'block';
+
+        // Slugify title
+        var slug = (title || 'mi-negocio').trim().toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            .substring(0, 80) || 'mi-negocio';
+
+        var url = '/' + (tipo || 'tipo') + '/' + (cat || 'categoria') + '/' + slug;
+        previewEl.textContent = url;
+    }
+
+    /**
+     * Legacy: populate a single select by selector (backward compat).
+     */
+    async function loadDynamicCategories(selectEl, opts) {
+        opts = opts || {};
+        var el = typeof selectEl === 'string' ? document.querySelector(selectEl) : selectEl;
+        if (!el) return;
+
+        var cats = await fetchFlatCategories();
+
+        var firstOption = el.querySelector('option:first-child');
+        var firstHtml = firstOption ? firstOption.outerHTML : '<option value="">Selecciona una categoria</option>';
+        var currentValue = opts.currentValue || el.value;
+
+        el.innerHTML = firstHtml;
+
+        cats.forEach(function (c) {
+            var opt = document.createElement('option');
+            opt.value = c.slug;
+            opt.textContent = c.name;
+            if (c.slug === currentValue) opt.selected = true;
+            el.appendChild(opt);
+        });
+
+        var otroOpt = document.createElement('option');
+        otroOpt.value = 'otro';
+        otroOpt.textContent = 'Otro';
+        if ('otro' === currentValue) otroOpt.selected = true;
+        el.appendChild(otroOpt);
+
+        if (opts.addSuggestOption) {
+            var suggestOpt = document.createElement('option');
+            suggestOpt.value = '__suggest__';
+            suggestOpt.textContent = '+ Agregar nueva categoria';
+            suggestOpt.style.color = '#006EE3';
+            suggestOpt.style.fontWeight = '600';
+            el.appendChild(suggestOpt);
+        }
+    }
+
+    /**
+     * Populate all known selects on the current page.
+     */
+    async function loadAllDynamicCategories() {
+        // Load cascading tipo→categoria (new-business form)
+        loadCascadingSelects();
+        // Load flat selects (search, map, dashboard)
+        loadFlatSelects();
+    }
+
+    /**
+     * Invalidate cache.
      */
     function invalidateCategoryCache() {
-        _cachedCategories = null;
+        _cachedTipos = null;
+        _cachedFlat = null;
     }
 
     // Expose globally
     window.loadDynamicCategories = loadDynamicCategories;
     window.loadAllDynamicCategories = loadAllDynamicCategories;
     window.invalidateCategoryCache = invalidateCategoryCache;
+    window.updateSlugPreview = updateSlugPreview;
 
     // Auto-load on pages that have any known select
-    var hasAny = SELECT_IDS.some(function (id) { return document.getElementById(id); });
+    var allIds = CASCADING_TIPO_IDS.concat(CASCADING_CAT_IDS).concat(FLAT_SELECT_IDS);
+    var hasAny = allIds.some(function (id) { return document.getElementById(id); });
     if (hasAny) {
-        // Small delay to let other scripts initialize first
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', function () {
-                setTimeout(loadAllDynamicCategories, 50);
+                setTimeout(loadAllDynamicCategories, 100);
             });
         } else {
-            setTimeout(loadAllDynamicCategories, 50);
+            setTimeout(loadAllDynamicCategories, 100);
         }
     }
 

@@ -29,7 +29,7 @@ export async function onRequestGet(context) {
     // Fetch all approved businesses with slugs
     try {
       const businesses = await env.DB.prepare(
-        "SELECT b.slug, b.business_type, b.updated_at, c.slug as category_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
+        "SELECT b.slug, b.business_type, b.updated_at, c.slug as category_slug, tn.slug as tipo_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
       ).all();
 
       function slugify(text) {
@@ -39,7 +39,7 @@ export async function onRequestGet(context) {
 
       for (const biz of businesses.results) {
         const lastmod = biz.updated_at ? biz.updated_at.substring(0, 10) : '';
-        const tipo = slugify(biz.business_type || 'negocio');
+        const tipo = biz.tipo_slug || slugify(biz.business_type || 'negocio');
         const cat = biz.category_slug || 'otro';
         dynamicUrls += `  <url>
     <loc>${baseUrl}/${tipo}/${cat}/${biz.slug}</loc>

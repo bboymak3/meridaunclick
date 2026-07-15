@@ -157,61 +157,23 @@
 
                         <div class="pf-grid-2">
                             <div class="pf-field">
-                                <label for="propCategoria" class="pf-label">
-                                    <i class="fas fa-th-large"></i> Categoría <span class="pf-required">*</span>
+                                <label for="propTipoNegocio" class="pf-label">
+                                    <i class="fas fa-briefcase"></i> Tipo de Negocio <span class="pf-required">*</span>
                                 </label>
                                 <div class="pf-select-wrapper">
-                                    <select id="propCategoria" name="categoria" required>
-                                        <option value="">Selecciona una categoría</option>
-                                        <option value="restaurantes">Restaurantes</option>
-                                        <option value="farmacias">Farmacias</option>
-                                        <option value="clinicas-hospitales">Clínicas y Hospitales</option>
-                                        <option value="medicina-servicio-medico">Medicina / Servicio Médico</option>
-                                        <option value="supermercados">Supermercados</option>
-                                        <option value="ropas">Ropas</option>
-                                        <option value="barberias">Barberías y Salones</option>
-                                        <option value="auto-talleres">Auto Talleres</option>
-                                        <option value="cafeterias">Cafeterías</option>
-                                        <option value="bares-discotecas">Bares y Discotecas</option>
-                                        <option value="ferreterias">Ferreterías</option>
-                                        <option value="tecnologia">Tecnología</option>
-                                        <option value="hoteles-posadas">Hoteles y Posadas</option>
-                                        <option value="gimnasios">Gimnasios</option>
-                                        <option value="dentistas">Dentistas</option>
-                                        <option value="celulares">Celulares</option>
-                                        <option value="mueblerias">Mueblerías</option>
-                                        <option value="juridicos">Jurídicos</option>
-                                        <option value="academias">Academias</option>
-                                        <option value="veterinarias">Veterinarias</option>
-                                        <option value="electricos">Eléctricos</option>
-                                        <option value="perfumerias">Perfumerías</option>
-                                        <option value="joyerias">Joyerías</option>
-                                        <option value="zapaterias">Zapaterías</option>
-                                        <option value="panaderias">Panaderías</option>
-                                        <option value="heladerias">Heladerías</option>
-                                        <option value="pizzerias">Pizzerías</option>
-                                        <option value="bicicletas">Bicicletas</option>
-                                        <option value="encomiendas">Encomiendas</option>
-                                        <option value="lavanderias">Lavanderías</option>
-                                        <option value="otro">Otro</option>
-                                        <option value="__suggest__" style="color:#006EE3;font-weight:600;">+ Agregar nueva categoría</option>
+                                    <select id="propTipoNegocio" name="tipo_negocio" required>
+                                        <option value="">Cargando tipos...</option>
                                     </select>
                                     <i class="fas fa-chevron-down pf-select-arrow"></i>
                                 </div>
                             </div>
                             <div class="pf-field">
-                                <label for="propTipoNegocio" class="pf-label">
-                                    <i class="fas fa-store"></i> Tipo de Negocio <span class="pf-required">*</span>
+                                <label for="propCategoria" class="pf-label">
+                                    <i class="fas fa-th-large"></i> Categoría <span class="pf-required">*</span>
                                 </label>
                                 <div class="pf-select-wrapper">
-                                    <select id="propTipoNegocio" name="tipo_negocio" required>
-                                        <option value="">Selecciona el tipo</option>
-                                        <option value="negocio">Negocio</option>
-                                        <option value="profesional">Profesional</option>
-                                        <option value="servicio">Servicio</option>
-                                        <option value="restaurante">Restaurante</option>
-                                        <option value="tienda">Tienda</option>
-                                        <option value="otro">Otro</option>
+                                    <select id="propCategoria" name="categoria" required>
+                                        <option value="">Primero selecciona un tipo</option>
                                     </select>
                                     <i class="fas fa-chevron-down pf-select-arrow"></i>
                                 </div>
@@ -634,7 +596,7 @@
     <!-- Slug Preview -->
     <div id="slugPreview" style="display:none;position:fixed;bottom:20px;right:20px;background:#1e293b;color:#e2e8f0;padding:12px 18px;border-radius:10px;font-size:0.82rem;max-width:400px;z-index:1000;box-shadow:0 4px 20px rgba(0,0,0,0.3);">
         <div style="font-size:0.72rem;color:#94a3b8;margin-bottom:4px;">URL preview:</div>
-        <div id="slugPreviewText" style="word-break:break-all;font-family:monospace;color:#38bdf8;">/negocio/mi-negocio</div>
+        <div id="slugPreviewText" style="word-break:break-all;font-family:monospace;color:#38bdf8;">/tipo/categoria/mi-negocio</div>
     </div>
 
     <!-- Leaflet CSS & JS for location picker map -->

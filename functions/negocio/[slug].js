@@ -15,20 +15,22 @@ export async function onRequestGet(context) {
       return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     }
 
-    // Look up business by slug
+    // Look up business with tipo info from DB
     const business = await env.DB.prepare(
-      `SELECT b.slug, b.business_type, c.slug as category_slug
+      `SELECT b.slug, b.business_type, c.slug as category_slug,
+        tn.slug as tipo_negocio_slug
        FROM businesses b
        LEFT JOIN categories c ON b.category_id = c.id
+       LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
        WHERE b.slug = ? AND b.status = 'approved'`
     ).bind(slug).first();
 
     if (business) {
-      const tipo = slugify(business.business_type || 'negocio');
+      const tipo = business.tipo_negocio_slug || slugify(business.business_type || 'negocio');
       const cat = business.category_slug || 'otro';
       return new Response('', {
         status: 301,
-        headers: { 'Location': `/${tipo}/${cat}/${business.slug}` },
+        headers: { 'Location': '/' + tipo + '/' + cat + '/' + business.slug },
       });
     }
 
@@ -36,17 +38,19 @@ export async function onRequestGet(context) {
     const numericSlug = parseInt(slug);
     if (!isNaN(numericSlug)) {
       const byId = await env.DB.prepare(
-        `SELECT b.slug, b.business_type, c.slug as category_slug
+        `SELECT b.slug, b.business_type, c.slug as category_slug,
+          tn.slug as tipo_negocio_slug
          FROM businesses b
          LEFT JOIN categories c ON b.category_id = c.id
+         LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
          WHERE b.id = ? AND b.status = 'approved'`
       ).bind(numericSlug).first();
       if (byId) {
-        const tipo = slugify(byId.business_type || 'negocio');
+        const tipo = byId.tipo_negocio_slug || slugify(byId.business_type || 'negocio');
         const cat = byId.category_slug || 'otro';
         return new Response('', {
           status: 301,
-          headers: { 'Location': `/${tipo}/${cat}/${byId.slug}` },
+          headers: { 'Location': '/' + tipo + '/' + cat + '/' + byId.slug },
         });
       }
     }

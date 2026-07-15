@@ -416,8 +416,8 @@
 
         setValue('propTitle', business.title);
         setValue('propDescription', business.description);
-        setValue('propCategoria', business.category_id);
-        setValue('propTipoNegocio', business.business_type);
+        setValue('propCategoria', business.category_slug || business.category_id);
+        setValue('propTipoNegocio', business.tipo_negocio_slug || business.business_type || 'negocio');
         setValue('propPhone', business.phone);
         setValue('propWhatsapp', business.whatsapp);
         setValue('propEmail', business.email_contact);
@@ -1222,8 +1222,7 @@
         if (!slugPreview || !slugPreviewText) return;
         var title = titleInput ? titleInput.value.trim() : '';
         var tipo = tipoSelect ? tipoSelect.value : '';
-        var cat = catSelect ? catSelect.options[catSelect.selectedIndex] : null;
-        var catName = (cat && cat.value && cat.value !== '__suggest__') ? cat.textContent : '';
+        var cat = catSelect ? catSelect.value : '';
 
         if (!title) {
             slugPreview.style.display = 'none';
@@ -1231,16 +1230,12 @@
         }
 
         var slugName = slugifyText(title);
-        var slugTipo = slugifyText(tipo);
-        var slugCat = slugifyText(catName);
-
         var urlParts = [];
-        if (slugTipo) urlParts.push(slugTipo);
-        if (slugCat) urlParts.push(slugCat);
+        if (tipo) urlParts.push(tipo);
+        if (cat && cat !== '__suggest__') urlParts.push(cat);
         urlParts.push(slugName);
 
-        var fullUrl = 'aunclick.pages.dev/' + urlParts.join('/');
-        slugPreviewText.textContent = fullUrl;
+        slugPreviewText.textContent = '/' + urlParts.join('/');
         slugPreview.style.display = 'block';
     }
 
