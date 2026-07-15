@@ -142,30 +142,43 @@ export async function onRequestGet(context) {
     const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();
     const total = countResult.total;
 
-    // Fetch businesses with cover image, owner info, and tipo info
-    const query = `
-      SELECT 
-        p.*,
-        c.name as category_name,
-        c.slug as category_slug,
-        tn.slug as tipo_negocio_slug,
-        tn.name as tipo_negocio_name,
-        u.name as owner_name,
-        u.phone as owner_phone,
-        u.whatsapp as owner_whatsapp,
-        u.avatar as owner_avatar,
-        (SELECT url FROM images WHERE business_id = p.id AND is_cover = 1 LIMIT 1) as cover_image,
-        (SELECT COUNT(*) FROM images WHERE business_id = p.id) as image_count
-      FROM businesses p
-      LEFT JOIN categories c ON p.category_id = c.id
-      LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
-      LEFT JOIN users u ON p.user_id = u.id
-      WHERE ${whereClause}
-      ORDER BY ${orderBy}
-      LIMIT ? OFFSET ?
-    `;
-
-    const businesses = await env.DB.prepare(query).bind(...bindings, limit, offset).all();
+    // Fetch businesses — try with tipos_negocio JOIN, fallback without
+    let businesses;
+    try {
+      const queryWithTipo = `
+        SELECT 
+          p.*,
+          c.name as category_name, c.slug as category_slug,
+          tn.slug as tipo_negocio_slug, tn.name as tipo_negocio_name,
+          u.name as owner_name, u.phone as owner_phone, u.whatsapp as owner_whatsapp, u.avatar as owner_avatar,
+          (SELECT url FROM images WHERE business_id = p.id AND is_cover = 1 LIMIT 1) as cover_image,
+          (SELECT COUNT(*) FROM images WHERE business_id = p.id) as image_count
+        FROM businesses p
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
+        LEFT JOIN users u ON p.user_id = u.id
+        WHERE ${whereClause}
+        ORDER BY ${orderBy}
+        LIMIT ? OFFSET ?
+      `;
+      businesses = await env.DB.prepare(queryWithTipo).bind(...bindings, limit, offset).all();
+    } catch (joinErr) {
+      const querySimple = `
+        SELECT 
+          p.*,
+          c.name as category_name, c.slug as category_slug,
+          u.name as owner_name, u.phone as owner_phone, u.whatsapp as owner_whatsapp, u.avatar as owner_avatar,
+          (SELECT url FROM images WHERE business_id = p.id AND is_cover = 1 LIMIT 1) as cover_image,
+          (SELECT COUNT(*) FROM images WHERE business_id = p.id) as image_count
+        FROM businesses p
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN users u ON p.user_id = u.id
+        WHERE ${whereClause}
+        ORDER BY ${orderBy}
+        LIMIT ? OFFSET ?
+      `;
+      businesses = await env.DB.prepare(querySimple).bind(...bindings, limit, offset).all();
+    }
 
     return new Response(JSON.stringify({
       businesses: businesses.results,
@@ -290,10 +303,14 @@ export async function onRequestPost(context) {
     // Derive business_type from category's tipo_negocio (for SEO slug URLs)
     let finalBusinessType = business_type;
     if (!finalBusinessType || ['negocio', 'otro'].includes(finalBusinessType)) {
-      const catTipo = await env.DB.prepare(
-        'SELECT tn.slug FROM categories c JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id WHERE c.id = ?'
-      ).bind(resolvedCategoryId).first();
-      finalBusinessType = catTipo ? catTipo.slug : 'negocio';
+      try {
+        const catTipo = await env.DB.prepare(
+          'SELECT tn.slug FROM categories c JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id WHERE c.id = ?'
+        ).bind(resolvedCategoryId).first();
+        finalBusinessType = catTipo ? catTipo.slug : 'negocio';
+      } catch (e) {
+        finalBusinessType = 'negocio';
+      }
     }
 
     // Generate unique slug from title

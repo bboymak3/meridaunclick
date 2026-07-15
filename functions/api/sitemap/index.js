@@ -28,9 +28,16 @@ export async function onRequestGet(context) {
 
     // Fetch all approved businesses with slugs
     try {
-      const businesses = await env.DB.prepare(
-        "SELECT b.slug, b.business_type, b.updated_at, c.slug as category_slug, tn.slug as tipo_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
-      ).all();
+      let businesses;
+      try {
+        businesses = await env.DB.prepare(
+          "SELECT b.slug, b.business_type, b.updated_at, c.slug as category_slug, tn.slug as tipo_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
+        ).all();
+      } catch (joinErr) {
+        businesses = await env.DB.prepare(
+          "SELECT b.slug, b.business_type, b.updated_at, c.slug as category_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
+        ).all();
+      }
 
       function slugify(text) {
         if (!text) return '';

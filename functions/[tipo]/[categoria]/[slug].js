@@ -14,6 +14,27 @@ function slugify(text) {
 
 const SITE_URL = 'https://aunclick.pages.dev';
 
+// Simple query without tipos_negocio JOIN (safe fallback)
+const BIZ_SIMPLE = `SELECT
+  b.*,
+  c.name as category_name, c.slug as category_slug,
+  (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
+  (SELECT COUNT(*) FROM images WHERE business_id = b.id) as image_count
+FROM businesses b
+LEFT JOIN categories c ON b.category_id = c.id`;
+
+// Full query with tipos_negocio JOIN
+const BIZ_FULL = `SELECT
+  b.*,
+  c.name as category_name, c.slug as category_slug,
+  c.tipo_negocio_id,
+  tn.slug as tipo_negocio_slug, tn.name as tipo_negocio_name,
+  (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
+  (SELECT COUNT(*) FROM images WHERE business_id = b.id) as image_count
+FROM businesses b
+LEFT JOIN categories c ON b.category_id = c.id
+LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id`;
+
 export async function onRequestGet(context) {
   try {
     const { env, params } = context;
@@ -23,68 +44,29 @@ export async function onRequestGet(context) {
       return new Response('Database unavailable', { status: 500 });
     }
 
-    // Look up the tipo_negocio by slug to get its ID
-    const tipoRow = await env.DB.prepare(
-      'SELECT id, slug, name FROM tipos_negocio WHERE slug = ? AND is_active = 1'
-    ).bind(tipo).first();
+    // Check if tipos_negocio table exists
+    let hasTiposTable = false;
+    try {
+      await env.DB.prepare('SELECT 1 FROM tipos_negocio LIMIT 1').first();
+      hasTiposTable = true;
+    } catch (e) { /* table doesn't exist yet */ }
 
-    // Also look up the category by slug
+    // Look up the category by slug
     const catRow = await env.DB.prepare(
       'SELECT id, slug, name, tipo_negocio_id FROM categories WHERE slug = ? AND is_active = 1'
     ).bind(categoria).first();
 
-    // Build the query: find business by slug, optionally filtered by tipo+categoria
+    // Build query based on what tables exist
+    const baseQuery = hasTiposTable ? BIZ_FULL : BIZ_SIMPLE;
     let business;
-    if (tipoRow && catRow) {
-      // Full match: filter by both tipo and category
+
+    if (catRow) {
       business = await env.DB.prepare(
-        `SELECT
-          b.*,
-          c.name as category_name,
-          c.slug as category_slug,
-          c.tipo_negocio_id,
-          tn.slug as tipo_negocio_slug,
-          tn.name as tipo_negocio_name,
-          (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
-          (SELECT COUNT(*) FROM images WHERE business_id = b.id) as image_count
-        FROM businesses b
-        LEFT JOIN categories c ON b.category_id = c.id
-        LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
-        WHERE b.slug = ? AND b.status = 'approved' AND c.id = ?`
-      ).bind(slug, catRow.id).first();
-    } else if (catRow) {
-      // Only category match
-      business = await env.DB.prepare(
-        `SELECT
-          b.*,
-          c.name as category_name,
-          c.slug as category_slug,
-          c.tipo_negocio_id,
-          tn.slug as tipo_negocio_slug,
-          tn.name as tipo_negocio_name,
-          (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
-          (SELECT COUNT(*) FROM images WHERE business_id = b.id) as image_count
-        FROM businesses b
-        LEFT JOIN categories c ON b.category_id = c.id
-        LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
-        WHERE b.slug = ? AND b.status = 'approved' AND c.id = ?`
+        baseQuery + ' WHERE b.slug = ? AND b.status = \'approved\' AND c.id = ?'
       ).bind(slug, catRow.id).first();
     } else {
-      // Fallback: just by slug (no tipo/category filter)
       business = await env.DB.prepare(
-        `SELECT
-          b.*,
-          c.name as category_name,
-          c.slug as category_slug,
-          c.tipo_negocio_id,
-          tn.slug as tipo_negocio_slug,
-          tn.name as tipo_negocio_name,
-          (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
-          (SELECT COUNT(*) FROM images WHERE business_id = b.id) as image_count
-        FROM businesses b
-        LEFT JOIN categories c ON b.category_id = c.id
-        LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
-        WHERE b.slug = ? AND b.status = 'approved'`
+        baseQuery + ' WHERE b.slug = ? AND b.status = \'approved\''
       ).bind(slug).first();
     }
 
@@ -93,13 +75,7 @@ export async function onRequestGet(context) {
       const numericSlug = parseInt(slug);
       if (!isNaN(numericSlug)) {
         const byId = await env.DB.prepare(
-          `SELECT b.*, c.name as category_name, c.slug as category_slug,
-            tn.slug as tipo_negocio_slug, tn.name as tipo_negocio_name,
-            (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image
-          FROM businesses b
-          LEFT JOIN categories c ON b.category_id = c.id
-          LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
-          WHERE b.id = ? AND b.status = 'approved'`
+          baseQuery + ' WHERE b.id = ? AND b.status = \'approved\''
         ).bind(numericSlug).first();
         if (byId) {
           const correctTipo = byId.tipo_negocio_slug || slugify(byId.business_type || 'negocio');

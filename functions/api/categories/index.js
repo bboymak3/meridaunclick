@@ -70,14 +70,26 @@ export async function onRequestGet(context) {
       });
     }
 
-    const categories = await env.DB.prepare(
-      `SELECT c.*, 
-        tn.name as tipo_negocio_name, tn.slug as tipo_negocio_slug, tn.icon as tipo_negocio_icon,
-        (SELECT COUNT(*) FROM businesses b WHERE b.category_id = c.id AND b.status = 'approved') as business_count 
-       FROM categories c 
-       LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
-       WHERE c.is_active = 1 ORDER BY c.sort_order ASC, c.name ASC`
-    ).all();
+    // Try with tipos_negocio JOIN first; fallback to simple query if table doesn't exist
+    let categories;
+    try {
+      categories = await env.DB.prepare(
+        `SELECT c.*, 
+          tn.name as tipo_negocio_name, tn.slug as tipo_negocio_slug, tn.icon as tipo_negocio_icon,
+          (SELECT COUNT(*) FROM businesses b WHERE b.category_id = c.id AND b.status = 'approved') as business_count 
+         FROM categories c 
+         LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
+         WHERE c.is_active = 1 ORDER BY c.sort_order ASC, c.name ASC`
+      ).all();
+    } catch (joinErr) {
+      // tipos_negocio table may not exist yet (migration pending)
+      categories = await env.DB.prepare(
+        `SELECT c.*,
+          (SELECT COUNT(*) FROM businesses b WHERE b.category_id = c.id AND b.status = 'approved') as business_count 
+         FROM categories c 
+         WHERE c.is_active = 1 ORDER BY c.sort_order ASC, c.name ASC`
+      ).all();
+    }
 
     return new Response(JSON.stringify({ categories: categories.results }), {
       status: 200,
