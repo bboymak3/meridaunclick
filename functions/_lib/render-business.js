@@ -266,30 +266,36 @@ export function renderBusinessPage(env, business, options = {}) {
 /* === Compact Business Cards (for similar businesses) === */
 .business-detail-page .business-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
 }
 .business-detail-page .business-card {
     background: #fff;
-    border-radius: 10px;
+    border-radius: 14px;
     overflow: hidden;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #eef0f4;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1), box-shadow 0.25s cubic-bezier(.4,0,.2,1), border-color 0.25s;
 }
 .business-detail-page .business-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0,110,227,0.10);
+    border-color: #c2dbf5;
 }
 .business-detail-page .business-card-image {
-    height: 120px;
+    height: 100px;
     overflow: hidden;
     position: relative;
+    background: #f3f4f6;
 }
 .business-detail-page .business-card-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.3s ease;
+}
+.business-detail-page .business-card:hover .business-card-image img {
+    transform: scale(1.05);
 }
 .business-detail-page .business-card-badges {
     position: absolute;
@@ -300,57 +306,67 @@ export function renderBusinessPage(env, business, options = {}) {
     z-index: 2;
 }
 .business-detail-page .business-card-badges .card-badge {
-    font-size: 0.58rem;
+    font-size: 0.55rem;
     padding: 2px 7px;
     border-radius: 6px;
     font-weight: 600;
+    letter-spacing: 0.01em;
 }
 .business-detail-page .business-card-fav,
 .business-detail-page .btn-share-wa-card {
     position: absolute;
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
     border-radius: 7px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.75rem;
-    background: rgba(255,255,255,0.9);
+    font-size: 0.7rem;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(4px);
     border: none;
     cursor: pointer;
     z-index: 2;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    transition: transform 0.2s;
 }
-.business-detail-page .business-card-fav { top: 6px; right: 38px; color: #e74c3c; }
+.business-detail-page .business-card-fav { top: 6px; right: 36px; color: #e74c3c; }
+.business-detail-page .business-card-fav:hover { transform: scale(1.15); }
 .business-detail-page .btn-share-wa-card { top: 6px; right: 6px; color: #25d366; }
+.business-detail-page .btn-share-wa-card:hover { transform: scale(1.15); }
 .business-detail-page .business-card-body {
-    padding: 8px 10px 10px;
+    padding: 10px 10px 12px;
+    text-align: center;
 }
 .business-detail-page .business-card-title {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 700;
     color: #1e293b;
-    margin: 0 0 2px;
-    line-height: 1.25;
+    margin: 0 0 4px;
+    line-height: 1.3;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .business-detail-page .business-card-location {
-    font-size: 0.65rem;
-    color: #64748b;
-    margin: 0 0 3px;
-}
-.business-detail-page .business-card-location i { font-size: 0.58rem; }
-.business-detail-page .business-card-desc {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     color: #94a3b8;
+    margin: 0 auto 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+.business-detail-page .business-card-location i { font-size: 0.55rem; }
+.business-detail-page .business-card-desc {
+    font-size: 0.62rem;
+    color: #b0b8c4;
     line-height: 1.4;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    text-align: center;
 }
 .business-detail-page .business-card-link {
     text-decoration: none;
@@ -424,13 +440,27 @@ export function renderBusinessPage(env, business, options = {}) {
     max-height: 300px;
 }
 
+@media (max-width: 900px) and (min-width: 641px) {
+    .business-detail-page .business-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
 @media (max-width: 640px) {
     .business-detail-page .business-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
     }
     .business-detail-page .business-card-image {
-        height: 100px;
+        height: 80px;
+    }
+    .business-detail-page .business-card-body {
+        padding: 8px 6px 10px;
+    }
+    .business-detail-page .business-card-title {
+        font-size: 0.7rem;
+    }
+    .business-detail-page .business-card-desc {
+        -webkit-line-clamp: 1;
     }
     .products-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -716,10 +746,10 @@ export function renderBusinessPage(env, business, options = {}) {
                 </section>
             </div>
 
-            <section class="section hidden" id="similarSection">
+            <section class="section hidden" id="similarSection" style="margin-top:28px;">
                 <div class="section-header">
-                    <h2 class="section-title">Negocios Similares</h2>
-                    <a href="/search.html" class="section-link">Ver más <i class="fas fa-arrow-right"></i></a>
+                    <h2 class="section-title" style="display:flex;align-items:center;gap:8px;"><i class="fas fa-store" style="color:#006EE3;font-size:0.9rem;"></i> Negocios Similares</h2>
+                    <a href="/search.html" class="section-link" style="font-size:0.8rem;">Ver más <i class="fas fa-arrow-right"></i></a>
                 </div>
                 <div class="business-grid" id="similarGrid"></div>
             </section>
