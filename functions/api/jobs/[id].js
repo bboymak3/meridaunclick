@@ -69,7 +69,11 @@ function renderJobHTML(job) {
   const companyInitials = (job.company_name || 'E').substring(0, 2).toUpperCase();
   const whatsappMsg = encodeURIComponent(`Hola, vi la oferta de empleo "${job.title}" en HolaX y me interesa aplicar.`);
   const whatsappLink = job.business_whatsapp ? `https://wa.me/${job.business_whatsapp.replace(/[^0-9]/g,'')}?text=${whatsappMsg}` : job.contact_phone ? `https://wa.me/${job.contact_phone.replace(/[^0-9]/g,'')}?text=${whatsappMsg}` : null;
-  const businessLink = job.business_slug ? `/negocio/${job.business_slug}` : null;
+  const businessLink = job.business_slug ? (() => {
+    var tipo = (job.business_type || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    var cat = job.category_slug || 'otro';
+    return '/' + tipo + '/' + cat + '/' + job.business_slug;
+  })() : null;
 
   let jobImages = [];
   if (job.images) { try { const p = JSON.parse(job.images); if (Array.isArray(p)) jobImages = p.filter(u => u && u.trim()); } catch(e) { if (job.images.trim()) jobImages = [job.images.trim()]; } }
@@ -164,11 +168,13 @@ export async function onRequestGet(context) {
 
     const job = await env.DB.prepare(
       `SELECT j.*,
-              b.title as business_title, b.slug as business_slug,
+              b.title as business_title, b.slug as business_slug, b.business_type,
               b.phone as business_phone, b.whatsapp as business_whatsapp,
-              b.logo as business_logo
+              b.logo as business_logo,
+              c.slug as category_slug
        FROM job_listings j
        LEFT JOIN businesses b ON j.business_id = b.id
+       LEFT JOIN categories c ON b.category_id = c.id
        WHERE j.id = ?`
     ).bind(id).first();
 

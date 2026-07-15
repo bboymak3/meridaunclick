@@ -29,14 +29,20 @@ export async function onRequestGet(context) {
     // Fetch all approved businesses with slugs
     try {
       const businesses = await env.DB.prepare(
-        "SELECT b.slug, b.updated_at, c.slug as category_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
+        "SELECT b.slug, b.business_type, b.updated_at, c.slug as category_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
       ).all();
+
+      function slugify(text) {
+        if (!text) return '';
+        return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      }
 
       for (const biz of businesses.results) {
         const lastmod = biz.updated_at ? biz.updated_at.substring(0, 10) : '';
-        const prefix = (biz.category_slug === 'medicina-servicio-medico') ? '/medicina-servicio-medico' : '/negocio';
+        const tipo = slugify(biz.business_type || 'negocio');
+        const cat = biz.category_slug || 'otro';
         dynamicUrls += `  <url>
-    <loc>${baseUrl}${prefix}/${biz.slug}</loc>
+    <loc>${baseUrl}/${tipo}/${cat}/${biz.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>
@@ -64,13 +70,14 @@ export async function onRequestGet(context) {
     // Fetch all approved products with slugs
     try {
       const products = await env.DB.prepare(
-        "SELECT slug, updated_at FROM products WHERE (status = 'approved' OR status IS NULL) AND slug IS NOT NULL AND slug != '' ORDER BY updated_at DESC"
+        "SELECT slug, category, updated_at FROM products WHERE (status = 'approved' OR status IS NULL) AND slug IS NOT NULL AND slug != '' ORDER BY updated_at DESC"
       ).all();
 
       for (const prod of products.results) {
         const lastmod = prod.updated_at ? prod.updated_at.substring(0, 10) : '';
+        const tipo = slugify(prod.category || 'general');
         dynamicUrls += `  <url>
-    <loc>${baseUrl}/producto/${prod.slug}</loc>
+    <loc>${baseUrl}/producto/${tipo}/${prod.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <priority>0.7</priority>
     <changefreq>weekly</changefreq>

@@ -67,6 +67,7 @@ export async function onRequestGet(context) {
     // Fetch businesses
     const businesses = await env.DB.prepare(
       `SELECT b.id, b.title, b.slug, b.city, b.phone, b.whatsapp,
+              b.business_type,
               c.name as category_name, c.slug as category_slug,
               (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
               b.featured
@@ -116,8 +117,11 @@ export async function onRequestGet(context) {
     // Build business cards
     const bizCards = (businesses.results || []).map(b => {
       const img = b.cover_image || '';
+      const tipo = (b.business_type || 'negocio').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const cat = b.category_slug || 'otro';
       return `
-        <a href="${b.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio'}/${b.slug}" class="est-biz-card">
+        <a href="${esc('/' + tipo + '/' + cat + '/' + b.slug)}" class="est-biz-card">
           <div class="est-biz-img">
             ${img ? `<img src="${esc(img)}" alt="${esc(b.title)}" loading="lazy" onerror="this.style.display='none'">` : `<div class="est-biz-ph"><i class="fas fa-store"></i></div>`}
             ${b.featured ? '<span class="est-biz-featured"><i class="fas fa-star"></i></span>' : ''}

@@ -15,7 +15,7 @@ export async function onRequestGet(context) {
     const business = await env.DB.prepare(
       `SELECT 
         b.*,
-        c.name as category_name,
+        c.name as category_name, c.slug as category_slug,
         (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
         (SELECT COUNT(*) FROM products WHERE business_id = b.id AND (status = 'approved' OR status IS NULL)) as product_count,
         (SELECT COUNT(*) FROM images WHERE business_id = b.id) as image_count
@@ -44,6 +44,8 @@ export async function onRequestGet(context) {
     ).bind(business.id).all();
 
     const baseUrl = 'https://aunclick.pages.dev';
+    const bizTipo = (business.business_type || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const bizCat = business.category_slug || 'otro';
     const title = business.title || 'Negocio';
     const fullDescription = business.description || '';
     const metaDescription = fullDescription
@@ -106,7 +108,7 @@ export async function onRequestGet(context) {
     <meta name="description" content="${escapeHtml(metaDescription)}">
     <title>${escapeHtml(title)} - ${escapeHtml(business.category_name || 'Negocio')} en ${escapeHtml(business.city || 'Venezuela')}</title>
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="${baseUrl}/negocio/${business.slug}">
+    <link rel="canonical" href="${baseUrl}/${bizTipo}/${bizCat}/${business.slug}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
@@ -132,7 +134,7 @@ export async function onRequestGet(context) {
         "@context": "https://schema.org",
         "@type": "LocalBusiness",
         "name": title,
-        "url": `${baseUrl}/negocio/${business.slug}`,
+        "url": `${baseUrl}/${bizTipo}/${bizCat}/${business.slug}`,
         "image": imageUrl
       };
       if (fullDescription) ld.description = fullDescription;
@@ -877,7 +879,7 @@ ${(socialUrls.instagram || socialUrls.facebook || socialUrls.twitter || socialUr
             <h2 class="lp-section-title">Nuestras Redes Sociales</h2>
         </div>
         <div class="lp-social-grid">
-            ${business.slug ? `<a href="${baseUrl}/negocio/${escapeHtml(business.slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#006EE3,#0ea5e9);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fas fa-store" style="font-size:1.75rem;"></i> Ficha del Negocio</a>` : ''}
+            ${business.slug ? `<a href="${baseUrl}/${bizTipo}/${bizCat}/${escapeHtml(business.slug)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#006EE3,#0ea5e9);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fas fa-store" style="font-size:1.75rem;"></i> Ficha del Negocio</a>` : ''}
             ${socialUrls.instagram ? `<a href="${escapeHtml(socialUrls.instagram)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-instagram" style="font-size:1.75rem;"></i> Instagram</a>` : ''}
             ${socialUrls.facebook ? `<a href="${escapeHtml(socialUrls.facebook)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#1877f2;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-facebook-f" style="font-size:1.75rem;"></i> Facebook</a>` : ''}
             ${socialUrls.twitter ? `<a href="${escapeHtml(socialUrls.twitter)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:12px;padding:19px 35px;border-radius:20px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:1.5rem;"><i class="fab fa-x-twitter" style="font-size:1.75rem;"></i> X (Twitter)</a>` : ''}
@@ -946,7 +948,7 @@ ${(business.lat || business.latitude || business.address) ? `
 <footer class="lp-footer">
     <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">AuNClick</a></p>
     <div class="lp-footer-links">
-        <a href="${baseUrl}/negocio/${business.slug}" target="_blank">Ver en AuNClick</a>
+        <a href="${baseUrl}/${bizTipo}/${bizCat}/${business.slug}" target="_blank">Ver en AuNClick</a>
         ${socialUrls.instagram ? `<a href="${escapeHtml(socialUrls.instagram)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
         ${socialUrls.facebook ? `<a href="${escapeHtml(socialUrls.facebook)}" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
     </div>
@@ -1032,7 +1034,7 @@ window.addEventListener('scroll', () => {
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
         'Cache-Control': 'public, max-age=300',
-        'Link': `<${baseUrl}/negocio/${business.slug}>; rel="canonical"`,
+        'Link': `<${baseUrl}/${bizTipo}/${bizCat}/${business.slug}>; rel="canonical"`,
       },
     });
   } catch (error) {

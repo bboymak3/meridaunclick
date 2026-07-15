@@ -44,7 +44,8 @@ export async function onRequestGet(context) {
     // Fetch approved businesses in this category
     const businesses = await env.DB.prepare(
       `SELECT b.id, b.title, b.slug, b.description, b.city, b.state, b.phone, b.whatsapp,
-              b.logo, c.name as category_name, c.slug as category_slug,
+              b.logo, b.business_type,
+              c.name as category_name, c.slug as category_slug,
               (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
               b.featured, b.views
        FROM businesses b
@@ -70,13 +71,21 @@ export async function onRequestGet(context) {
        LIMIT 15`
     ).bind(category.id).all();
 
+    // Helper to build SEO URL segments for a business
+    function bizTipo(b) {
+      return (b.business_type || 'negocio').toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+
     // Build business cards HTML
     const bizCards = (businesses.results || []).map(b => {
       const desc = b.description ? b.description.substring(0, 120) + (b.description.length > 120 ? '...' : '') : '';
       const img = b.cover_image || b.logo || '';
       const waNum = (b.whatsapp || b.phone || '').replace(/[^0-9]/g, '');
+      const tipo = bizTipo(b);
+      const cat = b.category_slug || 'otro';
       return `
-        <a href="${b.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio'}/${b.slug}" class="cat-biz-card">
+        <a href="${esc('/' + tipo + '/' + cat + '/' + b.slug)}" class="cat-biz-card">
           <div class="cat-biz-img">
             ${img ? `<img src="${esc(img)}" alt="${esc(b.title)}" loading="lazy" onerror="this.style.display='none'">` : `<div class="cat-biz-ph"><i class="fas fa-store"></i></div>`}
             ${b.featured ? '<span class="cat-biz-featured"><i class="fas fa-star"></i></span>' : ''}
@@ -147,7 +156,7 @@ export async function onRequestGet(context) {
         "@type": "ListItem",
         "position": i + 1,
         "name": b.title,
-        "url": `${baseUrl}/negocio/${b.slug}`
+        "url": baseUrl + '/' + bizTipo(b) + '/' + (b.category_slug || 'otro') + '/' + b.slug
       }))
     })}</script>
 

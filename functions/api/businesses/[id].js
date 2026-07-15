@@ -161,6 +161,38 @@ export async function onRequestPut(context) {
       }
     }
 
+    // Regenerate slug if title changed
+    if (body.title && body.title !== business.title) {
+      function generateSlug(text) {
+        return (text || '').trim().toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+          .substring(0, 120);
+      }
+
+      async function ensureUniqueSlug(db, baseSlug, excludeId) {
+        let candidate = baseSlug;
+        let counter = 1;
+        while (counter <= 100) {
+          const existing = await db.prepare('SELECT id FROM businesses WHERE slug = ? AND id != ?').bind(candidate, excludeId || 0).first();
+          if (!existing) break;
+          candidate = baseSlug + '-' + counter;
+          counter++;
+        }
+        return candidate;
+      }
+
+      let newSlug = generateSlug(body.title);
+      if (newSlug) {
+        newSlug = await ensureUniqueSlug(env.DB, newSlug, parseInt(id));
+        setClauses.push('slug = ?');
+        bindings.push(newSlug);
+      }
+    }
+
     if (setClauses.length === 0) {
       return new Response(JSON.stringify({ error: 'No se proporcionaron campos para actualizar' }), {
         status: 400,

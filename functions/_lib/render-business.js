@@ -85,7 +85,7 @@ export function getVideoEmbed(url) {
 export function renderBusinessPage(env, business, options = {}) {
   const {
     pathPrefix = null,
-    finalCanonical = null,
+    canonicalUrl = null,
     categoryBreadcrumb = null,
     sectionLabel = null,
     tipoBreadcrumb = null,
@@ -98,7 +98,7 @@ export function renderBusinessPage(env, business, options = {}) {
     ? business.description.substring(0, 160)
     : `Información sobre ${title} en ${business.city || 'Venezuela'}. Dirección, contacto, servicios y más.`;
   const imageUrl = business.cover_image || `${baseUrl}/logo.png`;
-  const finalCanonical = finalCanonical || `${baseUrl}${pathPrefix || '/negocio'}/${business.slug}`;
+  const finalCanonical = canonicalUrl || `${baseUrl}${pathPrefix || '/negocio'}/${business.slug}`;
 
   // Breadcrumb helpers
   const sectionBreadcrumbText = sectionLabel || 'Negocios';

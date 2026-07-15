@@ -249,12 +249,33 @@ export async function onRequestPost(context) {
 
     const businessId = body.business_id ? parseInt(body.business_id) : null;
 
-    // Generate slug from product name
-    const slug = body.name.trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 120);
+    // Generate unique slug from product name
+    function generateSlug(text) {
+      return (text || '').trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 120);
+    }
+
+    async function ensureUniqueSlug(db, baseSlug, excludeId) {
+      let candidate = baseSlug;
+      let counter = 1;
+      while (counter <= 100) {
+        const existing = await db.prepare('SELECT id FROM products WHERE slug = ? AND id != ?').bind(candidate, excludeId || 0).first();
+        if (!existing) break;
+        candidate = baseSlug + '-' + counter;
+        counter++;
+      }
+      return candidate;
+    }
+
+    let slug = generateSlug(body.name);
+    if (slug) {
+      slug = await ensureUniqueSlug(env.DB, slug, 0);
+    }
 
     const result = await env.DB.prepare(`
       INSERT INTO products (name, slug, price, category, image, description, video_url, sort_order, user_id, business_id, status)

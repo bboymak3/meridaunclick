@@ -294,12 +294,33 @@ export async function onRequestPost(context) {
       resolvedCategoryId = parseInt(catInput);
     }
 
-    // Generate slug from title
-    const slug = title.toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .substring(0, 120);
+    // Generate unique slug from title
+    function generateSlug(text) {
+      return (text || '').trim().toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .substring(0, 120);
+    }
+
+    async function ensureUniqueSlug(db, baseSlug, excludeId) {
+      let candidate = baseSlug;
+      let counter = 1;
+      while (counter <= 100) {
+        const existing = await db.prepare('SELECT id FROM businesses WHERE slug = ? AND id != ?').bind(candidate, excludeId || 0).first();
+        if (!existing) break;
+        candidate = baseSlug + '-' + counter;
+        counter++;
+      }
+      return candidate;
+    }
+
+    let slug = generateSlug(title);
+    if (slug) {
+      slug = await ensureUniqueSlug(env.DB, slug, 0);
+    }
 
     const result = await env.DB.prepare(`
       INSERT INTO businesses (
