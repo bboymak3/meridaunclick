@@ -1,8 +1,5 @@
 // functions/medicina-servicio-medico/[slug].js
-// GET: Serve business detail page at /medicina-servicio-medico/:slug
-// Category-specific URL for Medicina / Servicio Médico businesses (SEO)
-
-import { renderBusinessPage } from '../_lib/render-business.js';
+// Legacy route: redirects to /:tipo/:categoria/:slug format
 
 export async function onRequestGet(context) {
   try {
@@ -13,51 +10,34 @@ export async function onRequestGet(context) {
       return new Response('Database unavailable', { status: 500 });
     }
 
-    // Look up business by slug — only medicina category
+    function slugify(text) {
+      if (!text) return '';
+      return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+
     const business = await env.DB.prepare(
-      `SELECT 
-        b.*,
-        c.name as category_name,
-        c.slug as category_slug,
-        (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
-        (SELECT COUNT(*) FROM images WHERE business_id = b.id) as image_count
-      FROM businesses b
-      LEFT JOIN categories c ON b.category_id = c.id
-      WHERE b.slug = ? AND b.status = 'approved' AND c.slug = 'medicina-servicio-medico'`
+      `SELECT b.slug, b.business_type, c.slug as category_slug
+       FROM businesses b
+       LEFT JOIN categories c ON b.category_id = c.id
+       WHERE b.slug = ? AND b.status = 'approved'`
     ).bind(slug).first();
 
-    if (!business) {
-      // Maybe it exists but is NOT medicina — redirect to /negocio/
-      const anyBiz = await env.DB.prepare(
-        `SELECT slug FROM businesses WHERE slug = ? AND status = 'approved'`
-      ).bind(slug).first();
-      if (anyBiz) {
-        return new Response('', {
-          status: 301,
-          headers: { 'Location': `/negocio/${anyBiz.slug}` },
-        });
-      }
-
-      return new Response('<h1>Negocio no encontrado</h1><p>El negocio que buscas no existe o fue eliminado.</p>', {
-        status: 404,
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    if (business) {
+      const tipo = slugify(business.business_type || 'negocio');
+      const cat = business.category_slug || 'medicina-servicio-medico';
+      return new Response('', {
+        status: 301,
+        headers: { 'Location': `/${tipo}/${cat}/${business.slug}` },
       });
     }
 
-    return renderBusinessPage(env, business, {
-      pathPrefix: '/medicina-servicio-medico',
-      sectionLabel: 'Medicina / Servicio Médico',
-      categoryBreadcrumb: {
-        name: 'Medicina / Servicio Médico',
-        url: 'https://aunclick.pages.dev/categoria/medicina-servicio-medico',
-      },
+    return new Response('<h1>Negocio no encontrado</h1><p>El negocio que buscas no existe o fue eliminado.</p>', {
+      status: 404,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
 
   } catch (error) {
-    console.error('Medicina business GET error:', error);
-    return new Response('Error interno del servidor', {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' },
-    });
+    console.error('Medicina redirect error:', error);
+    return new Response('Error interno del servidor', { status: 500, headers: { 'Content-Type': 'text/plain' } });
   }
 }

@@ -74,16 +74,22 @@ export function getVideoEmbed(url) {
  * @param {object}  env           – Cloudflare env (kept for API consistency / future use)
  * @param {object}  business      – Row from the businesses table
  * @param {object}  options
- * @param {string}  options.pathPrefix         – '/negocio' | '/medicina-servicio-medico'
+ * @param {string}  [options.pathPrefix]       – e.g. '/servicio/medicina-servicio-medico'
+ * @param {string}  [options.canonicalUrl]      – Full canonical URL (overrides pathPrefix-based)
+ * @param {string}  [options.sectionLabel]      – Breadcrumb label for the section
  * @param {{name:string,url:string}} [options.categoryBreadcrumb] – Override category breadcrumb
- * @param {string}  [options.sectionLabel]     – Breadcrumb label for the section (e.g. "Medicina / Servicio Médico")
+ * @param {{name:string,url:string}} [options.tipoBreadcrumb] – Breadcrumb for business type
+ * @param {string}  [options.tipoLabel]         – Display label for business type
  * @returns {Response}
  */
 export function renderBusinessPage(env, business, options = {}) {
   const {
-    pathPrefix = '/negocio',
+    pathPrefix = null,
+    finalCanonical = null,
     categoryBreadcrumb = null,
     sectionLabel = null,
+    tipoBreadcrumb = null,
+    tipoLabel = null,
   } = options;
 
   const baseUrl = 'https://aunclick.pages.dev';
@@ -92,7 +98,7 @@ export function renderBusinessPage(env, business, options = {}) {
     ? business.description.substring(0, 160)
     : `Información sobre ${title} en ${business.city || 'Venezuela'}. Dirección, contacto, servicios y más.`;
   const imageUrl = business.cover_image || `${baseUrl}/logo.png`;
-  const canonicalUrl = `${baseUrl}${pathPrefix}/${business.slug}`;
+  const finalCanonical = finalCanonical || `${baseUrl}${pathPrefix || '/negocio'}/${business.slug}`;
 
   // Breadcrumb helpers
   const sectionBreadcrumbText = sectionLabel || 'Negocios';
@@ -110,14 +116,14 @@ export function renderBusinessPage(env, business, options = {}) {
     <meta name="description" content="${escapeHtml(description)}">
     <title>${escapeHtml(title)} - HolaX | Directorio de Negocios en Venezuela</title>
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="${canonicalUrl}">
+    <link rel="canonical" href="${finalCanonical}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="business.business">
     <meta property="og:title" content="${escapeHtml(title)} - HolaX">
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:image" content="${imageUrl}">
-    <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:url" content="${finalCanonical}">
     <meta property="og:site_name" content="HolaX">
     <meta property="og:locale" content="es_VE">
 
@@ -140,7 +146,7 @@ export function renderBusinessPage(env, business, options = {}) {
         "@context": "https://schema.org",
         "@type": isMedical ? "MedicalBusiness" : "LocalBusiness",
         "name": title,
-        "url": canonicalUrl,
+        "url": finalCanonical,
         "image": imageUrl,
         "description": description
       };
@@ -187,7 +193,7 @@ export function renderBusinessPage(env, business, options = {}) {
         const catSlug = (business.category_name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
         crumbs.push({ "@type": "ListItem", "position": 3, "name": business.category_name, "item": "https://aunclick.pages.dev/categoria/" + catSlug });
       }
-      crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": title, "item": canonicalUrl });
+      crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": title, "item": finalCanonical });
       return JSON.stringify({ "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": crumbs });
     })()}</script>
 
@@ -755,7 +761,7 @@ export function renderBusinessPage(env, business, options = {}) {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-store',
-      'Link': `<${canonicalUrl}>; rel="canonical"`,
+      'Link': `<${finalCanonical}>; rel="canonical"`,
     },
   });
 }

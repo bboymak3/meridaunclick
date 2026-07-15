@@ -1,8 +1,5 @@
 // functions/negocio/[slug].js
-// GET: Serve full business detail page at /negocio/:slug
-// Medicina businesses get 301 redirect to /medicina-servicio-medico/:slug
-
-import { renderBusinessPage } from '../_lib/render-business.js';
+// Legacy route: redirects ALL businesses to /:tipo/:categoria/:slug format
 
 export async function onRequestGet(context) {
   try {
@@ -13,60 +10,54 @@ export async function onRequestGet(context) {
       return new Response('Database unavailable', { status: 500 });
     }
 
-    // Look up business by slug (include category slug for redirect check)
+    function slugify(text) {
+      if (!text) return '';
+      return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+
+    // Look up business by slug
     const business = await env.DB.prepare(
-      `SELECT 
-        b.*,
-        c.name as category_name,
-        c.slug as category_slug,
-        (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
-        (SELECT COUNT(*) FROM images WHERE business_id = b.id) as image_count
-      FROM businesses b
-      LEFT JOIN categories c ON b.category_id = c.id
-      WHERE b.slug = ? AND b.status = 'approved'`
+      `SELECT b.slug, b.business_type, c.slug as category_slug
+       FROM businesses b
+       LEFT JOIN categories c ON b.category_id = c.id
+       WHERE b.slug = ? AND b.status = 'approved'`
     ).bind(slug).first();
 
-    if (!business) {
-      // Fallback: try by ID (some old links may use ?id= format)
-      const numericSlug = parseInt(slug);
-      if (!isNaN(numericSlug)) {
-        const byId = await env.DB.prepare(
-          `SELECT b.*, c.name as category_name, c.slug as category_slug,
-            (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image
-          FROM businesses b
-          LEFT JOIN categories c ON b.category_id = c.id
-          WHERE b.id = ? AND b.status = 'approved'`
-        ).bind(numericSlug).first();
-        if (byId) {
-          const prefix = byId.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio';
-          return new Response('', {
-            status: 301,
-            headers: { 'Location': `${prefix}/${byId.slug}` },
-          });
-        }
-      }
-
-      return new Response('<h1>Negocio no encontrado</h1><p>El negocio que buscas no existe o fue eliminado.</p>', {
-        status: 404,
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
-      });
-    }
-
-    // 301 redirect medicina businesses to their category-specific URL
-    if (business.category_slug === 'medicina-servicio-medico') {
+    if (business) {
+      const tipo = slugify(business.business_type || 'negocio');
+      const cat = business.category_slug || 'otro';
       return new Response('', {
         status: 301,
-        headers: { 'Location': `/medicina-servicio-medico/${business.slug}` },
+        headers: { 'Location': `/${tipo}/${cat}/${business.slug}` },
       });
     }
 
-    return renderBusinessPage(env, business, { pathPrefix: '/negocio' });
+    // Fallback: try by numeric ID
+    const numericSlug = parseInt(slug);
+    if (!isNaN(numericSlug)) {
+      const byId = await env.DB.prepare(
+        `SELECT b.slug, b.business_type, c.slug as category_slug
+         FROM businesses b
+         LEFT JOIN categories c ON b.category_id = c.id
+         WHERE b.id = ? AND b.status = 'approved'`
+      ).bind(numericSlug).first();
+      if (byId) {
+        const tipo = slugify(byId.business_type || 'negocio');
+        const cat = byId.category_slug || 'otro';
+        return new Response('', {
+          status: 301,
+          headers: { 'Location': `/${tipo}/${cat}/${byId.slug}` },
+        });
+      }
+    }
+
+    return new Response('<h1>Negocio no encontrado</h1><p>El negocio que buscas no existe o fue eliminado.</p>', {
+      status: 404,
+      headers: { 'Content-Type': 'text/html; charset=utf-8' },
+    });
 
   } catch (error) {
-    console.error('Negocio GET error:', error);
-    return new Response('Error interno del servidor', {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' },
-    });
+    console.error('Negocio redirect error:', error);
+    return new Response('Error interno del servidor', { status: 500, headers: { 'Content-Type': 'text/plain' } });
   }
 }
