@@ -264,9 +264,15 @@ export function renderBusinessPage(env, business, options = {}) {
 }
 
 /* === Compact Business Cards (for similar businesses) === */
+/* Hide action buttons and video badge in similar section */
+.business-detail-page #similarGrid .business-card-fav,
+.business-detail-page #similarGrid .btn-share-wa-card,
+.business-detail-page #similarGrid .business-card-video-badge {
+    display: none !important;
+}
 .business-detail-page .business-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
 }
 .business-detail-page .business-card {
@@ -282,7 +288,7 @@ export function renderBusinessPage(env, business, options = {}) {
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 .business-detail-page .business-card-image {
-    height: 90px;
+    height: 110px;
     overflow: hidden;
     position: relative;
     background: #f3f4f6;
@@ -306,24 +312,6 @@ export function renderBusinessPage(env, business, options = {}) {
     border-radius: 5px;
     font-weight: 600;
 }
-.business-detail-page .business-card-fav,
-.business-detail-page .btn-share-wa-card {
-    position: absolute;
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 0.65rem;
-    background: rgba(255,255,255,0.9);
-    border: none;
-    cursor: pointer;
-    z-index: 2;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-}
-.business-detail-page .business-card-fav { top: 5px; right: 32px; color: #e74c3c; }
-.business-detail-page .btn-share-wa-card { top: 5px; right: 5px; color: #25d366; }
 .business-detail-page .business-card-body {
     padding: 8px 8px 10px;
     text-align: center;
@@ -436,10 +424,10 @@ export function renderBusinessPage(env, business, options = {}) {
         gap: 8px;
     }
     .business-detail-page .business-card-image {
-        height: 70px;
+        height: 85px;
     }
     .business-detail-page .business-card-body {
-        padding: 6px 6px 8px;
+        padding: 6px 5px 8px;
     }
     .products-grid {
         grid-template-columns: repeat(2, 1fr);
