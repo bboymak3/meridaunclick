@@ -54,7 +54,7 @@ export async function onRequestGet(context) {
     const imageUrl = business.cover_image || business.logo || `${baseUrl}/images/favicon.jpeg`;
     const whatsappNumber = (business.whatsapp || business.phone || '').replace(/[^0-9]/g, '');
     const whatsappLink = whatsappNumber
-      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, vi tu pagina web en AuNClick y me interesa conocer mas sobre ' + title)}`
+      ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Hola, vi tu pagina web en HolaX y me interesa conocer mas sobre ' + title)}`
       : '#';
     const phoneClean = (business.phone || '').replace(/[^0-9]/g, '');
     const mapQuery = encodeURIComponent(`${business.address || ''} ${business.city || ''} ${business.state || ''} Venezuela`);
@@ -619,7 +619,7 @@ export async function onRequestGet(context) {
 <!-- NAV -->
 <nav class="lp-nav" id="lpNav">
     <a href="${baseUrl}/" class="lp-nav-brand">
-        <img src="/images/favicon.jpeg" alt="AuNClick" style="height:32px;width:auto;border-radius:6px;margin-right:6px;"> AuNClick
+        <img src="/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:6px;"> HolaX
     </a>
     <div class="lp-nav-links">
         <a href="#about">Nosotros</a>
@@ -946,9 +946,9 @@ ${(business.lat || business.latitude || business.address) ? `
 
 <!-- FOOTER -->
 <footer class="lp-footer">
-    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">AuNClick</a></p>
+    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">HolaX</a></p>
     <div class="lp-footer-links">
-        <a href="${baseUrl}/${bizTipo}/${bizCat}/${business.slug}" target="_blank">Ver en AuNClick</a>
+        <a href="${baseUrl}/${bizTipo}/${bizCat}/${business.slug}" target="_blank">Ver en HolaX</a>
         ${socialUrls.instagram ? `<a href="${escapeHtml(socialUrls.instagram)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
         ${socialUrls.facebook ? `<a href="${escapeHtml(socialUrls.facebook)}" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
     </div>
