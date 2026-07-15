@@ -127,70 +127,101 @@ export async function onRequestGet(context) {
 
     // 5. Remove CHECK constraint on business_type (only allows old values)
     // In D1/SQLite we must recreate the table without the constraint
+    // Use dynamic schema discovery to handle any unknown columns
     let constraintRemoved = false;
     try {
-      // Check if constraint exists by trying an insert with a new-style slug
-      await env.DB.prepare(`
-        CREATE TABLE businesses_new (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          user_id INTEGER,
-          title TEXT,
-          slug TEXT UNIQUE,
-          description TEXT,
-          category_id INTEGER,
-          business_type TEXT DEFAULT 'negocio',
-          address TEXT,
-          city TEXT DEFAULT 'Mérida',
-          state TEXT DEFAULT 'Mérida',
-          country TEXT DEFAULT 'Venezuela',
-          lat REAL,
-          lng REAL,
-          phone TEXT,
-          whatsapp TEXT,
-          website TEXT,
-          instagram TEXT,
-          facebook TEXT,
-          twitter TEXT,
-          tiktok TEXT,
-          youtube TEXT,
-          email_contact TEXT,
-          schedule TEXT,
-          has_parking INTEGER DEFAULT 0,
-          has_wifi INTEGER DEFAULT 0,
-          has_card INTEGER DEFAULT 0,
-          has_delivery INTEGER DEFAULT 0,
-          has_outdoor INTEGER DEFAULT 0,
-          video_url TEXT,
-          logo TEXT,
-          banner TEXT,
-          featured INTEGER DEFAULT 0,
-          status TEXT DEFAULT 'pending',
-          price_range TEXT,
-          created_at TEXT DEFAULT (datetime('now')),
-          updated_at TEXT DEFAULT (datetime('now'))
-        )
-      `).run();
+      // Clean up from a previous failed migration attempt
+      try {
+        await env.DB.prepare('DROP TABLE IF EXISTS _businesses_backup').run();
+        await env.DB.prepare('DROP TABLE IF EXISTS businesses_new').run();
+      } catch (cleanupErr) {
+        results.push('limpieza previa: ' + cleanupErr.message);
+      }
 
-      // Copy all data
-      await env.DB.prepare(`
-        INSERT INTO businesses_new SELECT * FROM businesses
-      `).run();
+      // Step 5a: Read the current schema dynamically
+      const tableInfo = await env.DB.prepare('PRAGMA table_info(businesses)').all();
+      if (!tableInfo.results || tableInfo.results.length === 0) {
+        throw new Error('No se pudo leer el schema de la tabla businesses');
+      }
 
-      // Swap tables
-      await env.DB.prepare('DROP TABLE businesses').run();
-      await env.DB.prepare('ALTER TABLE businesses_new RENAME TO businesses').run();
+      // Build column definitions for the new table (same as old, minus CHECK)
+      const colNames = [];
+      const colDefs = [];
+      for (const col of tableInfo.results) {
+        colNames.push(col.name);
+        let def = col.name;
+        // Type
+        if (col.type) def += ' ' + col.type;
+        // PRIMARY KEY
+        if (col.pk === 1) def += ' PRIMARY KEY AUTOINCREMENT';
+        // UNIQUE (but skip slug — we'll add it separately to avoid duplicate)
+        if (col.notnull === 1 && col.pk !== 1 && col.dflt_value === null && col.name !== 'slug') {
+          def += ' NOT NULL';
+        }
+        // DEFAULT
+        if (col.dflt_value !== null) {
+          def += ' DEFAULT ' + col.dflt_value;
+        }
+        colDefs.push(def);
+      }
 
-      // Recreate indexes
-      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_slug ON businesses(slug)').run();
-      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_category ON businesses(category_id)').run();
-      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_status ON businesses(status)').run();
-      await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_user ON businesses(user_id)').run();
-      await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_slug_unique ON businesses(slug)').run();
+      // Check if the current schema has the CHECK constraint
+      const sqlInfo = await env.DB.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name='businesses'").first();
+      const hasCheck = sqlInfo && sqlInfo.sql && sqlInfo.sql.includes('CHECK');
 
-      constraintRemoved = true;
-      results.push('CHECK constraint eliminada de business_type (tabla recreada)');
+      if (!hasCheck) {
+        results.push('CHECK constraint no existe (ya fue eliminada previamente)');
+        constraintRemoved = true;
+      } else {
+        results.push('CHECK constraint detectada, procediendo a eliminar...');
+
+        // Rename old table (this updates FK refs in child tables to point to _businesses_backup)
+        await env.DB.prepare('ALTER TABLE businesses RENAME TO _businesses_backup').run();
+
+        // Create new table WITHOUT CHECK constraint
+        const createSQL = 'CREATE TABLE businesses (\n  ' + colDefs.join(',\n  ') + '\n)';
+        await env.DB.prepare(createSQL).run();
+
+        // Copy data using explicit column list (handles column order safely)
+        const colList = colNames.join(', ');
+        await env.DB.prepare(
+          `INSERT INTO businesses (${colList}) SELECT ${colList} FROM _businesses_backup`
+        ).run();
+
+        // Add UNIQUE index on slug (since we removed it from column def)
+        try {
+          await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_slug_unique ON businesses(slug)').run();
+        } catch (e) { /* ignore if already exists */ }
+
+        // Recreate other indexes
+        try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_slug ON businesses(slug)').run(); } catch(e) {}
+        try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_category ON businesses(category_id)').run(); } catch(e) {}
+        try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_status ON businesses(status)').run(); } catch(e) {}
+        try { await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_user ON businesses(user_id)').run(); } catch(e) {}
+
+        // Try to drop backup table (may fail due to FK refs, that's OK)
+        try {
+          await env.DB.prepare('DROP TABLE _businesses_backup').run();
+          results.push('CHECK constraint eliminada, backup eliminado');
+        } catch (dropErr) {
+          results.push('CHECK constraint eliminada (backup _businesses_backup conservado por FK refs)');
+        }
+
+        constraintRemoved = true;
+      }
     } catch (e) {
-      results.push('error eliminando CHECK constraint (puede que ya no exista): ' + e.message);
+      results.push('error eliminando CHECK constraint: ' + e.message);
+      // Try to recover: rename backup back if it exists
+      try {
+        // Check if original table still exists
+        const checkOriginal = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='businesses'").first();
+        if (!checkOriginal) {
+          await env.DB.prepare('ALTER TABLE _businesses_backup RENAME TO businesses').run();
+          results.push('recuperacion exitosa: tabla original restaurada');
+        }
+      } catch (recoverErr) {
+        results.push('error en recuperacion: ' + recoverErr.message);
+      }
     }
 
     // 6. Backfill business.business_type from category -> tipo_negocio
