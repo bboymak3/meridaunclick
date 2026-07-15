@@ -127,6 +127,7 @@ export async function onRequestGet(context) {
 
     // 5. Remove CHECK constraint on business_type (only allows old values)
     // In D1/SQLite we must recreate the table without the constraint
+    let constraintRemoved = false;
     try {
       // Check if constraint exists by trying an insert with a new-style slug
       await env.DB.prepare(`
@@ -186,26 +187,34 @@ export async function onRequestGet(context) {
       await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_businesses_user ON businesses(user_id)').run();
       await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS idx_businesses_slug_unique ON businesses(slug)').run();
 
+      constraintRemoved = true;
       results.push('CHECK constraint eliminada de business_type (tabla recreada)');
     } catch (e) {
       results.push('error eliminando CHECK constraint (puede que ya no exista): ' + e.message);
     }
 
     // 6. Backfill business.business_type from category -> tipo_negocio
-    // Update businesses that have business_type as generic values (negocio, otro) 
-    // to use the tipo slug from their category
-    const updatedBiz = await env.DB.prepare(`
-      UPDATE businesses 
-      SET business_type = (
-        SELECT tn.slug 
-        FROM categories c 
-        JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id 
-        WHERE c.id = businesses.category_id
-      )
-      WHERE business_type IN ('negocio', 'otro', NULL) 
-        AND category_id IN (SELECT id FROM categories WHERE tipo_negocio_id IS NOT NULL)
-    `).run();
-    results.push('businesses actualizados con tipo correcto: ' + updatedBiz.meta.changes);
+    // Only run if the CHECK constraint was successfully removed (or didn't exist)
+    if (constraintRemoved) {
+      try {
+        const updatedBiz = await env.DB.prepare(`
+          UPDATE businesses
+          SET business_type = (
+            SELECT tn.slug
+            FROM categories c
+            JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
+            WHERE c.id = businesses.category_id
+          )
+          WHERE business_type IN ('negocio', 'otro', NULL)
+            AND category_id IN (SELECT id FROM categories WHERE tipo_negocio_id IS NOT NULL)
+        `).run();
+        results.push('businesses actualizados con tipo correcto: ' + updatedBiz.meta.changes);
+      } catch (e) {
+        results.push('error actualizando business_type: ' + e.message);
+      }
+    } else {
+      results.push('paso 6 omitido: CHECK constraint aun existe, ejecuta la migracion de nuevo');
+    }
 
     // 7. Verify results
     const verify = await env.DB.prepare(`

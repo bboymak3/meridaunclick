@@ -1164,7 +1164,7 @@ if (!window._renderVideoList) {
 
             document.getElementById('bizEditTitle').value = biz.title || '';
             document.getElementById('bizEditDescription').value = biz.description || '';
-            document.getElementById('bizEditType').value = biz.business_type || 'comercio';
+            document.getElementById('bizEditType').value = biz.business_type || 'negocio';
             if (biz.category_id) document.getElementById('bizEditCategory').value = biz.category_id;
             adminBizEditModal.dataset.currentCategoryId = biz.category_id || 1;
             document.getElementById('bizEditPhone').value = biz.phone || '';

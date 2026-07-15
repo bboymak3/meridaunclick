@@ -43,7 +43,8 @@ function parseBusinessFromText(text) {
 
   const lower = text.toLowerCase();
   const result = {
-    business_type: 'venta',
+    business_type: 'negocio',
+    property_type: 'venta', // internal field for property classification (not stored in DB)
     bedrooms: null,
     bathrooms: null,
     area: null,
@@ -52,21 +53,21 @@ function parseBusinessFromText(text) {
     currency: 'USD',
   };
 
-  // Detect business type
-  if (/\bcasa\b/i.test(text)) result.business_type = 'casa';
-  else if (/\bapartamento\b|\bapto\b|\bapt\b|\bapartamento\b/i.test(text)) result.business_type = 'apartamento';
-  else if (/\bterreno\b|\blote\b/i.test(text)) result.business_type = 'terreno';
-  else if (/\blocal\b|\bcomercial\b|\bff\b|\btienda\b/i.test(text)) result.business_type = 'local_comercial';
-  else if (/\boficina\b/i.test(text)) result.business_type = 'oficina';
-  else if (/\bfinca\b|\bquinta\b|\bhacienda\b/i.test(text)) result.business_type = 'finca';
-  else if (/\bhotel\b|\bposada\b/i.test(text)) result.business_type = 'hotel';
-  else if (/\bgalpon\b|\bgalpón\b|\bdepósito\b/i.test(text)) result.business_type = 'galpon';
-  else if (/\bestacionamiento\b/i.test(text)) result.business_type = 'estacionamiento';
+  // Detect property sub-type (stored as description info, not business_type)
+  if (/\bcasa\b/i.test(text)) result.property_type = 'casa';
+  else if (/\bapartamento\b|\bapto\b|\bapt\b|\bapartamento\b/i.test(text)) result.property_type = 'apartamento';
+  else if (/\bterreno\b|\blote\b/i.test(text)) result.property_type = 'terreno';
+  else if (/\blocal\b|\bcomercial\b|\bff\b|\btienda\b/i.test(text)) result.property_type = 'local_comercial';
+  else if (/\boficina\b/i.test(text)) result.property_type = 'oficina';
+  else if (/\bfinca\b|\bquinta\b|\bhacienda\b/i.test(text)) result.property_type = 'finca';
+  else if (/\bhotel\b|\bposada\b/i.test(text)) result.property_type = 'hotel';
+  else if (/\bgalpon\b|\bgalpón\b|\bdepósito\b/i.test(text)) result.property_type = 'galpon';
+  else if (/\bestacionamiento\b/i.test(text)) result.property_type = 'estacionamiento';
 
-  // Detect operation type
-  if (/\balquil(?:e|ar|o|ill)\b|\brenta\b|\balquiler\b/i.test(text)) result.business_type = 'alquiler';
-  else if (/\bventa\b|\bven(?:d|do|e)\b|\bvendo\b/i.test(text)) result.business_type = 'venta';
-  else if (/(?:venta.*alquiler|alquiler.*venta)/i.test(text)) result.business_type = 'venta_alquiler';
+  // Detect operation type (stored in property_type, not business_type)
+  if (/\balquil(?:e|ar|o|ill)\b|\brenta\b|\balquiler\b/i.test(text)) result.property_type = 'alquiler';
+  else if (/\bventa\b|\bven(?:d|do|e)\b|\bvendo\b/i.test(text)) result.property_type = 'venta';
+  else if (/(?:venta.*alquiler|alquiler.*venta)/i.test(text)) result.property_type = 'venta_alquiler';
 
   // Detect price - multiple patterns
   // Pattern: $ 25.000 / $25,000 / $25.000,00 / USD 25,000 / Bs 50.000
@@ -253,7 +254,7 @@ async function runImport(env) {
           'local_comercial': 'Local Comercial', 'oficina': 'Oficina', 'finca': 'Finca',
           'hotel': 'Hotel', 'galpon': 'Galpón', 'estacionamiento': 'Estacionamiento', 'otro': 'Propiedad',
         };
-        title = `${typeLabels[parsed.business_type] || 'Propiedad'} en ${defaultCity}`;
+        title = `${typeLabels[parsed.property_type] || 'Propiedad'} en ${defaultCity}`;
       }
 
       // Clean title - remove emojis and excessive symbols

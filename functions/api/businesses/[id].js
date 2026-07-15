@@ -123,6 +123,12 @@ export async function onRequestPut(context) {
 
     const body = await request.json();
 
+    // Validate business_type against CHECK constraint
+    const ALLOWED_BIZ_TYPES = ['negocio', 'profesional', 'servicio', 'restaurante', 'tienda', 'otro'];
+    if (body.business_type !== undefined && !ALLOWED_BIZ_TYPES.includes(body.business_type)) {
+      body.business_type = 'negocio';
+    }
+
     // Build dynamic UPDATE query — only business-relevant fields
     const allowedFields = [
       'title', 'description', 'category_id', 'business_type',
