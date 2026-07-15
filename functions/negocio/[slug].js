@@ -133,16 +133,18 @@ export async function onRequestGet(context) {
       if (business.schedule) ld.openingHours = business.schedule;
       return ld;
     })())}</script>
-    <script type="application/ld+json">${JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
+    <script type="application/ld+json">${(() => {
+      const crumbs = [
         { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://aunclick.pages.dev/" },
-        { "@type": "ListItem", "position": 2, "name": "Negocios", "item": "https://aunclick.pages.dev/search.html" },
-        ${business.category_name ? `{ "@type": "ListItem", "position": 3, "name": ${JSON.stringify(business.category_name)}, "item": "https://aunclick.pages.dev/categoria/${encodeURIComponent((business.category_name || '').toLowerCase().replace(/[^a-z0-9áéíóúñü]+/g, '-').replace(/^-|-$/g, ''))}" },` : ''}
-        { "@type": "ListItem", "position": ${business.category_name ? 4 : 3}, "name": ${JSON.stringify(title)}, "item": canonicalUrl }
-      ]
-    })}</script>
+        { "@type": "ListItem", "position": 2, "name": "Negocios", "item": "https://aunclick.pages.dev/search.html" }
+      ];
+      if (business.category_name) {
+        const catSlug = (business.category_name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        crumbs.push({ "@type": "ListItem", "position": 3, "name": business.category_name, "item": "https://aunclick.pages.dev/categoria/" + catSlug });
+      }
+      crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": title, "item": canonicalUrl });
+      return JSON.stringify({ "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": crumbs });
+    })()}</script>
 
     <link rel="stylesheet" href="/css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
