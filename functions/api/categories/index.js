@@ -71,7 +71,12 @@ export async function onRequestGet(context) {
     }
 
     const categories = await env.DB.prepare(
-      'SELECT c.*, (SELECT COUNT(*) FROM businesses b WHERE b.category_id = c.id AND b.status = \'approved\') as business_count FROM categories c WHERE c.is_active = 1 ORDER BY c.sort_order ASC, c.name ASC'
+      `SELECT c.*, 
+        tn.name as tipo_negocio_name, tn.slug as tipo_negocio_slug, tn.icon as tipo_negocio_icon,
+        (SELECT COUNT(*) FROM businesses b WHERE b.category_id = c.id AND b.status = 'approved') as business_count 
+       FROM categories c 
+       LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
+       WHERE c.is_active = 1 ORDER BY c.sort_order ASC, c.name ASC`
     ).all();
 
     return new Response(JSON.stringify({ categories: categories.results }), {
@@ -106,7 +111,7 @@ export async function onRequestPost(context) {
     }
 
     const body = await request.json();
-    const { name, icon, color, sort_order } = body;
+    const { name, icon, color, sort_order, tipo_negocio_id } = body;
 
     if (!name || !name.trim()) {
       return new Response(JSON.stringify({ error: 'El nombre de la categoria es requerido.' }), {
@@ -127,13 +132,14 @@ export async function onRequestPost(context) {
     }
 
     const result = await env.DB.prepare(
-      'INSERT INTO categories (name, slug, icon, color, sort_order, is_active) VALUES (?, ?, ?, ?, ?, 1)'
+      'INSERT INTO categories (name, slug, icon, color, sort_order, is_active, tipo_negocio_id) VALUES (?, ?, ?, ?, ?, 1, ?)'
     ).bind(
       name.trim(),
       slug,
       icon || 'fas fa-store',
       color || '#607d8b',
-      sort_order !== undefined ? parseInt(sort_order) : 99
+      sort_order !== undefined ? parseInt(sort_order) : 99,
+      tipo_negocio_id ? parseInt(tipo_negocio_id) : null
     ).run();
 
     const newCat = await env.DB.prepare('SELECT * FROM categories WHERE id = ?').bind(result.meta.last_row_id).first();
