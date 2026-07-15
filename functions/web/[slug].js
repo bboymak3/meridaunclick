@@ -43,7 +43,7 @@ export async function onRequestGet(context) {
       `SELECT url, is_cover FROM images WHERE business_id = ? ORDER BY is_cover DESC, id ASC LIMIT 10`
     ).bind(business.id).all();
 
-    const baseUrl = 'https://aunclick.pages.dev';
+    const baseUrl = 'https://holax.com.ve';
     const bizTipo = (business.business_type || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const bizCat = business.category_slug || 'otro';
     const title = business.title || 'Negocio';

@@ -4,7 +4,7 @@
 
 import { renderProductPage } from '../../_lib/render-product.js';
 
-const SITE_URL = 'https://aunclick.pages.dev';
+const SITE_URL = 'https://holax.com.ve';
 
 function slugify(text) {
   if (!text) return '';

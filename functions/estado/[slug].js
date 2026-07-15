@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
       return new Response('Database unavailable', { status: 500 });
     }
 
-    const baseUrl = 'https://aunclick.pages.dev';
+    const baseUrl = 'https://holax.com.ve';
 
     // Venezuelan states map
     const STATES = {
@@ -159,13 +159,13 @@ export async function onRequestGet(context) {
       "name": `Negocios en ${stateName}`,
       "description": stateDesc,
       "url": canonicalUrl,
-      "isPartOf": { "@type": "WebSite", "name": "HolaX", "url": "https://aunclick.pages.dev" }
+      "isPartOf": { "@type": "WebSite", "name": "HolaX", "url": "https://holax.com.ve" }
     })}</script>
     <script type="application/ld+json">${JSON.stringify({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://aunclick.pages.dev/" },
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },
         { "@type": "ListItem", "position": 2, "name": stateName, "item": canonicalUrl }
       ]
     })}</script>

@@ -1,5 +1,5 @@
-# Un Click - Directorio Nacional de Negocios de Venezuela
-# https://aunclick.pages.dev
+# HolaX - Directorio Nacional de Negocios de Venezuela
+# https://holax.com.ve
 
 User-agent: *
 Allow: /
@@ -18,4 +18,4 @@ Disallow: /*?page=
 Disallow: /*?sort=
 
 # Sitemap dinámico
-Sitemap: /sitemap.xml
+Sitemap: https://holax.com.ve/sitemap.xml

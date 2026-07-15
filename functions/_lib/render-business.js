@@ -92,7 +92,7 @@ export function renderBusinessPage(env, business, options = {}) {
     tipoLabel = null,
   } = options;
 
-  const baseUrl = 'https://aunclick.pages.dev';
+  const baseUrl = 'https://holax.com.ve';
   const title = business.title || 'Negocio';
   const description = business.description
     ? business.description.substring(0, 160)
@@ -184,14 +184,14 @@ export function renderBusinessPage(env, business, options = {}) {
     })())}</script>
     <script type="application/ld+json">${(() => {
       const crumbs = [
-        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://aunclick.pages.dev/" },
-        { "@type": "ListItem", "position": 2, "name": sectionBreadcrumbText, "item": "https://aunclick.pages.dev/search.html" }
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },
+        { "@type": "ListItem", "position": 2, "name": sectionBreadcrumbText, "item": "https://holax.com.ve/search.html" }
       ];
       if (categoryBreadcrumb) {
-        crumbs.push({ "@type": "ListItem", "position": 3, "name": categoryBreadcrumb.name, "item": categoryBreadcrumb.url.startsWith('http') ? categoryBreadcrumb.url : "https://aunclick.pages.dev" + categoryBreadcrumb.url });
+        crumbs.push({ "@type": "ListItem", "position": 3, "name": categoryBreadcrumb.name, "item": categoryBreadcrumb.url.startsWith('http') ? categoryBreadcrumb.url : "https://holax.com.ve" + categoryBreadcrumb.url });
       } else if (business.category_name) {
         const catSlug = (business.category_name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        crumbs.push({ "@type": "ListItem", "position": 3, "name": business.category_name, "item": "https://aunclick.pages.dev/categoria/" + catSlug });
+        crumbs.push({ "@type": "ListItem", "position": 3, "name": business.category_name, "item": "https://holax.com.ve/categoria/" + catSlug });
       }
       crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": title, "item": finalCanonical });
       return JSON.stringify({ "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": crumbs });

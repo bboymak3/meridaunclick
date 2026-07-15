@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
       return new Response('Database unavailable', { status: 500 });
     }
 
-    const baseUrl = 'https://aunclick.pages.dev';
+    const baseUrl = 'https://holax.com.ve';
 
     // Look up category by slug
     const category = await env.DB.prepare(
@@ -135,15 +135,15 @@ export async function onRequestGet(context) {
       "isPartOf": {
         "@type": "WebSite",
         "name": "HolaX",
-        "url": "https://aunclick.pages.dev"
+        "url": "https://holax.com.ve"
       }
     })}</script>
     <script type="application/ld+json">${JSON.stringify({
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       "itemListElement": [
-        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://aunclick.pages.dev/" },
-        { "@type": "ListItem", "position": 2, "name": "Negocios", "item": "https://aunclick.pages.dev/search.html" },
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },
+        { "@type": "ListItem", "position": 2, "name": "Negocios", "item": "https://holax.com.ve/search.html" },
         { "@type": "ListItem", "position": 3, "name": catName, "item": canonicalUrl }
       ]
     })}</script>

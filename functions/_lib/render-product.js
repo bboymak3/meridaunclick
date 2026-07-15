@@ -49,7 +49,7 @@ export async function renderProductPage(env, product, options) {
   }
   const mainImage = productImages[0] || '';
 
-  const baseUrl = 'https://aunclick.pages.dev';
+  const baseUrl = 'https://holax.com.ve';
   const title = product.name || 'Producto';
   const price = product.price ? `$${Number(product.price).toLocaleString('es-VE')}` : '';
   const description = product.description
@@ -201,14 +201,14 @@ export async function renderProductPage(env, product, options) {
     })}</script>
     <script type="application/ld+json">${(() => {
       const crumbs = [
-        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://aunclick.pages.dev/" },
-        { "@type": "ListItem", "position": 2, "name": "Marketplace", "item": "https://aunclick.pages.dev/marketplace.html" }
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },
+        { "@type": "ListItem", "position": 2, "name": "Marketplace", "item": "https://holax.com.ve/marketplace.html" }
       ];
       if (productTypeSlug) {
-        crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": productTypeSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), "item": "https://aunclick.pages.dev/tipo/" + encodeURIComponent(productTypeSlug) });
+        crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": productTypeSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()), "item": "https://holax.com.ve/tipo/" + encodeURIComponent(productTypeSlug) });
       }
       if (product.category) {
-        crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": product.category, "item": "https://aunclick.pages.dev/marketplace.html?categoria=" + encodeURIComponent(product.category) });
+        crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": product.category, "item": "https://holax.com.ve/marketplace.html?categoria=" + encodeURIComponent(product.category) });
       }
       crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": title, "item": canonicalUrl });
       return JSON.stringify({ "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": crumbs });
