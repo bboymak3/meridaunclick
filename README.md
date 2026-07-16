@@ -2,20 +2,24 @@
 
 > Plataforma web progresiva (PWA) para descubrir, registrar y gestionar negocios en Venezuela. Incluye directorio con mapa interactivo, marketplace de productos, bolsa de empleo, gestion de inmuebles, reservas, cupones, chat en tiempo real, IA chatbot, seccion dedicada de servicios medicos y mas.
 
-**URL en produccion:** [https://aunclick.pages.dev](https://aunclick.pages.dev)
+**URL en produccion:** [https://holax.com.ve](https://holax.com.ve)
 
 ---
 
 ## Caracteristicas Principales
 
 - **Directorio de Negocios** — Busqueda por categoria, estado/ciudad, tipo de negocio. Fichas detalladas con galeria, mapa, servicios, productos, videos y contactos por WhatsApp.
+- **URLs SEO Canonicas** — Cada negocio tiene URL amigable: `/:tipo/:categoria/:slug` (ej: `/salud-bienestar/medicina-servicio-medico/dr-mario-leon`). Rutas antiguas redirigen con 301.
 - **Seccion de Servicios Medicos** — Categoria dedicada "Medicina / Servicio Medico" con seccion propia en la homepage y selector de destacados independiente en el panel admin.
-- **Paginas Web Automaticas** — Cada negocio aprobado genera automaticamente una landing page profesional en `/web/:slug` con banner, logo, productos, FAQ, galeria, mapa y contacto.
+- **Tipos de Negocio** — Clasificacion en 10 tipos (Salud, Comida, Belleza, Automotriz, Hogar, Profesionales, Tiendas, Educacion, Turismo, Servicios Varios) con paginas de categoria dedicadas y filtro en el formulario de registro.
+- **Paginas Web Automaticas** — Cada negocio aprobado genera automaticamente una landing page profesional en `/web/:slug` con banner, logo, productos, FAQ, galeria, mapa y contacto. Marca HolaX.
+- **Paginas de Estado** — Directorio por estado: `/estado/merida` muestra todos los negocios de ese estado.
 - **Mapa Interactivo** — Visualizacion geolocalizada de negocios con Leaflet/OpenStreetMap.
 - **Marketplace** — Publicacion y busqueda de productos con multiples fotos, videos (URL y archivo adjunto), filtros por categoria/precio. Contacto directo por WhatsApp. Banner configurable desde el panel admin con recorte optimizado.
 - **Gestion de Inmuebles** — Publicacion de propiedades (venta/alquiler) con multiples fotos, videos, mapa, 6 pasos de formulario, galeria con lightbox.
 - **Bolsa de Empleo** — Publicacion de ofertas laborales vinculadas a negocios.
 - **Gestion de Servicios** — Cada negocio puede registrar los servicios que ofrece, editables desde el panel del usuario.
+- **Importacion desde Facebook** — Import automatico de publicaciones de Facebook como negocios (cron configurable). Parsea precio, tipo de propiedad, habitaciones, banos, area.
 - **Reservas y Cupones** — Modulos para reservar citas y gestionar cupones/promociones.
 - **Entretenimiento y Eventos** — Directorio de opciones de entretenimiento.
 - **Emergencias** — Directorio de numeros de emergencia por estado.
@@ -25,8 +29,8 @@
 - **Resenas y Calificaciones** — Sistema de resenas con estrellas para negocios y productos.
 - **PWA (Progressive Web App)** — Instalable en movil y escritorio. Funciona offline con Service Worker.
 - **Panel de Usuario** — Dashboard para gestionar negocios, productos, inmuebles, mensajes, favoritos y perfil.
-- **Panel de Administracion** — Aprobacion de negocios pendientes, gestion de usuarios, contenido, configuracion del sitio (banners, logos, modulos), seleccion de destacados por categoria (negocios, servicios medicos, inmuebles, productos, empleos).
-- **SEO Completo** — Sitemap XML dinamico, robots.txt, meta tags Open Graph, Twitter Cards, datos estructurados para cada ficha.
+- **Panel de Administracion** — Aprobacion de negocios pendientes, gestion de usuarios, contenido, configuracion del sitio (banners, logos, modulos), seleccion de destacados por categoria (negocios, servicios medicos, inmuebles, productos, empleos), gestion de categorias y tipos de negocio.
+- **SEO Completo** — Sitemap XML dinamico, robots.txt, meta tags Open Graph, Twitter Cards, datos estructurados (JSON-LD) para cada ficha. Google Search Console verificado.
 - **Sistema de Planes** — Plan basico (gratuito, 20 dias expiracion) y plan premium (sin expiracion, mas visibilidad).
 
 ---
@@ -45,6 +49,7 @@
 | Autenticacion | JWT (HMAC-SHA256) | Configurado via variable de entorno |
 | Cache | Service Worker | cache-first + stale-while-revalidate |
 | Despliegue | Cloudflare Pages | CI/CD automatico desde GitHub (`git push origin main`) |
+| Dominio | `holax.com.ve` | Custom domain en Cloudflare Pages |
 | Fonts | Google Fonts (Inter) | Cargado desde CDN |
 | Iconos | Font Awesome 6.5.1 | Cargado desde cdnjs |
 | PWA | manifest.json + sw.js | Instalable, cache offline |
@@ -57,7 +62,7 @@ git push origin main
     → Cloudflare Pages detecta el cambio
       → Build automatico (no requiere build step)
         → Deploy a produccion
-          → URL: https://aunclick.pages.dev
+          → URL: https://holax.com.ve
 ```
 
 No hay paso de build. Los archivos HTML/CSS/JS se sirven directamente. Las `functions/` se ejecutan como Workers serverless en el edge.
@@ -97,7 +102,7 @@ meridaunclick/
 ├── manifest.json               # PWA Manifest
 ├── sw.js                       # Service Worker (cache offline)
 ├── robots.txt                  # Robots.txt estatico (redirige a /api/robots)
-├── _redirects                  # Redirecciones Cloudflare Pages
+├── _redirects                  # Redirecciones Cloudflare Pages (301 antiguas URLs, www→apex)
 ├── _headers                    # Headers de seguridad Cloudflare Pages
 ├── wrangler.toml               # Configuracion Cloudflare (D1 + R2 bindings)
 │
@@ -107,9 +112,9 @@ meridaunclick/
 ├── js/
 │   ├── app.js                  # Modulo principal (API helper, auth, UI, nav, hero banner/logo, destacados medicos)
 │   ├── dashboard.js            # Dashboard usuario (negocios, productos, inmuebles, empleos)
-│   ├── admin.js                # Panel admin (todas las tabs, CRUD, settings, banners, logos, destacados por categoria)
+│   ├── admin.js                # Panel admin (todas las tabs, CRUD, settings, banners, logos, destacados por categoria, gestion de categorias)
 │   ├── business-detail.js      # Ficha de negocio (galeria, productos, servicios, mapa, lightbox)
-│   ├── business-form.js        # Formulario registro negocio (anti-doble-submit)
+│   ├── business-form.js        # Formulario registro negocio (anti-doble-submit, selector de tipo de negocio)
 │   ├── property-form.js        # Formulario registro inmueble (6 pasos, fotos, videos)
 │   ├── property-detail.js      # Ficha de inmueble (galeria, videos, lightbox)
 │   ├── auth.js                 # Login y registro
@@ -120,15 +125,26 @@ meridaunclick/
 │   └── map.js                  # Pagina de mapa completo
 │
 ├── images/
-│   ├── favicon.jpeg            # Logo/Favicon principal (HolaX)
+│   ├── Holax.png               # Logo principal HolaX (Open Graph)
+│   ├── favicon.jpeg            # Logo/Favicon principal
 │   ├── logoprincipal.jpeg      # Logo principal
 │   ├── PWA.jpeg                # Icono PWA (512x512)
 │   └── favicom.jpeg            # Favicon alternativo
 │
 ├── functions/
-│   ├── negocio/[slug].js       # Pagina de ficha de negocio (SSR, SEO completo)
-│   ├── producto/[slug].js      # Pagina de ficha de producto (SSR, SEO completo)
-│   ├── web/[slug].js           # Landing page automatica por negocio (SSR)
+│   ├── [tipo]/[categoria]/[slug].js  # Ficha de negocio SSR (URL canonica: /:tipo/:categoria/:slug)
+│   ├── categoria/[slug].js           # Pagina de categoria (lista negocios por tipo de negocio)
+│   ├── estado/[slug].js              # Pagina de estado (lista negocios por estado)
+│   ├── negocio/[slug].js             # Ficha de negocio (legacy, 301 → URL canonica)
+│   ├── medicina-servicio-medico/[slug].js  # Ficha medica (legacy, 301 → URL canonica)
+│   ├── producto/[tipo]/[slug].js     # Ficha de producto SSR (URL canonica: /producto/:tipo/:slug)
+│   ├── producto/[slug].js            # Ficha de producto (legacy, 301 → URL canonica)
+│   ├── web/[slug].js                 # Landing page automatica por negocio (SSR, marca HolaX)
+│   │
+│   ├── _lib/
+│   │   ├── render-business.js        # Motor de renderizado de fichas de negocio (HTML, JSON-LD, galeria, mapa, negocios similares)
+│   │   ├── render-product.js         # Motor de renderizado de fichas de producto
+│   │   └── auth.js                   # Helpers de autenticacion
 │   │
 │   └── api/
 │       ├── admin/              # Admin (sellers, chat-logs, create-user)
@@ -141,7 +157,7 @@ meridaunclick/
 │       │   ├── index.js        #   GET (listar/buscar), POST (crear)
 │       │   └── [id]/           #   GET/PUT/DELETE + approve.js, reject.js
 │       │       └── services/   #   CRUD servicios por negocio
-│       ├── categories/         # Categorias de negocios
+│       ├── categories/         # Categorias de negocios (CRUD admin, listado publico con tipos)
 │       ├── chat/               # Chat en tiempo real (conversations, messages, config)
 │       ├── contacts/           # Formulario de contacto (+ admin-message)
 │       ├── coupons/            # Cupones y promociones
@@ -154,7 +170,13 @@ meridaunclick/
 │       ├── images/             # Gestion de imagenes de negocios + set-cover
 │       ├── jobs/               # Ofertas de empleo
 │       ├── marketplace/        # CRUD de productos (+ approve/reject)
-│       ├── migrate/            # Migraciones de DB (schema-premium, add-social-video)
+│       ├── migrate/            # Migraciones de DB
+│       │   ├── schema-premium.js      # Plan premium
+│       │   ├── seller-role.js         # Rol vendedor
+│       │   ├── category-suggestions.js # Sugerencias de categorias
+│       │   ├── add-social-video.js    # Campos sociales y video
+│       │   ├── product-type.js        # Tipo de producto
+│       │   └── tipos-negocio.js       # Tipos de negocio + eliminacion de CHECK constraint
 │       ├── notifications/      # Notificaciones push
 │       ├── plans/              # Planes (request-upgrade)
 │       ├── points/             # Sistema de puntos
@@ -171,6 +193,7 @@ meridaunclick/
 │       │   └── public.js       #   GET (publico, subset de keys)
 │       ├── sitemap/            # Sitemap XML dinamico
 │       ├── stats.js            # Estadisticas generales
+│       ├── tipo-negocio/       # API publica de tipos de negocio
 │       ├── upload.js           # Subida de archivos a R2 (imagenes, videos, banners, logos)
 │       ├── user/               # Perfil de usuario (my-businesses)
 │       └── users/              # Gestion de usuarios (admin) + activate-premium
@@ -186,26 +209,44 @@ meridaunclick/
 
 | Tabla | Descripcion | Campos Clave |
 |---|---|---|
-| `users` | Usuarios del sistema | id, name, email, phone, password_hash, role (user/admin), plan (basic/premium) |
-| `businesses` | Negocios registrados | id, user_id, title, slug, description, category_id, logo, banner, address, city, state, lat, lng, phone, whatsapp, website, instagram, facebook, twitter, tiktok, youtube, video_url, schedule, status (pending/approved/rejected), featured, views, expires_at, custom_html |
+| `users` | Usuarios del sistema | id, name, email, phone, password_hash, role (user/admin/seller), plan (basic/premium) |
+| `businesses` | Negocios registrados | id, user_id, title, slug, description, category_id, business_type, logo, banner, address, city, state, lat, lng, phone, whatsapp, website, instagram, facebook, twitter, tiktok, youtube, video_url, schedule, status, featured, views, custom_html, price, currency, bedrooms, bathrooms, area |
 | `business_services` | Servicios por negocio | id, business_id, name, description, price |
 | `images` | Imagenes de negocios | id, business_id, url, thumbnail_url, is_cover, order_index |
-| `products` | Productos del marketplace | id, business_id, name, slug, description, price, currency, image (JSON array), video_url (JSON array), category, status, views |
-| `properties` | Inmuebles | id, user_id, title, slug, property_type, operation_type, price, address, city, lat, lng, bedrooms, bathrooms, area, video_url, status, featured, views, expires_at |
-| `property_images` | Imagenes de inmuebles | id, property_id, url, is_cover, order_index (tabla separada, many-to-one) |
+| `products` | Productos del marketplace | id, business_id, name, slug, description, price, currency, image, video_url, category, product_type, status, views |
+| `properties` | Inmuebles | id, user_id, title, slug, property_type, operation_type, price, address, city, lat, lng, bedrooms, bathrooms, area, video_url, status, featured, views |
+| `property_images` | Imagenes de inmuebles | id, property_id, url, is_cover, order_index |
 | `jobs` | Ofertas de empleo | id, business_id, title, description, company, location, salary, type, status |
 | `contacts` | Mensajes de contacto | id, business_id, name, email, phone, message |
 | `favorites` | Negocios favoritos | id, user_id, business_id |
 | `property_favorites` | Inmuebles favoritos | id, user_id, property_id |
 | `reviews` | Resenas de negocios | id, business_id, user_id, rating, comment |
-| `categories` | Categorias de negocios | id, name, slug, icon |
-| `featured_items` | Elementos destacados | id, item_type (business/product/job/property/medical), item_id, user_id, title, start_date, end_date |
+| `categories` | Categorias de negocios | id, name, slug, icon, sort_order, is_active, tipo_negocio_id (FK → tipos_negocio) |
+| `tipos_negocio` | Tipos de negocio (grupos) | id, name, slug, icon, color, description, sort_order, is_active |
+| `featured_items` | Elementos destacados | id, item_type, item_id, user_id, title, start_date, end_date |
 | `admin_settings` | Configuracion del sitio | key (TEXT PK), value (TEXT) |
 | `coupons` | Cupones y promociones | id, business_id, code, discount, expires_at |
 | `bookings` | Reservas | id, business_id, user_id, date, time, status |
 | `points_transactions` | Transacciones de puntos | id, user_id, points, type, reference_id |
 | `chat_rooms` | Salas de chat | id, business_id, user_id |
 | `chat_messages` | Mensajes de chat | id, room_id, sender_id, message, read |
+| `fb_config` | Configuracion Facebook import | id, key, value |
+| `fb_imports` | Registro de imports | id, fb_post_id, business_id, post_message, post_url, raw_data |
+
+### Tipos de Negocio (tipos_negocio)
+
+| Slug | Nombre | Icono |
+|---|---|---|
+| `salud-bienestar` | Salud y Bienestar | fa-heartbeat |
+| `comida-bebidas` | Comida y Bebidas | fa-utensils |
+| `belleza-cuidado-personal` | Belleza y Cuidado Personal | fa-spa |
+| `automotriz` | Automotriz | fa-car |
+| `hogar-construccion` | Hogar y Construccion | fa-home |
+| `servicios-profesionales` | Servicios Profesionales | fa-briefcase |
+| `tiendas-comercio` | Tiendas y Comercio | fa-shopping-bag |
+| `educacion` | Educacion | fa-graduation-cap |
+| `turismo-hospedaje` | Turismo y Hospedaje | fa-plane |
+| `servicios-varios` | Servicios Varios | fa-concierge-bell |
 
 ### Tipos de item_type en featured_items
 
@@ -221,13 +262,13 @@ meridaunclick/
 
 | Key | Default | Descripcion |
 |---|---|---|
-| `site_name` | `AuNclick Merida` | Nombre del sitio |
-| `site_description` | `Directorio de negocios y servicios en Merida, Venezuela` | Descripcion del sitio |
+| `site_name` | `HolaX` | Nombre del sitio |
+| `site_description` | `Directorio de negocios y servicios en Venezuela` | Descripcion del sitio |
 | `contact_email` | `""` | Email de contacto |
 | `whatsapp_number` | `""` | Numero de WhatsApp |
-| `hero_banner_url` | `""` | URL del banner principal (homepage) — con recorte 15% desktop / 10% movil |
+| `hero_banner_url` | `""` | URL del banner principal (homepage) |
 | `hero_logo_url` | `""` | URL del logo sobre el banner (homepage) |
-| `marketplace_banner_url` | `""` | URL del banner del marketplace — mismo comportamiento de recorte que el hero |
+| `marketplace_banner_url` | `""` | URL del banner del marketplace |
 | `businesses_enabled` | `1` | Modulo de negocios activo |
 | `marketplace_enabled` | `1` | Modulo de marketplace activo |
 | `jobs_enabled` | `1` | Modulo de empleo activo |
@@ -253,6 +294,50 @@ meridaunclick/
 
 ---
 
+## Rutas y URLs
+
+### Paginas Estaticas
+
+| Ruta | Archivo |
+|---|---|
+| `/` | `index.html` |
+| `/buscar` | `search.html` |
+| `/mapa` | `map.html` |
+| `/marketplace` | `marketplace.html` |
+| `/inmuebles` | `properties.html` |
+| `/empleo` | `empleo.html` |
+| `/entretenimiento` | `entretenimiento.html` |
+| `/eventos` | `eventos.html` |
+| `/reservas` | `reservas.html` |
+| `/cupones` | `cupones.html` |
+| `/emergencia` | `emergencia.html` |
+| `/planes` | `plans.html` |
+| `/dashboard` | `dashboard.html` |
+| `/login` | `login.html` |
+| `/admin` | `admin.html` |
+| `/registro-negocio` | `new-business.html` |
+
+### Paginas Dinamicas (SSR con SEO)
+
+| Ruta | Descripcion |
+|---|---|
+| `/:tipo/:categoria/:slug` | Ficha de negocio (canonica) — ej: `/salud-bienestar/medicina-servicio-medico/dr-mario-leon` |
+| `/producto/:tipo/:slug` | Ficha de producto (canonica) — ej: `/producto/ropa/camisa-polo` |
+| `/categoria/:slug` | Pagina de categoria — ej: `/categoria/salud-bienestar` |
+| `/estado/:slug` | Pagina de estado — ej: `/estado/merida` |
+| `/web/:slug` | Landing page automatica del negocio — ej: `/web/dr-mario-leon` |
+| `/negocio/:slug` | Redireccion 301 a URL canonica |
+| `/producto/:slug` (sin tipo) | Redireccion 301 a URL canonica |
+
+### Redirecciones
+
+- `/negocio/:slug` → 301 a `/:tipo/:categoria/:slug`
+- `/medicina-servicio-medico/:slug` → 301 a `/:tipo/:categoria/:slug`
+- `aunclick.pages.dev/*` → 301 a `holax.com.ve/*`
+- `www.holax.com.ve/*` → 301 a `holax.com.ve/*`
+
+---
+
 ## APIs Principales
 
 ### Autenticacion
@@ -270,7 +355,7 @@ meridaunclick/
 
 | Endpoint | Metodo | Auth | Descripcion |
 |---|---|---|---|
-| `/api/businesses` | GET | No | Listar/buscar negocios (filtros: category, city, state, search, featured, etc.) |
+| `/api/businesses` | GET | No | Listar/buscar negocios (filtros: category, city, state, search, featured, tipo, etc.) |
 | `/api/businesses` | POST | Si | Crear negocio |
 | `/api/businesses/:id` | GET | No | Detalle de negocio (con imagenes, servicios) |
 | `/api/businesses/:id` | PUT | Si | Editar negocio (owner/admin) |
@@ -283,6 +368,17 @@ meridaunclick/
 | `/api/businesses/:id/services/:sid` | DELETE | Si | Eliminar servicio |
 | `/api/businesses/:id/stats` | GET | No | Estadisticas de vistas |
 | `/api/businesses/:id/stats/track` | POST | No | Registrar vista |
+
+### Categorias y Tipos
+
+| Endpoint | Metodo | Auth | Descripcion |
+|---|---|---|---|
+| `/api/categories` | GET | No | Lista de categorias (con tipo de negocio) |
+| `/api/tipo-negocio` | GET | No | Lista de tipos de negocio |
+| `/api/categories` | POST | Admin | Crear categoria |
+| `/api/categories/:id` | PUT | Admin | Editar categoria |
+| `/api/categories/:id` | DELETE | Admin | Eliminar categoria |
+| `/api/categories/suggestions` | POST | Si | Sugerir nueva categoria |
 
 ### Productos (Marketplace)
 
@@ -303,7 +399,7 @@ meridaunclick/
 | `/api/properties` | GET | No | Listar inmuebles (filtros: type, operation, city, price, etc.) |
 | `/api/properties` | POST | Si | Crear inmueble |
 | `/api/properties/:id` | GET | No | Detalle (con imagenes) |
-| `/api/properties/:id` | PUT | Si | Editar inmueble (incluye video_url) |
+| `/api/properties/:id` | PUT | Si | Editar inmueble |
 | `/api/properties/:id` | DELETE | Si | Eliminar inmueble |
 | `/api/properties/:id/approve` | POST | Admin | Aprobar inmueble |
 | `/api/properties/:id/reject` | POST | Admin | Rechazar inmueble |
@@ -324,7 +420,7 @@ meridaunclick/
 | Endpoint | Metodo | Auth | Descripcion |
 |---|---|---|---|
 | `/api/featured-items` | GET | No | Listar destacados (filtro: `?item_type=business\|medical\|product\|property\|job`) |
-| `/api/featured-items` | POST | Admin | Agregar destacado (body: `item_type`, `item_id`) |
+| `/api/featured-items` | POST | Admin | Agregar destacado |
 | `/api/featured-items/:id` | DELETE | Admin | Eliminar destacado |
 
 ### Otros
@@ -335,13 +431,12 @@ meridaunclick/
 | `/api/serve` | GET | No | Servir archivos desde R2 |
 | `/api/settings` | GET/PUT | Admin | Configuracion completa del sitio |
 | `/api/settings` | POST | Admin | Restablecer configuracion a defaults |
-| `/api/settings/public` | GET | No | Settings publicos (site_name, hero_banner_url, hero_logo_url, marketplace_banner_url) |
+| `/api/settings/public` | GET | No | Settings publicos |
 | `/api/favorites` | GET/POST/DELETE | Si | Favoritos de negocios |
 | `/api/favorites/check` | GET | Si | Verificar si un negocio es favorito |
 | `/api/property-favorites` | GET/POST/DELETE | Si | Favoritos de inmuebles |
 | `/api/property-favorites/check` | GET | Si | Verificar si un inmueble es favorito |
 | `/api/reviews` | GET/POST | Varia | Resenas |
-| `/api/categories` | GET | No | Lista de categorias |
 | `/api/product-comments` | GET/POST | Varia | Comentarios en productos |
 | `/api/contacts` | POST | No | Enviar mensaje de contacto |
 | `/api/contacts/admin-message` | POST | No | Mensaje directo al admin |
@@ -362,22 +457,24 @@ meridaunclick/
 | `/api/admin/chat-logs` | GET | Admin | Logs de chat |
 | `/api/emergency` | GET | No | Directorio de emergencias |
 | `/api/events` | GET/POST | Varia | Eventos |
-| `/api/facebook/import` | POST | Admin | Importar desde Facebook |
+| `/api/facebook/import` | POST/GET | Admin | Importar desde Facebook (cron o manual) |
+| `/api/facebook/config` | GET/PUT | Admin | Configuracion de Facebook |
 | `/api/stats` | GET | No | Estadisticas generales del sitio |
+| `/api/migrate/tipos-negocio` | GET | Admin | Migracion: tipos de negocio |
 
 ---
 
 ## Paginas Dinamicas (Server-Side Rendered)
 
-Estas paginas se generan en el servidor (Cloudflare Pages Functions) con HTML completo, SEO optimizado:
+Todas las paginas SSR se generan en el servidor (Cloudflare Pages Functions) con HTML completo y SEO optimizado:
 
-| Ruta | Archivo | Descripcion |
-|---|---|---|
-| `/negocio/:slug` | `functions/negocio/[slug].js` | Ficha completa del negocio (banner, logo, galeria, productos, servicios, empleos, mapa, resenas) |
-| `/producto/:slug` | `functions/producto/[slug].js` | Ficha del producto (imagenes, videos, descripcion, negocio vinculado) |
-| `/web/:slug` | `functions/web/[slug].js` | Landing page automatica del negocio (banner, logo, productos, FAQ, servicios, galeria, mapa, CTA WhatsApp) |
+- **Ficha de negocio** (`/:tipo/:categoria/:slug`) — Banner, logo, galeria con lightbox, productos, servicios, empleos, mapa, resenas, JSON-LD, negocios similares (compactos tipo clima).
+- **Pagina de categoria** (`/categoria/:slug`) — Lista de negocios del tipo, banner, contador, grid de fichas.
+- **Pagina de estado** (`/estado/:slug`) — Lista de negocios del estado, grid de fichas.
+- **Ficha de producto** (`/producto/:tipo/:slug`) — Imagenes, videos, descripcion, negocio vinculado.
+- **Landing page** (`/web/:slug`) — Pagina web automatica del negocio con marca HolaX, CTA WhatsApp, FAQ, galeria, mapa.
 
-Todas incluyen: `<title>`, `<meta description>`, Open Graph, Twitter Cards, canonical URL, y datos estructurados.
+Todas incluyen: `<title>`, `<meta description>`, Open Graph (`og:image` con Holax.png), Twitter Cards, canonical URL (`holax.com.ve`), y datos estructurados (JSON-LD).
 
 ---
 
@@ -389,12 +486,17 @@ Todas incluyen: `<title>`, `<meta description>`, Open Graph, Twitter Cards, cano
 - **Badge de destacado** centrado en la parte superior de cada ficha, visible en todos los dispositivos.
 - **Maximo 4 destacados** por categoria (negocios, servicios medicos, inmuebles, productos, empleos).
 
+### Negocios Similares
+- Fichas compactas estilo widget de clima: imagen pequena centrada (110px), texto centrado, 4 columnas.
+- Sin botones de accion (WhatsApp, favoritos, video) para no saturar la vista.
+- Estilos encapsulados con selector `#similarGrid` para no afectar las fichas principales.
+
 ### Banners
-- **Banner hero (homepage):** Configurable desde el panel admin (`hero_banner_url`). Recorte automatico: 15% arriba y abajo en desktop, 10% en movil. Implementado con `background-size: 100% 130%` y `background-position: center 15%`.
-- **Banner marketplace:** Configurable desde el panel admin (`marketplace_banner_url`). Mismo comportamiento de recorte que el hero. Se aplica con la clase `.mp-hero-bg`.
+- **Banner hero (homepage):** Configurable desde el panel admin (`hero_banner_url`). Recorte automatico: 15% arriba y abajo en desktop, 10% en movil.
+- **Banner marketplace:** Configurable desde el panel admin (`marketplace_banner_url`). Mismo comportamiento de recorte.
 
 ### Busqueda
-- **Modal de busqueda:** Cuando esta abierto, los elementos flotantes (botones de WhatsApp, badges, favoritos, chat, pulsaciones de IA) se ocultan con `visibility: hidden` para evitar superposicion en moviles. Se controla con la clase `body.search-modal-open`.
+- **Modal de busqueda:** Cuando esta abierto, los elementos flotantes se ocultan con `visibility: hidden` para evitar superposicion en moviles.
 
 ---
 
@@ -402,7 +504,7 @@ Todas incluyen: `<title>`, `<meta description>`, Open Graph, Twitter Cards, cano
 
 El endpoint `/api/upload` acepta archivos via `FormData`:
 - **Campo:** `file` (el archivo)
-- **Campo opcional:** `product_type` (banner, logo, property, etc.) — afecta la ruta de almacenamiento en R2
+- **Campo opcional:** `product_type` (banner, logo, property, etc.)
 - **Campo opcional:** `property_id` — para imagenes de inmuebles
 - **Tipos permitidos:** image/jpeg, image/png, image/webp, image/gif, video/mp4, video/webm, video/quicktime
 - **Tamano maximo:** 50MB
@@ -410,17 +512,18 @@ El endpoint `/api/upload` acepta archivos via `FormData`:
 - **R2 key pattern:** `{R2_FOLDER}/{product_type}/{timestamp}_{filename}`
 - **Respuesta:** `{ url: "/api/serve?key=...", key: "..." }`
 
-Las imagenes se sirven via `/api/serve?key=...` que lee desde R2.
-
 ---
 
 ## Sitemap y SEO
 
-- **Sitemap dinamico:** `/sitemap.xml` → redirige a `/api/sitemap`
-- Se genera en cada request (sin cache largo)
-- Incluye: paginas estaticas, negocios aprobados (`/negocio/:slug`), productos aprobados (`/producto/:slug`)
-- **Robots.txt dinamico:** `/robots.txt` → redirige a `/api/robots`
-- Cada ficha de negocio/producto tiene meta tags SEO completos
+- **Sitemap dinamico:** `/sitemap.xml` → `/api/sitemap` — incluye paginas estaticas, negocios aprobados, productos aprobados, categorias, estados. Dominio: `holax.com.ve`.
+- **Robots.txt dinamico:** `/robots.txt` → `/api/robots`
+- **Google Search Console:** Meta tag de verificacion en `index.html`.
+- **Open Graph:** Todas las paginas incluyen `og:title`, `og:description`, `og:image` (Holax.png), `og:url`, `og:type`.
+- **Twitter Cards:** Todas las paginas incluyen `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`.
+- **JSON-LD:** Fichas de negocio incluyen `LocalBusiness` o `MedicalBusiness` schema.
+- **Canonical:** Todas las paginas tienen `<link rel="canonical">`.
+- **301 Redirects:** `_redirects` redirige URLs antiguas al dominio nuevo.
 
 ---
 
@@ -434,11 +537,37 @@ Las imagenes se sirven via `/api/serve?key=...` que lee desde R2.
 
 ---
 
+## Integracion Facebook
+
+- Configuracion: `page_id` y `page_access_token` en `/api/facebook/config`
+- Import manual (POST) o automatico via cron (GET con header `X-Cron-Secret`)
+- Parsea publicaciones de Facebook: titulo, descripcion, precio, tipo de propiedad, habitaciones, banos, area
+- Registra posts ya importados para evitar duplicados
+- Los negocios importados se crean con `business_type = 'negocio'` y estatus configurable (auto-aprobar)
+
+---
+
+## Migraciones
+
+Las migraciones se ejecutan via GET al endpoint correspondiente (requieren autenticacion admin):
+
+| Endpoint | Descripcion |
+|---|---|
+| `/api/migrate/tipos-negocio` | Crea tabla tipos_negocio, asigna categorias a tipos, elimina CHECK constraint en business_type |
+| `/api/migrate/product-type` | Agrega columna product_type a productos |
+| `/api/migrate/schema-premium` | Agrega campos de plan premium |
+| `/api/migrate/seller-role` | Agrega rol vendedor |
+| `/api/migrate/category-suggestions` | Tabla de sugerencias de categorias |
+| `/api/migrate/add-social-video` | Campos redes sociales y video |
+
+---
+
 ## Despliegue
 
 ### Requisitos
 
 - Cuenta de Cloudflare con Pages, D1 y R2 habilitados
+- Dominio personalizado configurado en Cloudflare Pages
 - GitHub repo conectado a Cloudflare Pages
 - Variables de entorno configuradas en Cloudflare
 
@@ -449,12 +578,14 @@ Las imagenes se sirven via `/api/serve?key=...` que lee desde R2.
 | `JWT_SECRET` | Secreto para firmar JWT tokens |
 | `OPENAI_API_KEY` | Clave API de OpenAI (para chatbot IA, opcional) |
 | `GOOGLE_MAPS_KEY` | API key de Google Maps (geocoding, opcional) |
+| `CRON_SECRET` | Secreto para autenticar llamadas cron (Facebook import) |
 
 ### Configuracion en Cloudflare
 
 1. **D1 Database:** Binding name `DB` → base de datos creada en el dashboard de Cloudflare
 2. **R2 Bucket:** Binding name `R2` (y/o `MEDIA_BUCKET`) → bucket creado en el dashboard
 3. **Pages Project:** Conectado al repositorio de GitHub, rama `main`
+4. **Custom Domain:** `holax.com.ve` configurado en Pages > Custom domains
 
 ### Flujo
 
@@ -463,7 +594,7 @@ git add -A
 git commit -m "descripcion del cambio"
 git push origin main
 # Cloudflare Pages detecta el push y despliega automaticamente
-# Verificar: https://aunclick.pages.dev
+# Verificar: https://holax.com.ve
 ```
 
 ---
