@@ -1087,7 +1087,7 @@
         videoFileInput.addEventListener('change', function() {
             var files = this.files;
             if (!files || !files.length) return;
-            var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+            var token = localStorage.getItem('meridaunclick_token') || localStorage.getItem('token');
             var infoDiv = document.getElementById('bizFormVideoFileInfo');
 
             Array.from(files).forEach(function(file) {
