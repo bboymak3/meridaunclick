@@ -94,8 +94,9 @@ export async function onRequestPost(context) {
       });
     }
 
-    if (!businessId && !propertyId && productType !== 'marketplace' && productType !== 'video' && productType !== 'logo' && productType !== 'banner') {
-      return new Response(JSON.stringify({ error: 'business_id, property_id es requerido o product_type debe ser marketplace/video/logo/banner' }), {
+    const ALLOWED_PRODUCT_TYPES = ['marketplace', 'video', 'logo', 'banner', 'business', 'business_image', 'property', 'job'];
+    if (!businessId && !propertyId && !ALLOWED_PRODUCT_TYPES.includes(productType)) {
+      return new Response(JSON.stringify({ error: 'business_id, property_id es requerido o product_type debe ser ' + ALLOWED_PRODUCT_TYPES.join('/') }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -128,8 +129,8 @@ export async function onRequestPost(context) {
     }
 
     // Verify ownership based on product_type
-    if (productType === 'marketplace' || productType === 'video') {
-      // Marketplace/video uploads - any authenticated user can upload
+    if (productType === 'marketplace' || productType === 'video' || productType === 'job') {
+      // Marketplace/video/job uploads - any authenticated user can upload
     } else if (productType === 'logo' || productType === 'banner') {
       // Logo/banner uploads - any authenticated user (admin) can upload, no business_id required
     } else if (productType === 'property' || propertyId) {
@@ -182,8 +183,11 @@ export async function onRequestPost(context) {
       key = `${r2Folder}/banners/${timestamp}_${sanitizedName}`;
     } else if (productType === 'property' || propertyId) {
       key = `${r2Folder}/properties/${propertyId}/${timestamp}_${sanitizedName}`;
+    } else if (productType === 'job') {
+      key = `${r2Folder}/jobs/${user.id}/${timestamp}_${sanitizedName}`;
     } else {
-      key = `${r2Folder}/businesses/${businessId}/${timestamp}_${sanitizedName}`;
+      // 'business', 'business_image', or fallback
+      key = `${r2Folder}/businesses/${businessId || user.id}/${timestamp}_${sanitizedName}`;
     }
 
     // Upload to R2
@@ -206,9 +210,17 @@ export async function onRequestPost(context) {
     });
   } catch (error) {
     console.error('Upload error:', error);
+    const debugMsg = error.message || 'Unknown error';
     let errorMsg = 'Error interno del servidor';
-    if (error.message) errorMsg = `Error: ${error.message}`;
-    return new Response(JSON.stringify({ error: errorMsg, debug: error.message }), {
+    // Provide more specific error messages for common issues
+    if (debugMsg.includes('R2 binding') || debugMsg.includes('R2_BUCKET') || debugMsg.includes('binding')) {
+      errorMsg = 'Almacenamiento R2 no configurado correctamente';
+    } else if (debugMsg.includes('size') || debugMsg.includes('too large')) {
+      errorMsg = 'El archivo es demasiado grande';
+    } else if (debugMsg.includes('network') || debugMsg.includes('fetch') || debugMsg.includes('connect')) {
+      errorMsg = 'Error de conexión al almacenamiento';
+    }
+    return new Response(JSON.stringify({ error: errorMsg, debug: debugMsg }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -259,7 +259,8 @@ async function apiCall(endpoint, options = {}) {
             if (response.status === 401) {
                 removeToken();
             }
-            throw new Error(data.error || `Error ${response.status}: ${response.statusText}`);
+            const debugInfo = data.debug ? ` (${data.debug})` : '';
+            throw new Error((data.error || `Error ${response.status}: ${response.statusText}`) + debugInfo);
         }
 
         return data;

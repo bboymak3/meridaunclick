@@ -946,6 +946,7 @@
                         const formData = new FormData();
                         formData.append('file', img.file);
                         formData.append('business_id', businessId.toString());
+                        formData.append('product_type', 'business');
 
                         // Upload file to R2
                         const uploadResult = await api.postFormData('/upload', formData);
@@ -963,14 +964,15 @@
                     } catch (uploadError) {
                         console.error('Error uploading image:', uploadError);
                         // Detect if R2 is not configured
-                        if (uploadError.message && (
-                            uploadError.message.includes('R2') ||
-                            uploadError.message.includes('Almacenamiento') ||
-                            uploadError.message.includes('r2')
-                        )) {
+                        const errMsg = uploadError.message || '';
+                        if (errMsg.includes('R2') ||
+                            errMsg.includes('Almacenamiento') ||
+                            errMsg.includes('r2') ||
+                            errMsg.includes('interno del servidor')) {
                             r2NotConfigured = true;
+                            showToast(`Error al subir imagen ${i + 1}: ${errMsg}`, 'warning');
                         } else {
-                            showToast(`Error al subir imagen ${i + 1}: ${uploadError.message}`, 'warning');
+                            showToast(`Error al subir imagen ${i + 1}: ${errMsg}`, 'warning');
                         }
                     }
                 }
@@ -1235,7 +1237,7 @@
         if (cat && cat !== '__suggest__') urlParts.push(cat);
         urlParts.push(slugName);
 
-        slugPreviewText.textContent = '/' + urlParts.join('/');
+        slugPreviewText.textContent = 'https://holax.com.ve/' + urlParts.join('/');
         slugPreview.style.display = 'block';
     }
 

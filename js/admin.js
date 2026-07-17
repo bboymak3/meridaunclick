@@ -1028,7 +1028,7 @@ if (!window._renderVideoList) {
                     const fd = new FormData();
                     fd.append('file', file);
                     fd.append('product_type', 'video');
-                    fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('auth_token') || localStorage.getItem('token')) }, body: fd })
+                    fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('meridaunclick_token') || localStorage.getItem('token')) }, body: fd })
                     .then(r => r.json())
                     .then(data => {
                         if (data.url) {
@@ -1074,7 +1074,8 @@ if (!window._renderVideoList) {
                 const compressed = await compressImage(file);
                 const fd = new FormData();
                 fd.append('file', compressed);
-                fd.append('product_type', 'business_image');
+                fd.append('business_id', adminBizEditModal.dataset.businessId);
+                fd.append('product_type', 'business');
                 const data = await api.postFormData('/upload', fd);
                 if (!data.url) throw new Error(data.error || 'Error al subir');
                 await api.post(`/images/${adminBizEditModal.dataset.businessId}`, { url: data.url, is_cover: 0 });
