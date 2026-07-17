@@ -220,6 +220,13 @@ export async function onRequestPost(context) {
       });
     }
 
+    // Auto-migrate: ensure all required columns exist (same as GET handler)
+    try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN expires_at TEXT').run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE users ADD COLUMN plan_type TEXT DEFAULT 'basic'").run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN logo TEXT").run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN custom_html TEXT").run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN banner TEXT").run(); } catch(e) { /* column may exist */ }
+
     const jwtSecret = env.JWT_SECRET || 'aunclick_default_secret_2024';
 
     // Auth required
