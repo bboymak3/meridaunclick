@@ -721,6 +721,7 @@ function createBusinessCard(business) {
 
     const featuredBadge = business.featured ? '<span class="card-badge badge-featured"><i class="fas fa-star"></i> Destacada</span>' : '';
     const statusBadge = business.status && business.status !== 'approved' ? `<span class="card-badge badge-${business.status}">${getStatusLabel(business.status)}</span>` : '';
+    const especialidadBadge = business.especialidad ? `<span class="card-badge badge-especialidad"><i class="fas fa-stethoscope"></i> ${business.especialidad}</span>` : '';
 
     const bizUrl = getBusinessUrl(business);
     return `
@@ -730,7 +731,7 @@ function createBusinessCard(business) {
                     <img src="${imgSrc}" alt="${business.title || 'Sin título'}" loading="lazy" onerror="this.src='${placeholderImg}'">
                     <div class="business-card-badges">
                         <span class="card-badge badge-type">${typeLabel}</span>
-                        ${featuredBadge}${statusBadge}
+                        ${featuredBadge}${statusBadge}${especialidadBadge}
                     </div>
                     <button class="btn-favorite business-card-fav" data-business-id="${business.id}" aria-label="Agregar a favoritos" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(${business.id});">
                         <i class="far fa-heart"></i>
