@@ -1481,7 +1481,6 @@ strong {
 body.search-modal-open .btn-share-wa-card,
 body.search-modal-open .card-badge,
 body.search-modal-open .btn-favorite,
-body.search-modal-open .business-card-video-badge,
 body.search-modal-open .ai-chat-btn-pulse,
 body.search-modal-open .ai-chat-btn,
 body.search-modal-open .cb-chat-btn {
@@ -2484,25 +2483,6 @@ body.search-modal-open .cb-chat-btn {
     display: flex;
     gap: 4px;
     z-index: 2;
-}
-.business-card-video-badge {
-    position: absolute;
-    bottom: 8px;
-    left: 8px;
-    background: rgba(0,0,0,0.7);
-    color: #fff;
-    font-size: 0.75rem;
-    padding: 4px 10px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    z-index: 2;
-    backdrop-filter: blur(4px);
-}
-.business-card-video-badge i {
-    color: #ef4444;
-    font-size: 0.85rem;
 }
 .business-card-fav {
     position: absolute;

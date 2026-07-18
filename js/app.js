@@ -722,12 +722,6 @@ function createBusinessCard(business) {
     const featuredBadge = business.featured ? '<span class="card-badge badge-featured"><i class="fas fa-star"></i> Destacada</span>' : '';
     const statusBadge = business.status && business.status !== 'approved' ? `<span class="card-badge badge-${business.status}">${getStatusLabel(business.status)}</span>` : '';
 
-    // Video indicator
-    let videoIndicator = '';
-    if (business.video_url) {
-        videoIndicator = '<div class="business-card-video-badge"><i class="fas fa-play-circle"></i> Video</div>';
-    }
-
     const bizUrl = getBusinessUrl(business);
     return `
         <article class="business-card" data-business-id="${business.id}">
@@ -738,7 +732,6 @@ function createBusinessCard(business) {
                         <span class="card-badge badge-type">${typeLabel}</span>
                         ${featuredBadge}${statusBadge}
                     </div>
-                    ${videoIndicator}
                     <button class="btn-favorite business-card-fav" data-business-id="${business.id}" aria-label="Agregar a favoritos" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(${business.id});">
                         <i class="far fa-heart"></i>
                     </button>

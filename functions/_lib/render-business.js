@@ -265,10 +265,9 @@ export function renderBusinessPage(env, business, options = {}) {
 }
 
 /* === Compact Business Cards (for similar businesses) === */
-/* Hide action buttons and video badge in similar section */
+/* Hide action buttons in similar section */
 .business-detail-page #similarGrid .business-card-fav,
-.business-detail-page #similarGrid .btn-share-wa-card,
-.business-detail-page #similarGrid .business-card-video-badge {
+.business-detail-page #similarGrid .btn-share-wa-card {
     display: none !important;
 }
 .business-detail-page .business-grid {
