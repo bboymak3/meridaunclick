@@ -88,6 +88,7 @@ if (!window._renderVideoList) {
     const tabPremium = document.getElementById('tabPremium');
     const tabProducts = document.getElementById('tabProducts');
     const tabEditBiz = document.getElementById('tabEditBiz');
+    const tabPopup = document.getElementById('tabPopup');
     const tabBazar = document.getElementById('tabBazar');
     const tabCarousel = document.getElementById('tabCarousel');
 
@@ -287,7 +288,7 @@ if (!window._renderVideoList) {
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories'), bazar: tabBazar, carousel: tabCarousel };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories'), popup: tabPopup, bazar: tabBazar, carousel: tabCarousel };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -295,7 +296,7 @@ if (!window._renderVideoList) {
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías', bazar: 'Bazar', carousel: 'Carrusel de Videos' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías', popup: 'Ventana Emergente', bazar: 'Bazar', carousel: 'Carrusel de Videos' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -348,6 +349,9 @@ if (!window._renderVideoList) {
             case 'categories':
                 loadAdmin2Categories();
                 loadAdmin2CatSuggestions();
+                break;
+            case 'popup':
+                loadPopupTab();
                 break;
             case 'bazar':
                 loadBazarTab();
@@ -4665,6 +4669,110 @@ if (!window._renderVideoList) {
             });
         }
     });
+
+    // ─── POPUP (VENTANA EMERGENTE) TAB ──────────────────────────
+    async function loadPopupTab() {
+        try {
+            const data = await api.get('/settings');
+            const s = data.settings || {};
+            // Toggle
+            const toggleEl = document.getElementById('setting_popup_enabled');
+            if (toggleEl) toggleEl.checked = s.popup_enabled === '1';
+            // Link URL
+            const linkEl = document.getElementById('setting_popup_link_url');
+            if (linkEl) linkEl.value = s.popup_link_url || '';
+            // Image URL
+            const hiddenUrl = document.getElementById('setting_popup_image_url');
+            if (hiddenUrl) hiddenUrl.value = s.popup_image_url || '';
+            // Image preview
+            const imgEl = document.getElementById('adminPopupImg');
+            const iconEl = document.getElementById('adminPopupPlaceholderIcon');
+            const removeBtn = document.getElementById('adminPopupRemoveBtn');
+            if (s.popup_image_url) {
+                if (imgEl) { imgEl.src = s.popup_image_url; imgEl.style.display = 'block'; }
+                if (iconEl) iconEl.style.display = 'none';
+                if (removeBtn) removeBtn.style.display = '';
+            } else {
+                if (imgEl) { imgEl.style.display = 'none'; imgEl.src = ''; }
+                if (iconEl) iconEl.style.display = '';
+                if (removeBtn) removeBtn.style.display = 'none';
+            }
+        } catch (e) {
+            showToast('Error al cargar configuracion de popup', 'error');
+        }
+    }
+
+    // Save popup settings (called from onclick in HTML)
+    window.savePopupSettings = async function() {
+        const btn = event.target.closest('button');
+        const origText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+        try {
+            const updates = {};
+            const toggleEl = document.getElementById('setting_popup_enabled');
+            if (toggleEl) updates.popup_enabled = toggleEl.checked ? '1' : '0';
+            const linkEl = document.getElementById('setting_popup_link_url');
+            if (linkEl) updates.popup_link_url = linkEl.value.trim();
+            const hiddenUrl = document.getElementById('setting_popup_image_url');
+            if (hiddenUrl) updates.popup_image_url = hiddenUrl.value;
+            await api.put('/settings', updates);
+            showToast('Configuracion de Ventana Emergente guardada', 'success');
+        } catch (e) {
+            showToast(e.message || 'Error al guardar', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = origText;
+        }
+    };
+
+    // Handle popup image file selection and upload to R2
+    window.handleAdminPopupImageSelect = async function(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { showToast('La imagen no debe superar 5MB', 'error'); return; }
+        try {
+            showToast('Subiendo imagen...', 'info');
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('folder', 'merida/popup');
+            const resp = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken')) },
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.url) {
+                const hiddenUrl = document.getElementById('setting_popup_image_url');
+                if (hiddenUrl) hiddenUrl.value = data.url;
+                const imgEl = document.getElementById('adminPopupImg');
+                const iconEl = document.getElementById('adminPopupPlaceholderIcon');
+                const removeBtn = document.getElementById('adminPopupRemoveBtn');
+                if (imgEl) { imgEl.src = data.url; imgEl.style.display = 'block'; }
+                if (iconEl) iconEl.style.display = 'none';
+                if (removeBtn) removeBtn.style.display = '';
+                showToast('Imagen subida. Recuerda guardar cambios.', 'success');
+            } else {
+                showToast(data.error || 'Error al subir', 'error');
+            }
+        } catch (e) {
+            showToast('Error al subir imagen', 'error');
+        }
+        input.value = '';
+    };
+
+    // Remove popup image
+    window.removeAdminPopupImage = function() {
+        const hiddenUrl = document.getElementById('setting_popup_image_url');
+        if (hiddenUrl) hiddenUrl.value = '';
+        const imgEl = document.getElementById('adminPopupImg');
+        const iconEl = document.getElementById('adminPopupPlaceholderIcon');
+        const removeBtn = document.getElementById('adminPopupRemoveBtn');
+        if (imgEl) { imgEl.style.display = 'none'; imgEl.src = ''; }
+        if (iconEl) iconEl.style.display = '';
+        if (removeBtn) removeBtn.style.display = 'none';
+        showToast('Imagen quitada. Recuerda guardar cambios.', 'success');
+    };
 
     // ─── BAZAR TAB ─────────────────────────────────────────────
     async function loadBazarTab() {

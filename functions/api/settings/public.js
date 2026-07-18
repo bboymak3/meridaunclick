@@ -24,6 +24,9 @@ const PUBLIC_KEYS = [
   'marketplace_banner_url',
   'bazar_enabled',
   'video_carousel_enabled',
+  'popup_enabled',
+  'popup_image_url',
+  'popup_link_url',
 ];
 
 export async function onRequestGet(context) {
@@ -60,6 +63,9 @@ export async function onRequestGet(context) {
       marketplace_banner_url: '',
       bazar_enabled: '0',
       video_carousel_enabled: '0',
+      popup_enabled: '0',
+      popup_image_url: '',
+      popup_link_url: '',
     };
 
     const response = {};

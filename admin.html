@@ -122,6 +122,10 @@
                         <i class="fas fa-sliders-h"></i>
                         <span>Configuración</span>
                     </a>
+                    <a href="#" class="admin-nav-link" data-tab="popup">
+                        <i class="fas fa-window-restore"></i>
+                        <span>Ventana Emergente</span>
+                    </a>
                     <a href="#" class="admin-nav-link" data-tab="bazar">
                         <i class="fas fa-store"></i>
                         <span>Bazar</span>
@@ -796,8 +800,9 @@
                                 <div class="settings-toggle-row"><label class="settings-label">Marketplace</label><label class="settings-switch"><input type="checkbox" id="setting_marketplace_enabled" data-key="marketplace_enabled"><span class="settings-switch-slider"></span></label></div>
                                 <div class="settings-toggle-row"><label class="settings-label">Programa de Puntos</label><label class="settings-switch"><input type="checkbox" id="setting_points_enabled" data-key="points_enabled"><span class="settings-switch-slider"></span></label></div>
                                 <div class="settings-toggle-row"><label class="settings-label">Servicios de Emergencia</label><label class="settings-switch"><input type="checkbox" id="setting_emergency_enabled" data-key="emergency_enabled"><span class="settings-switch-slider"></span></label></div>
-                                <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-store" style="color:#059669;margin-right:4px;"></i> Encuesta Bazar (perfiles de negocio)</label><label class="settings-switch"><input type="checkbox" id="setting_bazar_enabled" data-key="bazar_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-store" style="color:#059669;margin-right:4px;"></i> Encuesta Bazar (Dashboard)</label><label class="settings-switch"><input type="checkbox" id="setting_bazar_enabled" data-key="bazar_enabled"><span class="settings-switch-slider"></span></label></div>
                                 <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-video" style="color:#dc2626;margin-right:4px;"></i> Carrusel de Videos (Index)</label><label class="settings-switch"><input type="checkbox" id="setting_video_carousel_enabled" data-key="video_carousel_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-window-restore" style="color:#7c3aed;margin-right:4px;"></i> Ventana Emergente (Publicidad)</label><label class="settings-switch"><input type="checkbox" id="setting_popup_enabled_toggle" data-key="popup_enabled"><span class="settings-switch-slider"></span></label></div>
                             </div>
                             <hr style="margin:20px 0; border-color:var(--color-border-light);">
                             <div class="settings-section">
@@ -1072,6 +1077,64 @@
                                 <p>No se encontraron usuarios.</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== POPUP (VENTANA EMERGENTE) TAB ==================== -->
+        <div class="admin-tab hidden" id="tabPopup">
+            <div class="admin-card" style="padding:24px;">
+                <div class="admin-card-header" style="margin-bottom:20px;">
+                    <h3><i class="fas fa-window-restore" style="color:#7c3aed;"></i> Ventana Emergente (Publicidad)</h3>
+                </div>
+                <div class="admin-card-body">
+                    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:20px;">Configura la ventana emergente que se mostrara a los usuarios al visitar perfiles de negocio. Sube una imagen publicitaria y opcionalmente un enlace de destino.</p>
+
+                    <!-- Toggle -->
+                    <div class="settings-section" style="margin-bottom:20px;">
+                        <div class="settings-toggle-row">
+                            <label class="settings-label" style="font-weight:600;"><i class="fas fa-power-off" style="color:#7c3aed;margin-right:6px;"></i> Habilitar Ventana Emergente</label>
+                            <label class="settings-switch"><input type="checkbox" id="setting_popup_enabled" data-key="popup_enabled"><span class="settings-switch-slider"></span></label>
+                        </div>
+                    </div>
+
+                    <hr style="margin:20px 0; border-color:var(--color-border-light);">
+
+                    <!-- Imagen del Popup -->
+                    <div class="settings-section" style="margin-bottom:20px;">
+                        <h4 class="settings-section-title"><i class="fas fa-image" style="color:#7c3aed;"></i> Imagen del Popup</h4>
+                        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Esta imagen se mostrara en la ventana emergente. Se recomienda 600x400px o proporciones similares.</p>
+                        <div style="display:flex;align-items:flex-start;gap:16px;">
+                            <div id="adminPopupImagePreview" style="width:240px;height:160px;border-radius:10px;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f9fafb;flex-shrink:0;">
+                                <i class="fas fa-image" id="adminPopupPlaceholderIcon" style="font-size:2rem;color:#94a3b8;"></i>
+                                <img id="adminPopupImg" src="" alt="Popup" style="width:100%;height:100%;object-fit:contain;display:none;">
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('adminPopupImageInput').click()">
+                                    <i class="fas fa-upload"></i> Subir Imagen
+                                </button>
+                                <button type="button" class="btn btn-secondary btn-sm" id="adminPopupRemoveBtn" onclick="removeAdminPopupImage()" style="display:none;margin-left:6px;">
+                                    <i class="fas fa-trash"></i> Quitar
+                                </button>
+                                <input type="file" id="adminPopupImageInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;" onchange="handleAdminPopupImageSelect(this)">
+                                <input type="hidden" id="setting_popup_image_url" data-key="popup_image_url">
+                                <p style="font-size:0.72rem;color:#94a3b8;margin:6px 0 0;">JPG, PNG, WebP, GIF - Max 5MB.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enlace de destino -->
+                    <div class="settings-section" style="margin-bottom:20px;">
+                        <h4 class="settings-section-title"><i class="fas fa-link" style="color:#7c3aed;"></i> Enlace de Destino (opcional)</h4>
+                        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:8px;">Si configuras un enlace, al hacer clic en la imagen del popup se abrira esa URL. Si lo dejas vacio la imagen no tendra enlace.</p>
+                        <input type="url" id="setting_popup_link_url" data-key="popup_link_url" class="form-control" placeholder="https://ejemplo.com/mi-promocion" style="max-width:500px;">
+                    </div>
+
+                    <div style="text-align:right;">
+                        <button type="button" class="btn btn-primary" onclick="savePopupSettings()">
+                            <i class="fas fa-save"></i> Guardar Cambios
+                        </button>
                     </div>
                 </div>
             </div>

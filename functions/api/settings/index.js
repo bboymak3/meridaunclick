@@ -78,6 +78,10 @@ const DEFAULT_SETTINGS = {
   bazar_enabled: '0',
   // Video Carousel
   video_carousel_enabled: '0',
+  // Popup (Ventana Emergente)
+  popup_enabled: '0',
+  popup_image_url: '',
+  popup_link_url: '',
   // Points configuration
   points_per_visit: '10',
   points_per_review: '20',
@@ -92,7 +96,7 @@ const DEFAULT_SETTINGS = {
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
 // Also allow hero_logo_url even if it was added after initial seed
-const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url'];
+const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url'];
 // Deduplicate
 const ALLOWED_KEYS_SET = [...new Set(ALLOWED_KEYS)];
 
