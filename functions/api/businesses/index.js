@@ -74,6 +74,7 @@ export async function onRequestGet(context) {
     const sort = params.get('sort') || 'newest';
     const userId = params.get('user_id');
     const featured = params.get('featured');
+    const especialidad = params.get('especialidad');
 
     const conditions = [];
     const bindings = [];
@@ -118,6 +119,10 @@ export async function onRequestGet(context) {
     }
     if (featured === '1') {
       conditions.push('p.featured = 1');
+    }
+    if (especialidad) {
+      conditions.push('p.especialidad LIKE ?');
+      bindings.push(`%${especialidad}%`);
     }
     // Filter expired posts for public views
     if (status === 'approved') {

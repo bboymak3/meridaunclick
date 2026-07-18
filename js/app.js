@@ -774,6 +774,7 @@ function getSearchParams() {
         city: params.get('ciudad') || params.get('city') || '',
         search: params.get('q') || params.get('search') || '',
         business_type: params.get('tipo_negocio') || '',
+        especialidad: params.get('especialidad') || '',
         page: params.get('page') || 1,
         limit: params.get('limit') || 12,
     };
@@ -1370,6 +1371,17 @@ async function loadSiteStats() {
         if (params.city && document.getElementById('sCiudad')) document.getElementById('sCiudad').value = params.city;
         if (params.business_type && document.getElementById('sTipoNegocio')) document.getElementById('sTipoNegocio').value = params.business_type;
         if (params.search && document.getElementById('sQuery')) document.getElementById('sQuery').value = params.search;
+        if (params.especialidad && document.getElementById('sEspecialidad')) document.getElementById('sEspecialidad').value = params.especialidad;
+
+        // Show/hide especialidad field based on category
+        const sCat = document.getElementById('sCategoria');
+        const espWrap = document.getElementById('especialidadFilterWrap');
+        function toggleEspecialidadField() {
+            if (espWrap) {
+                espWrap.style.display = (sCat && sCat.value === 'medicina-servicio-medico') ? '' : 'none';
+            }
+        }
+        if (sCat) { sCat.addEventListener('change', toggleEspecialidadField); toggleEspecialidadField(); }
 
         // Search button
         const searchBtn = document.getElementById('searchBtn');
@@ -1453,6 +1465,7 @@ async function loadSiteStats() {
         const categoria = document.getElementById('sCategoria')?.value || '';
         const ciudad = document.getElementById('sCiudad')?.value?.trim() || '';
         const tipoNegocio = document.getElementById('sTipoNegocio')?.value || '';
+        const especialidad = document.getElementById('sEspecialidad')?.value?.trim() || '';
         const q = document.getElementById('sQuery')?.value?.trim() || '';
         const sort = document.getElementById('sSort')?.value || document.getElementById('sOrdenar')?.value || '';
 
@@ -1462,6 +1475,7 @@ async function loadSiteStats() {
         if (categoria) endpoint += `&categoria=${encodeURIComponent(categoria)}`;
         if (ciudad) endpoint += `&city=${encodeURIComponent(ciudad)}`;
         if (tipoNegocio) endpoint += `&business_type=${encodeURIComponent(tipoNegocio)}`;
+        if (especialidad) endpoint += `&especialidad=${encodeURIComponent(especialidad)}`;
         if (q) endpoint += `&search=${encodeURIComponent(q)}`;
 
         // Sort mapping
@@ -1490,6 +1504,7 @@ async function loadSiteStats() {
                 if (categoria) tags += `<span class="active-filter-tag"><i class="fas fa-tag"></i> ${categoria} <button onclick="this.parentElement.remove(); document.getElementById('sCategoria').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
                 if (ciudad) tags += `<span class="active-filter-tag"><i class="fas fa-map-marker-alt"></i> ${ciudad} <button onclick="this.parentElement.remove(); document.getElementById('sCiudad').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
                 if (tipoNegocio) tags += `<span class="active-filter-tag">${getBusinessTypeLabel(tipoNegocio)} <button onclick="this.parentElement.remove(); document.getElementById('sTipoNegocio').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
+                if (especialidad) tags += `<span class="active-filter-tag"><i class="fas fa-stethoscope"></i> ${truncateText(especialidad, 20)} <button onclick="this.parentElement.remove(); document.getElementById('sEspecialidad').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
                 if (q) tags += `<span class="active-filter-tag"><i class="fas fa-search"></i> "${truncateText(q, 20)}" <button onclick="this.parentElement.remove(); document.getElementById('sQuery').value=''; document.getElementById('searchBtn').click();">&times;</button></span>`;
                 activeFiltersEl.innerHTML = tags;
                 if (clearFiltersBtn) {
@@ -1510,7 +1525,7 @@ async function loadSiteStats() {
             renderPagination(paginationEl, paginationData, executeSearch);
 
             // Update URL without reload
-            updateSearchURL(estado, categoria, ciudad, tipoNegocio, q, page);
+            updateSearchURL(estado, categoria, ciudad, tipoNegocio, especialidad, q, page);
 
         } catch (error) {
             if (searchLoading) searchLoading.classList.add('hidden');
@@ -1519,12 +1534,13 @@ async function loadSiteStats() {
         }
     }
 
-    function updateSearchURL(estado, categoria, ciudad, tipoNegocio, q, page) {
+    function updateSearchURL(estado, categoria, ciudad, tipoNegocio, especialidad, q, page) {
         const url = new URL(window.location);
         url.searchParams.delete('estado');
         url.searchParams.delete('categoria');
         url.searchParams.delete('ciudad');
         url.searchParams.delete('tipo_negocio');
+        url.searchParams.delete('especialidad');
         url.searchParams.delete('q');
         url.searchParams.delete('page');
 
@@ -1532,6 +1548,7 @@ async function loadSiteStats() {
         if (categoria) url.searchParams.set('categoria', categoria);
         if (ciudad) url.searchParams.set('ciudad', ciudad);
         if (tipoNegocio) url.searchParams.set('tipo_negocio', tipoNegocio);
+        if (especialidad) url.searchParams.set('especialidad', especialidad);
         if (q) url.searchParams.set('q', q);
         if (page && page > 1) url.searchParams.set('page', page);
 
