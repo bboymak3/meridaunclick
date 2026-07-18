@@ -874,6 +874,66 @@ function positionHeroLogo(logo) {
     }
 }
 
+// ─── Video Carousel Loader ────────────────────────────
+function getYoutubeEmbedUrl(url) {
+    if (!url) return '';
+    // Standard youtube.com/watch?v=
+    let m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    if (m) return `https://www.youtube.com/embed/${m[1]}?autoplay=0&rel=0`;
+    // Short youtu.be
+    m = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+    if (m) return `https://www.youtube.com/embed/${m[1]}?autoplay=0&rel=0`;
+    // TikTok
+    if (url.includes('tiktok.com')) return url.replace(/\/video\//, '/embed/v2/');
+    // Direct video URL or other embed
+    return url;
+}
+
+function getYoutubeThumb(url) {
+    if (!url) return '';
+    let m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    if (m) return `https://img.youtube.com/vi/${m[1]}/hqdefault.jpg`;
+    return '';
+}
+
+async function loadVideoCarousel() {
+    const section = document.getElementById('videoCarouselSection');
+    const track = document.getElementById('videoCarouselTrack');
+    if (!section || !track) return;
+
+    try {
+        const settings = await fetch('/api/settings/public').then(r => r.json());
+        if (settings.video_carousel_enabled !== '1') return;
+
+        const data = await fetch('/api/video-carousel').then(r => r.json());
+        const videos = data.videos || [];
+        if (videos.length === 0) return;
+
+        track.innerHTML = videos.map(v => {
+            const thumb = v.thumbnail_url || getYoutubeThumb(v.url);
+            const embedUrl = getYoutubeEmbedUrl(v.url);
+            return `
+                <div style="flex:0 0 280px;scroll-snap-align:start;border-radius:14px;overflow:hidden;background:#111;position:relative;cursor:pointer;aspect-ratio:16/9;" onclick="this.innerHTML='<iframe src=\\'${embedUrl}&autoplay=1\\' style=\\'width:100%;height:100%;border:none;\\' allow=\\'autoplay;encrypted-media\\' allowfullscreen></iframe>'">
+                    ${thumb
+                        ? `<img src="${thumb}" style="width:100%;height:100%;object-fit:cover;" alt="${v.title || 'Video'}" loading="lazy">`
+                        : `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;"><i class="fas fa-video" style="font-size:2rem;"></i></div>`
+                    }
+                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);">
+                        <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.9);display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-play" style="color:#dc2626;font-size:1.2rem;margin-left:3px;"></i>
+                        </div>
+                    </div>
+                    ${v.title ? `<div style="position:absolute;bottom:0;left:0;right:0;padding:8px 12px;background:linear-gradient(transparent,rgba(0,0,0,0.8));color:#fff;font-size:0.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.title}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        section.classList.remove('hidden');
+    } catch (e) {
+        console.warn('Video carousel error:', e);
+    }
+}
+
 // ─── Hero Banner Loader ─────────────────────────────────
 async function loadHeroBanner() {
     const heroBg = document.getElementById('idxHeroBg');
@@ -925,6 +985,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load hero banner from settings
     loadHeroBanner();
+
+    // Load video carousel
+    loadVideoCarousel();
 
     // Load marketplace banner from settings
     loadMarketplaceBanner();

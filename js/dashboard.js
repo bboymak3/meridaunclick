@@ -1595,6 +1595,49 @@ window.closeEditBusinessModal = function() {
 
     setupJobModal();
 
+    // ═══════════════════════════════════════════════════════════════
+    // BAZAR BUTTON (shown when bazar_enabled setting is on)
+    // ═══════════════════════════════════════════════════════════════
+    (function setupBazarButton() {
+        const bazarBtn = document.getElementById('quickActionBazar');
+        const bazarModal = document.getElementById('bazarModal');
+        if (!bazarBtn || !bazarModal) return;
+
+        // Check if bazar is enabled and user has businesses
+        api.get('/settings/public').then(settings => {
+            if (settings.bazar_enabled !== '1') return;
+            const user = getCachedUser();
+            if (!user) return;
+            return api.get(`/businesses?user_id=${user.id}&status=approved&limit=1`);
+        }).then(bizData => {
+            if (!bizData) return;
+            const businesses = bizData.businesses || bizData.results || bizData || [];
+            if (businesses.length > 0) bazarBtn.style.display = '';
+        }).catch(() => {});
+
+        bazarBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            bazarModal.classList.remove('hidden');
+        });
+
+        const close = document.getElementById('bazarModalClose');
+        if (close) close.addEventListener('click', () => bazarModal.classList.add('hidden'));
+        bazarModal.querySelector('.modal-overlay')?.addEventListener('click', () => bazarModal.classList.add('hidden'));
+
+        async function sendBazarResponse(val) {
+            bazarModal.classList.add('hidden');
+            try {
+                await api.post('/bazar', { response: val, source: 'dashboard' });
+                showToast(val === 'si' ? 'Te has inscrito al bazar!' : 'Respuesta guardada', 'success');
+                bazarBtn.style.display = 'none';
+            } catch (e) {
+                showToast(e.message || 'Error', 'error');
+            }
+        }
+        document.getElementById('bazarDashSi')?.addEventListener('click', () => sendBazarResponse('si'));
+        document.getElementById('bazarDashNo')?.addEventListener('click', () => sendBazarResponse('no'));
+    })();
+
     // ─── Utility: escape HTML attributes ──────────────────────────
     function escapeAttr(str) {
         if (!str) return '';

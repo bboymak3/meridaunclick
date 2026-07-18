@@ -88,6 +88,8 @@ if (!window._renderVideoList) {
     const tabPremium = document.getElementById('tabPremium');
     const tabProducts = document.getElementById('tabProducts');
     const tabEditBiz = document.getElementById('tabEditBiz');
+    const tabBazar = document.getElementById('tabBazar');
+    const tabCarousel = document.getElementById('tabCarousel');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -285,7 +287,7 @@ if (!window._renderVideoList) {
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories') };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories'), bazar: tabBazar, carousel: tabCarousel };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -293,7 +295,7 @@ if (!window._renderVideoList) {
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías', bazar: 'Bazar', carousel: 'Carrusel de Videos' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -346,6 +348,12 @@ if (!window._renderVideoList) {
             case 'categories':
                 loadAdmin2Categories();
                 loadAdmin2CatSuggestions();
+                break;
+            case 'bazar':
+                loadBazarTab();
+                break;
+            case 'carousel':
+                loadCarouselTab();
                 break;
         }
 
@@ -4657,6 +4665,166 @@ if (!window._renderVideoList) {
             });
         }
     });
+
+    // ─── BAZAR TAB ─────────────────────────────────────────────
+    async function loadBazarTab() {
+        const tbody = document.getElementById('bazarTableBody');
+        const filter = document.getElementById('bazarFilter');
+        if (!tbody) return;
+
+        const filterVal = filter ? filter.value : '';
+        const url = `/bazar${filterVal ? '?response=' + filterVal : ''}`;
+        try {
+            const data = await api.get(url);
+            const responses = data.responses || [];
+
+            // Stats
+            const allData = filterVal ? await api.get('/bazar') : data;
+            const all = allData.responses || responses;
+            let siCount = 0, noCount = 0;
+            if (Array.isArray(all)) {
+                all.forEach(r => { if (r.response === 'si') siCount++; else noCount++; });
+            }
+            const statsSi = document.getElementById('bazarStatsSi');
+            const statsNo = document.getElementById('bazarStatsNo');
+            if (statsSi) statsSi.textContent = `Si: ${siCount}`;
+            if (statsNo) statsNo.textContent = `No: ${noCount}`;
+
+            if (responses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#6b7280;">Sin respuestas aun.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = responses.map(r => `
+                <tr>
+                    <td>${(r.created_at || '').split('T')[0]}</td>
+                    <td>${r.user_name || 'Usuario #' + r.user_id}</td>
+                    <td>${r.user_email || '-'}</td>
+                    <td>${r.business_title || '-'}</td>
+                    <td><span style="padding:3px 10px;border-radius:12px;font-size:0.8rem;font-weight:600;background:${r.response === 'si' ? '#d1fae5;color:#059669' : '#fee2e2;color:#dc2626'};">${r.response === 'si' ? 'Si' : 'No'}</span></td>
+                    <td>${r.source === 'dashboard' ? 'Dashboard' : 'Perfil'}</td>
+                </tr>
+            `).join('');
+        } catch (e) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:#dc2626;">Error al cargar</td></tr>';
+        }
+    }
+
+    // Bazar filter change
+    document.getElementById('bazarFilter')?.addEventListener('change', () => loadBazarTab());
+
+    // ─── CAROUSEL TAB ──────────────────────────────────────────
+    async function loadCarouselTab() {
+        const list = document.getElementById('carouselVideoList');
+        if (!list) return;
+        try {
+            const data = await api.get('/video-carousel?admin=true');
+            const videos = data.videos || [];
+            if (videos.length === 0) {
+                list.innerHTML = '<p style="text-align:center;padding:40px;color:#6b7280;">No hay videos en el carrusel.</p>';
+                return;
+            }
+            list.innerHTML = videos.map(v => `
+                <div style="display:flex;align-items:center;gap:16px;padding:12px;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:8px;background:#fff;">
+                    <div style="width:120px;height:68px;border-radius:8px;overflow:hidden;flex-shrink:0;background:#f3f4f6;">
+                        ${v.thumbnail_url
+                            ? `<img src="${v.thumbnail_url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;\\' ><i class=\\'fas fa-video\\' style=\\'font-size:1.2rem;color:#9ca3af;\\'></i></div>'">`
+                            : `<div style="display:flex;align-items:center;justify-content:center;height:100%;"><i class="fas fa-play-circle" style="font-size:1.5rem;color:#9ca3af;"></i></div>`
+                        }
+                    </div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.title || 'Sin titulo'}</div>
+                        <div style="font-size:0.75rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.url}</div>
+                        <div style="display:flex;gap:8px;margin-top:4px;">
+                            <span style="font-size:0.7rem;padding:2px 6px;border-radius:4px;background:${v.is_active ? '#d1fae5;color:#059669' : '#f3f4f6;color:#6b7280'};">${v.is_active ? 'Activo' : 'Inactivo'}</span>
+                            <span style="font-size:0.7rem;color:#6b7280;">Orden: ${v.order_index}</span>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-shrink:0;">
+                        <button class="btn btn-sm" style="background:${v.is_active ? '#fef3c7;color:#d97706' : '#d1fae5;color:#059669'};border:none;border-radius:6px;padding:6px 10px;font-size:0.75rem;cursor:pointer;" onclick="toggleCarouselVideo(${v.id}, ${v.is_active})">${v.is_active ? 'Desactivar' : 'Activar'}</button>
+                        <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;border:none;border-radius:6px;padding:6px 10px;font-size:0.75rem;cursor:pointer;" onclick="deleteCarouselVideo(${v.id})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            list.innerHTML = '<p style="text-align:center;padding:40px;color:#dc2626;">Error al cargar videos</p>';
+        }
+    }
+
+    // Toggle video active state (via settings-style inline SQL is not possible, so use a simple approach)
+    window.toggleCarouselVideo = async function(id, currentState) {
+        try {
+            // We update via a small trick: update in DB directly using the bazar endpoint pattern
+            // Actually, let's use the settings API to toggle — but we need a proper endpoint.
+            // For simplicity, we'll toggle by deleting and re-adding, or better: we add a PUT handler.
+            // For now, use the raw SQL approach via a quick fetch:
+            const token = localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken');
+            await fetch(`/api/video-carousel?id=${id}&toggle=1`, {
+                method: 'PUT',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_active: currentState ? 0 : 1 }),
+            });
+            loadCarouselTab();
+        } catch (e) {
+            showToast('Error al cambiar estado', 'error');
+        }
+    };
+
+    window.deleteCarouselVideo = async function(id) {
+        if (!confirm('Eliminar este video del carrusel?')) return;
+        try {
+            await api.delete('/video-carousel?id=' + id);
+            loadCarouselTab();
+            showToast('Video eliminado', 'success');
+        } catch (e) {
+            showToast('Error al eliminar', 'error');
+        }
+    };
+
+    // Carousel Modal Setup
+    (function() {
+        const modal = document.getElementById('carouselVideoModal');
+        if (!modal) return;
+        const close = document.getElementById('carouselVideoClose');
+        const cancel = document.getElementById('carouselVideoCancel');
+        const save = document.getElementById('carouselVideoSave');
+        const addBtn = document.getElementById('addVideoBtn');
+
+        if (close) close.addEventListener('click', () => modal.classList.add('hidden'));
+        if (cancel) cancel.addEventListener('click', () => modal.classList.add('hidden'));
+        modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+
+        if (addBtn) addBtn.addEventListener('click', () => {
+            document.getElementById('carouselVideoUrl').value = '';
+            document.getElementById('carouselVideoTitle').value = '';
+            document.getElementById('carouselVideoThumb').value = '';
+            document.getElementById('carouselVideoOrder').value = '0';
+            modal.classList.remove('hidden');
+        });
+
+        if (save) save.addEventListener('click', async () => {
+            const url = document.getElementById('carouselVideoUrl').value.trim();
+            if (!url) { showToast('La URL es requerida', 'error'); return; }
+            save.disabled = true;
+            save.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+            try {
+                await api.post('/video-carousel', {
+                    url,
+                    title: document.getElementById('carouselVideoTitle').value.trim(),
+                    thumbnail_url: document.getElementById('carouselVideoThumb').value.trim(),
+                    order_index: parseInt(document.getElementById('carouselVideoOrder').value) || 0,
+                });
+                modal.classList.add('hidden');
+                loadCarouselTab();
+                showToast('Video agregado al carrusel', 'success');
+            } catch (e) {
+                showToast(e.message || 'Error al guardar', 'error');
+            } finally {
+                save.disabled = false;
+                save.innerHTML = '<i class="fas fa-save"></i> Guardar';
+            }
+        });
+    })();
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {

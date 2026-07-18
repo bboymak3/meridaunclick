@@ -74,6 +74,10 @@ const DEFAULT_SETTINGS = {
   points_enabled: '0',
   emergency_enabled: '1',
   anonymous_comments_enabled: '1',
+  // Bazar
+  bazar_enabled: '0',
+  // Video Carousel
+  video_carousel_enabled: '0',
   // Points configuration
   points_per_visit: '10',
   points_per_review: '20',

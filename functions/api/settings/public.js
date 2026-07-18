@@ -22,6 +22,8 @@ const PUBLIC_KEYS = [
   'hero_banner_url',
   'hero_logo_url',
   'marketplace_banner_url',
+  'bazar_enabled',
+  'video_carousel_enabled',
 ];
 
 export async function onRequestGet(context) {
@@ -56,6 +58,8 @@ export async function onRequestGet(context) {
       hero_banner_url: '',
       hero_logo_url: '',
       marketplace_banner_url: '',
+      bazar_enabled: '0',
+      video_carousel_enabled: '0',
     };
 
     const response = {};

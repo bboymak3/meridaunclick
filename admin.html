@@ -122,6 +122,14 @@
                         <i class="fas fa-sliders-h"></i>
                         <span>Configuración</span>
                     </a>
+                    <a href="#" class="admin-nav-link" data-tab="bazar">
+                        <i class="fas fa-store"></i>
+                        <span>Bazar</span>
+                    </a>
+                    <a href="#" class="admin-nav-link" data-tab="carousel">
+                        <i class="fas fa-video"></i>
+                        <span>Carrusel</span>
+                    </a>
                     <a href="admin-vendedores.html" class="admin-nav-link admin-nav-external">
                         <i class="fas fa-store"></i>
                         <span>Vendedores</span>
@@ -788,6 +796,8 @@
                                 <div class="settings-toggle-row"><label class="settings-label">Marketplace</label><label class="settings-switch"><input type="checkbox" id="setting_marketplace_enabled" data-key="marketplace_enabled"><span class="settings-switch-slider"></span></label></div>
                                 <div class="settings-toggle-row"><label class="settings-label">Programa de Puntos</label><label class="settings-switch"><input type="checkbox" id="setting_points_enabled" data-key="points_enabled"><span class="settings-switch-slider"></span></label></div>
                                 <div class="settings-toggle-row"><label class="settings-label">Servicios de Emergencia</label><label class="settings-switch"><input type="checkbox" id="setting_emergency_enabled" data-key="emergency_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-store" style="color:#059669;margin-right:4px;"></i> Encuesta Bazar (perfiles de negocio)</label><label class="settings-switch"><input type="checkbox" id="setting_bazar_enabled" data-key="bazar_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-video" style="color:#dc2626;margin-right:4px;"></i> Carrusel de Videos (Index)</label><label class="settings-switch"><input type="checkbox" id="setting_video_carousel_enabled" data-key="video_carousel_enabled"><span class="settings-switch-slider"></span></label></div>
                             </div>
                             <hr style="margin:20px 0; border-color:var(--color-border-light);">
                             <div class="settings-section">
@@ -1066,7 +1076,95 @@
                 </div>
             </div>
         </div>
+
+        <!-- ==================== BAZAR TAB ==================== -->
+        <div class="admin-tab hidden" id="tabBazar">
+            <div class="admin-card" style="padding:24px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-store" style="color:#059669;"></i> Respuestas de Bazar</h3>
+                        <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Encuesta de participacion en bazar respondida desde perfiles de negocio y dashboard.</p>
+                    </div>
+                    <div style="display:flex;gap:8px;align-items:center;">
+                        <span id="bazarStatsSi" style="background:#d1fae5;color:#059669;padding:4px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;"></span>
+                        <span id="bazarStatsNo" style="background:#fee2e2;color:#dc2626;padding:4px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;"></span>
+                        <select id="bazarFilter" style="padding:6px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
+                            <option value="">Todos</option>
+                            <option value="si">Si</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="admin-table" style="width:100%;font-size:0.85rem;">
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Usuario</th>
+                                <th>Email</th>
+                                <th>Negocio</th>
+                                <th>Respuesta</th>
+                                <th>Origen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bazarTableBody">
+                            <tr><td colspan="6" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div id="bazarPagination" style="margin-top:16px;display:flex;justify-content:center;gap:6px;"></div>
+            </div>
+        </div>
+
+        <!-- ==================== CAROUSEL TAB ==================== -->
+        <div class="admin-tab hidden" id="tabCarousel">
+            <div class="admin-card" style="padding:24px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                    <div>
+                        <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-video" style="color:#dc2626;"></i> Carrusel de Videos</h3>
+                        <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Administra los videos que se muestran en el carrusel de la pagina de inicio.</p>
+                    </div>
+                    <button class="btn btn-primary" id="addVideoBtn"><i class="fas fa-plus"></i> Agregar Video</button>
+                </div>
+                <div id="carouselVideoList">
+                    <p style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <!-- Carousel Add Video Modal -->
+    <div class="modal hidden" id="carouselVideoModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-video" style="color:#dc2626;"></i> Agregar Video al Carrusel</h3>
+                <button class="modal-close" id="carouselVideoClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">URL del Video *</label>
+                    <input type="url" id="carouselVideoUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=... o URL de video directo">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">Titulo</label>
+                    <input type="text" id="carouselVideoTitle" class="form-control" placeholder="Titulo del video (opcional)">
+                </div>
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">URL de Miniatura</label>
+                    <input type="url" id="carouselVideoThumb" class="form-control" placeholder="URL de imagen de miniatura (opcional)">
+                </div>
+                <div>
+                    <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">Orden</label>
+                    <input type="number" id="carouselVideoOrder" class="form-control" placeholder="0" value="0" min="0">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="carouselVideoCancel">Cancelar</button>
+                <button class="btn btn-primary" id="carouselVideoSave"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Premium Voucher Modal -->
     <div class="modal hidden" id="premiumVoucherModal">

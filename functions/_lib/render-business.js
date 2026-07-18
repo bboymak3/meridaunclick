@@ -742,6 +742,22 @@ export function renderBusinessPage(env, business, options = {}) {
     <div class="toast-container" id="toastContainer"></div>
     <span id="statAreaLabel" class="hidden"></span>
 
+    <!-- Bazar Survey Popup -->
+    <div class="bazar-popup-overlay hidden" id="bazarPopup" style="position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px;">
+        <div style="background:#fff;border-radius:20px;padding:32px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);position:relative;">
+            <button onclick="document.getElementById('bazarPopup').classList.add('hidden')" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:1.5rem;cursor:pointer;color:#6b7280;line-height:1;">&times;</button>
+            <div style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#059669,#10b981);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <i class="fas fa-store" style="color:#fff;font-size:1.5rem;"></i>
+            </div>
+            <h3 style="margin:0 0 8px;font-size:1.2rem;color:#111827;">Participa en nuestro Bazar</h3>
+            <p style="margin:0 0 24px;color:#6b7280;font-size:0.9rem;line-height:1.5;">Estas interesado en participar en un bazar con tu negocio?</p>
+            <div style="display:flex;gap:12px;justify-content:center;">
+                <button id="bazarBtnSi" style="flex:1;padding:12px 24px;border-radius:12px;border:none;background:linear-gradient(135deg,#059669,#10b981);color:#fff;font-size:1rem;font-weight:600;cursor:pointer;transition:transform 0.15s;">Si, me interesa</button>
+                <button id="bazarBtnNo" style="flex:1;padding:12px 24px;border-radius:12px;border:2px solid #e5e7eb;background:#fff;color:#374151;font-size:1rem;font-weight:600;cursor:pointer;transition:transform 0.15s;">No, gracias</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/js/app.js?v=7"></script>
     <script>window.__BUSINESS_ID = ${business.id}; window.__BUSINESS_SLUG = '${escapeJs(business.slug)}';</script>
@@ -750,6 +766,31 @@ export function renderBusinessPage(env, business, options = {}) {
     <script src="/js/review-widget.js?v=3"></script>
     <script src="/js/ai-chatbot.js?v=3"></script>
     <script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${business.id},event_type:'view',source:'ficha'})}).catch(function(){})},0);</script>
+    <script>
+    (function(){
+        function getToken(){return localStorage.getItem('meridaunclick_token')||localStorage.getItem('authToken');}
+        var bazarPopup=document.getElementById('bazarPopup');
+        if(!bazarPopup)return;
+        fetch('/api/settings/public').then(function(r){return r.json();}).then(function(s){
+            if(s.bazar_enabled!=='1')return;
+            var tok=getToken();
+            if(!tok){bazarPopup.classList.remove('hidden');return;}
+            fetch('/api/bazar',{headers:{'Authorization':'Bearer '+tok}}).then(function(r){return r.json();}).then(function(d){
+                if(!d.responded){bazarPopup.classList.remove('hidden');}
+            }).catch(function(){bazarPopup.classList.remove('hidden');});
+        }).catch(function(){});
+        var btnSi=document.getElementById('bazarBtnSi');
+        var btnNo=document.getElementById('bazarBtnNo');
+        function sendResp(val){
+            var tok=getToken();
+            bazarPopup.classList.add('hidden');
+            if(!tok)return;
+            fetch('/api/bazar',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({response:val,business_id:${business.id},source:'profile'})}).catch(function(){});
+        }
+        if(btnSi)btnSi.onclick=function(){sendResp('si');};
+        if(btnNo)btnNo.onclick=function(){sendResp('no');};
+    })();
+    </script>
 </body>
 </html>`;
 
