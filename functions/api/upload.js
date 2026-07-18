@@ -94,7 +94,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    const ALLOWED_PRODUCT_TYPES = ['marketplace', 'video', 'logo', 'banner', 'business', 'business_image', 'property', 'job'];
+    const ALLOWED_PRODUCT_TYPES = ['marketplace', 'video', 'logo', 'banner', 'business', 'business_image', 'property', 'job', 'popup'];
     if (!businessId && !propertyId && !ALLOWED_PRODUCT_TYPES.includes(productType)) {
       return new Response(JSON.stringify({ error: 'business_id, property_id es requerido o product_type debe ser ' + ALLOWED_PRODUCT_TYPES.join('/') }), {
         status: 400,
@@ -129,7 +129,7 @@ export async function onRequestPost(context) {
     }
 
     // Verify ownership based on product_type
-    if (productType === 'marketplace' || productType === 'video' || productType === 'job') {
+    if (productType === 'marketplace' || productType === 'video' || productType === 'job' || productType === 'popup') {
       // Marketplace/video/job uploads - any authenticated user can upload
     } else if (productType === 'logo' || productType === 'banner') {
       // Logo/banner uploads - any authenticated user (admin) can upload, no business_id required

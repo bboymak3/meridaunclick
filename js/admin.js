@@ -2888,6 +2888,9 @@ if (!window._renderVideoList) {
             if (document.querySelector('[name="chat_mode"]')) {
                 highlightChatModeCard();
             }
+            // Sync popup quick toggle in Settings tab
+            const popupQuickToggle = document.getElementById('setting_popup_enabled_quick');
+            if (popupQuickToggle) popupQuickToggle.checked = (settings.popup_enabled === '1');
         } catch (error) {
             console.error('Error loading settings:', error);
             showToast('Error al cargar configuración', 'error');
@@ -4670,17 +4673,25 @@ if (!window._renderVideoList) {
         }
     });
 
+    // Quick toggle popup from Settings tab (syncs immediately)
+    window.quickTogglePopup = async function(checked) {
+        try {
+            await api.put('/settings', { popup_enabled: checked ? '1' : '0' });
+            showToast(checked ? 'Ventana Emergente activada' : 'Ventana Emergente desactivada', 'success');
+        } catch (e) {
+            showToast('Error al cambiar estado', 'error');
+        }
+    };
+
     // ─── POPUP (VENTANA EMERGENTE) TAB ──────────────────────────
     async function loadPopupTab() {
         try {
+            // Load settings
             const data = await api.get('/settings');
             const s = data.settings || {};
             // Toggle
             const toggleEl = document.getElementById('setting_popup_enabled');
             if (toggleEl) toggleEl.checked = s.popup_enabled === '1';
-            // Link URL
-            const linkEl = document.getElementById('setting_popup_link_url');
-            if (linkEl) linkEl.value = s.popup_link_url || '';
             // Image URL
             const hiddenUrl = document.getElementById('setting_popup_image_url');
             if (hiddenUrl) hiddenUrl.value = s.popup_image_url || '';
@@ -4697,10 +4708,50 @@ if (!window._renderVideoList) {
                 if (iconEl) iconEl.style.display = '';
                 if (removeBtn) removeBtn.style.display = 'none';
             }
+            // Load businesses for the selector
+            await loadPopupBusinessSelector(s.popup_link_url || '');
         } catch (e) {
             showToast('Error al cargar configuracion de popup', 'error');
         }
     }
+
+    // Load all approved businesses into the popup selector
+    async function loadPopupBusinessSelector(currentLink) {
+        const select = document.getElementById('popupBusinessSelect');
+        if (!select) return;
+        try {
+            const data = await api.get('/businesses?status=approved&limit=500');
+            const businesses = data.businesses || data.results || data || [];
+            // Keep the first empty option
+            select.innerHTML = '<option value="">-- Sin negocio vinculado --</option>';
+            businesses.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.slug || b.id;
+                opt.textContent = b.title || 'Negocio #' + b.id;
+                // Pre-select if current link matches this business
+                if (currentLink && (currentLink.endsWith('/negocio/' + b.slug) || currentLink === '/negocio/' + b.slug)) {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+            const info = document.getElementById('popupBusinessSelectedInfo');
+            if (info && select.value) info.style.display = '';
+        } catch (e) {
+            console.warn('Error loading businesses for popup selector:', e);
+        }
+    }
+
+    // Update hidden link when business is selected
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'popupBusinessSelect') {
+            const hiddenUrl = document.getElementById('setting_popup_link_url');
+            const info = document.getElementById('popupBusinessSelectedInfo');
+            if (hiddenUrl) {
+                hiddenUrl.value = e.target.value ? '/negocio/' + e.target.value : '';
+            }
+            if (info) info.style.display = e.target.value ? '' : 'none';
+        }
+    });
 
     // Save popup settings (called from onclick in HTML)
     window.savePopupSettings = async function() {
@@ -4712,10 +4763,10 @@ if (!window._renderVideoList) {
             const updates = {};
             const toggleEl = document.getElementById('setting_popup_enabled');
             if (toggleEl) updates.popup_enabled = toggleEl.checked ? '1' : '0';
-            const linkEl = document.getElementById('setting_popup_link_url');
-            if (linkEl) updates.popup_link_url = linkEl.value.trim();
-            const hiddenUrl = document.getElementById('setting_popup_image_url');
-            if (hiddenUrl) updates.popup_image_url = hiddenUrl.value;
+            const hiddenUrl = document.getElementById('setting_popup_link_url');
+            if (hiddenUrl) updates.popup_link_url = hiddenUrl.value;
+            const imgUrl = document.getElementById('setting_popup_image_url');
+            if (imgUrl) updates.popup_image_url = imgUrl.value;
             await api.put('/settings', updates);
             showToast('Configuracion de Ventana Emergente guardada', 'success');
         } catch (e) {
@@ -4736,6 +4787,7 @@ if (!window._renderVideoList) {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('folder', 'merida/popup');
+            formData.append('product_type', 'popup');
             const resp = await fetch('/api/upload', {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken')) },

@@ -839,8 +839,18 @@ async function loadBusinessServices(businessId) {
                 if (settings.popup_link_url) {
                     const a = document.createElement('a');
                     a.href = settings.popup_link_url;
-                    a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
+                    // Internal links (negocio/) navigate in same tab, external links open new tab
+                    if (settings.popup_link_url.startsWith('/') || settings.popup_link_url.startsWith(window.location.origin)) {
+                        a.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            sessionStorage.setItem('popup_dismissed', '1');
+                            overlay.remove();
+                            window.location.href = settings.popup_link_url;
+                        });
+                    } else {
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                    }
                     a.appendChild(img);
                     popup.appendChild(a);
                 } else {

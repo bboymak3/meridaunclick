@@ -802,7 +802,7 @@
                                 <div class="settings-toggle-row"><label class="settings-label">Servicios de Emergencia</label><label class="settings-switch"><input type="checkbox" id="setting_emergency_enabled" data-key="emergency_enabled"><span class="settings-switch-slider"></span></label></div>
                                 <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-store" style="color:#059669;margin-right:4px;"></i> Encuesta Bazar (Dashboard)</label><label class="settings-switch"><input type="checkbox" id="setting_bazar_enabled" data-key="bazar_enabled"><span class="settings-switch-slider"></span></label></div>
                                 <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-video" style="color:#dc2626;margin-right:4px;"></i> Carrusel de Videos (Index)</label><label class="settings-switch"><input type="checkbox" id="setting_video_carousel_enabled" data-key="video_carousel_enabled"><span class="settings-switch-slider"></span></label></div>
-                                <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-window-restore" style="color:#7c3aed;margin-right:4px;"></i> Ventana Emergente (Publicidad)</label><label class="settings-switch"><input type="checkbox" id="setting_popup_enabled_toggle" data-key="popup_enabled"><span class="settings-switch-slider"></span></label></div>
+                                <div class="settings-toggle-row"><label class="settings-label"><i class="fas fa-window-restore" style="color:#7c3aed;margin-right:4px;"></i> Ventana Emergente (Publicidad)</label><label class="settings-switch"><input type="checkbox" id="setting_popup_enabled_quick" onchange="quickTogglePopup(this.checked)"><span class="settings-switch-slider"></span></label></div>
                             </div>
                             <hr style="margin:20px 0; border-color:var(--color-border-light);">
                             <div class="settings-section">
@@ -1124,11 +1124,17 @@
                         </div>
                     </div>
 
-                    <!-- Enlace de destino -->
+                    <!-- Negocio vinculado -->
                     <div class="settings-section" style="margin-bottom:20px;">
-                        <h4 class="settings-section-title"><i class="fas fa-link" style="color:#7c3aed;"></i> Enlace de Destino (opcional)</h4>
-                        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:8px;">Si configuras un enlace, al hacer clic en la imagen del popup se abrira esa URL. Si lo dejas vacio la imagen no tendra enlace.</p>
-                        <input type="url" id="setting_popup_link_url" data-key="popup_link_url" class="form-control" placeholder="https://ejemplo.com/mi-promocion" style="max-width:500px;">
+                        <h4 class="settings-section-title"><i class="fas fa-store" style="color:#7c3aed;"></i> Negocio Vinculado (opcional)</h4>
+                        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:8px;">Selecciona un negocio registrado. Al hacer clic en la ventana emergente, los usuarios seran redirigidos al perfil de ese negocio.</p>
+                        <select id="popupBusinessSelect" class="form-control" style="max-width:500px;">
+                            <option value="">-- Sin negocio vinculado --</option>
+                        </select>
+                        <input type="hidden" id="setting_popup_link_url" data-key="popup_link_url">
+                        <p id="popupBusinessSelectedInfo" style="font-size:0.8rem;color:#059669;margin-top:6px;display:none;">
+                            <i class="fas fa-check-circle"></i> Negocio vinculado correctamente.
+                        </p>
                     </div>
 
                     <div style="text-align:right;">
