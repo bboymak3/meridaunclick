@@ -1759,4 +1759,70 @@ async function loadFeaturedJobs() {
     }
 }
 
+// ─── POPUP (VENTANA EMERGENTE) on INDEX ──────────────────────────
+(function initPopupOnIndex() {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (sessionStorage.getItem('popup_dismissed')) return;
+
+        fetch('/api/settings/public')
+            .then(r => r.json())
+            .then(settings => {
+                if (settings.popup_enabled !== '1') return;
+                if (!settings.popup_image_url) return;
+
+                const overlay = document.createElement('div');
+                overlay.id = 'adPopupOverlay';
+                overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);animation:fadeInUp 0.3s ease;';
+
+                const popup = document.createElement('div');
+                popup.style.cssText = 'position:relative;max-width:90vw;max-height:90vh;border-radius:16px;overflow:hidden;box-shadow:0 25px 60px rgba(0,0,0,0.4);animation:scaleIn 0.3s ease;background:#fff;';
+
+                const img = document.createElement('img');
+                img.src = settings.popup_image_url;
+                img.alt = 'Publicidad';
+                img.style.cssText = 'display:block;max-width:90vw;max-height:80vh;object-fit:contain;';
+                img.onerror = function() { overlay.remove(); };
+
+                if (settings.popup_link_url) {
+                    const a = document.createElement('a');
+                    a.href = settings.popup_link_url;
+                    if (settings.popup_link_url.startsWith('/') || settings.popup_link_url.startsWith(window.location.origin)) {
+                        a.addEventListener('click', (e) => {
+                            e.preventDefault();
+                            sessionStorage.setItem('popup_dismissed', '1');
+                            overlay.remove();
+                            window.location.href = settings.popup_link_url;
+                        });
+                    } else {
+                        a.target = '_blank';
+                        a.rel = 'noopener noreferrer';
+                    }
+                    a.appendChild(img);
+                    popup.appendChild(a);
+                } else {
+                    popup.appendChild(img);
+                }
+
+                const closeBtn = document.createElement('button');
+                closeBtn.innerHTML = '&times;';
+                closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;';
+                closeBtn.addEventListener('click', () => {
+                    sessionStorage.setItem('popup_dismissed', '1');
+                    overlay.remove();
+                });
+                popup.appendChild(closeBtn);
+                overlay.appendChild(popup);
+
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) {
+                        sessionStorage.setItem('popup_dismissed', '1');
+                        overlay.remove();
+                    }
+                });
+
+                document.body.appendChild(overlay);
+            })
+            .catch(() => {});
+    });
+})();
 

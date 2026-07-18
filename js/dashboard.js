@@ -1597,18 +1597,25 @@ window.closeEditBusinessModal = function() {
 
     // ═══════════════════════════════════════════════════════════════
     // BAZAR BUTTON (shown when bazar_enabled setting is on)
+    // Only shows if user hasn't responded in the last 15 days
     // ═══════════════════════════════════════════════════════════════
     (function setupBazarButton() {
         const bazarBtn = document.getElementById('quickActionBazar');
         const bazarModal = document.getElementById('bazarModal');
         if (!bazarBtn || !bazarModal) return;
 
-        // Check if bazar is enabled and user has businesses
+        // Check if bazar is enabled and user has businesses AND hasn't responded in 15 days
         api.get('/settings/public').then(settings => {
             if (settings.bazar_enabled !== '1') return;
             const user = getCachedUser();
             if (!user) return;
-            return api.get(`/businesses?user_id=${user.id}&status=approved&limit=1`);
+            // Check cooldown via bazar API
+            return api.get('/bazar').then(bazarStatus => {
+                // If user responded within last 15 days, don't show button
+                if (bazarStatus.within_cooldown) return;
+                // If user said "si" at any point, also respect 15-day cooldown (checked above via within_cooldown)
+                return api.get(`/businesses?user_id=${user.id}&status=approved&limit=1`);
+            });
         }).then(bizData => {
             if (!bizData) return;
             const businesses = bizData.businesses || bizData.results || bizData || [];

@@ -107,12 +107,19 @@ export async function onRequestGet(context) {
       }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Authenticated user: check if already responded
+    // Authenticated user: check if already responded (include created_at for 15-day cooldown)
     if (user) {
       const existing = await env.DB.prepare(
-        'SELECT id, response FROM bazar_responses WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+        'SELECT id, response, created_at FROM bazar_responses WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
       ).bind(user.id).first();
-      return new Response(JSON.stringify({ responded: !!existing, response: existing?.response || null }), {
+      const fifteenDaysAgo = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString();
+      const isWithinCooldown = existing && existing.created_at && existing.created_at >= fifteenDaysAgo;
+      return new Response(JSON.stringify({
+        responded: !!existing,
+        response: existing?.response || null,
+        responded_at: existing?.created_at || null,
+        within_cooldown: !!isWithinCooldown
+      }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
