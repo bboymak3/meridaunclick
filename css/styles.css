@@ -2546,6 +2546,18 @@ body.search-modal-open .cb-chat-btn {
     overflow: hidden;
     text-overflow: ellipsis;
 }
+.business-card-especialidad {
+    font-size: 0.7rem;
+    color: #006EE3;
+    font-weight: 600;
+    margin: 0 0 3px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.business-card-especialidad i {
+    font-size: 0.65rem;
+}
 .business-card-location {
     font-size: 0.72rem;
     color: #64748b;

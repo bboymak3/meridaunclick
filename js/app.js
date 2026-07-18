@@ -742,6 +742,7 @@ function createBusinessCard(business) {
                 </div>
                 <div class="business-card-body">
                     <h3 class="business-card-title">${business.title || 'Sin título'}</h3>
+                    ${business.especialidad ? '<p class="business-card-especialidad"><i class="fas fa-stethoscope"></i> ' + business.especialidad + '</p>' : ''}
                     <p class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${address}</p>
                     ${descSnippet}
                 </div>
