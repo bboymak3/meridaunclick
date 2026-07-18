@@ -1760,9 +1760,19 @@ async function loadFeaturedJobs() {
 }
 
 // ─── POPUP (VENTANA EMERGENTE) on INDEX ──────────────────────────
+// Shows once per hour (uses localStorage timestamp)
 (function initPopupOnIndex() {
+    var HOUR_MS = 60 * 60 * 1000;
+    function canShow() {
+        var last = localStorage.getItem('popup_dismissed_at');
+        if (!last) return true;
+        return (Date.now() - parseInt(last, 10)) > HOUR_MS;
+    }
+    function dismiss() {
+        localStorage.setItem('popup_dismissed_at', String(Date.now()));
+    }
     function show() {
-        if (sessionStorage.getItem('popup_dismissed')) return;
+        if (!canShow()) return;
 
         fetch('/api/settings/public')
             .then(r => r.json())
@@ -1797,7 +1807,7 @@ async function loadFeaturedJobs() {
                     if (settings.popup_link_url.startsWith('/') || settings.popup_link_url.startsWith(window.location.origin)) {
                         a.addEventListener('click', (e) => {
                             e.preventDefault();
-                            sessionStorage.setItem('popup_dismissed', '1');
+                            dismiss();
                             overlay.remove();
                             window.location.href = settings.popup_link_url;
                         });
@@ -1816,7 +1826,7 @@ async function loadFeaturedJobs() {
                 closeBtn.setAttribute('aria-label', 'Cerrar');
                 closeBtn.style.cssText = 'position:absolute;top:8px;right:12px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;line-height:1;';
                 closeBtn.addEventListener('click', () => {
-                    sessionStorage.setItem('popup_dismissed', '1');
+                    dismiss();
                     overlay.remove();
                 });
                 popup.appendChild(closeBtn);
@@ -1824,7 +1834,7 @@ async function loadFeaturedJobs() {
 
                 overlay.addEventListener('click', (e) => {
                     if (e.target === overlay) {
-                        sessionStorage.setItem('popup_dismissed', '1');
+                        dismiss();
                         overlay.remove();
                     }
                 });
