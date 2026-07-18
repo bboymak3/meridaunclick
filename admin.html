@@ -1205,15 +1205,41 @@
     <!-- Carousel Add Video Modal -->
     <div class="modal hidden" id="carouselVideoModal">
         <div class="modal-overlay"></div>
-        <div class="modal-content" style="max-width:500px;">
+        <div class="modal-content" style="max-width:520px;">
             <div class="modal-header">
                 <h3><i class="fas fa-video" style="color:#dc2626;"></i> Agregar Video al Carrusel</h3>
                 <button class="modal-close" id="carouselVideoClose">&times;</button>
             </div>
             <div class="modal-body">
+                <!-- Adjuntar video desde dispositivo -->
                 <div style="margin-bottom:16px;">
-                    <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">URL del Video *</label>
-                    <input type="url" id="carouselVideoUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=... o URL de video directo">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;"><i class="fas fa-film" style="color:#dc2626;"></i> Adjuntar Video</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                            <i class="fas fa-upload"></i> Subir archivo
+                            <input type="file" id="carouselVideoFile" accept="video/mp4,video/webm,video/quicktime,.mp4,.webm,.mov" style="display:none;">
+                        </label>
+                        <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0;">
+                            <i class="fas fa-camera"></i> Tomar video
+                            <input type="file" id="carouselVideoCamera" accept="video/mp4,video/webm,.mp4,.webm" capture="environment" style="display:none;">
+                        </label>
+                        <span id="carouselVideoFileName" style="font-size:0.82rem;color:#059669;display:none;"><i class="fas fa-check-circle"></i> </span>
+                    </div>
+                    <p id="carouselVideoFileError" style="font-size:0.78rem;color:#dc2626;margin-top:4px;display:none;"></p>
+                </div>
+
+                <!-- Negocio asociado -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;"><i class="fas fa-store" style="color:#006EE3;"></i> Negocio Asociado (opcional)</label>
+                    <select id="carouselVideoBusiness" class="form-control">
+                        <option value="">-- Sin negocio asociado --</option>
+                    </select>
+                </div>
+
+                <!-- URL del Video -->
+                <div style="margin-bottom:16px;">
+                    <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">URL del Video <span style="font-weight:400;color:#6b7280;">(si no adjuntas archivo)</span></label>
+                    <input type="url" id="carouselVideoUrl" class="form-control" placeholder="https://www.youtube.com/watch?v=... o URL directa">
                 </div>
                 <div style="margin-bottom:16px;">
                     <label style="display:block;font-weight:600;margin-bottom:6px;font-size:0.9rem;">Titulo</label>

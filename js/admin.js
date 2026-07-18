@@ -4895,9 +4895,10 @@ if (!window._renderVideoList) {
                     <div style="flex:1;min-width:0;">
                         <div style="font-weight:600;font-size:0.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.title || 'Sin titulo'}</div>
                         <div style="font-size:0.75rem;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.url}</div>
-                        <div style="display:flex;gap:8px;margin-top:4px;">
+                        <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
                             <span style="font-size:0.7rem;padding:2px 6px;border-radius:4px;background:${v.is_active ? '#d1fae5;color:#059669' : '#f3f4f6;color:#6b7280'};">${v.is_active ? 'Activo' : 'Inactivo'}</span>
                             <span style="font-size:0.7rem;color:#6b7280;">Orden: ${v.order_index}</span>
+                            ${v.business_title ? `<span style="font-size:0.7rem;padding:2px 6px;border-radius:4px;background:#EFF6FF;color:#006EE3;"><i class="fas fa-store" style="margin-right:3px;"></i>${v.business_title}</span>` : ''}
                         </div>
                     </div>
                     <div style="display:flex;gap:6px;flex-shrink:0;">
@@ -4949,30 +4950,132 @@ if (!window._renderVideoList) {
         const cancel = document.getElementById('carouselVideoCancel');
         const save = document.getElementById('carouselVideoSave');
         const addBtn = document.getElementById('addVideoBtn');
+        const businessSelect = document.getElementById('carouselVideoBusiness');
+        const fileInput = document.getElementById('carouselVideoFile');
+        const cameraInput = document.getElementById('carouselVideoCamera');
 
         if (close) close.addEventListener('click', () => modal.classList.add('hidden'));
         if (cancel) cancel.addEventListener('click', () => modal.classList.add('hidden'));
         modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+
+        // Cache for uploaded video file
+        let pendingVideoFile = null;
+
+        // Handle file selection (upload or camera)
+        function handleVideoFileSelected(input) {
+            const file = input.files && input.files[0];
+            if (!file) return;
+            const allowedTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(mp4|webm|mov)$/i)) {
+                const errEl = document.getElementById('carouselVideoFileError');
+                if (errEl) { errEl.textContent = 'Formato no soportado. Usa MP4, WebM o MOV.'; errEl.style.display = ''; }
+                input.value = '';
+                return;
+            }
+            if (file.size > 50 * 1024 * 1024) {
+                const errEl = document.getElementById('carouselVideoFileError');
+                if (errEl) { errEl.textContent = 'El video no debe superar 50MB.'; errEl.style.display = ''; }
+                input.value = '';
+                return;
+            }
+            pendingVideoFile = file;
+            const nameEl = document.getElementById('carouselVideoFileName');
+            const errEl = document.getElementById('carouselVideoFileError');
+            if (nameEl) { nameEl.innerHTML = '<i class="fas fa-check-circle"></i> ' + file.name; nameEl.style.display = ''; }
+            if (errEl) errEl.style.display = 'none';
+            // Clear URL field since we have a file
+            document.getElementById('carouselVideoUrl').value = '';
+        }
+
+        if (fileInput) fileInput.addEventListener('change', () => handleVideoFileSelected(fileInput));
+        if (cameraInput) cameraInput.addEventListener('change', () => handleVideoFileSelected(cameraInput));
+
+        // Load businesses into selector
+        async function loadCarouselBusinessSelector() {
+            if (!businessSelect) return;
+            try {
+                const data = await api.get('/businesses?status=approved&limit=500');
+                const businesses = data.businesses || data.results || data || [];
+                // Keep first empty option
+                const firstOpt = businessSelect.querySelector('option');
+                businessSelect.innerHTML = '';
+                if (firstOpt) businessSelect.appendChild(firstOpt);
+                businesses.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.id;
+                    opt.textContent = b.title || 'Negocio #' + b.id;
+                    businessSelect.appendChild(opt);
+                });
+            } catch (e) {
+                console.warn('Error loading businesses for carousel selector:', e);
+            }
+        }
 
         if (addBtn) addBtn.addEventListener('click', () => {
             document.getElementById('carouselVideoUrl').value = '';
             document.getElementById('carouselVideoTitle').value = '';
             document.getElementById('carouselVideoThumb').value = '';
             document.getElementById('carouselVideoOrder').value = '0';
+            const nameEl = document.getElementById('carouselVideoFileName');
+            const errEl = document.getElementById('carouselVideoFileError');
+            if (nameEl) nameEl.style.display = 'none';
+            if (errEl) errEl.style.display = 'none';
+            if (fileInput) fileInput.value = '';
+            if (cameraInput) cameraInput.value = '';
+            pendingVideoFile = null;
+            loadCarouselBusinessSelector();
             modal.classList.remove('hidden');
         });
 
         if (save) save.addEventListener('click', async () => {
-            const url = document.getElementById('carouselVideoUrl').value.trim();
-            if (!url) { showToast('La URL es requerida', 'error'); return; }
+            let url = document.getElementById('carouselVideoUrl').value.trim();
+            const title = document.getElementById('carouselVideoTitle').value.trim();
+            const thumb = document.getElementById('carouselVideoThumb').value.trim();
+            const order = parseInt(document.getElementById('carouselVideoOrder').value) || 0;
+            const businessId = businessSelect ? businessSelect.value : '';
+            const errEl = document.getElementById('carouselVideoFileError');
+
+            // If no URL and no file, show error
+            if (!url && !pendingVideoFile) {
+                if (errEl) { errEl.textContent = 'Agrega una URL o adjunta un video.'; errEl.style.display = ''; }
+                return;
+            }
+            if (errEl) errEl.style.display = 'none';
+
             save.disabled = true;
             save.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
             try {
+                // If file selected, upload it first
+                if (pendingVideoFile) {
+                    showToast('Subiendo video...', 'info');
+                    const formData = new FormData();
+                    formData.append('file', pendingVideoFile);
+                    formData.append('product_type', 'video');
+                    formData.append('folder', 'merida/carousel');
+                    const uploadResp = await fetch('/api/upload', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken')) },
+                        body: formData
+                    });
+                    const uploadData = await uploadResp.json();
+                    if (uploadData.url) {
+                        url = uploadData.url;
+                    } else {
+                        showToast(uploadData.error || 'Error al subir video', 'error');
+                        save.disabled = false;
+                        save.innerHTML = '<i class="fas fa-save"></i> Guardar';
+                        return;
+                    }
+                }
+
+                if (!url) { showToast('No se pudo obtener la URL del video', 'error'); return; }
+
                 await api.post('/video-carousel', {
                     url,
-                    title: document.getElementById('carouselVideoTitle').value.trim(),
-                    thumbnail_url: document.getElementById('carouselVideoThumb').value.trim(),
-                    order_index: parseInt(document.getElementById('carouselVideoOrder').value) || 0,
+                    title,
+                    thumbnail_url: thumb,
+                    order_index: order,
+                    business_id: businessId || null,
                 });
                 modal.classList.add('hidden');
                 loadCarouselTab();
@@ -4982,6 +5085,7 @@ if (!window._renderVideoList) {
             } finally {
                 save.disabled = false;
                 save.innerHTML = '<i class="fas fa-save"></i> Guardar';
+                pendingVideoFile = null;
             }
         });
     })();

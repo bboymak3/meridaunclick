@@ -53,9 +53,12 @@ async function ensureTable(env) {
       thumbnail_url TEXT DEFAULT '',
       order_index INTEGER DEFAULT 0,
       is_active INTEGER DEFAULT 1,
+      business_id INTEGER DEFAULT NULL,
       created_at TEXT DEFAULT (datetime('now'))
     )
   `).run();
+  // Auto-migrate: add business_id column if missing
+  try { await env.DB.prepare('ALTER TABLE video_carousel ADD COLUMN business_id INTEGER DEFAULT NULL').run(); } catch(e) {}
 }
 
 // ─── GET ────────────────────────────────────────────────────────
@@ -71,8 +74,13 @@ export async function onRequestGet(context) {
     const user = await getUserFromRequest(request, env);
 
     if (isAdminParam && user && user.role === 'admin') {
-      // Admin: all videos
-      const rows = await env.DB.prepare('SELECT * FROM video_carousel ORDER BY order_index ASC, id DESC').all();
+      // Admin: all videos with business name
+      const rows = await env.DB.prepare(`
+        SELECT vc.*, b.title as business_title
+        FROM video_carousel vc
+        LEFT JOIN businesses b ON vc.business_id = b.id
+        ORDER BY vc.order_index ASC, vc.id DESC
+      `).all();
       return new Response(JSON.stringify({ videos: rows.results }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
@@ -99,15 +107,15 @@ export async function onRequestPost(context) {
     await ensureTable(env);
 
     const body = await request.json();
-    const { url, title, thumbnail_url, order_index } = body;
+    const { url, title, thumbnail_url, order_index, business_id } = body;
 
     if (!url || !url.trim()) {
       return new Response(JSON.stringify({ error: 'La URL del video es requerida' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const result = await env.DB.prepare(
-      'INSERT INTO video_carousel (url, title, thumbnail_url, order_index) VALUES (?, ?, ?, ?)'
-    ).bind(url.trim(), (title || '').trim(), (thumbnail_url || '').trim(), parseInt(order_index) || 0).run();
+      'INSERT INTO video_carousel (url, title, thumbnail_url, order_index, business_id) VALUES (?, ?, ?, ?, ?)'
+    ).bind(url.trim(), (title || '').trim(), (thumbnail_url || '').trim(), parseInt(order_index) || 0, business_id ? parseInt(business_id) : null).run();
 
     return new Response(JSON.stringify({ message: 'Video agregado', id: result.meta.last_row_id }), {
       status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
