@@ -2888,9 +2888,7 @@ if (!window._renderVideoList) {
             if (document.querySelector('[name="chat_mode"]')) {
                 highlightChatModeCard();
             }
-            // Sync popup quick toggle in Settings tab
-            const popupQuickToggle = document.getElementById('setting_popup_enabled_quick');
-            if (popupQuickToggle) popupQuickToggle.checked = (settings.popup_enabled === '1');
+
         } catch (error) {
             console.error('Error loading settings:', error);
             showToast('Error al cargar configuración', 'error');
@@ -4673,16 +4671,6 @@ if (!window._renderVideoList) {
         }
     });
 
-    // Quick toggle popup from Settings tab (syncs immediately)
-    window.quickTogglePopup = async function(checked) {
-        try {
-            await api.put('/settings', { popup_enabled: checked ? '1' : '0' });
-            showToast(checked ? 'Ventana Emergente activada' : 'Ventana Emergente desactivada', 'success');
-        } catch (e) {
-            showToast('Error al cambiar estado', 'error');
-        }
-    };
-
     // ─── POPUP (VENTANA EMERGENTE) TAB ──────────────────────────
     async function loadPopupTab() {
         try {
@@ -4719,25 +4707,37 @@ if (!window._renderVideoList) {
     async function loadPopupBusinessSelector(currentLink) {
         const select = document.getElementById('popupBusinessSelect');
         if (!select) return;
+        select.innerHTML = '<option value="">Cargando negocios...</option>';
+        select.disabled = true;
         try {
-            const data = await api.get('/businesses?status=approved&limit=500');
-            const businesses = data.businesses || data.results || data || [];
-            // Keep the first empty option
-            select.innerHTML = '<option value="">-- Sin negocio vinculado --</option>';
-            businesses.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b.slug || b.id;
-                opt.textContent = b.title || 'Negocio #' + b.id;
-                // Pre-select if current link matches this business
-                if (currentLink && (currentLink.endsWith('/negocio/' + b.slug) || currentLink === '/negocio/' + b.slug)) {
-                    opt.selected = true;
-                }
-                select.appendChild(opt);
+            const resp = await fetch('/api/businesses?status=approved&limit=500', {
+                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken') || '') }
             });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            const businesses = Array.isArray(data.businesses) ? data.businesses : (Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []));
+            select.innerHTML = '<option value="">-- Sin negocio vinculado --</option>';
+            if (businesses.length === 0) {
+                select.innerHTML += '<option value="" disabled>No hay negocios aprobados</option>';
+            } else {
+                businesses.forEach(b => {
+                    const opt = document.createElement('option');
+                    opt.value = b.slug || b.id;
+                    opt.textContent = b.title || ('Negocio #' + b.id);
+                    if (currentLink && b.slug && (currentLink === '/negocio/' + b.slug || currentLink.endsWith('/negocio/' + b.slug))) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+            }
             const info = document.getElementById('popupBusinessSelectedInfo');
-            if (info && select.value) info.style.display = '';
+            if (info) info.style.display = select.value ? '' : 'none';
         } catch (e) {
-            console.warn('Error loading businesses for popup selector:', e);
+            console.error('Error loading businesses for popup selector:', e);
+            select.innerHTML = '<option value="">-- Error al cargar negocios --</option>';
+            showToast('No se pudieron cargar los negocios. Verifica tu conexion.', 'error');
+        } finally {
+            select.disabled = false;
         }
     }
 
@@ -4786,11 +4786,11 @@ if (!window._renderVideoList) {
             showToast('Subiendo imagen...', 'info');
             const formData = new FormData();
             formData.append('file', file);
-            formData.append('folder', 'merida/popup');
             formData.append('product_type', 'popup');
+            const token = localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken') || '';
             const resp = await fetch('/api/upload', {
                 method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken')) },
+                headers: { 'Authorization': 'Bearer ' + token },
                 body: formData
             });
             const data = await resp.json();
@@ -4805,10 +4805,12 @@ if (!window._renderVideoList) {
                 if (removeBtn) removeBtn.style.display = '';
                 showToast('Imagen subida. Recuerda guardar cambios.', 'success');
             } else {
-                showToast(data.error || 'Error al subir', 'error');
+                showToast(data.error || 'Error al subir imagen', 'error');
+                console.error('Upload error response:', data);
             }
         } catch (e) {
-            showToast('Error al subir imagen', 'error');
+            showToast('Error al subir imagen: ' + e.message, 'error');
+            console.error('Upload exception:', e);
         }
         input.value = '';
     };

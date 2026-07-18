@@ -185,6 +185,8 @@ export async function onRequestPost(context) {
       key = `${r2Folder}/properties/${propertyId}/${timestamp}_${sanitizedName}`;
     } else if (productType === 'job') {
       key = `${r2Folder}/jobs/${user.id}/${timestamp}_${sanitizedName}`;
+    } else if (productType === 'popup') {
+      key = `${r2Folder}/popup/${timestamp}_${sanitizedName}`;
     } else {
       // 'business', 'business_image', or fallback
       key = `${r2Folder}/businesses/${businessId || user.id}/${timestamp}_${sanitizedName}`;
