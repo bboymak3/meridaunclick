@@ -151,6 +151,7 @@ export function renderBusinessPage(env, business, options = {}) {
         "description": description
       };
       if (business.category_name) ld.category = business.category_name;
+      if (business.especialidad) ld.medicalSpecialty = business.especialidad;
       const phoneClean = (business.phone || '').replace(/[^0-9]/g, '');
       const waClean = (business.whatsapp || business.phone || '').replace(/[^0-9]/g, '');
       if (waClean) ld.telephone = '+' + waClean;
@@ -604,6 +605,7 @@ export function renderBusinessPage(env, business, options = {}) {
                     <div class="feature-chips">
                         <div class="feature-chip" id="statStateCityWrap" title="Estado / Ciudad"><i class="fas fa-map-marker-alt"></i> <span id="statStateCity">${escapeHtml((business.city || '') + (business.state ? ', ' + business.state : ''))}</span></div>
                         <div class="feature-chip" id="statCategoriaWrap" title="Categoría"><i class="fas fa-tag"></i> <span id="statCategoria">${escapeHtml(business.category_name || '--')}</span></div>
+                        ${business.especialidad ? `<div class="feature-chip" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;" title="Especialidad"><i class="fas fa-stethoscope"></i> <span>${escapeHtml(business.especialidad)}</span></div>` : ''}
                         <div class="feature-chip" id="statScheduleWrap" style="display:none;" title="Horario"><i class="fas fa-clock"></i> <span id="statSchedule">--</span></div>
                         <div class="feature-chip" id="statPhoneWrap" style="display:none;" title="Teléfono"><i class="fas fa-phone"></i> <span id="statPhone">--</span></div>
                         <div class="feature-chip" id="statWhatsAppWrap" style="display:none;" title="WhatsApp"><i class="fab fa-whatsapp"></i> <span id="statWhatsApp">WhatsApp</span></div>

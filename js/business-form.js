@@ -855,6 +855,7 @@
             has_outdoor,
             logo: uploadedLogoUrl || null,
             banner: uploadedBannerUrl || null,
+            especialidad: getValue('propEspecialidad') || null,
         };
 
         // Upload logo first if selected and not yet uploaded

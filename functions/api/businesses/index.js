@@ -57,6 +57,7 @@ export async function onRequestGet(context) {
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN logo TEXT").run(); } catch(e) { /* column may exist */ }
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN custom_html TEXT").run(); } catch(e) { /* column may exist */ }
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN banner TEXT").run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN especialidad TEXT").run(); } catch(e) { /* column may exist */ }
 
     const url = new URL(request.url);
     const params = url.searchParams;
@@ -123,8 +124,8 @@ export async function onRequestGet(context) {
       conditions.push("(p.expires_at IS NULL OR p.expires_at > datetime('now'))");
     }
     if (search) {
-      conditions.push('(p.title LIKE ? OR p.description LIKE ? OR p.address LIKE ?)');
-      bindings.push(`%${search}%`, `%${search}%`, `%${search}%`);
+      conditions.push('(p.title LIKE ? OR p.description LIKE ? OR p.address LIKE ? OR p.especialidad LIKE ?)');
+      bindings.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
     }
 
     const whereClause = conditions.join(' AND ');
@@ -226,6 +227,7 @@ export async function onRequestPost(context) {
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN logo TEXT").run(); } catch(e) { /* column may exist */ }
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN custom_html TEXT").run(); } catch(e) { /* column may exist */ }
     try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN banner TEXT").run(); } catch(e) { /* column may exist */ }
+    try { await env.DB.prepare("ALTER TABLE businesses ADD COLUMN especialidad TEXT").run(); } catch(e) { /* column may exist */ }
 
     const jwtSecret = env.JWT_SECRET || 'aunclick_default_secret_2024';
 
@@ -361,9 +363,9 @@ export async function onRequestPost(context) {
         address, city, state, country, lat, lng,
         phone, whatsapp, website, instagram, facebook, twitter, tiktok, youtube, email_contact, schedule,
         has_parking, has_wifi, has_card, has_delivery, has_outdoor,
-        video_url, logo, banner,
+        video_url, logo, banner, especialidad,
         status
-      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+      ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
       payload.id,
       title,
@@ -395,6 +397,7 @@ export async function onRequestPost(context) {
       body.video_url || null,
       body.logo || null,
       body.banner || null,
+      body.especialidad || null,
       'pending'
     ).run();
 

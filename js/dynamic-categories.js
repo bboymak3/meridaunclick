@@ -191,6 +191,21 @@
             }
         });
 
+        // Show/hide Especialidad field based on tipo + categoria
+        function checkEspecialidadVisibility() {
+            var tipoEl = document.getElementById('propTipoNegocio');
+            var catEl = document.getElementById('propCategoria');
+            var wrap = document.getElementById('propEspecialidadWrap');
+            if (!tipoEl || !catEl || !wrap) return;
+            var isServiciosVarios = tipoEl.value === 'servicios-varios';
+            var isMedicina = catEl.value === 'medicina-servicio-medico';
+            wrap.style.display = (isServiciosVarios && isMedicina) ? '' : 'none';
+        }
+        var tipoForEsp = document.getElementById('propTipoNegocio');
+        var catForEsp = document.getElementById('propCategoria');
+        if (tipoForEsp) tipoForEsp.addEventListener('change', checkEspecialidadVisibility);
+        if (catForEsp) catForEsp.addEventListener('change', checkEspecialidadVisibility);
+
         // Listen to title input for slug preview
         var titleInput = document.getElementById(TITLE_INPUT_ID);
         if (titleInput) {

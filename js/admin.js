@@ -4196,6 +4196,7 @@ if (!window._renderVideoList) {
                 <div class="aeb-field"><label>Categoria</label><input type="text" class="eb-input" id="aebCategory" value="${escH(b.category_name||'')}"></div>
                 <div class="aeb-field"><label>Descripcion</label><textarea class="eb-input eb-textarea" id="aebDesc" rows="3">${escH(b.description||'')}</textarea></div>
                 <div class="aeb-field"><label>Tipo</label><input type="text" class="eb-input" id="aebType" value="${escH(b.business_type||'')}"></div>
+                <div class="aeb-field" id="aebEspecialidadWrap" style="${(b.category_slug==='medicina-servicio-medico'||b.especialidad)?'':'display:none'}"><label><i class="fas fa-stethoscope" style="color:#e74c3c;"></i> Especialidad</label><input type="text" class="eb-input" id="aebEspecialidad" value="${escH(b.especialidad||'')}" placeholder="Ej: Cardiología, Dermatología..."></div>
             </div>
         </div>
         <div class="aeb-card">
@@ -4469,6 +4470,7 @@ if (!window._renderVideoList) {
                 logo: document.getElementById('aebLogoUrl').value || null,
                 banner: document.getElementById('aebBannerUrl').value || null,
                 custom_html: customHtmlEl ? customHtmlEl.value || null : null,
+                especialidad: document.getElementById('aebEspecialidad')?.value || null,
             };
             await api.put('/businesses/' + id, payload);
             showToast('Negocio actualizado exitosamente','success');

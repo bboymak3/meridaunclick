@@ -2512,6 +2512,14 @@ window.closeEditBusinessModal = function() {
         el('editBizLat', biz.lat || biz.latitude);
         el('editBizLng', biz.lng || biz.longitude);
         el('editBizSchedule', biz.schedule);
+        el('editBizEspecialidad', biz.especialidad);
+
+        // Show/hide especialidad field
+        const espWrap = document.getElementById('editBizEspecialidadWrap');
+        if (espWrap) {
+            const catVal = biz.category || biz.category_slug || '';
+            espWrap.style.display = (catVal === 'medicina-servicio-medico' || biz.especialidad) ? '' : 'none';
+        }
 
         // Features
         const features = biz.features || biz.caracteristicas || '';
@@ -2799,6 +2807,7 @@ window.closeEditBusinessModal = function() {
                 video_url: window._getVideoUrlsJSON(),
                 logo: currentForm.querySelector('.edit-biz-logo-url')?.value || null,
                 banner: currentForm.querySelector('.edit-biz-banner-url')?.value || null,
+                especialidad: document.getElementById('editBizEspecialidad')?.value || null,
             };
 
             // Upload new logo if selected
