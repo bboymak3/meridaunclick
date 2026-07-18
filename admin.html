@@ -1079,128 +1079,127 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- ==================== POPUP (VENTANA EMERGENTE) TAB ==================== -->
-        <div class="admin-tab hidden" id="tabPopup">
-            <div class="admin-card" style="padding:24px;">
-                <div class="admin-card-header" style="margin-bottom:20px;">
-                    <h3><i class="fas fa-window-restore" style="color:#7c3aed;"></i> Ventana Emergente (Publicidad)</h3>
-                </div>
-                <div class="admin-card-body">
-                    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:20px;">Configura la ventana emergente que se mostrara a los usuarios al visitar perfiles de negocio. Sube una imagen publicitaria y opcionalmente un enlace de destino.</p>
+                <!-- ==================== POPUP (VENTANA EMERGENTE) TAB ==================== -->
+                <div class="admin-tab hidden" id="tabPopup">
+                    <div class="admin-card" style="padding:24px;">
+                        <div class="admin-card-header" style="margin-bottom:20px;">
+                            <h3><i class="fas fa-window-restore" style="color:#7c3aed;"></i> Ventana Emergente (Publicidad)</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <p style="font-size:0.85rem;color:#6b7280;margin-bottom:20px;">Configura la ventana emergente que se mostrara a los usuarios al visitar perfiles de negocio. Sube una imagen publicitaria y opcionalmente un enlace de destino.</p>
 
-                    <!-- Toggle -->
-                    <div class="settings-section" style="margin-bottom:20px;">
-                        <div class="settings-toggle-row">
-                            <label class="settings-label" style="font-weight:600;"><i class="fas fa-power-off" style="color:#7c3aed;margin-right:6px;"></i> Habilitar Ventana Emergente</label>
-                            <label class="settings-switch"><input type="checkbox" id="setting_popup_enabled" data-key="popup_enabled"><span class="settings-switch-slider"></span></label>
+                            <!-- Toggle -->
+                            <div class="settings-section" style="margin-bottom:20px;">
+                                <div class="settings-toggle-row">
+                                    <label class="settings-label" style="font-weight:600;"><i class="fas fa-power-off" style="color:#7c3aed;margin-right:6px;"></i> Habilitar Ventana Emergente</label>
+                                    <label class="settings-switch"><input type="checkbox" id="setting_popup_enabled" data-key="popup_enabled"><span class="settings-switch-slider"></span></label>
+                                </div>
+                            </div>
+
+                            <hr style="margin:20px 0; border-color:var(--color-border-light);">
+
+                            <!-- Imagen del Popup -->
+                            <div class="settings-section" style="margin-bottom:20px;">
+                                <h4 class="settings-section-title"><i class="fas fa-image" style="color:#7c3aed;"></i> Imagen del Popup</h4>
+                                <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Esta imagen se mostrara en la ventana emergente. Se recomienda 600x400px o proporciones similares.</p>
+                                <div style="display:flex;align-items:flex-start;gap:16px;">
+                                    <div id="adminPopupImagePreview" style="width:240px;height:160px;border-radius:10px;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f9fafb;flex-shrink:0;">
+                                        <i class="fas fa-image" id="adminPopupPlaceholderIcon" style="font-size:2rem;color:#94a3b8;"></i>
+                                        <img id="adminPopupImg" src="" alt="Popup" style="width:100%;height:100%;object-fit:contain;display:none;">
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('adminPopupImageInput').click()">
+                                            <i class="fas fa-upload"></i> Subir Imagen
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="adminPopupRemoveBtn" onclick="removeAdminPopupImage()" style="display:none;margin-left:6px;">
+                                            <i class="fas fa-trash"></i> Quitar
+                                        </button>
+                                        <input type="file" id="adminPopupImageInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;" onchange="handleAdminPopupImageSelect(this)">
+                                        <input type="hidden" id="setting_popup_image_url" data-key="popup_image_url">
+                                        <p style="font-size:0.72rem;color:#94a3b8;margin:6px 0 0;">JPG, PNG, WebP, GIF - Max 5MB.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Negocio vinculado -->
+                            <div class="settings-section" style="margin-bottom:20px;">
+                                <h4 class="settings-section-title"><i class="fas fa-store" style="color:#7c3aed;"></i> Negocio Vinculado (opcional)</h4>
+                                <p style="font-size:0.85rem;color:#6b7280;margin-bottom:8px;">Selecciona un negocio registrado. Al hacer clic en la ventana emergente, los usuarios seran redirigidos al perfil de ese negocio.</p>
+                                <select id="popupBusinessSelect" class="form-control" style="max-width:500px;">
+                                    <option value="">-- Sin negocio vinculado --</option>
+                                </select>
+                                <input type="hidden" id="setting_popup_link_url" data-key="popup_link_url">
+                                <p id="popupBusinessSelectedInfo" style="font-size:0.8rem;color:#059669;margin-top:6px;display:none;">
+                                    <i class="fas fa-check-circle"></i> Negocio vinculado correctamente.
+                                </p>
+                            </div>
+
+                            <div style="text-align:right;">
+                                <button type="button" class="btn btn-primary" onclick="savePopupSettings()">
+                                    <i class="fas fa-save"></i> Guardar Cambios
+                                </button>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <hr style="margin:20px 0; border-color:var(--color-border-light);">
-
-                    <!-- Imagen del Popup -->
-                    <div class="settings-section" style="margin-bottom:20px;">
-                        <h4 class="settings-section-title"><i class="fas fa-image" style="color:#7c3aed;"></i> Imagen del Popup</h4>
-                        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Esta imagen se mostrara en la ventana emergente. Se recomienda 600x400px o proporciones similares.</p>
-                        <div style="display:flex;align-items:flex-start;gap:16px;">
-                            <div id="adminPopupImagePreview" style="width:240px;height:160px;border-radius:10px;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f9fafb;flex-shrink:0;">
-                                <i class="fas fa-image" id="adminPopupPlaceholderIcon" style="font-size:2rem;color:#94a3b8;"></i>
-                                <img id="adminPopupImg" src="" alt="Popup" style="width:100%;height:100%;object-fit:contain;display:none;">
-                            </div>
+                <!-- ==================== BAZAR TAB ==================== -->
+                <div class="admin-tab hidden" id="tabBazar">
+                    <div class="admin-card" style="padding:24px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
                             <div>
-                                <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('adminPopupImageInput').click()">
-                                    <i class="fas fa-upload"></i> Subir Imagen
-                                </button>
-                                <button type="button" class="btn btn-secondary btn-sm" id="adminPopupRemoveBtn" onclick="removeAdminPopupImage()" style="display:none;margin-left:6px;">
-                                    <i class="fas fa-trash"></i> Quitar
-                                </button>
-                                <input type="file" id="adminPopupImageInput" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none;" onchange="handleAdminPopupImageSelect(this)">
-                                <input type="hidden" id="setting_popup_image_url" data-key="popup_image_url">
-                                <p style="font-size:0.72rem;color:#94a3b8;margin:6px 0 0;">JPG, PNG, WebP, GIF - Max 5MB.</p>
+                                <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-store" style="color:#059669;"></i> Respuestas de Bazar</h3>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Encuesta de participacion en bazar respondida desde perfiles de negocio y dashboard.</p>
+                            </div>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <span id="bazarStatsSi" style="background:#d1fae5;color:#059669;padding:4px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;"></span>
+                                <span id="bazarStatsNo" style="background:#fee2e2;color:#dc2626;padding:4px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;"></span>
+                                <select id="bazarFilter" style="padding:6px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
+                                    <option value="">Todos</option>
+                                    <option value="si">Si</option>
+                                    <option value="no">No</option>
+                                </select>
                             </div>
                         </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" style="width:100%;font-size:0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Usuario</th>
+                                        <th>Email</th>
+                                        <th>Negocio</th>
+                                        <th>Respuesta</th>
+                                        <th>Origen</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="bazarTableBody">
+                                    <tr><td colspan="6" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="bazarPagination" style="margin-top:16px;display:flex;justify-content:center;gap:6px;"></div>
                     </div>
+                </div>
 
-                    <!-- Negocio vinculado -->
-                    <div class="settings-section" style="margin-bottom:20px;">
-                        <h4 class="settings-section-title"><i class="fas fa-store" style="color:#7c3aed;"></i> Negocio Vinculado (opcional)</h4>
-                        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:8px;">Selecciona un negocio registrado. Al hacer clic en la ventana emergente, los usuarios seran redirigidos al perfil de ese negocio.</p>
-                        <select id="popupBusinessSelect" class="form-control" style="max-width:500px;">
-                            <option value="">-- Sin negocio vinculado --</option>
-                        </select>
-                        <input type="hidden" id="setting_popup_link_url" data-key="popup_link_url">
-                        <p id="popupBusinessSelectedInfo" style="font-size:0.8rem;color:#059669;margin-top:6px;display:none;">
-                            <i class="fas fa-check-circle"></i> Negocio vinculado correctamente.
-                        </p>
-                    </div>
-
-                    <div style="text-align:right;">
-                        <button type="button" class="btn btn-primary" onclick="savePopupSettings()">
-                            <i class="fas fa-save"></i> Guardar Cambios
-                        </button>
+                <!-- ==================== CAROUSEL TAB ==================== -->
+                <div class="admin-tab hidden" id="tabCarousel">
+                    <div class="admin-card" style="padding:24px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-video" style="color:#dc2626;"></i> Carrusel de Videos</h3>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Administra los videos que se muestran en el carrusel de la pagina de inicio.</p>
+                            </div>
+                            <button class="btn btn-primary" id="addVideoBtn"><i class="fas fa-plus"></i> Agregar Video</button>
+                        </div>
+                        <div id="carouselVideoList">
+                            <p style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- ==================== BAZAR TAB ==================== -->
-        <div class="admin-tab hidden" id="tabBazar">
-            <div class="admin-card" style="padding:24px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-                    <div>
-                        <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-store" style="color:#059669;"></i> Respuestas de Bazar</h3>
-                        <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Encuesta de participacion en bazar respondida desde perfiles de negocio y dashboard.</p>
-                    </div>
-                    <div style="display:flex;gap:8px;align-items:center;">
-                        <span id="bazarStatsSi" style="background:#d1fae5;color:#059669;padding:4px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;"></span>
-                        <span id="bazarStatsNo" style="background:#fee2e2;color:#dc2626;padding:4px 12px;border-radius:20px;font-size:0.85rem;font-weight:600;"></span>
-                        <select id="bazarFilter" style="padding:6px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
-                            <option value="">Todos</option>
-                            <option value="si">Si</option>
-                            <option value="no">No</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="overflow-x:auto;">
-                    <table class="admin-table" style="width:100%;font-size:0.85rem;">
-                        <thead>
-                            <tr>
-                                <th>Fecha</th>
-                                <th>Usuario</th>
-                                <th>Email</th>
-                                <th>Negocio</th>
-                                <th>Respuesta</th>
-                                <th>Origen</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bazarTableBody">
-                            <tr><td colspan="6" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div id="bazarPagination" style="margin-top:16px;display:flex;justify-content:center;gap:6px;"></div>
-            </div>
-        </div>
-
-        <!-- ==================== CAROUSEL TAB ==================== -->
-        <div class="admin-tab hidden" id="tabCarousel">
-            <div class="admin-card" style="padding:24px;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-                    <div>
-                        <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-video" style="color:#dc2626;"></i> Carrusel de Videos</h3>
-                        <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Administra los videos que se muestran en el carrusel de la pagina de inicio.</p>
-                    </div>
-                    <button class="btn btn-primary" id="addVideoBtn"><i class="fas fa-plus"></i> Agregar Video</button>
-                </div>
-                <div id="carouselVideoList">
-                    <p style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</p>
-                </div>
-            </div>
-        </div>
-    </main>
 
     <!-- Carousel Add Video Modal -->
     <div class="modal hidden" id="carouselVideoModal">
@@ -2154,7 +2153,7 @@
     </div>
 
     <script src="js/app.js"></script>
-    <script src="js/admin.js?v=5"></script>
+    <script src="js/admin.js?v=6"></script>
     <style>
     /* Editar Negocios styles */
     .aeb-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;}
