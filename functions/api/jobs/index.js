@@ -233,18 +233,50 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Verify that company_name exists in the businesses table
-    const businessRow = await env.DB.prepare('SELECT id, user_id, title FROM businesses WHERE title = ? AND status = ? LIMIT 1')
-      .bind(company_name.trim(), 'approved')
-      .first();
+    // Special handling for HOLAX virtual company
+    const HOLAX_NAME = 'HOLAX';
+    let businessId;
+    let companyNameFinal = company_name.trim();
 
-    if (!businessRow) {
-      return new Response(JSON.stringify({
-        error: `La empresa "${company_name}" no está registrada o no está aprobada en el directorio. Solo puedes publicar empleos para negocios registrados.`,
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (companyNameFinal === HOLAX_NAME) {
+      // HOLAX is a virtual/placeholder company — auto-create if not exists
+      let holaxRow = await env.DB.prepare('SELECT id FROM businesses WHERE title = ? LIMIT 1')
+        .bind(HOLAX_NAME).first();
+      if (!holaxRow) {
+        // Ensure logo column exists
+        try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN logo TEXT').run(); } catch(e) {}
+        try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN banner TEXT').run(); } catch(e) {}
+        const holaxInsert = await env.DB.prepare(`
+          INSERT INTO businesses (user_id, title, slug, status, category_id, logo, description)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+          payload.id,
+          HOLAX_NAME,
+          'holax',
+          'approved',
+          0,
+          '/images/Holax.png',
+          'Plataforma HolaX – Directorio comercial e inmobiliario de Venezuela'
+        ).run();
+        businessId = holaxInsert.meta.last_row_id;
+      } else {
+        businessId = holaxRow.id;
+      }
+    } else {
+      // Verify that company_name exists in the businesses table
+      const businessRow = await env.DB.prepare('SELECT id, user_id, title FROM businesses WHERE title = ? AND status = ? LIMIT 1')
+        .bind(companyNameFinal, 'approved')
+        .first();
+
+      if (!businessRow) {
+        return new Response(JSON.stringify({
+          error: `La empresa "${companyNameFinal}" no está registrada o no está aprobada en el directorio. Solo puedes publicar empleos para negocios registrados.`,
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      businessId = businessRow.id;
     }
 
     // Insert job listing
@@ -268,8 +300,8 @@ export async function onRequestPost(context) {
         video_url
       ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     `).bind(
-      businessRow.id,
-      company_name.trim(),
+      businessId,
+      companyNameFinal,
       title.trim(),
       body.description || null,
       job_type,
@@ -306,7 +338,7 @@ export async function onRequestPost(context) {
     return new Response(JSON.stringify({
       message: 'Oferta de empleo registrada exitosamente. Está pendiente de aprobación.',
       job_id: jobId,
-      business_id: businessRow.id,
+      business_id: businessId,
     }), {
       status: 201,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

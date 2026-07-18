@@ -1563,23 +1563,30 @@ window.closeEditBusinessModal = function() {
         if (modal) modal.classList.remove('hidden');
         try {
             const user = getCachedUser();
-            const businessesData = await api.get(`/businesses?user_id=${user.id}&status=approved&limit=50`);
+            const isAdmin = user && (user.role === 'admin');
+            const businessesData = isAdmin
+                ? await api.get('/businesses?status=approved&limit=200')
+                : await api.get(`/businesses?user_id=${user.id}&status=approved&limit=50`);
             const businesses = businessesData.businesses || businessesData.results || businessesData || [];
             const select = document.getElementById('jobBusiness');
             if (select) {
-                if (businesses.length === 0) {
-                    select.innerHTML = '<option value="">-- No tienes negocios aprobados --</option>';
-                    select.disabled = true;
-                } else {
-                    select.innerHTML = '<option value="" disabled selected>Selecciona un negocio</option>';
+                select.innerHTML = '<option value="" disabled selected>Selecciona un negocio</option>';
+                // Always add HOLAX as the first option (uses Holax.png logo)
+                const holaxOpt = document.createElement('option');
+                holaxOpt.value = 'holax';
+                holaxOpt.textContent = 'HOLAX';
+                holaxOpt.dataset.logo = '/images/Holax.png';
+                select.appendChild(holaxOpt);
+                if (businesses.length > 0) {
                     businesses.forEach(b => {
                         const opt = document.createElement('option');
                         opt.value = b.id;
                         opt.textContent = b.title || b.name || `Negocio #${b.id}`;
+                        if (b.logo) opt.dataset.logo = b.logo;
                         select.appendChild(opt);
                     });
-                    select.disabled = false;
                 }
+                select.disabled = false;
             }
         } catch (e) {
             console.log('Could not load businesses for job modal:', e);

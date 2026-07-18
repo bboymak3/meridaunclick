@@ -48,6 +48,9 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Auto-migrate: add whatsapp column if missing
+    try { await env.DB.prepare('ALTER TABLE properties ADD COLUMN whatsapp TEXT').run(); } catch(e) {}
+
     const url = new URL(request.url);
     const params = url.searchParams;
 
@@ -172,6 +175,9 @@ export async function onRequestPost(context) {
       });
     }
 
+    // Auto-migrate: add whatsapp column if missing
+    try { await env.DB.prepare('ALTER TABLE properties ADD COLUMN whatsapp TEXT').run(); } catch(e) {}
+
     const jwtSecret = env.JWT_SECRET || 'aunclick_jwt_secret_2024';
 
     const authHeader = request.headers.get('Authorization');
@@ -215,11 +221,11 @@ export async function onRequestPost(context) {
     const result = await env.DB.prepare(`
       INSERT INTO properties (
         user_id, title, description, property_type, operation_type, price,
-        currency, address, city, state, country, lat, lng, bedrooms, bathrooms,
+        currency, address, city, state, country, lat, lng, whatsapp, bedrooms, bathrooms,
         parking_spaces, area, area_unit, year_built, floors,
         has_pool, has_garden, has_ac, has_kitchen, has_furniture, has_security, has_elevator,
         status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       payload.id,
       title,
@@ -234,6 +240,7 @@ export async function onRequestPost(context) {
       body.country || 'Venezuela',
       body.lat || null,
       body.lng || null,
+      body.whatsapp || null,
       body.bedrooms || null,
       body.bathrooms || null,
       body.parking_spaces || null,

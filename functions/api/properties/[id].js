@@ -51,6 +51,9 @@ export async function onRequestGet(context) {
     const { env, params } = context;
     const { id } = params;
 
+    // Auto-migrate: add whatsapp column if missing
+    try { await env.DB.prepare('ALTER TABLE properties ADD COLUMN whatsapp TEXT').run(); } catch(e) {}
+
     const property = await env.DB.prepare(`
       SELECT p.*, u.name as owner_name, u.phone as owner_phone, u.whatsapp as owner_whatsapp, u.email as owner_email, u.avatar as owner_avatar, u.bio as owner_bio, u.plan_type as owner_plan_type,
              (SELECT url FROM property_images WHERE property_id = p.id AND is_cover = 1 LIMIT 1) as cover_image,
@@ -113,7 +116,7 @@ export async function onRequestPut(context) {
     const allowedFields = [
       'title', 'description', 'property_type', 'operation_type', 'price',
       'currency', 'address', 'city', 'state', 'country', 'lat', 'lng',
-      'bedrooms', 'bathrooms', 'parking_spaces', 'area', 'area_unit',
+      'whatsapp', 'bedrooms', 'bathrooms', 'parking_spaces', 'area', 'area_unit',
       'year_built', 'floors', 'has_pool', 'has_garden', 'has_ac',
       'has_kitchen', 'has_furniture', 'has_security', 'has_elevator',
       'featured', 'video_url',

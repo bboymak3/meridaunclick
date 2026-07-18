@@ -673,8 +673,9 @@ const PropertyDetail = (function () {
         const emailContactBtn = document.getElementById('emailContactBtn');
 
         if (mainWhatsApp) {
-            const waNumber = p.whatsapp || p.phone || p.owner_whatsapp || '';
-            if (waNumber && isOwnerPremium) {
+            // Priority: property's own whatsapp > owner's whatsapp > owner's phone
+            const waNumber = p.whatsapp || p.owner_whatsapp || p.phone || p.owner_phone || '';
+            if (waNumber) {
                 const cleanNumber = waNumber.replace(/[^0-9+]/g, '');
                 const msg = encodeURIComponent(`Hola, vi tu propiedad "${p.title || ''}" en HolaX y me interesa saber más.`);
                 mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
@@ -684,16 +685,12 @@ const PropertyDetail = (function () {
             }
         }
 
-        // Email contact for Basic plan
+        // Email contact
         if (emailContactBtn) {
             const emailAddr = p.email_contact || p.owner_email || '';
             if (emailAddr) {
-                if (isOwnerPremium) {
-                    emailContactBtn.style.display = 'none';
-                } else {
-                    emailContactBtn.href = `mailto:${emailAddr}?subject=Consulta sobre propiedad ${encodeURIComponent(p.title || '')}`;
-                    emailContactBtn.style.display = '';
-                }
+                emailContactBtn.href = `mailto:${emailAddr}?subject=Consulta sobre propiedad ${encodeURIComponent(p.title || '')}`;
+                emailContactBtn.style.display = '';
             } else {
                 emailContactBtn.style.display = 'none';
             }

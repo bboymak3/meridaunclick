@@ -806,6 +806,7 @@
             state: estado || '',
             lat,
             lng,
+            whatsapp: (document.getElementById('propWhatsApp')?.value || '').trim() || null,
             bedrooms: habitaciones || null,
             bathrooms: banos || null,
             parking_spaces: estacionamientos || null,
@@ -1008,6 +1009,7 @@
         setValue('propEstado', property.state);
         setValue('propLat', property.lat);
         setValue('propLng', property.lng);
+        setValue('propWhatsApp', property.whatsapp);
 
         // Update map marker if coordinates exist
         if (property.lat && property.lng && locationMap && locationMarker) {
