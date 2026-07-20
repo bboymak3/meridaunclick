@@ -270,7 +270,7 @@
                     </div>
                 </div>
             </div>
-            <div id="videoCarouselTrack" style="display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px;-webkit-overflow-scrolling:touch;">
+            <div id="videoCarouselTrack" style="display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px;-webkit-overflow-scrolling:touch;cursor:grab;scrollbar-width:none;">
             </div>
         </div>
     </section>
@@ -802,6 +802,24 @@
     <script src="js/chat.js"></script>
     <script src="js/ai-chatbot.js"></script>
     <script>
+        // Drag-to-scroll for carousels
+        document.querySelectorAll('#videoCarouselTrack, #weatherTrack').forEach(track => {
+            let isDown = false, startX, scrollLeft;
+            track.addEventListener('mousedown', e => {
+                isDown = true;
+                track.style.cursor = 'grabbing';
+                startX = e.pageX - track.offsetLeft;
+                scrollLeft = track.scrollLeft;
+            });
+            track.addEventListener('mouseleave', () => { isDown = false; track.style.cursor = 'grab'; });
+            track.addEventListener('mouseup', () => { isDown = false; track.style.cursor = 'grab'; });
+            track.addEventListener('mousemove', e => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - track.offsetLeft;
+                track.scrollLeft = scrollLeft - (x - startX);
+            });
+        });
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').catch(() => {});
         }
