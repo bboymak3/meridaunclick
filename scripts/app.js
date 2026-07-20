@@ -744,9 +744,6 @@ function createBusinessCard(business) {
                         <span class="card-badge badge-type">${typeLabel}</span>
                         ${featuredBadge}${statusBadge}${especialidadBadge}
                     </div>
-                    <button class="btn-favorite business-card-fav" data-business-id="${business.id}" aria-label="Agregar a favoritos" onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite(${business.id});">
-                        <i class="far fa-heart"></i>
-                    </button>
                     <button class="btn-share-wa-card" data-business-id="${business.id}" aria-label="Compartir por WhatsApp" onclick="event.preventDefault(); event.stopPropagation();">
                         <i class="fab fa-whatsapp"></i>
                     </button>
