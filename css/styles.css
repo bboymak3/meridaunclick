@@ -11685,19 +11685,21 @@ a.btn-icon {
 .weather-carousel-track {
     display: flex;
     gap: 8px;
-    overflow-x: auto;
+    overflow: hidden;
     padding: 0 4px 4px;
     position: relative;
     z-index: 1;
     width: max-content;
-    cursor: grab;
-    -webkit-overflow-scrolling: touch;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
+    animation: weatherMarquee 50s linear infinite;
 }
 
-.weather-carousel-track:active {
-    cursor: grabbing;
+.weather-carousel-track.weather-paused {
+    animation-play-state: paused;
+}
+
+@keyframes weatherMarquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 
 .weather-carousel-track::-webkit-scrollbar {
