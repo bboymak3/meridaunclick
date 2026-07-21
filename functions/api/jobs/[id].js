@@ -219,6 +219,35 @@ export async function onRequestPatch(context) {
     } else if (action === 'reject') {
       await env.DB.prepare("UPDATE job_listings SET status = 'rejected', updated_at = datetime('now') WHERE id = ?").bind(id).run();
       return new Response(JSON.stringify({ message: 'Oferta rechazada' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    } else if (action === 'edit') {
+      const { title, company_name, job_type, salary, state, city, description, requirements, benefits, contact_email, contact_phone } = body;
+      // Build dynamic UPDATE
+      const fields = [];
+      const values = [];
+      if (title !== undefined) { fields.push('title = ?'); values.push(title.trim()); }
+      if (company_name !== undefined) {
+        fields.push('company_name = ?');
+        values.push(company_name.trim());
+        // Also update business_id if company changed
+        const bizRow = await env.DB.prepare('SELECT id FROM businesses WHERE title = ? AND status = ? LIMIT 1').bind(company_name.trim(), 'approved').first();
+        if (bizRow) { fields.push('business_id = ?'); values.push(bizRow.id); }
+      }
+      if (job_type !== undefined) { fields.push('job_type = ?'); values.push(job_type); }
+      if (salary !== undefined) { fields.push('salary = ?'); values.push(salary || null); }
+      if (state !== undefined) { fields.push('state = ?'); values.push(state || null); }
+      if (city !== undefined) { fields.push('city = ?'); values.push(city || null); }
+      if (description !== undefined) { fields.push('description = ?'); values.push(description || null); }
+      if (requirements !== undefined) { fields.push('requirements = ?'); values.push(requirements || null); }
+      if (benefits !== undefined) { fields.push('benefits = ?'); values.push(benefits || null); }
+      if (contact_email !== undefined) { fields.push('contact_email = ?'); values.push(contact_email || null); }
+      if (contact_phone !== undefined) { fields.push('contact_phone = ?'); values.push(contact_phone || null); }
+      if (fields.length === 0) {
+        return new Response(JSON.stringify({ error: 'No hay campos para actualizar' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      fields.push("updated_at = datetime('now')");
+      values.push(id);
+      await env.DB.prepare(`UPDATE job_listings SET ${fields.join(', ')} WHERE id = ?`).bind(...values).run();
+      return new Response(JSON.stringify({ message: 'Oferta actualizada' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     } else {
       return new Response(JSON.stringify({ error: 'Accion no valida' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }

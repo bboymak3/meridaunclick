@@ -63,6 +63,7 @@ if (!window._renderVideoList) {
     let usersPage = 1;
     let msgsPage = 1;
     let jobsPage = 1;
+    let editingJobId = null;
     let inmueblesPage = 1;
     let productsPage = 1;
     let premiumPage = 1;
@@ -2458,6 +2459,7 @@ if (!window._renderVideoList) {
         approveJob,
         rejectJob,
         deleteJob,
+        editJob,
         activateSellerPremium,
         deactivateSellerPremium,
     };
@@ -2497,6 +2499,7 @@ if (!window._renderVideoList) {
                     <td><span class="badge badge-${j.status === 'approved' ? 'success' : j.status === 'rejected' ? 'danger' : 'warning'}">${j.job_type || '-'}</span></td>
                     <td><span class="badge badge-${j.status === 'approved' ? 'success' : j.status === 'rejected' ? 'danger' : 'warning'}">${j.status}</span></td>
                     <td>
+                        <button class="btn btn-sm btn-outline" onclick="admin.editJob(${j.id})" title="Editar"><i class="fas fa-edit"></i></button>
                         ${j.status === 'pending' ? `<button class="btn btn-sm btn-success" onclick="admin.approveJob(${j.id})"><i class="fas fa-check"></i></button>` : ''}
                         ${j.status !== 'rejected' ? `<button class="btn btn-sm btn-danger" onclick="admin.rejectJob(${j.id})"><i class="fas fa-ban"></i></button>` : ''}
                         <button class="btn btn-sm btn-secondary" onclick="admin.deleteJob(${j.id})"><i class="fas fa-trash"></i></button>
@@ -2533,15 +2536,54 @@ if (!window._renderVideoList) {
         const cancelBtn = document.getElementById('adminJobCancel');
         const submitBtn = document.getElementById('adminJobSubmit');
 
-        if (createBtn) createBtn.addEventListener('click', () => { if (modal) modal.classList.remove('hidden'); });
-        if (closeBtn) closeBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); });
-        if (cancelBtn) cancelBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); });
-        if (modal) modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+        if (createBtn) createBtn.addEventListener('click', () => { editingJobId = null; resetJobForm(); if (modal) { modal.querySelector('.modal-header h3').innerHTML = '<i class="fas fa-briefcase" style="color:#6366f1"></i> Publicar Oferta de Empleo'; submitBtn.textContent = 'Publicar Empleo'; modal.classList.remove('hidden'); } });
+        if (closeBtn) closeBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); editingJobId = null; });
+        if (cancelBtn) cancelBtn.addEventListener('click', () => { if (modal) modal.classList.add('hidden'); editingJobId = null; });
+        if (modal) modal.querySelector('.modal-overlay')?.addEventListener('click', () => { modal.classList.add('hidden'); editingJobId = null; });
 
         if (submitBtn) submitBtn.addEventListener('click', submitJob);
 
         const jobStatusFilter = document.getElementById('jobStatusFilter');
         if (jobStatusFilter) jobStatusFilter.addEventListener('change', () => { jobsPage = 1; loadJobs(); });
+    }
+
+    function resetJobForm() {
+        const ids = ['jobCompany','jobTitle','jobType','jobSalary','jobState','jobCity','jobDescription','jobRequirements','jobBenefits','jobContactEmail','jobContactPhone'];
+        ids.forEach(id => { const el = document.getElementById(id); if (el) { if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ''; } });
+    }
+
+    async function editJob(id) {
+        try {
+            const resp = await fetch(`/api/jobs/${id}`, { headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY) } });
+            if (!resp.ok) { showToast('Error al cargar empleo', 'error'); return; }
+            const j = await resp.json();
+
+            editingJobId = id;
+            const modal = document.getElementById('adminJobModal');
+            if (!modal) return;
+
+            // Set title
+            modal.querySelector('.modal-header h3').innerHTML = '<i class="fas fa-edit" style="color:#6366f1"></i> Editar Oferta de Empleo #' + id;
+            document.getElementById('adminJobSubmit').textContent = 'Guardar Cambios';
+
+            // Populate fields
+            const setVal = (elId, val) => { const el = document.getElementById(elId); if (!el) return; if (el.tagName === 'SELECT') { for (let i = 0; i < el.options.length; i++) { if (el.options[i].value === val) { el.selectedIndex = i; break; } } } else { el.value = val || ''; } };
+            setVal('jobCompany', j.company_name);
+            setVal('jobTitle', j.title);
+            setVal('jobType', j.job_type);
+            setVal('jobSalary', j.salary);
+            setVal('jobState', j.state);
+            setVal('jobCity', j.city);
+            setVal('jobDescription', j.description);
+            setVal('jobRequirements', j.requirements);
+            setVal('jobBenefits', j.benefits);
+            setVal('jobContactEmail', j.contact_email);
+            setVal('jobContactPhone', j.contact_phone);
+
+            modal.classList.remove('hidden');
+        } catch (err) {
+            showToast(err.message || 'Error al cargar empleo', 'error');
+        }
     }
 
     async function submitJob() {
@@ -2563,24 +2605,51 @@ if (!window._renderVideoList) {
         }
 
         try {
-            await api.post('/jobs', {
-                company_name: company,
-                title,
-                job_type: job_type || 'tiempo_completo',
-                salary: salary || null,
-                state: state || null,
-                city: city || null,
-                description: description || null,
-                requirements: requirements || null,
-                benefits: benefits || null,
-                contact_email: contactEmail || null,
-                contact_phone: contactPhone || null,
-            });
-            showToast('Oferta de empleo publicada', 'success');
+            if (editingJobId) {
+                // EDIT mode — PATCH
+                const token = localStorage.getItem(TOKEN_KEY);
+                const resp = await fetch(`/api/jobs/${editingJobId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        action: 'edit',
+                        company_name: company,
+                        title,
+                        job_type: job_type || 'tiempo_completo',
+                        salary: salary || null,
+                        state: state || null,
+                        city: city || null,
+                        description: description || null,
+                        requirements: requirements || null,
+                        benefits: benefits || null,
+                        contact_email: contactEmail || null,
+                        contact_phone: contactPhone || null,
+                    }),
+                });
+                if (resp.ok) { showToast('Oferta de empleo actualizada', 'success'); }
+                else { showToast('Error al actualizar empleo', 'error'); }
+                editingJobId = null;
+            } else {
+                // CREATE mode — POST
+                await api.post('/jobs', {
+                    company_name: company,
+                    title,
+                    job_type: job_type || 'tiempo_completo',
+                    salary: salary || null,
+                    state: state || null,
+                    city: city || null,
+                    description: description || null,
+                    requirements: requirements || null,
+                    benefits: benefits || null,
+                    contact_email: contactEmail || null,
+                    contact_phone: contactPhone || null,
+                });
+                showToast('Oferta de empleo publicada', 'success');
+            }
             document.getElementById('adminJobModal')?.classList.add('hidden');
             loadJobs();
         } catch (err) {
-            showToast(err.message || 'Error al publicar empleo', 'error');
+            showToast(err.message || 'Error al guardar empleo', 'error');
         }
     }
 
