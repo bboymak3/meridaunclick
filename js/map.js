@@ -152,9 +152,43 @@
         return icons[type?.toLowerCase()] || '📌';
     }
 
+    // ─── Fix Corrupted Coordinates ───────────────────────────
+    // DB values like lng=-7021260663068742 missing decimal → -70.21260663068742
+    function fixCoord(val) {
+        if (val === null || val === undefined || val === '') return null;
+        var n = parseFloat(val);
+        if (isNaN(n)) return null;
+        if (n > 180 || n < -180) {
+            // Likely missing decimal point — insert after first 2-3 digits
+            var s = String(Math.abs(n));
+            var sign = n < 0 ? '-' : '';
+            // Try inserting at position 2 (e.g. -7021... → -70.21...)
+            if (s.length > 3) {
+                var fixed = sign + s.substring(0, 2) + '.' + s.substring(2);
+                var fn = parseFloat(fixed);
+                if (!isNaN(fn) && fn >= -180 && fn <= 180) return fn;
+            }
+            // Fallback: insert at position 3
+            if (s.length > 4) {
+                var fixed2 = sign + s.substring(0, 3) + '.' + s.substring(3);
+                var fn2 = parseFloat(fixed2);
+                if (!isNaN(fn2) && fn2 >= -180 && fn2 <= 180) return fn2;
+            }
+            return null; // Cannot fix
+        }
+        return n;
+    }
+
+    function fixItemCoords(item) {
+        item._lat = fixCoord(item.lat);
+        item._lng = fixCoord(item.lng);
+        return item;
+    }
+
     // ─── Create Marker ──────────────────────────────────────────
     function createMarker(business) {
-        if (!business.lat || !business.lng || typeof L === 'undefined') return null;
+        fixItemCoords(business);
+        if (!business._lat || !business._lng || typeof L === 'undefined') return null;
 
         try {
             var coverImage = '';
@@ -182,7 +216,7 @@
                 popupAnchor: [0, -56],
             });
 
-            var marker = L.marker([business.lat, business.lng], { icon: icon });
+            var marker = L.marker([business._lat, business._lng], { icon: icon });
 
             // Build popup content
             var imgTag = coverImage
@@ -272,7 +306,7 @@
             }
 
             // Add markers
-            var validItems = allBusinesses.filter(function (p) { return p.lat && p.lng; });
+            var validItems = allBusinesses.filter(function (p) { return fixCoord(p.lat) && fixCoord(p.lng); });
 
             validItems.forEach(function (business) {
                 var marker = createMarker(business);
@@ -385,7 +419,8 @@
             var coverImage = p.cover_image || (p.images && p.images[0] && p.images[0].url) || '';
             var typeLabel = safeGetTypeLabel(p.business_type);
             var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
-            html += '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p.lat || '') + '" data-lng="' + (p.lng || '') + '">'
+            fixItemCoords(p);
+            html += '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p._lat || '') + '" data-lng="' + (p._lng || '') + '">'
                 + '<img src="' + coverImage + '" alt="' + (p.title || 'Negocio') + '" onerror="this.style.display=\'none\'">'
                 + '<div class="card-info">'
                 + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin t\u00edtulo') + '</div>'
@@ -403,7 +438,8 @@
             var opLabel = (p.operation_type || '').replace('_', ' ');
             var price = p.price ? '$' + Number(p.price).toLocaleString('es-VE') : '';
             var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
-            html += '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p.lat || '') + '" data-lng="' + (p.lng || '') + '">'
+            fixItemCoords(p);
+            html += '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p._lat || '') + '" data-lng="' + (p._lng || '') + '">'
                 + (coverImage ? '<img src="' + coverImage + '" alt="' + (p.title || 'Propiedad') + '" onerror="this.style.display=\'none\'">' : '')
                 + '<div class="card-info">'
                 + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin t\u00edtulo') + '</div>'
@@ -549,7 +585,8 @@
             var typeLabel = safeGetTypeLabel(p.business_type);
             var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
 
-            return '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p.lat || '') + '" data-lng="' + (p.lng || '') + '">'
+            fixItemCoords(p);
+            return '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p._lat || '') + '" data-lng="' + (p._lng || '') + '">'
                 + '<img src="' + coverImage + '" alt="' + (p.title || 'Negocio') + '" onerror="this.style.display=\'none\'">'
                 + '<div class="card-info">'
                 + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin título') + '</div>'
@@ -692,7 +729,7 @@
         api.get(endpoint).then(function (data) {
             var businesses = data.businesses || [];
             window._miniMarkerLayer.clearLayers();
-            var validItems = businesses.filter(function (p) { return p.lat && p.lng; });
+            var validItems = businesses.filter(function (p) { return fixCoord(p.lat) && fixCoord(p.lng); });
 
             validItems.forEach(function (business) {
                 var marker = createMarker(business);
@@ -700,7 +737,7 @@
             });
 
             if (validItems.length > 0) {
-                var bounds = L.latLngBounds(validItems.map(function (p) { return [p.lat, p.lng]; }));
+                var bounds = L.latLngBounds(validItems.map(function (p) { return [fixCoord(p.lat), fixCoord(p.lng)]; }));
                 window._miniMap.fitBounds(bounds, { padding: [30, 30], maxZoom: 14 });
             }
         }).catch(function (error) {
@@ -731,7 +768,7 @@
                 mapResultCount.textContent = allBusinesses.length + ' propiedades encontradas';
             }
 
-            var validItems = allBusinesses.filter(function (p) { return p.lat && p.lng; });
+            var validItems = allBusinesses.filter(function (p) { return fixCoord(p.lat) && fixCoord(p.lng); });
 
             validItems.forEach(function (property) {
                 var marker = createPropertyMarker(property);
@@ -757,7 +794,8 @@
 
     // ─── Create Property Marker ─────────────────────────────────
     function createPropertyMarker(property) {
-        if (!property.lat || !property.lng || typeof L === 'undefined') return null;
+        fixItemCoords(property);
+        if (!property._lat || !property._lng || typeof L === 'undefined') return null;
 
         var coverImage = property.cover_image || '';
         var title = property.title || 'Propiedad';
@@ -775,7 +813,7 @@
             popupAnchor: [0, -56],
         });
 
-        var marker = L.marker([property.lat, property.lng], { icon: icon });
+        var marker = L.marker([property._lat, property._lng], { icon: icon });
 
         var imgTag = coverImage
             ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display=\'none\'"></div>'
@@ -829,7 +867,8 @@
             var price = p.price ? '$' + Number(p.price).toLocaleString('es-VE') : '';
             var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
 
-            return '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p.lat || '') + '" data-lng="' + (p.lng || '') + '">'
+            fixItemCoords(p);
+            return '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p._lat || '') + '" data-lng="' + (p._lng || '') + '">'
                 + (coverImage ? '<img src="' + coverImage + '" alt="' + (p.title || 'Propiedad') + '" onerror="this.style.display=\'none\'">' : '')
                 + '<div class="card-info">'
                 + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin título') + '</div>'
