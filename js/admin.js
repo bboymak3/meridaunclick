@@ -2515,6 +2515,13 @@ if (!window._renderVideoList) {
         const select = document.getElementById('jobCompany');
         if (!select) return;
         try {
+            // Always add HOLAX as the first option (default for jobs without a store)
+            const holaxOpt = document.createElement('option');
+            holaxOpt.value = 'HOLAX';
+            holaxOpt.textContent = 'HOLAX';
+            holaxOpt.dataset.logo = '/images/Holax.png';
+            select.appendChild(holaxOpt);
+
             const data = await api.get('/businesses?status=approved&limit=200');
             if (data.businesses) {
                 data.businesses.forEach(b => {
