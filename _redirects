@@ -20,5 +20,5 @@ https://www.holax.com.ve/* https://holax.com.ve/:splat 301
 /registro.html /new-business.html 301
 /perfil.html /dashboard.html 301
 
-# Redirigir sitemap estático al endpoint dinámico
-/sitemap.xml /api/sitemap 200
+# Sitemap: ahora manejado directamente por Function en /functions/sitemap.xml/index.js
+# (el status 200 en _redirects no invoca Functions de forma confiable)
