@@ -22,13 +22,13 @@
             map = L.map('homeMap', {
                 center: VENEZUELA_CENTER,
                 zoom: 6,
-                zoomControl: false,
-                scrollWheelZoom: false,
+                zoomControl: true,
+                scrollWheelZoom: true,
                 dragging: true,
                 tap: true,
                 touchZoom: true,
-                doubleClickZoom: false,
-                boxZoom: false,
+                doubleClickZoom: true,
+                boxZoom: true,
                 keyboard: false,
             });
 
