@@ -174,6 +174,29 @@
         });
     }
 
+    // ─── Fix Corrupted Coordinates ───────────────────────────
+    function fixCoord(val) {
+        if (val === null || val === undefined || val === '') return null;
+        var n = parseFloat(val);
+        if (isNaN(n)) return null;
+        if (n > 180 || n < -180) {
+            var s = String(Math.abs(n));
+            var sign = n < 0 ? '-' : '';
+            if (s.length > 3) {
+                var fixed = sign + s.substring(0, 2) + '.' + s.substring(2);
+                var fn = parseFloat(fixed);
+                if (!isNaN(fn) && fn >= -180 && fn <= 180) return fn;
+            }
+            if (s.length > 4) {
+                var fixed2 = sign + s.substring(0, 3) + '.' + s.substring(3);
+                var fn2 = parseFloat(fixed2);
+                if (!isNaN(fn2) && fn2 >= -180 && fn2 <= 180) return fn2;
+            }
+            return null;
+        }
+        return n;
+    }
+
     function renderMarkers() {
         if (!markerLayer) return;
 
@@ -184,8 +207,10 @@
         // Add business markers
         if (currentView === 'businesses' || currentView === 'both') {
             allBusinesses.forEach(function (p) {
-                if (!p.lat || !p.lng) return;
-                bounds.push([p.lat, p.lng]);
+                var lat = fixCoord(p.lat);
+                var lng = fixCoord(p.lng);
+                if (!lat || !lng) return;
+                bounds.push([lat, lng]);
 
                 var icon = createBusinessIcon(p.business_type);
                 var coverImage = p.cover_image || (p.images && p.images[0] && p.images[0].url) || '';
@@ -210,7 +235,7 @@
                     + '</div>'
                     + '</div>';
 
-                var marker = L.marker([p.lat, p.lng], { icon: icon });
+                var marker = L.marker([lat, lng], { icon: icon });
                 marker.bindPopup(popupHTML, { maxWidth: 300, minWidth: 260, closeButton: true });
                 markerLayer.addLayer(marker);
             });
@@ -219,8 +244,10 @@
         // Add property markers
         if (currentView === 'properties' || currentView === 'both') {
             allProperties.forEach(function (p) {
-                if (!p.lat || !p.lng) return;
-                bounds.push([p.lat, p.lng]);
+                var lat = fixCoord(p.lat);
+                var lng = fixCoord(p.lng);
+                if (!lat || !lng) return;
+                bounds.push([lat, lng]);
 
                 var icon = createPropertyIcon();
                 var coverImage = p.cover_image || '';
@@ -247,7 +274,7 @@
                     + '</div>'
                     + '</div>';
 
-                var marker = L.marker([p.lat, p.lng], { icon: icon });
+                var marker = L.marker([lat, lng], { icon: icon });
                 marker.bindPopup(popupHTML, { maxWidth: 300, minWidth: 260, closeButton: true });
                 markerLayer.addLayer(marker);
             });
