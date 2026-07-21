@@ -166,6 +166,9 @@ export async function onRequestGet(context) {
     const { env, request, params } = context;
     const id = params.id;
 
+    // Ensure business_logo column exists
+    try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN business_logo TEXT`).run(); } catch(e) {}
+
     const job = await env.DB.prepare(
       `SELECT j.*,
               COALESCE(j.business_logo, b.logo) as business_logo,
