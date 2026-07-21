@@ -1818,6 +1818,174 @@
         </div>
     </div>
 
+    <!-- Edit Inmueble Modal -->
+    <div class="modal hidden" id="adminInmuebleEditModal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content modal-xl">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit" style="color:#6366f1"></i> Editar Inmueble <span id="editInmuebleId"></span></h3>
+                <button class="modal-close" id="adminInmuebleEditClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eiTitle">Título <span style="color:#e74c3c">*</span></label>
+                        <input type="text" id="eiTitle" maxlength="150" required placeholder="Ej: Apartamento en el centro">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiTipo">Tipo <span style="color:#e74c3c">*</span></label>
+                        <select id="eiTipo" required>
+                            <option value="">Selecciona...</option>
+                            <option value="casa">Casa</option>
+                            <option value="apartamento">Apartamento</option>
+                            <option value="terreno">Terreno</option>
+                            <option value="local_comercial">Local Comercial</option>
+                            <option value="oficina">Oficina</option>
+                            <option value="hotel">Hotel</option>
+                            <option value="finca">Finca</option>
+                            <option value="galpon">Galpón</option>
+                            <option value="estacionamiento">Estacionamiento</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eiOperacion">Operación <span style="color:#e74c3c">*</span></label>
+                        <select id="eiOperacion" required>
+                            <option value="">Selecciona...</option>
+                            <option value="venta">Venta</option>
+                            <option value="alquiler">Alquiler</option>
+                            <option value="venta_alquiler">Venta y Alquiler</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="eiDescription">Descripción <span style="color:#e74c3c">*</span></label>
+                    <textarea id="eiDescription" rows="4" maxlength="2000" required placeholder="Describe el inmueble..."></textarea>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eiPrecio">Precio <span style="color:#e74c3c">*</span></label>
+                        <input type="number" id="eiPrecio" min="0" step="0.01" required placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Moneda</label>
+                        <div style="display:flex;gap:16px;margin-top:6px;">
+                            <label style="font-weight:normal;"><input type="radio" name="eiMoneda" value="USD" checked> USD</label>
+                            <label style="font-weight:normal;"><input type="radio" name="eiMoneda" value="EUR"> EUR</label>
+                            <label style="font-weight:normal;"><input type="radio" name="eiMoneda" value="Bs"> Bs</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex:2">
+                        <label for="eiDireccion">Dirección</label>
+                        <input type="text" id="eiDireccion" placeholder="Calle, urbanización...">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiCiudad">Ciudad <span style="color:#e74c3c">*</span></label>
+                        <input type="text" id="eiCiudad" required placeholder="Mérida">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiEstado">Estado</label>
+                        <input type="text" id="eiEstado" placeholder="Mérida">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eiLat">Latitud</label>
+                        <input type="number" id="eiLat" step="any" placeholder="8.5964">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiLng">Longitud</label>
+                        <input type="number" id="eiLng" step="any" placeholder="-71.1489">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiWhatsApp">WhatsApp</label>
+                        <input type="tel" id="eiWhatsApp" placeholder="+58 414 000-0000">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eiHabitaciones">Habitaciones</label>
+                        <input type="number" id="eiHabitaciones" min="0" max="50" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiBanos">Baños</label>
+                        <input type="number" id="eiBanos" min="0" max="50" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiEstacionamientos">Estacionamientos</label>
+                        <input type="number" id="eiEstacionamientos" min="0" max="50" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiPisos">Pisos</label>
+                        <input type="number" id="eiPisos" min="0" max="100" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eiArea">Área <span style="color:#e74c3c">*</span></label>
+                        <input type="number" id="eiArea" min="0" step="0.01" required placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="eiAreaUnidad">Unidad</label>
+                        <select id="eiAreaUnidad">
+                            <option value="m²">m²</option>
+                            <option value="ft²">ft²</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eiAno">Año Construcción</label>
+                        <input type="number" id="eiAno" min="1800" max="2030" placeholder="2020">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Características</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:6px;">
+                        <label style="font-weight:normal;"><input type="checkbox" id="eiFeatPool" value="1"> Piscina</label>
+                        <label style="font-weight:normal;"><input type="checkbox" id="eiFeatGarden" value="1"> Jardín</label>
+                        <label style="font-weight:normal;"><input type="checkbox" id="eiFeatAC" value="1"> Aire Acondicionado</label>
+                        <label style="font-weight:normal;"><input type="checkbox" id="eiFeatKitchen" value="1"> Cocina Equipada</label>
+                        <label style="font-weight:normal;"><input type="checkbox" id="eiFeatFurniture" value="1"> Amueblado</label>
+                        <label style="font-weight:normal;"><input type="checkbox" id="eiFeatSecurity" value="1"> Seguridad</label>
+                        <label style="font-weight:normal;"><input type="checkbox" id="eiFeatElevator" value="1"> Ascensor</label>
+                    </div>
+                </div>
+                <!-- Imágenes actuales -->
+                <div class="form-group">
+                    <label>Imágenes actuales <small style="color:#888;">(se eliminan individualmente)</small></label>
+                    <div id="eiImagesList" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;"></div>
+                </div>
+                <!-- Agregar imagen por URL -->
+                <div class="form-row">
+                    <div class="form-group" style="flex:2">
+                        <label for="eiNewImageUrl">Agregar imagen por URL</label>
+                        <input type="url" id="eiNewImageUrl" placeholder="https://ejemplo.com/foto.jpg">
+                    </div>
+                    <div class="form-group" style="display:flex;align-items:flex-end;">
+                        <button class="btn btn-outline" id="eiAddImageBtn" type="button"><i class="fas fa-plus"></i> Agregar</button>
+                    </div>
+                </div>
+                <!-- Subir imagen -->
+                <div class="form-group">
+                    <label>Subir imagen</label>
+                    <input type="file" id="eiImageFile" accept="image/*" style="margin-top:4px;">
+                    <div id="eiUploadProgress" class="hidden" style="color:#6366f1;font-size:0.85rem;margin-top:4px;"><i class="fas fa-spinner fa-spin"></i> Subiendo...</div>
+                </div>
+                <!-- Videos -->
+                <div class="form-group">
+                    <label>Videos <small style="color:#888;">(URLs de YouTube, TikTok, etc.)</small></label>
+                    <div id="eiVideoList"></div>
+                    <button class="btn btn-outline btn-sm" id="eiAddVideoBtn" type="button" style="margin-top:6px;"><i class="fas fa-plus"></i> Agregar video</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="adminInmuebleEditCancel">Cancelar</button>
+                <button class="btn btn-primary" id="adminInmuebleEditSave"><i class="fas fa-save"></i> Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>
 

@@ -249,6 +249,7 @@ if (!window._renderVideoList) {
         setupB2Modal();
         setupBusinessEditModal();
         setupInmueblesListeners();
+        setupInmuebleEditModal();
         loadBusinessesForJobSelect();
         setupPremiumListeners();
 
@@ -2349,6 +2350,7 @@ if (!window._renderVideoList) {
                 <td>${escHtml(p.owner_name || p.user_name || '-')}</td>
                 <td>${getInmuebleStatusBadge(p.status)}</td>
                 <td class="admin-actions">
+                    <button class="btn btn-xs btn-outline" onclick="window._adminEditInmueble(${p.id})" title="Editar"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-xs btn-outline" onclick="window._adminViewInmueble(${p.id})" title="Ver"><i class="fas fa-eye"></i></button>
                     ${p.status === 'pending' ? `
                         <button class="btn btn-xs btn-success" onclick="window._adminApproveInmueble(${p.id})" title="Aprobar"><i class="fas fa-check"></i></button>
@@ -2434,12 +2436,227 @@ if (!window._renderVideoList) {
         }
     }
 
+    // ─── INMUEBLE EDIT MODAL ──────────────────────────────
+    let editingInmuebleId = null;
+    let eiCurrentImages = [];
+
+    function setupInmuebleEditModal() {
+        const modal = document.getElementById('adminInmuebleEditModal');
+        if (!modal) return;
+        document.getElementById('adminInmuebleEditClose')?.addEventListener('click', () => modal.classList.add('hidden'));
+        modal.querySelector('.modal-overlay')?.addEventListener('click', () => modal.classList.add('hidden'));
+        document.getElementById('adminInmuebleEditCancel')?.addEventListener('click', () => modal.classList.add('hidden'));
+        document.getElementById('adminInmuebleEditSave')?.addEventListener('click', saveEditInmueble);
+        document.getElementById('eiAddImageBtn')?.addEventListener('click', async () => {
+            const url = document.getElementById('eiNewImageUrl')?.value?.trim();
+            if (!url || !editingInmuebleId) return;
+            try {
+                await api.post(`/property-images/${editingInmuebleId}`, { image_url: url });
+                document.getElementById('eiNewImageUrl').value = '';
+                showToast('Imagen agregada', 'success');
+                loadInmuebleImages(editingInmuebleId);
+            } catch (e) { showToast(e.message || 'Error al agregar imagen', 'error'); }
+        });
+        document.getElementById('eiImageFile')?.addEventListener('change', async (e) => {
+            const file = e.target.files?.[0];
+            if (!file || !editingInmuebleId) return;
+            const prog = document.getElementById('eiUploadProgress');
+            if (prog) prog.classList.remove('hidden');
+            try {
+                const fd = new FormData();
+                fd.append('file', file);
+                fd.append('product_type', 'property');
+                const token = localStorage.getItem(TOKEN_KEY);
+                const resp = await fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
+                const data = await resp.json();
+                if (data.url) {
+                    await api.post(`/property-images/${editingInmuebleId}`, { image_url: data.url });
+                    showToast('Imagen subida', 'success');
+                    loadInmuebleImages(editingInmuebleId);
+                } else { showToast('No se obtuvo URL de la imagen', 'error'); }
+            } catch (err) { showToast(err.message || 'Error al subir imagen', 'error'); }
+            finally { if (prog) prog.classList.add('hidden'); e.target.value = ''; }
+        });
+        document.getElementById('eiAddVideoBtn')?.addEventListener('click', () => {
+            const list = document.getElementById('eiVideoList');
+            if (!list) return;
+            const div = document.createElement('div');
+            div.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;';
+            div.innerHTML = '<input type="url" class="form-control ei-video-url" placeholder="https://youtube.com/watch?v=..." style="flex:1"><button class="btn btn-xs btn-danger" type="button" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+            list.appendChild(div);
+        });
+    }
+
+    async function loadInmuebleImages(propertyId) {
+        const container = document.getElementById('eiImagesList');
+        if (!container) return;
+        try {
+            const data = await api.get(`/properties/${propertyId}`);
+            eiCurrentImages = data.images || [];
+            container.innerHTML = eiCurrentImages.map((img, i) => `
+                <div style="position:relative;width:100px;height:80px;border-radius:6px;overflow:hidden;border:1px solid #ddd;">
+                    <img src="${img.image_url || img.url}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+                    <button type="button" onclick="admin.deleteInmuebleImage(${propertyId}, ${img.id})" style="position:absolute;top:2px;right:2px;background:rgba(231,76,60,0.9);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;"><i class="fas fa-times"></i></button>
+                    ${i === 0 ? '<span style="position:absolute;bottom:2px;left:2px;background:#16a34a;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;">Portada</span>' : ''}
+                </div>
+            `).join('');
+        } catch (e) { console.error('Error loading images:', e); }
+    }
+
+    async function deleteInmuebleImage(propertyId, imageId) {
+        if (!confirm('¿Eliminar esta imagen?')) return;
+        try {
+            await api.delete(`/property-images/${propertyId}?image_id=${imageId}`);
+            showToast('Imagen eliminada', 'success');
+            loadInmuebleImages(propertyId);
+        } catch (e) { showToast(e.message || 'Error al eliminar imagen', 'error'); }
+    }
+
+    async function openEditInmueble(id) {
+        try {
+            const resp = await fetch(`/api/properties/${id}`, { headers: { 'Accept': 'application/json', 'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY) } });
+            if (!resp.ok) { showToast('Error al cargar inmueble', 'error'); return; }
+            const p = await resp.json();
+
+            editingInmuebleId = id;
+            const modal = document.getElementById('adminInmuebleEditModal');
+            if (!modal) return;
+            document.getElementById('editInmuebleId').textContent = '#' + id;
+
+            // Populate fields
+            const setV = (elId, val) => { const el = document.getElementById(elId); if (el) el.value = val || ''; };
+            const setSel = (elId, val) => { const el = document.getElementById(elId); if (!el) return; for (let i = 0; i < el.options.length; i++) { if (el.options[i].value === val) { el.selectedIndex = i; break; } } };
+
+            setV('eiTitle', p.title);
+            setSel('eiTipo', p.property_type || p.type);
+            setSel('eiOperacion', p.operation_type || p.operation);
+            setV('eiDescription', p.description);
+            setV('eiPrecio', p.price);
+            // Moneda radio
+            const currRadio = document.querySelector(`input[name="eiMoneda"][value="${p.currency || 'USD'}"]`);
+            if (currRadio) currRadio.checked = true;
+            setV('eiDireccion', p.address);
+            setV('eiCiudad', p.city);
+            setV('eiEstado', p.state);
+            setV('eiLat', p.lat);
+            setV('eiLng', p.lng);
+            setV('eiWhatsApp', p.whatsapp);
+            setV('eiHabitaciones', p.bedrooms);
+            setV('eiBanos', p.bathrooms);
+            setV('eiEstacionamientos', p.parking_spaces);
+            setV('eiPisos', p.floors);
+            setV('eiArea', p.area);
+            setSel('eiAreaUnidad', p.area_unit);
+            setV('eiAno', p.year_built);
+
+            // Features checkboxes
+            document.getElementById('eiFeatPool').checked = !!p.has_pool;
+            document.getElementById('eiFeatGarden').checked = !!p.has_garden;
+            document.getElementById('eiFeatAC').checked = !!p.has_ac;
+            document.getElementById('eiFeatKitchen').checked = !!p.has_kitchen;
+            document.getElementById('eiFeatFurniture').checked = !!p.has_furniture;
+            document.getElementById('eiFeatSecurity').checked = !!p.has_security;
+            document.getElementById('eiFeatElevator').checked = !!p.has_elevator;
+
+            // Videos
+            const videoList = document.getElementById('eiVideoList');
+            if (videoList) {
+                videoList.innerHTML = '';
+                let videos = [];
+                if (p.video_url) { try { videos = JSON.parse(p.video_url); } catch(e) { if (typeof p.video_url === 'string' && p.video_url) videos = [p.video_url]; } }
+                videos.forEach(v => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'display:flex;gap:8px;margin-bottom:6px;';
+                    div.innerHTML = `<input type="url" class="form-control ei-video-url" value="${escHtml(v)}" style="flex:1"><button class="btn btn-xs btn-danger" type="button" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>`;
+                    videoList.appendChild(div);
+                });
+            }
+
+            // Load images
+            await loadInmuebleImages(id);
+
+            modal.classList.remove('hidden');
+        } catch (err) {
+            showToast(err.message || 'Error al cargar inmueble', 'error');
+        }
+    }
+
+    async function saveEditInmueble() {
+        if (!editingInmuebleId) return;
+        const title = document.getElementById('eiTitle')?.value?.trim();
+        const property_type = document.getElementById('eiTipo')?.value;
+        const operation_type = document.getElementById('eiOperacion')?.value;
+        const description = document.getElementById('eiDescription')?.value?.trim();
+        const price = document.getElementById('eiPrecio')?.value;
+        const currency = document.querySelector('input[name="eiMoneda"]:checked')?.value || 'USD';
+
+        if (!title || !property_type || !operation_type || !description) {
+            showToast('Título, tipo, operación y descripción son requeridos', 'error');
+            return;
+        }
+
+        const videos = [];
+        document.querySelectorAll('.ei-video-url').forEach(inp => { const v = (inp.value || '').trim(); if (v) videos.push(v); });
+
+        const body = {
+            title,
+            property_type,
+            operation_type,
+            description,
+            price: price || null,
+            currency,
+            address: document.getElementById('eiDireccion')?.value?.trim() || null,
+            city: document.getElementById('eiCiudad')?.value?.trim() || null,
+            state: document.getElementById('eiEstado')?.value?.trim() || null,
+            lat: document.getElementById('eiLat')?.value || null,
+            lng: document.getElementById('eiLng')?.value || null,
+            whatsapp: document.getElementById('eiWhatsApp')?.value?.trim() || null,
+            bedrooms: document.getElementById('eiHabitaciones')?.value || null,
+            bathrooms: document.getElementById('eiBanos')?.value || null,
+            parking_spaces: document.getElementById('eiEstacionamientos')?.value || null,
+            floors: document.getElementById('eiPisos')?.value || null,
+            area: document.getElementById('eiArea')?.value || null,
+            area_unit: document.getElementById('eiAreaUnidad')?.value || 'm²',
+            year_built: document.getElementById('eiAno')?.value || null,
+            has_pool: document.getElementById('eiFeatPool')?.checked ? 1 : 0,
+            has_garden: document.getElementById('eiFeatGarden')?.checked ? 1 : 0,
+            has_ac: document.getElementById('eiFeatAC')?.checked ? 1 : 0,
+            has_kitchen: document.getElementById('eiFeatKitchen')?.checked ? 1 : 0,
+            has_furniture: document.getElementById('eiFeatFurniture')?.checked ? 1 : 0,
+            has_security: document.getElementById('eiFeatSecurity')?.checked ? 1 : 0,
+            has_elevator: document.getElementById('eiFeatElevator')?.checked ? 1 : 0,
+            video_url: videos.length > 0 ? JSON.stringify(videos) : null,
+        };
+
+        try {
+            const token = localStorage.getItem(TOKEN_KEY);
+            const resp = await fetch(`/api/properties/${editingInmuebleId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(body),
+            });
+            if (resp.ok) {
+                showToast('Inmueble actualizado exitosamente', 'success');
+                document.getElementById('adminInmuebleEditModal')?.classList.add('hidden');
+                loadInmueblesTab();
+            } else {
+                const err = await resp.json().catch(() => ({}));
+                showToast(err.error || 'Error al actualizar inmueble', 'error');
+            }
+        } catch (err) {
+            showToast(err.message || 'Error al guardar inmueble', 'error');
+        }
+    }
+
     // Expose inmuebles functions for inline onclick handlers
     window._adminApproveInmueble = approveProperty;
     window._adminRejectInmueble = rejectProperty;
     window._adminDeleteInmueble = deleteProperty;
     window._adminToggleInmuebleFeatured = togglePropertyFeatured;
     window._adminViewInmueble = viewInmueble;
+    window._adminEditInmueble = openEditInmueble;
+    window.admin = window.admin || {};
+    window.admin.deleteInmuebleImage = deleteInmuebleImage;
     window._adminInmueblesPage = function(page) {
         inmueblesPage = page;
         loadInmueblesTab();
