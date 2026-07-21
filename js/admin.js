@@ -2767,13 +2767,46 @@ if (!window._renderVideoList) {
 
         if (submitBtn) submitBtn.addEventListener('click', submitJob);
 
+        // Logo field: show/hide based on company selection, auto-set HOLAX
+        const jobCompany = document.getElementById('jobCompany');
+        const jobLogoGroup = document.getElementById('jobLogoGroup');
+        const jobLogoInput = document.getElementById('jobLogo');
+        const jobLogoPreview = document.getElementById('jobLogoPreview');
+        const jobLogoClearBtn = document.getElementById('jobLogoClearBtn');
+
+        function updateJobLogoField() {
+            if (!jobCompany || !jobLogoGroup) return;
+            const val = jobCompany.value;
+            jobLogoGroup.style.display = val ? '' : 'none';
+            if (val === 'HOLAX') {
+                jobLogoInput.value = '/images/Holax.png';
+                jobLogoPreview.src = '/images/Holax.png';
+                jobLogoPreview.style.display = '';
+                if (jobLogoClearBtn) jobLogoClearBtn.style.display = '';
+            }
+        }
+        function updateLogoPreview() {
+            const url = jobLogoInput?.value?.trim();
+            if (url) { jobLogoPreview.src = url; jobLogoPreview.style.display = ''; if (jobLogoClearBtn) jobLogoClearBtn.style.display = ''; }
+            else { jobLogoPreview.style.display = 'none'; if (jobLogoClearBtn) jobLogoClearBtn.style.display = 'none'; }
+        }
+        if (jobCompany) jobCompany.addEventListener('change', updateJobLogoField);
+        if (jobLogoInput) jobLogoInput.addEventListener('input', updateLogoPreview);
+        if (jobLogoClearBtn) jobLogoClearBtn.addEventListener('click', () => { jobLogoInput.value = ''; jobLogoPreview.style.display = 'none'; jobLogoClearBtn.style.display = 'none'; });
+
         const jobStatusFilter = document.getElementById('jobStatusFilter');
         if (jobStatusFilter) jobStatusFilter.addEventListener('change', () => { jobsPage = 1; loadJobs(); });
     }
 
     function resetJobForm() {
-        const ids = ['jobCompany','jobTitle','jobType','jobSalary','jobState','jobCity','jobDescription','jobRequirements','jobBenefits','jobContactEmail','jobContactPhone'];
+        const ids = ['jobCompany','jobTitle','jobType','jobSalary','jobState','jobCity','jobDescription','jobRequirements','jobBenefits','jobContactEmail','jobContactPhone','jobLogo'];
         ids.forEach(id => { const el = document.getElementById(id); if (el) { if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ''; } });
+        const logoGroup = document.getElementById('jobLogoGroup');
+        if (logoGroup) logoGroup.style.display = 'none';
+        const logoPreview = document.getElementById('jobLogoPreview');
+        if (logoPreview) logoPreview.style.display = 'none';
+        const logoClear = document.getElementById('jobLogoClearBtn');
+        if (logoClear) logoClear.style.display = 'none';
     }
 
     async function editJob(id) {
@@ -2804,6 +2837,17 @@ if (!window._renderVideoList) {
             setVal('jobContactEmail', j.contact_email);
             setVal('jobContactPhone', j.contact_phone);
 
+            // Logo
+            const logoGroup = document.getElementById('jobLogoGroup');
+            const logoInput = document.getElementById('jobLogo');
+            const logoPreview = document.getElementById('jobLogoPreview');
+            const logoClearBtn = document.getElementById('jobLogoClearBtn');
+            if (logoGroup) logoGroup.style.display = '';
+            if (logoInput) logoInput.value = j.business_logo || '';
+            if (logoPreview && j.business_logo) { logoPreview.src = j.business_logo; logoPreview.style.display = ''; }
+            else if (logoPreview) logoPreview.style.display = 'none';
+            if (logoClearBtn) logoClearBtn.style.display = j.business_logo ? '' : 'none';
+
             modal.classList.remove('hidden');
         } catch (err) {
             showToast(err.message || 'Error al cargar empleo', 'error');
@@ -2822,6 +2866,7 @@ if (!window._renderVideoList) {
         const benefits = document.getElementById('jobBenefits')?.value?.trim();
         const contactEmail = document.getElementById('jobContactEmail')?.value?.trim();
         const contactPhone = document.getElementById('jobContactPhone')?.value?.trim();
+        const businessLogo = document.getElementById('jobLogo')?.value?.trim() || null;
 
         if (!company || !title) {
             showToast('Empresa y título son requeridos', 'error');
@@ -2848,6 +2893,7 @@ if (!window._renderVideoList) {
                         benefits: benefits || null,
                         contact_email: contactEmail || null,
                         contact_phone: contactPhone || null,
+                        business_logo: businessLogo,
                     }),
                 });
                 if (resp.ok) { showToast('Oferta de empleo actualizada', 'success'); }
@@ -2867,6 +2913,7 @@ if (!window._renderVideoList) {
                     benefits: benefits || null,
                     contact_email: contactEmail || null,
                     contact_phone: contactPhone || null,
+                    business_logo: businessLogo,
                 });
                 showToast('Oferta de empleo publicada', 'success');
             }

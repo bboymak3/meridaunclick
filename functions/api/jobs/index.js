@@ -323,6 +323,13 @@ export async function onRequestPost(context) {
     // Ensure images and video_url columns exist
     try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN images TEXT`).run(); } catch(e) {}
     try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN video_url TEXT`).run(); } catch(e) {}
+    try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN business_logo TEXT`).run(); } catch(e) {}
+
+    // Set business_logo for the job (use provided or default for HOLAX)
+    const jobLogo = body.business_logo || (companyNameFinal === HOLAX_NAME ? '/images/Holax.png' : null);
+    if (jobLogo) {
+      try { await env.DB.prepare('UPDATE job_listings SET business_logo = ? WHERE id = ?').bind(jobLogo, jobId).run(); } catch(e) {}
+    }
 
     // Set expiration for basic users (20 days)
     try {

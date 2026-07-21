@@ -168,9 +168,9 @@ export async function onRequestGet(context) {
 
     const job = await env.DB.prepare(
       `SELECT j.*,
+              COALESCE(j.business_logo, b.logo) as business_logo,
               b.title as business_title, b.slug as business_slug, b.business_type,
               b.phone as business_phone, b.whatsapp as business_whatsapp,
-              b.logo as business_logo,
               c.slug as category_slug
        FROM job_listings j
        LEFT JOIN businesses b ON j.business_id = b.id
@@ -220,7 +220,9 @@ export async function onRequestPatch(context) {
       await env.DB.prepare("UPDATE job_listings SET status = 'rejected', updated_at = datetime('now') WHERE id = ?").bind(id).run();
       return new Response(JSON.stringify({ message: 'Oferta rechazada' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     } else if (action === 'edit') {
-      const { title, company_name, job_type, salary, state, city, description, requirements, benefits, contact_email, contact_phone } = body;
+      const { title, company_name, job_type, salary, state, city, description, requirements, benefits, contact_email, contact_phone, business_logo } = body;
+      // Ensure business_logo column exists
+      try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN business_logo TEXT`).run(); } catch(e) {}
       // Build dynamic UPDATE
       const fields = [];
       const values = [];
@@ -232,6 +234,7 @@ export async function onRequestPatch(context) {
         const bizRow = await env.DB.prepare('SELECT id FROM businesses WHERE title = ? AND status = ? LIMIT 1').bind(company_name.trim(), 'approved').first();
         if (bizRow) { fields.push('business_id = ?'); values.push(bizRow.id); }
       }
+      if (business_logo !== undefined) { fields.push('business_logo = ?'); values.push(business_logo || null); }
       if (job_type !== undefined) { fields.push('job_type = ?'); values.push(job_type); }
       if (salary !== undefined) { fields.push('salary = ?'); values.push(salary || null); }
       if (state !== undefined) { fields.push('state = ?'); values.push(state || null); }
