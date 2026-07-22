@@ -3220,6 +3220,9 @@ if (!window._renderVideoList) {
             const data = await api.get('/settings');
             const settings = data.settings || data;
 
+            // Save HOLAX logo default before settings loop might overwrite it
+            const holaxDefaultUrl = document.getElementById('setting_holax_logo_url')?.value || '';
+
             // Populate toggle checkboxes and inputs
             document.querySelectorAll('[data-key]').forEach(el => {
                 const key = el.dataset.key;
@@ -3232,6 +3235,12 @@ if (!window._renderVideoList) {
                     el.value = value || '';
                 }
             });
+
+            // Restore HOLAX logo default if setting doesn't exist in DB
+            if (!settings.holax_logo_url && holaxDefaultUrl) {
+                const el = document.getElementById('setting_holax_logo_url');
+                if (el) el.value = holaxDefaultUrl;
+            }
 
             // Highlight active radio card (only if chat_mode radios exist on this page)
             if (document.querySelector('[name="chat_mode"]')) {
@@ -4413,6 +4422,26 @@ if (!window._renderVideoList) {
         }
     };
 
+    window.saveHolaxLogoSettings = async function() {
+        const url = document.getElementById('setting_holax_logo_url')?.value?.trim();
+        if (!url) {
+            showToast('Pega una URL o sube un logo primero', 'error');
+            return;
+        }
+        try {
+            showToast('Guardando logo HOLAX y actualizando empleos...', 'info');
+            const result = await api.put('/settings', { holax_logo_url: url });
+            let msg = 'Logo HOLAX guardado exitosamente';
+            if (result.holax_jobs_updated) {
+                msg += ` — ${result.holax_jobs_updated} empleo(s) HOLAX actualizado(s) con el nuevo logo`;
+            }
+            showToast(msg, 'success');
+        } catch (e) {
+            console.error('Error saving HOLAX logo:', e);
+            showToast('Error al guardar: ' + e.message, 'error');
+        }
+    };
+
     // ─── Marketplace Banner Management ─────────────────
     window.handleAdminMpBannerSelect = async function(input) {
         const file = input.files[0];
@@ -4483,7 +4512,7 @@ if (!window._renderVideoList) {
             if (btn) btn.style.display = 'inline-flex';
         }
         // HOLAX logo preview
-        const holaxLogoUrl = document.getElementById('setting_holax_logo_url')?.value;
+        const holaxLogoUrl = document.getElementById('setting_holax_logo_url')?.value || 'api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png';
         if (holaxLogoUrl) {
             const img = document.getElementById('holaxLogoImg');
             const icon = document.getElementById('holaxLogoPlaceholder');

@@ -96,7 +96,7 @@ const DEFAULT_SETTINGS = {
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
 // Also allow hero_logo_url even if it was added after initial seed
-const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url'];
+const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url', 'holax_logo_url'];
 // Deduplicate
 const ALLOWED_KEYS_SET = [...new Set(ALLOWED_KEYS)];
 
@@ -261,10 +261,29 @@ export async function onRequestPut(context) {
       }
     }
 
+    // If holax_logo_url was updated, bulk-update all HOLAX jobs
+    let holaxJobsUpdated = 0;
+    if (updates.holax_logo_url !== undefined && updates.holax_logo_url) {
+      try {
+        // Ensure business_logo column exists
+        try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN business_logo TEXT`).run(); } catch(e) {}
+        const upd = await env.DB.prepare(
+          `UPDATE job_listings SET business_logo = ? WHERE company_name = 'HOLAX'`
+        ).bind(updates.holax_logo_url).run();
+        holaxJobsUpdated = upd.meta.changes || 0;
+      } catch (e) {
+        console.error('Error updating HOLAX jobs logo:', e);
+      }
+    }
+
     const response = {
       message: 'Configuraciones actualizadas exitosamente',
       updated: results,
     };
+    if (holaxJobsUpdated > 0) {
+      response.holax_jobs_updated = holaxJobsUpdated;
+      response.message += ` (${holaxJobsUpdated} empleo(s) HOLAX actualizado(s) con el nuevo logo)`;
+    }
 
     if (rejected.length > 0) {
       response.rejected_keys = rejected;
