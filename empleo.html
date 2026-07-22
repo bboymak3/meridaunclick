@@ -32,6 +32,15 @@
             overflow: hidden;
         }
 
+        .empleo-hero-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: 0;
+        }
+
         .empleo-hero::before {
             content: '';
             position: absolute;
@@ -831,6 +840,7 @@
 
     <!-- Hero Section -->
     <section class="empleo-hero">
+        <div class="empleo-hero-bg" id="empleoHeroBg"></div>
         <div class="container">
             <div class="empleo-hero-content">
                 <div class="empleo-hero-badge">
@@ -980,6 +990,22 @@
 
     <!-- Scripts -->
     <script src="js/app.js"></script>
+    <script>
+        // ─── Load Empleo Banner ─────────────────────────
+        (async function() {
+            try {
+                const resp = await fetch('/api/settings/public');
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (data.empleo_banner_url) {
+                    const bg = document.getElementById('empleoHeroBg');
+                    if (bg) {
+                        bg.style.backgroundImage = 'url(' + data.empleo_banner_url + ')';
+                    }
+                }
+            } catch(e) {}
+        })();
+    </script>
     <script>
         (function () {
             'use strict';

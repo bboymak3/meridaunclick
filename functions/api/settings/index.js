@@ -96,7 +96,7 @@ const DEFAULT_SETTINGS = {
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
 // Also allow hero_logo_url even if it was added after initial seed
-const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url', 'holax_logo_url'];
+const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url', 'holax_logo_url', 'empleo_banner_url'];
 // Deduplicate
 const ALLOWED_KEYS_SET = [...new Set(ALLOWED_KEYS)];
 

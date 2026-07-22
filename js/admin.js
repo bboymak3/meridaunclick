@@ -4480,6 +4480,44 @@ if (!window._renderVideoList) {
         if (btn) btn.style.display = 'none';
     };
 
+    // ─── Empleo Banner Management ─────────────────
+    window.handleAdminEmpleoBannerSelect = async function(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { showToast('Max 5MB para el banner', 'error'); input.value = ''; return; }
+
+        try {
+            showToast('Subiendo banner de empleos...', 'info');
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('product_type', 'banner');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                document.getElementById('setting_empleo_banner_url').value = result.url;
+                const img = document.getElementById('adminEmpleoBannerImg');
+                const icon = document.getElementById('adminEmpleoBannerPlaceholderIcon');
+                const btn = document.getElementById('adminEmpleoBannerRemoveBtn');
+                if (img) { img.src = result.url; img.style.display = 'block'; }
+                if (icon) icon.style.display = 'none';
+                if (btn) btn.style.display = 'inline-flex';
+                showToast('Banner de empleos subido. Guarda la configuración para aplicarlo.', 'success');
+            }
+        } catch(e) {
+            showToast('Error al subir banner: ' + e.message, 'error');
+        }
+        input.value = '';
+    };
+
+    window.removeAdminEmpleoBanner = function() {
+        document.getElementById('setting_empleo_banner_url').value = '';
+        const img = document.getElementById('adminEmpleoBannerImg');
+        const icon = document.getElementById('adminEmpleoBannerPlaceholderIcon');
+        const btn = document.getElementById('adminEmpleoBannerRemoveBtn');
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (icon) icon.style.display = '';
+        if (btn) btn.style.display = 'none';
+    };
+
     // Override loadSettings to also show banner + logo + mp banner preview
     const _origLoadSettings = loadSettings;
     loadSettings = async function() {
@@ -4499,6 +4537,15 @@ if (!window._renderVideoList) {
             const icon = document.getElementById('adminMpBannerPlaceholderIcon');
             const btn = document.getElementById('adminMpBannerRemoveBtn');
             if (img) { img.src = mpBannerUrl; img.style.display = 'block'; }
+            if (icon) icon.style.display = 'none';
+            if (btn) btn.style.display = 'inline-flex';
+        }
+        const empleoBannerUrl = document.getElementById('setting_empleo_banner_url')?.value;
+        if (empleoBannerUrl) {
+            const img = document.getElementById('adminEmpleoBannerImg');
+            const icon = document.getElementById('adminEmpleoBannerPlaceholderIcon');
+            const btn = document.getElementById('adminEmpleoBannerRemoveBtn');
+            if (img) { img.src = empleoBannerUrl; img.style.display = 'block'; }
             if (icon) icon.style.display = 'none';
             if (btn) btn.style.display = 'inline-flex';
         }

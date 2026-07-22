@@ -27,6 +27,7 @@ const PUBLIC_KEYS = [
   'popup_enabled',
   'popup_image_url',
   'popup_link_url',
+  'empleo_banner_url',
 ];
 
 export async function onRequestGet(context) {
@@ -66,6 +67,7 @@ export async function onRequestGet(context) {
       popup_enabled: '0',
       popup_image_url: '',
       popup_link_url: '',
+      empleo_banner_url: '',
     };
 
     const response = {};

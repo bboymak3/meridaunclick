@@ -869,6 +869,34 @@
                                 </div>
                             </div>
 
+                            <!-- Portada Empleos (Banner) -->
+                            <div class="settings-section" style="margin-top:24px;">
+                                <h4 class="settings-section-title"><i class="fas fa-briefcase" style="color:#f59e0b;"></i> Portada de Empleos (Banner)</h4>
+                                <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Sube una imagen que se mostrará como fondo del hero en la página de Empleos.</p>
+                                <div style="display:flex;align-items:flex-start;gap:16px;">
+                                    <div id="adminEmpleoBannerPreview" style="width:200px;height:100px;border-radius:10px;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f9fafb;flex-shrink:0;">
+                                        <i class="fas fa-image" id="adminEmpleoBannerPlaceholderIcon" style="font-size:1.5rem;color:#94a3b8;"></i>
+                                        <img id="adminEmpleoBannerImg" src="" alt="Banner Empleos" style="width:100%;height:100%;object-fit:cover;display:none;">
+                                    </div>
+                                    <div>
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('adminEmpleoBannerInput').click()">
+                                            <i class="fas fa-upload"></i> Agregar Portada
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="adminEmpleoBannerRemoveBtn" onclick="removeAdminEmpleoBanner()" style="display:none;margin-left:6px;">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <input type="file" id="adminEmpleoBannerInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleAdminEmpleoBannerSelect(this)">
+                                        <input type="hidden" id="setting_empleo_banner_url" data-key="empleo_banner_url">
+                                        <p style="font-size:0.72rem;color:#94a3b8;margin:6px 0 0;">JPG, PNG, WebP - Max 5MB. Se recomienda 1920x800px.</p>
+                                    </div>
+                                </div>
+                                <div style="margin-top:12px;text-align:right;">
+                                    <button type="button" class="btn btn-primary" onclick="document.getElementById('adminSaveSettingsBtn').click()">
+                                        <i class="fas fa-save"></i> Guardar Cambios
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Logo sobre el Banner -->
                             <div class="settings-section" style="margin-top:24px;">
                                 <h4 class="settings-section-title"><i class="fas fa-crown" style="color:#8b5cf6;"></i> Logo sobre el Banner</h4>
