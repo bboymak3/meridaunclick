@@ -2779,8 +2779,9 @@ if (!window._renderVideoList) {
             const val = jobCompany.value;
             jobLogoGroup.style.display = val ? '' : 'none';
             if (val === 'HOLAX') {
-                jobLogoInput.value = '/images/Holax.png';
-                jobLogoPreview.src = '/images/Holax.png';
+                const holaxLogo = document.getElementById('setting_holax_logo_url')?.value || '/images/Holax.png';
+                jobLogoInput.value = holaxLogo;
+                jobLogoPreview.src = holaxLogo;
                 jobLogoPreview.style.display = '';
                 if (jobLogoClearBtn) jobLogoClearBtn.style.display = '';
             }
@@ -4352,6 +4353,58 @@ if (!window._renderVideoList) {
         if (btn) btn.style.display = 'none';
     };
 
+    // ─── HOLAX Logo Management ─────────────────
+    window.handleHolaxLogoSelect = async function(input) {
+        const file = input.files[0];
+        if (!file) return;
+        if (file.size > 2 * 1024 * 1024) { showToast('Max 2MB para el logo', 'error'); input.value = ''; return; }
+        try {
+            showToast('Subiendo logo HOLAX...', 'info');
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('product_type', 'logo');
+            const result = await api.postFormData('/upload', fd);
+            if (result.url) {
+                document.getElementById('setting_holax_logo_url').value = result.url;
+                const img = document.getElementById('holaxLogoImg');
+                const icon = document.getElementById('holaxLogoPlaceholder');
+                const btn = document.getElementById('holaxLogoRemoveBtn');
+                if (img) { img.src = result.url; img.style.display = ''; }
+                if (icon) icon.style.display = 'none';
+                if (btn) btn.style.display = 'inline-flex';
+                showToast('Logo HOLAX subido. Guarda la configuración para aplicarlo.', 'success');
+            }
+        } catch(e) {
+            showToast('Error al subir logo: ' + e.message, 'error');
+        }
+        input.value = '';
+    };
+
+    window.removeHolaxLogo = function() {
+        document.getElementById('setting_holax_logo_url').value = '';
+        const img = document.getElementById('holaxLogoImg');
+        const icon = document.getElementById('holaxLogoPlaceholder');
+        const btn = document.getElementById('holaxLogoRemoveBtn');
+        if (img) { img.src = ''; img.style.display = 'none'; }
+        if (icon) icon.style.display = '';
+        if (btn) btn.style.display = 'none';
+    };
+
+    window.previewHolaxLogo = function(url) {
+        const img = document.getElementById('holaxLogoImg');
+        const icon = document.getElementById('holaxLogoPlaceholder');
+        const btn = document.getElementById('holaxLogoRemoveBtn');
+        if (url.trim()) {
+            if (img) { img.src = url; img.style.display = ''; }
+            if (icon) icon.style.display = 'none';
+            if (btn) btn.style.display = 'inline-flex';
+        } else {
+            if (img) { img.src = ''; img.style.display = 'none'; }
+            if (icon) icon.style.display = '';
+            if (btn) btn.style.display = 'none';
+        }
+    };
+
     // ─── Marketplace Banner Management ─────────────────
     window.handleAdminMpBannerSelect = async function(input) {
         const file = input.files[0];
@@ -4418,6 +4471,16 @@ if (!window._renderVideoList) {
             const icon = document.getElementById('adminLogoPlaceholderIcon');
             const btn = document.getElementById('adminLogoRemoveBtn');
             if (img) { img.src = logoUrl; img.style.display = 'block'; }
+            if (icon) icon.style.display = 'none';
+            if (btn) btn.style.display = 'inline-flex';
+        }
+        // HOLAX logo preview
+        const holaxLogoUrl = document.getElementById('setting_holax_logo_url')?.value;
+        if (holaxLogoUrl) {
+            const img = document.getElementById('holaxLogoImg');
+            const icon = document.getElementById('holaxLogoPlaceholder');
+            const btn = document.getElementById('holaxLogoRemoveBtn');
+            if (img) { img.src = holaxLogoUrl; img.style.display = ''; }
             if (icon) icon.style.display = 'none';
             if (btn) btn.style.display = 'inline-flex';
         }

@@ -897,6 +897,35 @@
                                 </div>
                             </div>
 
+                            <!-- HOLAX Store Logo -->
+                            <div class="settings-section" style="margin-top:24px;">
+                                <h4 class="settings-section-title"><i class="fas fa-store" style="color:#6366f1;"></i> Logo de Tienda HOLAX</h4>
+                                <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Logo que se usa para las ofertas de empleo que no tienen un negocio asociado (seleccionan HOLAX).</p>
+                                <div style="display:flex;align-items:flex-start;gap:16px;">
+                                    <div>
+                                        <div id="holaxLogoPreview" style="width:80px;height:80px;border-radius:12px;border:2px dashed #d1d5db;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#f9fafb;">
+                                            <i class="fas fa-image" style="color:#9ca3af;font-size:1.5rem;" id="holaxLogoPlaceholder"></i>
+                                            <img id="holaxLogoImg" src="" alt="Logo HOLAX" style="width:100%;height:100%;object-fit:cover;display:none;">
+                                        </div>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <div style="display:flex;gap:8px;margin-bottom:8px;">
+                                            <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('holaxLogoInput').click()">
+                                                <i class="fas fa-upload"></i> Subir Logo
+                                            </button>
+                                            <button type="button" class="btn btn-secondary btn-sm" id="holaxLogoRemoveBtn" onclick="removeHolaxLogo()" style="display:none;">
+                                                <i class="fas fa-trash"></i> Quitar
+                                            </button>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:6px;">
+                                            <input type="url" id="setting_holax_logo_url" data-key="holax_logo_url" class="form-control" placeholder="O pega una URL de imagen aquí..." oninput="previewHolaxLogo(this.value)">
+                                        </div>
+                                        <p style="font-size:0.72rem;color:#94a3af8;margin:0;">PNG, JPG o WebP. Si subes un archivo se guardará automáticamente al hacer "Guardar Cambios".</p>
+                                        <input type="file" id="holaxLogoInput" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="handleHolaxLogoSelect(this)">
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Featured Businesses Selector -->
                             <div class="settings-section" style="margin-top:24px;">
                                 <h4 class="settings-section-title"><i class="fas fa-star" style="color:#f59e0b;"></i> Negocios Destacados en Inicio</h4>
