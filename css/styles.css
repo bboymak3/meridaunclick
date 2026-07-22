@@ -1535,7 +1535,7 @@ body.search-modal-open .cb-chat-btn {
 }
 
 .idx-section-title {
-    font-size: 1.4rem;
+    font-size: 1rem;
     font-weight: 800;
     color: #0f172a;
     letter-spacing: -0.3px;
@@ -1578,10 +1578,10 @@ body.search-modal-open .cb-chat-btn {
 .idx-type-card {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 16px 18px;
+    gap: 10px;
+    padding: 11px 13px;
     background: #fff;
-    border-radius: 14px;
+    border-radius: 12px;
     border: 1.5px solid #f0f0f0;
     text-decoration: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1596,13 +1596,13 @@ body.search-modal-open .cb-chat-btn {
 }
 
 .idx-type-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
+    font-size: 14px;
     flex-shrink: 0;
     transition: all 0.3s;
 }
@@ -1611,8 +1611,16 @@ body.search-modal-open .cb-chat-btn {
     transform: scale(1.08);
 }
 
+.idx-type-card h2 {
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+    flex: 1;
+}
+
 .idx-type-card h3 {
-    font-size: 0.88rem;
+    font-size: 0.62rem;
     font-weight: 700;
     color: #1f2937;
     margin: 0;
@@ -1620,7 +1628,7 @@ body.search-modal-open .cb-chat-btn {
 }
 
 .idx-type-arrow {
-    font-size: 0.75rem;
+    font-size: 0.6rem;
     color: #d1d5db;
     transition: all 0.3s;
 }
@@ -2145,8 +2153,12 @@ body.search-modal-open .cb-chat-btn {
         border-radius: 10px;
     }
 
+    .idx-type-card h2 {
+        font-size: 0.58rem;
+    }
+
     .idx-type-card h3 {
-        font-size: 0.8rem;
+        font-size: 0.58rem;
     }
 
     .idx-type-arrow {
