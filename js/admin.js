@@ -255,6 +255,14 @@ if (!window._renderVideoList) {
 
         // Load initial data
         loadDashboardTab();
+
+        // One-time: fix HOLAX jobs logo in background
+        fetch('/api/jobs/fix-holax-logo', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + localStorage.getItem(TOKEN_KEY), 'Content-Type': 'application/json' }
+        }).then(r => r.json()).then(d => {
+            if (d.updated > 0) console.log('HOLAX logo migration: ' + d.updated + ' jobs updated');
+        }).catch(() => {});
     }
 
     // ─── Tab Navigation ─────────────────────────────────────────
@@ -2779,7 +2787,7 @@ if (!window._renderVideoList) {
             const val = jobCompany.value;
             jobLogoGroup.style.display = val ? '' : 'none';
             if (val === 'HOLAX') {
-                const holaxLogo = document.getElementById('setting_holax_logo_url')?.value || '/images/Holax.png';
+                const holaxLogo = document.getElementById('setting_holax_logo_url')?.value || 'api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png';
                 jobLogoInput.value = holaxLogo;
                 jobLogoPreview.src = holaxLogo;
                 jobLogoPreview.style.display = '';

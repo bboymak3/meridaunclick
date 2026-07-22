@@ -326,7 +326,7 @@ export async function onRequestPost(context) {
     try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN business_logo TEXT`).run(); } catch(e) {}
 
     // Set business_logo for the job (use provided or default for HOLAX)
-    const jobLogo = body.business_logo || (companyNameFinal === HOLAX_NAME ? '/images/Holax.png' : null);
+    const jobLogo = body.business_logo || (companyNameFinal === HOLAX_NAME ? 'api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png' : null);
     if (jobLogo) {
       try { await env.DB.prepare('UPDATE job_listings SET business_logo = ? WHERE id = ?').bind(jobLogo, jobId).run(); } catch(e) {}
     }
