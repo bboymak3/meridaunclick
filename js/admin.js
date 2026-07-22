@@ -1050,8 +1050,7 @@ if (!window._renderVideoList) {
                     const fd = new FormData();
                     fd.append('file', file);
                     fd.append('product_type', 'video');
-                    fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('meridaunclick_token') || localStorage.getItem('token')) }, body: fd })
-                    .then(r => r.json())
+                    api.postFormData('/upload', fd)
                     .then(data => {
                         if (data.url) {
                             window._editBizVideos.push({ url: data.url, type: 'file' });
@@ -1069,17 +1068,7 @@ if (!window._renderVideoList) {
                 });
                 this.value = '';
             });
-            // Add a small "Subir Video" button next to the add URL button
-            const urlRow = videoUrlInput?.parentElement;
-            if (urlRow && !document.getElementById('bizEditVideoUploadBtn')) {
-                const upBtn = document.createElement('button');
-                upBtn.type = 'button';
-                upBtn.id = 'bizEditVideoUploadBtn';
-                upBtn.style.cssText = 'padding:8px 14px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;';
-                upBtn.innerHTML = '<i class="fas fa-upload"></i> Subir';
-                upBtn.addEventListener('click', () => videoFileInput.click());
-                urlRow.appendChild(upBtn);
-            }
+            // Upload button is now in HTML (bizEditVideoUploadBtn), no need to create dynamically
         }
 
         // ─── Gallery image handlers (add multiple) ───

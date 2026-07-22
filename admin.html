@@ -1609,9 +1609,10 @@
                                 <i class="fas fa-video" style="color:#ef4444;"></i> Videos del Negocio
                             </label>
                             <div id="bizEditVideosList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
-                            <div style="display:flex;gap:6px;">
-                                <input type="url" id="bizEditVideoUrl" placeholder="https://youtube.com/watch?v=... o tiktok.com/..." style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
-                                <button type="button" id="bizEditVideoAddBtn" style="padding:8px 14px;border-radius:8px;border:none;background:#006EE3;color:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="fas fa-plus"></i> Agregar</button>
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                                <input type="url" id="bizEditVideoUrl" placeholder="https://youtube.com/watch?v=... o tiktok.com/..." style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.85rem;">
+                                <button type="button" id="bizEditVideoAddBtn" style="padding:8px 14px;border-radius:8px;border:none;background:#006EE3;color:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;"><i class="fas fa-plus"></i> Agregar URL</button>
+                                <button type="button" id="bizEditVideoUploadBtn" style="padding:8px 14px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#374151;font-size:0.82rem;font-weight:600;cursor:pointer;white-space:nowrap;" onclick="document.getElementById('bizEditVideoFileInput').click()"><i class="fas fa-upload"></i> Subir Video</button>
                             </div>
                             <div id="bizEditVideoFileInfo" style="margin-top:6px;"></div>
                             <input type="file" id="bizEditVideoFileInput" accept="video/*" multiple style="display:none;">
