@@ -155,27 +155,91 @@
     }
 
     /**
-     * Setup cascading tipo→categoria selects (new-business form).
+     * Setup form selects for new-business page.
+     * Shows ALL categories at once, and auto-fills tipo de negocio based on selection.
      */
     async function loadCascadingSelects() {
         var tipos = await fetchTipos();
 
+        // Build a lookup: tipo_id → tipo object (for auto-fill)
+        var tipoById = {};
+        tipos.forEach(function (t) { tipoById[t.id] = t; });
+
+        // Collect ALL categories from all tipos
+        var allCats = [];
+        tipos.forEach(function (t) {
+            if (t.categories) {
+                t.categories.forEach(function (c) {
+                    allCats.push(Object.assign({}, c, { _tipo: t }));
+                });
+            }
+        });
+
+        // Populate tipo select (will be auto-filled)
         CASCADING_TIPO_IDS.forEach(function (tipoId) {
             var tipoEl = document.getElementById(tipoId);
-            if (!tipoEl) return;
+            if (tipoEl) {
+                populateTipoSelect(tipoEl, tipos);
+                // Make tipo select readonly-looking (auto-filled by category selection)
+                tipoEl.style.opacity = '0.7';
+                tipoEl.title = 'Se llena automáticamente según la categoría seleccionada';
+            }
+        });
 
-            populateTipoSelect(tipoEl, tipos);
+        // Populate category select with ALL categories (grouped by tipo)
+        CASCADING_CAT_IDS.forEach(function (catId) {
+            var catEl = document.getElementById(catId);
+            if (!catEl) return;
 
-            // When tipo changes, filter categories
-            tipoEl.addEventListener('change', function () {
-                var selectedSlug = this.value;
-                var selectedTipo = tipos.find(function (t) { return t.slug === selectedSlug; });
-                var cats = (selectedTipo && selectedTipo.categories) ? selectedTipo.categories : [];
+            catEl.innerHTML = '<option value="">Selecciona una categoría</option>';
 
-                CASCADING_CAT_IDS.forEach(function (catId) {
-                    var catEl = document.getElementById(catId);
-                    if (catEl) {
-                        populateCategorySelect(catEl, cats, { isFormSelect: true });
+            // Group categories by tipo
+            var grouped = {};
+            allCats.forEach(function (c) {
+                var tipoName = c._tipo ? c._tipo.name : 'Sin tipo';
+                if (!grouped[tipoName]) grouped[tipoName] = [];
+                grouped[tipoName].push(c);
+            });
+
+            // Add optgroups
+            var groupNames = Object.keys(grouped).sort();
+            groupNames.forEach(function (groupName) {
+                var group = document.createElement('optgroup');
+                group.label = groupName;
+                grouped[groupName].forEach(function (c) {
+                    var opt = document.createElement('option');
+                    opt.value = c.slug;
+                    opt.textContent = c.name;
+                    opt.setAttribute('data-tipo-slug', c._tipo ? c._tipo.slug : '');
+                    opt.setAttribute('data-tipo-id', c._tipo ? c._tipo.id : '');
+                    group.appendChild(opt);
+                });
+                catEl.appendChild(group);
+            });
+
+            // Add "Otro" and suggest option
+            var otroOpt = document.createElement('option');
+            otroOpt.value = 'otro';
+            otroOpt.textContent = 'Otro';
+            catEl.appendChild(otroOpt);
+
+            var suggestOpt = document.createElement('option');
+            suggestOpt.value = '__suggest__';
+            suggestOpt.textContent = '+ Agregar nueva categoría';
+            suggestOpt.style.color = '#006EE3';
+            suggestOpt.style.fontWeight = '600';
+            catEl.appendChild(suggestOpt);
+
+            // When category changes, auto-fill tipo de negocio
+            catEl.addEventListener('change', function () {
+                var selected = this.options[this.selectedIndex];
+                var tipoSlug = selected.getAttribute('data-tipo-slug') || '';
+                var tipoId = selected.getAttribute('data-tipo-id') || '';
+
+                CASCADING_TIPO_IDS.forEach(function (tipoId2) {
+                    var tipoEl2 = document.getElementById(tipoId2);
+                    if (tipoEl2) {
+                        tipoEl2.value = tipoSlug;
                     }
                 });
 
@@ -183,27 +247,23 @@
             });
         });
 
-        // Also listen to category change for slug preview
-        CASCADING_CAT_IDS.forEach(function (catId) {
-            var catEl = document.getElementById(catId);
-            if (catEl) {
-                catEl.addEventListener('change', updateSlugPreview);
+        // Also listen to tipo change for slug preview (if user changes manually)
+        CASCADING_TIPO_IDS.forEach(function (tipoId) {
+            var tipoEl = document.getElementById(tipoId);
+            if (tipoEl) {
+                tipoEl.addEventListener('change', updateSlugPreview);
             }
         });
 
-        // Show/hide Especialidad field based on tipo + categoria
+        // Show/hide Especialidad field based on categoria
         function checkEspecialidadVisibility() {
-            var tipoEl = document.getElementById('propTipoNegocio');
             var catEl = document.getElementById('propCategoria');
             var wrap = document.getElementById('propEspecialidadWrap');
-            if (!tipoEl || !catEl || !wrap) return;
-            var isServiciosVarios = tipoEl.value === 'servicios-varios';
+            if (!catEl || !wrap) return;
             var isMedicina = catEl.value === 'medicina-servicio-medico';
-            wrap.style.display = (isServiciosVarios && isMedicina) ? '' : 'none';
+            wrap.style.display = isMedicina ? '' : 'none';
         }
-        var tipoForEsp = document.getElementById('propTipoNegocio');
         var catForEsp = document.getElementById('propCategoria');
-        if (tipoForEsp) tipoForEsp.addEventListener('change', checkEspecialidadVisibility);
         if (catForEsp) catForEsp.addEventListener('change', checkEspecialidadVisibility);
 
         // Listen to title input for slug preview
