@@ -2496,6 +2496,12 @@ body.search-modal-open .cb-chat-btn {
     gap: 4px;
     z-index: 2;
 }
+/* Medical cards: stack badges vertically */
+.business-card--medical .business-card-badges {
+    flex-direction: column;
+    gap: 3px;
+    align-items: flex-start;
+}
 .business-card-fav {
     position: absolute;
     top: 8px;

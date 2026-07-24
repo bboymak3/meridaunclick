@@ -724,8 +724,9 @@ function createBusinessCard(business) {
     const especialidadBadge = business.especialidad ? `<span class="card-badge badge-especialidad"><i class="fas fa-stethoscope"></i> ${business.especialidad}</span>` : '';
 
     const bizUrl = getBusinessUrl(business);
+    const isMedical = business.category_slug === 'medicina-servicio-medico';
     return `
-        <article class="business-card" data-business-id="${business.id}">
+        <article class="business-card${isMedical ? ' business-card--medical' : ''}" data-business-id="${business.id}">
             <a href="${bizUrl}" class="business-card-link">
                 <div class="business-card-image">
                     <img src="${imgSrc}" alt="${business.title || 'Sin título'}" loading="lazy" onerror="this.src='${placeholderImg}'">
