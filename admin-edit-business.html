@@ -153,11 +153,11 @@
     <!-- Toast -->
     <div id="toastContainer" style="position:fixed;bottom:20px;right:20px;z-index:99999;"></div>
 
-    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
     <script>
     (function() {
         'use strict';
-        const TOKEN_KEY = 'admin_token';
+        const TOKEN_KEY = 'meridaunclick_token';
         const select = document.getElementById('ebBizSelect');
         const container = document.getElementById('ebFormContainer');
         let currentBiz = null;
@@ -612,8 +612,8 @@
 
         // Logout
         document.getElementById('navLogout').addEventListener('click', function() {
-            localStorage.removeItem('admin_token');
-            localStorage.removeItem('token');
+            localStorage.removeItem('meridaunclick_token');
+            localStorage.removeItem('meridaunclick_user');
             window.location.href = 'login.html';
         });
     })();
