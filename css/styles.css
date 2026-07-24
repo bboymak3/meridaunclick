@@ -4338,36 +4338,6 @@ a.btn-icon {
     color: #bbb;
 }
 
-.profile-input-wrapper select {
-    width: 100%;
-    padding: 11px 36px 11px 42px;
-    border: 2px solid #e8e8e8;
-    border-radius: 10px;
-    font-size: 0.92rem;
-    color: var(--color-text);
-    background: #fafbfc;
-    transition: all 0.25s ease;
-    outline: none;
-    appearance: auto;
-    -webkit-appearance: auto;
-    cursor: pointer;
-}
-
-.profile-input-wrapper select:hover {
-    border-color: #d0d0d0;
-    background: #fff;
-}
-
-.profile-input-wrapper select:focus {
-    border-color: var(--color-primary);
-    background: #fff;
-    box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
-}
-
-.profile-input-wrapper:has(select:focus) i {
-    color: var(--color-primary);
-}
-
 .profile-input-hint {
     display: block;
     margin-top: 6px;
