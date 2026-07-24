@@ -731,16 +731,11 @@ function createBusinessCard(business) {
                 <div class="business-card-image">
                     <img src="${imgSrc}" alt="${business.title || 'Sin título'}" loading="lazy" onerror="this.src='${placeholderImg}'">
                     <div class="business-card-badges">
-                        <span class="card-badge badge-type">${typeLabel}</span>
-                        ${featuredBadge}${statusBadge}${especialidadBadge}
+                        ${especialidadBadge}${featuredBadge}${statusBadge}
                     </div>
-                    <button class="btn-share-wa-card" data-business-id="${business.id}" aria-label="Compartir por WhatsApp" onclick="event.preventDefault(); event.stopPropagation();">
-                        <i class="fab fa-whatsapp"></i>
-                    </button>
                 </div>
                 <div class="business-card-body">
                     <h3 class="business-card-title">${business.title || 'Sin título'}</h3>
-                    ${business.especialidad ? '<p class="business-card-especialidad"><i class="fas fa-stethoscope"></i> ' + business.especialidad + '</p>' : ''}
                     <p class="business-card-location"><i class="fas fa-map-marker-alt"></i> ${address}</p>
                     ${descSnippet}
                 </div>
