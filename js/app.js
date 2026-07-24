@@ -719,7 +719,7 @@ function createBusinessCard(business) {
     const address = business.city ? (business.state ? `${business.city}, ${business.state}` : business.city) : '--';
     const descSnippet = business.description ? `<p class="business-card-desc">${truncateText(business.description, 80)}</p>` : '';
 
-    const featuredBadge = business.featured ? '<span class="card-badge badge-featured"><i class="fas fa-star"></i> Destacada</span>' : '';
+    const featuredBadge = business.featured ? '<span class="card-badge badge-featured" title="Destacada"><i class="fas fa-star"></i></span>' : '';
     const statusBadge = business.status && business.status !== 'approved' ? `<span class="card-badge badge-${business.status}">${getStatusLabel(business.status)}</span>` : '';
     const especialidadBadge = business.especialidad ? `<span class="card-badge badge-especialidad"><i class="fas fa-stethoscope"></i> ${business.especialidad}</span>` : '';
 

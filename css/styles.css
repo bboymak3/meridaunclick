@@ -2490,7 +2490,7 @@ body.search-modal-open .cb-chat-btn {
 }
 .business-card-badges {
     position: absolute;
-    top: 8px;
+    bottom: 8px;
     left: 8px;
     display: flex;
     gap: 4px;
@@ -2502,6 +2502,7 @@ body.search-modal-open .cb-chat-btn {
     gap: 3px;
     align-items: flex-start;
 }
+/* Medical cards: badges at bottom-left already from base rule */
 .business-card-fav {
     position: absolute;
     top: 8px;
@@ -2659,6 +2660,13 @@ body.search-modal-open .cb-chat-btn {
     color: var(--color-white);
     font-weight: 600;
     animation: badgePulse 2s ease-in-out infinite;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
 }
 
 .card-badge.badge-especialidad {
