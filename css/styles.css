@@ -2490,7 +2490,7 @@ body.search-modal-open .cb-chat-btn {
 }
 .business-card-badges {
     position: absolute;
-    bottom: 8px;
+    top: 8px;
     left: 8px;
     display: flex;
     gap: 4px;
