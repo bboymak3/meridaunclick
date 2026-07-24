@@ -167,13 +167,37 @@
 
         // Collect ALL categories from all tipos
         var allCats = [];
+        var catIdsSeen = {};
         tipos.forEach(function (t) {
             if (t.categories) {
                 t.categories.forEach(function (c) {
                     allCats.push(Object.assign({}, c, { _tipo: t }));
+                    catIdsSeen[c.id] = true;
                 });
             }
         });
+
+        // Also fetch flat categories to get any that have tipo_negocio_id = null
+        // or belong to tipos not in the tipos list (e.g. approved by admin without tipo)
+        try {
+            var flatCats = await fetchFlatCategories();
+            flatCats.forEach(function (c) {
+                if (!catIdsSeen[c.id]) {
+                    // Try to match tipo_negocio from flat response
+                    var _tipo = null;
+                    if (c.tipo_negocio_id && tipoById[c.tipo_negocio_id]) {
+                        _tipo = tipoById[c.tipo_negocio_id];
+                    } else if (c.tipo_negocio_name) {
+                        // Category has a tipo name from the flat JOIN but tipo was not in tipos list
+                        _tipo = { id: c.tipo_negocio_id, slug: c.tipo_negocio_slug || '', name: c.tipo_negocio_name, icon: c.tipo_negocio_icon || '' };
+                    }
+                    allCats.push(Object.assign({}, c, { _tipo: _tipo }));
+                    catIdsSeen[c.id] = true;
+                }
+            });
+        } catch (e) {
+            console.warn('Could not merge flat categories:', e);
+        }
 
         // Populate tipo select (will be auto-filled)
         CASCADING_TIPO_IDS.forEach(function (tipoId) {
