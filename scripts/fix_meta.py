@@ -2,7 +2,7 @@
 """Fix all OG/meta tags to use absolute URLs, fix PWA manifest, fix all pages."""
 import os, re, glob
 
-BASE = "https://aunclick.pages.dev"
+BASE = "https://holax.com.ve"
 
 count = 0
 for f in glob.glob('/home/z/my-project/*.html'):

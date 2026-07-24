@@ -679,7 +679,7 @@ function getBusinessUrl(business) {
 function shareBusinessWhatsApp(business) {
     if (!business) return;
     const type = getBusinessTypeLabel(business.business_type);
-    const url = 'https://aunclick.pages.dev' + getBusinessUrl(business);
+    const url = 'https://holax.com.ve' + getBusinessUrl(business);
     const title = business.title || 'Negocio';
 
     let msg = `🏪 *${title}*\n`;
@@ -776,7 +776,7 @@ document.addEventListener('click', (e) => {
         shareBusinessWhatsApp(business);
     }).catch(() => {
         // Minimal share with just the link
-        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en Un Click:\nhttps://aunclick.pages.dev/negocio/' + businessId)}`, '_blank');
+        window.open(`https://wa.me/?text=${encodeURIComponent('🏪 Mira este negocio en HolaX:\nhttps://holax.com.ve/negocio/' + businessId)}`, '_blank');
     });
 });
 
