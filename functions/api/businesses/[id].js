@@ -129,6 +129,18 @@ export async function onRequestPut(context) {
       body.business_type = 'negocio';
     }
 
+    // Resolve category_id: accept numeric ID or slug string
+    if (body.category_id !== undefined && isNaN(parseInt(body.category_id))) {
+      const catRow = await env.DB.prepare('SELECT id FROM categories WHERE slug = ?').bind(body.category_id).first();
+      if (catRow) {
+        body.category_id = catRow.id;
+      } else {
+        delete body.category_id; // invalid slug — skip
+      }
+    } else if (body.category_id !== undefined) {
+      body.category_id = parseInt(body.category_id);
+    }
+
     // Build dynamic UPDATE query — only business-relevant fields
     const allowedFields = [
       'title', 'description', 'category_id', 'business_type',

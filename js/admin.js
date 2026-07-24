@@ -5079,13 +5079,50 @@ if (!window._renderVideoList) {
     }
 
     // Make approve/reject accessible globally for onclick
-    window.admin2ApproveSugg = async function(id) {
+    var _cachedTiposNegocio = null;
+    async function getTiposNegocio() {
+        if (_cachedTiposNegocio) return _cachedTiposNegocio;
         try {
-            await api.put('/category-suggestions/' + id, { action: 'approve' });
-            showToast('Categoría creada exitosamente', 'success');
-            loadAdmin2Categories();
-            loadAdmin2CatSuggestions();
-        } catch(e) { showToast('Error: ' + (e.message || ''), 'error'); }
+            const data = await api.get('/tipos-negocio');
+            _cachedTiposNegocio = data.tipos || [];
+            return _cachedTiposNegocio;
+        } catch(e) { return []; }
+    }
+
+    window.admin2ApproveSugg = async function(id) {
+        // Build approve dialog with tipo_negocio_id selector
+        const tipos = await getTiposNegocio();
+        let tipoOptions = '<option value="">Sin tipo (general)</option>';
+        tipos.forEach(t => {
+            tipoOptions += '<option value="' + t.id + '">' + _esc(t.name) + '</option>';
+        });
+
+        const dialog = document.createElement('div');
+        dialog.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99999;display:flex;align-items:center;justify-content:center;';
+        dialog.innerHTML = '<div style="background:#fff;border-radius:12px;padding:24px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">'
+            + '<h3 style="margin:0 0 16px;font-size:1rem;"><i class="fas fa-check-circle" style="color:#22c55e;"></i> Aprobar Categoría</h3>'
+            + '<label style="display:block;font-size:0.85rem;font-weight:600;margin-bottom:6px;">Tipo de Negocio (opcional)</label>'
+            + '<select id="suggApproveTipoSelect" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:0.88rem;margin-bottom:16px;">' + tipoOptions + '</select>'
+            + '<div style="display:flex;gap:8px;justify-content:flex-end;">'
+            + '<button id="suggApproveCancel" class="btn" style="padding:8px 16px;">Cancelar</button>'
+            + '<button id="suggApproveConfirm" class="btn btn-primary" style="background:#22c55e;border-color:#22c55e;padding:8px 16px;"><i class="fas fa-check"></i> Aprobar</button>'
+            + '</div></div>';
+        document.body.appendChild(dialog);
+
+        return new Promise((resolve) => {
+            dialog.querySelector('#suggApproveCancel').onclick = () => { document.body.removeChild(dialog); resolve(); };
+            dialog.querySelector('#suggApproveConfirm').onclick = async () => {
+                const tipoId = document.getElementById('suggApproveTipoSelect').value || null;
+                document.body.removeChild(dialog);
+                try {
+                    await api.put('/category-suggestions/' + id, { action: 'approve', tipo_negocio_id: tipoId });
+                    showToast('Categoría creada exitosamente', 'success');
+                    _cachedTiposNegocio = null; // invalidate cache
+                    loadAdmin2Categories();
+                    loadAdmin2CatSuggestions();
+                } catch(e) { showToast('Error: ' + (e.message || ''), 'error'); }
+            };
+        });
     };
     window.admin2RejectSugg = async function(id) {
         if (!confirm('Rechazar esta solicitud?')) return;

@@ -40,7 +40,7 @@ function _openEditBizModal(id) {
             el('editBizId', biz.id);
             el('editBizTitle', biz.title);
             el('editBizDesc', biz.description);
-            el('editBizCat', biz.category || biz.category_id);
+            el('editBizCat', biz.category_slug || '');
             el('editBizType', biz.business_type);
             el('editBizPhone', biz.phone);
             el('editBizWhatsapp', biz.whatsapp);
@@ -2495,7 +2495,7 @@ window.closeEditBusinessModal = function() {
         el('editBizId', biz.id);
         el('editBizTitle', biz.title);
         el('editBizDesc', biz.description);
-        el('editBizCat', biz.category || biz.category_id);
+        el('editBizCat', biz.category_slug || '');
         el('editBizType', biz.business_type);
         el('editBizPhone', biz.phone);
         el('editBizWhatsapp', biz.whatsapp);
@@ -2786,7 +2786,7 @@ window.closeEditBusinessModal = function() {
             const payload = {
                 title: document.getElementById('editBizTitle').value,
                 description: document.getElementById('editBizDesc').value,
-                category: document.getElementById('editBizCat').value,
+                category_id: document.getElementById('editBizCat').value,
                 business_type: document.getElementById('editBizType').value,
                 phone: document.getElementById('editBizPhone').value,
                 whatsapp: document.getElementById('editBizWhatsapp').value,

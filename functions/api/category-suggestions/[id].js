@@ -80,7 +80,7 @@ export async function onRequestPut(context) {
     }
 
     const body = await request.json();
-    const { action, icon, color } = body; // action: 'approve' or 'reject'
+    const { action, icon, color, tipo_negocio_id } = body; // action: 'approve' or 'reject'
 
     if (!action || !['approve', 'reject'].includes(action)) {
       return new Response(JSON.stringify({ error: 'Accion invalida. Usa "approve" o "reject".' }), {
@@ -117,8 +117,8 @@ export async function onRequestPut(context) {
     }
 
     const insertResult = await env.DB.prepare(
-      'INSERT INTO categories (name, slug, icon, color, sort_order, is_active) VALUES (?, ?, ?, ?, 99, 1)'
-    ).bind(suggestion.category_name, slug, icon || 'fas fa-store', color || '#607d8b').run();
+      'INSERT INTO categories (name, slug, icon, color, sort_order, is_active, tipo_negocio_id) VALUES (?, ?, ?, ?, 99, 1, ?)'
+    ).bind(suggestion.category_name, slug, icon || 'fas fa-store', color || '#607d8b', tipo_negocio_id ? parseInt(tipo_negocio_id) : null).run();
 
     await env.DB.prepare(
       "UPDATE category_suggestions SET status = 'approved', resolved_at = datetime('now') WHERE id = ?"
