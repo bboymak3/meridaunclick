@@ -2225,6 +2225,120 @@ window.closeEditBusinessModal = function() {
 
     // ─── Business Stats ───────────────────────────────────────
     let currentStatsPeriod = '7d';
+    let selectedStatsBizId = null; // null = all businesses
+
+    function drawSimpleChart(dailyViews, dailyWhatsapp) {
+        const canvas = document.getElementById('statsDailyChart');
+        const emptyMsg = document.getElementById('statsChartEmpty');
+        if (!canvas) return;
+
+        const views = dailyViews || [];
+        const wa = dailyWhatsapp || [];
+        const allDates = [];
+        const viewMap = {};
+        const waMap = {};
+
+        views.forEach(v => { allDates.push(v.date); viewMap[v.date] = v.views; });
+        wa.forEach(w => { if (!allDates.includes(w.date)) allDates.push(w.date); waMap[w.date] = w.clicks; });
+        allDates.sort();
+
+        if (allDates.length === 0) {
+            canvas.style.display = 'none';
+            if (emptyMsg) emptyMsg.style.display = '';
+            return;
+        }
+        canvas.style.display = '';
+        if (emptyMsg) emptyMsg.style.display = 'none';
+
+        const ctx = canvas.getContext('2d');
+        const W = canvas.parentElement.clientWidth;
+        const H = 200;
+        canvas.width = W * 2;
+        canvas.height = H * 2;
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+        ctx.scale(2, 2);
+
+        const padL = 40, padR = 10, padT = 10, padB = 30;
+        const chartW = W - padL - padR;
+        const chartH = H - padT - padB;
+        const maxVal = Math.max(1, ...views.map(v => v.views), ...wa.map(w => w.clicks));
+
+        ctx.clearRect(0, 0, W, H);
+
+        // Grid lines
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 0.5;
+        for (let i = 0; i <= 4; i++) {
+            const y = padT + (chartH / 4) * i;
+            ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(Math.round(maxVal - (maxVal / 4) * i), padL - 6, y + 3);
+        }
+
+        // X labels (show max 15 dates)
+        const step = allDates.length > 15 ? Math.ceil(allDates.length / 15) : 1;
+        allDates.forEach((date, i) => {
+            if (i % step === 0) {
+                const x = padL + (chartW / Math.max(1, allDates.length - 1)) * i;
+                const label = date.substring(5); // MM-DD
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(label, x, H - 8);
+            }
+        });
+
+        function getXY(data, date) {
+            const idx = allDates.indexOf(date);
+            if (idx < 0) return null;
+            const x = padL + (chartW / Math.max(1, allDates.length - 1)) * idx;
+            const val = data === views ? viewMap[date] : waMap[date];
+            const y = padT + chartH - (val / maxVal) * chartH;
+            return { x, y };
+        }
+
+        // Draw views line
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        views.forEach((v, i) => {
+            const p = getXY(views, v.date);
+            if (p) i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+
+        // Views dots
+        ctx.fillStyle = '#3b82f6';
+        views.forEach(v => {
+            const p = getXY(views, v.date);
+            if (p) { ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill(); }
+        });
+
+        // Draw WA line
+        ctx.strokeStyle = '#25d366';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        wa.forEach((w, i) => {
+            const p = getXY(wa, w.date);
+            if (p) i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
+        });
+        ctx.stroke();
+
+        // WA dots
+        ctx.fillStyle = '#25d366';
+        wa.forEach(w => {
+            const p = getXY(wa, w.date);
+            if (p) { ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill(); }
+        });
+
+        // Legend
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#3b82f6'; ctx.fillRect(padL, H - 6, 12, 3); ctx.fillText('Vistas', padL + 16, H - 2);
+        ctx.fillStyle = '#25d366'; ctx.fillRect(padL + 60, H - 6, 12, 3); ctx.fillText('WhatsApp', padL + 76, H - 2);
+    }
 
     async function loadBusinessStats(businessId) {
         try {
@@ -2234,27 +2348,66 @@ window.closeEditBusinessModal = function() {
 
             if (businesses.length === 0) {
                 const body = document.getElementById('statsPerBusinessBody');
-                if (body) body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">No tienes negocios registrados.</td></tr>';
+                if (body) body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">No tienes negocios registrados.</td></tr>';
+                drawSimpleChart([], []);
                 return;
             }
 
-            // If no specific business, aggregate all
-            let allStats = { total_views: 0, total_whatsapp_clicks: 0, total_website_clicks: 0, total_shares: 0 };
-            let rows = [];
+            // Populate business selector dropdown
+            const selectorEl = document.getElementById('statsBusinessSelector');
+            if (selectorEl && !selectorEl.dataset.init) {
+                selectorEl.dataset.init = '1';
+                let selHtml = '<select id="statsBizSelect" style="padding:8px 12px;border-radius:8px;border:1px solid #e2e8f0;font-size:0.85rem;font-weight:600;cursor:pointer;background:#fff;">';
+                selHtml += '<option value="">Todos mis negocios</option>';
+                businesses.forEach(b => { selHtml += '<option value="' + b.id + '">' + (b.title || 'Sin título') + '</option>'; });
+                selHtml += '</select>';
+                selectorEl.innerHTML = selHtml;
+                document.getElementById('statsBizSelect').addEventListener('change', function() {
+                    selectedStatsBizId = this.value ? parseInt(this.value) : null;
+                    loadBusinessStats(selectedStatsBizId);
+                });
+            }
 
-            for (const biz of businesses) {
+            // If a specific business was passed, use it; otherwise aggregate all
+            let allStats = { total_views: 0, total_whatsapp_clicks: 0, total_website_clicks: 0, total_phone_clicks: 0, total_shares: 0 };
+            let rows = [];
+            let allDailyViews = [];
+            let allDailyWa = [];
+
+            const bizToQuery = businessId ? businesses.filter(b => b.id === businessId) : businesses;
+
+            for (const biz of bizToQuery) {
                 try {
                     const stats = await api.get(`/business-stats/${biz.id}?period=${currentStatsPeriod}`);
                     allStats.total_views += stats.total_views || 0;
                     allStats.total_whatsapp_clicks += stats.total_whatsapp_clicks || 0;
                     allStats.total_website_clicks += stats.total_website_clicks || 0;
+                    allStats.total_phone_clicks += stats.total_phone_clicks || 0;
                     allStats.total_shares += stats.total_shares || 0;
+
+                    // Merge daily data
+                    if (stats.daily_views) {
+                        stats.daily_views.forEach(dv => {
+                            const existing = allDailyViews.find(v => v.date === dv.date);
+                            if (existing) existing.views += dv.views;
+                            else allDailyViews.push({ date: dv.date, views: dv.views });
+                        });
+                    }
+                    if (stats.daily_whatsapp) {
+                        stats.daily_whatsapp.forEach(dw => {
+                            const existing = allDailyWa.find(w => w.date === dw.date);
+                            if (existing) existing.clicks += dw.clicks;
+                            else allDailyWa.push({ date: dw.date, clicks: dw.clicks });
+                        });
+                    }
 
                     rows.push(`
                         <tr>
                             <td><a href="/negocio/${biz.slug || biz.id}" style="color:#006EE3;font-weight:600;text-decoration:none;">${biz.title || 'Sin título'}</a></td>
+                            <td><span style="color:#64748b;font-size:0.85rem;">${biz.category_name || '--'}</span></td>
                             <td><span style="font-weight:700;color:#1e293b;">${(stats.total_views || 0).toLocaleString()}</span></td>
                             <td><span style="font-weight:700;color:#25d366;">${(stats.total_whatsapp_clicks || 0).toLocaleString()}</span></td>
+                            <td><span style="font-weight:700;color:#f59e0b;">${(stats.total_phone_clicks || 0).toLocaleString()}</span></td>
                             <td><span style="font-weight:700;color:#0ea5e9;">${(stats.total_website_clicks || 0).toLocaleString()}</span></td>
                             <td><span style="font-weight:700;color:#8b5cf6;">${(stats.total_shares || 0).toLocaleString()}</span></td>
                         </tr>
@@ -2263,7 +2416,8 @@ window.closeEditBusinessModal = function() {
                     rows.push(`
                         <tr>
                             <td>${biz.title || 'Sin título'}</td>
-                            <td colspan="4" style="color:#94a3b8;">Sin datos</td>
+                            <td>${biz.category_name || '--'}</td>
+                            <td colspan="5" style="color:#94a3b8;">Sin datos</td>
                         </tr>
                     `);
                 }
@@ -2272,16 +2426,21 @@ window.closeEditBusinessModal = function() {
             // Update summary cards
             const elViews = document.getElementById('statTotalViews');
             const elWA = document.getElementById('statTotalWA');
+            const elPhone = document.getElementById('statTotalPhone');
             const elWeb = document.getElementById('statTotalWeb');
             const elShares = document.getElementById('statTotalShares');
             if (elViews) elViews.textContent = allStats.total_views.toLocaleString();
             if (elWA) elWA.textContent = allStats.total_whatsapp_clicks.toLocaleString();
+            if (elPhone) elPhone.textContent = allStats.total_phone_clicks.toLocaleString();
             if (elWeb) elWeb.textContent = allStats.total_website_clicks.toLocaleString();
             if (elShares) elShares.textContent = allStats.total_shares.toLocaleString();
 
             // Update table
             const body = document.getElementById('statsPerBusinessBody');
-            if (body) body.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">Sin datos para este período.</td></tr>';
+            if (body) body.innerHTML = rows.length > 0 ? rows.join('') : '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">Sin datos para este período.</td></tr>';
+
+            // Draw chart
+            drawSimpleChart(allDailyViews, allDailyWa);
 
         } catch (error) {
             console.error('Stats error:', error);

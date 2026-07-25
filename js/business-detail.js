@@ -285,6 +285,11 @@ function populateBusinessDetail(b) {
         if (b.phone) {
             phoneEl.textContent = b.phone;
             phoneWrap.style.display = '';
+            phoneWrap.style.cursor = 'pointer';
+            phoneWrap.onclick = () => {
+                trackEvent(b.id, 'phone_click');
+                window.location.href = 'tel:' + b.phone.replace(/[^0-9+]/g, '');
+            };
         } else {
             phoneWrap.style.display = 'none';
         }
@@ -453,6 +458,8 @@ function populateBusinessDetail(b) {
             const msg = encodeURIComponent(`Hola, vi tu negocio "${b.title}" en HolaX y me interesa saber más.`);
             mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
             mainWhatsApp.style.display = '';
+            // Track WhatsApp click
+            mainWhatsApp.addEventListener('click', () => trackEvent(b.id, 'whatsapp_click'));
         } else {
             mainWhatsApp.style.display = 'none';
         }
@@ -504,6 +511,7 @@ function populateBusinessDetail(b) {
             shareWhatsAppBtn.onmouseenter = () => { shareWhatsAppBtn.style.background = '#111'; shareWhatsAppBtn.style.color = '#fff'; shareWhatsAppBtn.querySelector('i').style.color = '#fff'; };
             shareWhatsAppBtn.onmouseleave = () => { shareWhatsAppBtn.style.background = '#fff'; shareWhatsAppBtn.style.color = '#111'; shareWhatsAppBtn.querySelector('i').style.color = '#25d366'; };
             shareWhatsAppBtn.onclick = () => {
+                trackEvent(b.id, 'share');
                 shareBusinessWhatsApp(b);
             };
         } else {
@@ -902,6 +910,18 @@ async function loadBusinessServices(businessId) {
 
 // ─── Utility ────────────────────────────────────────────────
 // escapeHtml is defined in app.js (common module)
+
+// Track analytics event for a business
+function trackEvent(businessId, eventType) {
+    if (!businessId || !eventType) return;
+    try {
+        fetch('/api/business-stats/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ business_id: businessId, event_type: eventType, source: 'ficha' })
+        }).catch(() => {});
+    } catch(e) {}
+}
 
 
 
