@@ -292,6 +292,12 @@ const api = {
     delete(url) {
         return apiCall(url, { method: 'DELETE' });
     },
+    patch(url, data) {
+        return apiCall(url, {
+            method: 'PATCH',
+            body: JSON.stringify(data),
+        });
+    },
     postFormData(url, formData) {
         return apiCall(url, {
             method: 'POST',
