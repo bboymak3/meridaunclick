@@ -1,10 +1,13 @@
 // functions/api/notifications/index.js
-// GET: Get current user's notifications (supports ?unread=1 filter)
-// POST: Mark notifications as read (body: {notification_ids: [1,2,3]} or {all_read: true})
+// GET: List notifications for logged-in user (with unread count)
+// POST: Create notification (admin only)
+// PATCH: Mark notifications as read / mark all as read
+// GET ?action=unread_count — just the unread badge count
+// GET ?action=settings — get notification settings (admin only)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
@@ -37,150 +40,173 @@ async function verifyJWT(token, secret) {
   return payload;
 }
 
-async function getUserFromRequest(request, env) {
+async function requireAuth(request, env) {
+  const jwtSecret = env.JWT_SECRET || 'aunclick_jwt_secret_2024_secure';
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) return null;
   const token = authHeader.substring(7);
-  return verifyJWT(token, env.JWT_SECRET);
+  return verifyJWT(token, jwtSecret);
 }
 
-// ─── GET: Get user notifications ──────────────────────────────────
+// ─── GET: Notifications list / unread count / settings ──────────
 export async function onRequestGet(context) {
   try {
     const { request, env } = context;
-
-    // Auth required
-    const user = await getUserFromRequest(request, env);
+    const user = await requireAuth(request, env);
     if (!user) {
-      return new Response(JSON.stringify({ error: 'Token de autorización requerido' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+      return new Response(JSON.stringify({ error: 'Token requerido' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const url = new URL(request.url);
-    const unreadOnly = url.searchParams.get('unread') === '1';
+    const action = url.searchParams.get('action');
 
-    // Pagination
-    const page = parseInt(url.searchParams.get('page')) || 1;
-    const limit = Math.min(parseInt(url.searchParams.get('limit')) || 20, 50);
-    const offset = (page - 1) * limit;
-
-    // Build query based on filter
-    let whereClause = 'WHERE n.user_id = ?';
-    const bindings = [user.id];
-
-    if (unreadOnly) {
-      whereClause += ' AND n.is_read = 0';
+    // ── Unread count only (lightweight for polling) ──
+    if (action === 'unread_count') {
+      const row = await env.DB.prepare('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0')
+        .bind(user.id).first();
+      return new Response(JSON.stringify({ count: row?.count || 0 }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Count unread notifications
-    const unreadCount = await env.DB.prepare(
-      'SELECT COUNT(*) as unread_count FROM notifications WHERE user_id = ? AND is_read = 0'
-    ).bind(user.id).first();
+    // ── Settings (admin only) ──
+    if (action === 'settings') {
+      if (user.role !== 'admin') {
+        return new Response(JSON.stringify({ error: 'Solo admin' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const settings = await env.DB.prepare('SELECT key, value FROM admin_settings WHERE key IN (?, ?, ?)')
+        .bind('notifications_enabled', 'notify_all_users', 'notify_admin_only').all();
+      const map = {};
+      (settings.results || []).forEach(r => { map[r.key] = r.value; });
+      return new Response(JSON.stringify({ settings: map }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
 
-    // Count total (for pagination)
-    const countQuery = `SELECT COUNT(*) as total FROM notifications ${whereClause}`;
-    const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();
+    // ── Full notifications list ──
+    const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
+    const limit = Math.min(50, parseInt(url.searchParams.get('limit')) || 20);
+    const unreadOnly = url.searchParams.get('unread') === '1';
+    const offset = (page - 1) * limit;
 
-    // Fetch notifications
-    const notifications = await env.DB.prepare(`
-      SELECT
-        n.id,
-        n.type,
-        n.title,
-        n.message,
-        n.link,
-        n.is_read,
-        n.created_at
-      FROM notifications n
-      ${whereClause}
-      ORDER BY n.created_at DESC
-      LIMIT ? OFFSET ?
-    `).bind(...bindings, limit, offset).all();
+    let where = 'WHERE user_id = ?';
+    const bindings = [user.id];
+    if (unreadOnly) {
+      where += ' AND is_read = 0';
+    }
+
+    const countRow = await env.DB.prepare(`SELECT COUNT(*) as total FROM notifications ${where}`)
+      .bind(...bindings).first();
+    const total = countRow?.total || 0;
+
+    const notifications = await env.DB.prepare(
+      `SELECT id, type, title, message, related_id, related_type, is_read, created_at
+       FROM notifications ${where}
+       ORDER BY created_at DESC LIMIT ? OFFSET ?`
+    ).bind(...bindings, limit, offset).all();
+
+    const unreadCount = await env.DB.prepare('SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = 0')
+      .bind(user.id).first();
 
     return new Response(JSON.stringify({
-      notifications: notifications.results,
-      unread_count: unreadCount.unread_count,
-      pagination: {
-        page,
-        limit,
-        total: countResult.total,
-        totalPages: Math.ceil(countResult.total / limit),
-      },
-    }), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+      notifications: notifications.results || [],
+      total,
+      unread_count: unreadCount?.count || 0,
+      page,
+      limit
+    }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Error interno del servidor', details: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 }
 
-// ─── POST: Mark notifications as read ────────────────────────────
+// ─── POST: Create notification (admin only) ─────────────────────
 export async function onRequestPost(context) {
   try {
     const { request, env } = context;
-
-    // Auth required
-    const user = await getUserFromRequest(request, env);
-    if (!user) {
-      return new Response(JSON.stringify({ error: 'Token de autorización requerido' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    const user = await requireAuth(request, env);
+    if (!user || user.role !== 'admin') {
+      return new Response(JSON.stringify({ error: 'Solo admin puede crear notificaciones' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
     const body = await request.json();
-    const { notification_ids, all_read } = body;
+    const { target_user_ids, type, title, message, related_id, related_type } = body;
 
-    // Mark all as read
-    if (all_read) {
-      await env.DB.prepare(
-        'UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0'
-      ).bind(user.id).run();
-
-      return new Response(JSON.stringify({ message: 'Todas las notificaciones marcadas como leídas' }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    if (!title) {
+      return new Response(JSON.stringify({ error: 'Título requerido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    // Mark specific notifications as read
-    if (notification_ids && Array.isArray(notification_ids) && notification_ids.length > 0) {
-      // Validate all IDs are integers
-      const validIds = notification_ids.filter(id => Number.isInteger(id) && id > 0);
-
-      if (validIds.length === 0) {
-        return new Response(JSON.stringify({ error: 'notification_ids debe contener IDs válidos' }), {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
+    // target_user_ids: array of user IDs, or "all" for all users
+    let inserted = 0;
+    if (target_user_ids === 'all') {
+      const users = await env.DB.prepare('SELECT id FROM users WHERE is_active = 1').all();
+      if (users.results && users.results.length > 0) {
+        const stmts = users.results.map(u =>
+          env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)')
+            .bind(u.id, type || 'custom', title, message || null, related_id || null, related_type || null)
+        );
+        const batchResult = await env.DB.batch(stmts);
+        inserted = users.results.length;
       }
-
-      // Only mark notifications that belong to this user
-      const placeholders = validIds.map(() => '?').join(', ');
-      await env.DB.prepare(
-        `UPDATE notifications SET is_read = 1 WHERE user_id = ? AND id IN (${placeholders}) AND is_read = 0`
-      ).bind(user.id, ...validIds).run();
-
-      return new Response(JSON.stringify({ message: `${validIds.length} notificaciones marcadas como leídas` }), {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    } else if (Array.isArray(target_user_ids) && target_user_ids.length > 0) {
+      const stmts = target_user_ids.map(uid =>
+        env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)')
+          .bind(uid, type || 'custom', title, message || null, related_id || null, related_type || null)
+      );
+      await env.DB.batch(stmts);
+      inserted = target_user_ids.length;
+    } else {
+      return new Response(JSON.stringify({ error: 'target_user_ids requerido (array o "all")' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
     }
 
-    return new Response(JSON.stringify({ error: 'Se requiere notification_ids o all_read en el cuerpo de la petición' }), {
-      status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(JSON.stringify({ message: 'Notificación enviada', inserted }), { status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Error interno del servidor', details: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+}
+
+// ─── PATCH: Mark as read / mark all / update settings ────────────
+export async function onRequestPatch(context) {
+  try {
+    const { request, env } = context;
+    const user = await requireAuth(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Token requerido' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const body = await request.json();
+    const { action, notification_id, settings } = body;
+
+    // ── Mark single as read ──
+    if (action === 'mark_read' && notification_id) {
+      await env.DB.prepare('UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?')
+        .bind(notification_id, user.id).run();
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // ── Mark all as read ──
+    if (action === 'mark_all_read') {
+      await env.DB.prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0')
+        .bind(user.id).run();
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // ── Update notification settings (admin only) ──
+    if (action === 'update_settings') {
+      if (user.role !== 'admin') {
+        return new Response(JSON.stringify({ error: 'Solo admin' }), { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (!settings || typeof settings !== 'object') {
+        return new Response(JSON.stringify({ error: 'settings object requerido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const allowedKeys = ['notifications_enabled', 'notify_all_users', 'notify_admin_only'];
+      for (const key of allowedKeys) {
+        if (key in settings) {
+          await env.DB.prepare("INSERT INTO admin_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = ?")
+            .bind(key, String(settings[key]), String(settings[key])).run();
+        }
+      }
+      return new Response(JSON.stringify({ success: true, message: 'Configuración actualizada' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    return new Response(JSON.stringify({ error: 'Acción no reconocida. Usar: mark_read, mark_all_read, update_settings' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 }

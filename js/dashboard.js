@@ -4284,3 +4284,122 @@ window.closeEditBusinessModal = function() {
     };
 
 })();
+
+// ═══════════════════════════════════════════════════════════════
+// NOTIFICATIONS SYSTEM
+// ═══════════════════════════════════════════════════════════════
+(function setupNotifications() {
+    const bellBtn = document.getElementById('notifBellBtn');
+    const badge = document.getElementById('notifBadge');
+    const dropdown = document.getElementById('notifDropdown');
+    const list = document.getElementById('notifList');
+    const markAllBtn = document.getElementById('notifMarkAllRead');
+    const closeBtn = document.getElementById('notifCloseDropdown');
+
+    if (!bellBtn || !dropdown) return;
+
+    let isOpen = false;
+
+    // ── Poll unread count every 30s ──
+    async function pollUnreadCount() {
+        try {
+            const data = await api.get('/notifications?action=unread_count');
+            const count = data.count || 0;
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        } catch(e) {}
+    }
+
+    // ── Fetch and render notifications ──
+    async function loadNotifications() {
+        try {
+            const data = await api.get('/notifications?limit=30');
+            const notifs = data.notifications || [];
+            if (notifs.length === 0) {
+                list.innerHTML = '<div style="text-align:center;padding:40px 16px;color:#94a3b8;"><i class="fas fa-bell-slash" style="font-size:28px;margin-bottom:8px;display:block;"></i><p style="font-size:0.85rem;">No hay notificaciones</p></div>';
+                return;
+            }
+            list.innerHTML = notifs.map(n => {
+                const icon = n.type === 'new_business' ? 'fa-store' : n.type === 'new_job' ? 'fa-briefcase' : 'fa-bell';
+                const iconBg = n.is_read ? '#f1f5f9' : '#eff6ff';
+                const iconColor = n.is_read ? '#94a3b8' : '#006EE3';
+                const bg = n.is_read ? '#fff' : '#f8faff';
+                const timeAgo = getNotifTimeAgo(n.created_at);
+                return `<div class="notif-item" data-id="${n.id}" style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:${bg};border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .15s;">
+                    <div style="width:34px;height:34px;border-radius:9px;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas ${icon}" style="font-size:0.8rem;color:${iconColor};"></i></div>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:0.82rem;font-weight:${n.is_read ? '400' : '600'};color:#1e293b;line-height:1.4;margin-bottom:2px;">${escapeNotifHtml(n.title)}</div>
+                        <div style="font-size:0.75rem;color:#64748b;line-height:1.4;">${escapeNotifHtml(n.message || '')}</div>
+                        <div style="font-size:0.68rem;color:#94a3b8;margin-top:4px;">${timeAgo}</div>
+                    </div>
+                    ${n.is_read ? '' : '<div style="width:8px;height:8px;border-radius:50%;background:#006EE3;flex-shrink:0;margin-top:6px;"></div>'}
+                </div>`;
+            }).join('');
+
+            // Click handlers: mark as read
+            list.querySelectorAll('.notif-item').forEach(item => {
+                item.addEventListener('click', async () => {
+                    const id = item.dataset.id;
+                    const hasDot = item.querySelector('div[style*="background:#006EE3"]');
+                    if (hasDot) {
+                        try { await api.patch('/notifications', { action: 'mark_read', notification_id: parseInt(id) }); } catch(e) {}
+                        item.style.background = '#fff';
+                        hasDot.remove();
+                        pollUnreadCount();
+                    }
+                });
+            });
+        } catch(e) {
+            list.innerHTML = '<div style="text-align:center;padding:32px;color:#ef4444;font-size:0.82rem;">Error al cargar</div>';
+        }
+    }
+
+    function getNotifTimeAgo(dateStr) {
+        if (!dateStr) return '';
+        const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
+        if (diff < 60) return 'Justo ahora';
+        if (diff < 3600) return `Hace ${Math.floor(diff/60)} min`;
+        if (diff < 86400) return `Hace ${Math.floor(diff/3600)}h`;
+        if (diff < 604800) return `Hace ${Math.floor(diff/86400)}d`;
+        return `Hace ${Math.floor(diff/604800)} sem`;
+    }
+
+    function escapeNotifHtml(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+
+    // Toggle
+    bellBtn.addEventListener('click', () => {
+        isOpen = !isOpen;
+        dropdown.style.display = isOpen ? 'block' : 'none';
+        if (isOpen) loadNotifications();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (isOpen && !e.target.closest('#notifBellWrapper')) {
+            isOpen = false;
+            dropdown.style.display = 'none';
+        }
+    });
+
+    closeBtn.addEventListener('click', () => { isOpen = false; dropdown.style.display = 'none'; });
+
+    markAllBtn.addEventListener('click', async () => {
+        try { await api.patch('/notifications', { action: 'mark_all_read' }); loadNotifications(); pollUnreadCount(); } catch(e) {}
+    });
+
+    bellBtn.addEventListener('mouseenter', () => { bellBtn.style.borderColor = '#006EE3'; bellBtn.style.color = '#006EE3'; });
+    bellBtn.addEventListener('mouseleave', () => { bellBtn.style.borderColor = '#e2e8f0'; bellBtn.style.color = '#475569'; });
+
+    // Start polling
+    pollUnreadCount();
+    setInterval(pollUnreadCount, 30000);
+
+})();

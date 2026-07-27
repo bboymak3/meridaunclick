@@ -421,6 +421,42 @@ export async function onRequestPost(context) {
       console.error('Error setting business expiration:', expErr);
     }
 
+    // ── Send notification about new business ──
+    try {
+      const notifSetting = await env.DB.prepare("SELECT value FROM admin_settings WHERE key = 'notifications_enabled'").first();
+      if (notifSetting && notifSetting.value === '1') {
+        const businessTitle = body.titulo || body.title || 'Negocio';
+        const notifTitle = 'Nuevo negocio registrado';
+        const notifMsg = `"${businessTitle}" se ha registrado y está pendiente de aprobación.`;
+
+        // Always notify admin(s)
+        const admins = await env.DB.prepare("SELECT id FROM users WHERE role = 'admin' AND is_active = 1").all();
+        if (admins.results && admins.results.length > 0) {
+          const adminStmts = admins.results.map(a =>
+            env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)')
+              .bind(a.id, 'new_business', notifTitle, notifMsg, businessId, 'business')
+          );
+          await env.DB.batch(adminStmts);
+        }
+
+        // Optionally notify all users
+        const notifyAll = await env.DB.prepare("SELECT value FROM admin_settings WHERE key = 'notify_all_users'").first();
+        if (notifyAll && notifyAll.value === '1') {
+          const allUsers = await env.DB.prepare('SELECT id FROM users WHERE is_active = 1 AND role != ?').bind('admin').all();
+          if (allUsers.results && allUsers.results.length > 0) {
+            const userStmts = allUsers.results.map(u =>
+              env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)')
+                .bind(u.id, 'new_business', notifTitle, notifMsg, businessId, 'business')
+            );
+            await env.DB.batch(userStmts);
+          }
+        }
+      }
+    } catch (notifErr) {
+      console.error('Error sending notification:', notifErr);
+      // Don't fail the business creation if notification fails
+    }
+
     return new Response(JSON.stringify({
       message: 'Negocio registrado exitosamente. Está pendiente de aprobación.' + (isPremium ? '' : ' Tu plan Básico tiene una duración de 20 días. Renueva publicando nuevamente o mejora a Premium para que nunca caduque.'),
       business_id: businessId,

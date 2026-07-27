@@ -340,6 +340,29 @@
                     </button>
                     <h1 class="dashboard-title" id="sectionTitle">Resumen</h1>
                     <div class="dashboard-header-actions">
+                        <!-- Notifications Bell -->
+                        <div class="notif-bell-wrapper" id="notifBellWrapper" style="position:relative;">
+                            <button class="notif-bell-btn" id="notifBellBtn" title="Notificaciones" style="position:relative;background:none;border:2px solid #e2e8f0;width:40px;height:40px;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#475569;transition:all .2s;">
+                                <i class="fas fa-bell" style="font-size:1.05rem;"></i>
+                                <span class="notif-badge" id="notifBadge" style="display:none;position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;font-size:0.65rem;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px;box-shadow:0 2px 6px rgba(239,68,68,0.4);">0</span>
+                            </button>
+                            <!-- Notifications Dropdown -->
+                            <div class="notif-dropdown" id="notifDropdown" style="display:none;position:absolute;top:48px;right:0;width:360px;max-height:460px;background:#fff;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,0.15);border:1px solid #e2e8f0;overflow:hidden;z-index:9999;">
+                                <div style="padding:14px 16px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;">
+                                    <div style="font-weight:700;font-size:0.95rem;color:#1e293b;">Notificaciones</div>
+                                    <div style="display:flex;gap:6px;">
+                                        <button id="notifMarkAllRead" style="font-size:0.72rem;color:#006EE3;background:none;border:none;cursor:pointer;font-weight:600;">Marcar todas</button>
+                                        <button id="notifCloseDropdown" style="font-size:1rem;color:#94a3b8;background:none;border:none;cursor:pointer;">&times;</button>
+                                    </div>
+                                </div>
+                                <div class="notif-list" id="notifList" style="max-height:370px;overflow-y:auto;">
+                                    <div style="text-align:center;padding:32px 16px;color:#94a3b8;">
+                                        <i class="fas fa-spinner fa-spin" style="font-size:20px;"></i>
+                                        <p style="margin-top:8px;font-size:0.82rem;">Cargando...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <button class="btn btn-primary" id="headerBtnNewProduct" style="background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,0.2);box-shadow:0 4px 14px rgba(217,119,6,0.35);">
                             <i class="fas fa-shopping-bag"></i> Publicar Producto
                         </button>

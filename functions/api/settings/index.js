@@ -92,6 +92,9 @@ const DEFAULT_SETTINGS = {
   hero_logo_url: '',
   // Marketplace banner
   marketplace_banner_url: '',
+  // Notifications
+  notifications_enabled: '1',
+  notify_all_users: '0',
 };
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
