@@ -246,6 +246,10 @@ export async function onRequestPost(context) {
         // Ensure logo column exists
         try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN logo TEXT').run(); } catch(e) {}
         try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN banner TEXT').run(); } catch(e) {}
+        // Find a valid category_id (look for 'General', fallback to first available)
+        let holaxCatId = await env.DB.prepare('SELECT id FROM categories WHERE slug = ? LIMIT 1')
+          .bind('general').first();
+        const catId = holaxCatId ? holaxCatId.id : (await env.DB.prepare('SELECT id FROM categories ORDER BY id LIMIT 1').first()).id;
         const holaxInsert = await env.DB.prepare(`
           INSERT INTO businesses (user_id, title, slug, status, category_id, logo, description)
           VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -254,7 +258,7 @@ export async function onRequestPost(context) {
           HOLAX_NAME,
           'holax',
           'approved',
-          0,
+          catId,
           '/images/Holax.png',
           'Plataforma HolaX – Directorio comercial e inmobiliario de Venezuela'
         ).run();
