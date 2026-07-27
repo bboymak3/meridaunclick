@@ -442,7 +442,7 @@ meridaunclick/
 | `/api/contacts/admin-message` | POST | No | Mensaje directo al admin |
 | `/api/coupons` | GET/POST/DELETE | Varia | Cupones |
 | `/api/bookings` | GET/POST | Varia | Reservas |
-| `/api/notifications` | GET | Si | Notificaciones del usuario |
+| `/api/notifications` | GET/PATCH | Si | Notificaciones del usuario (PATCH para marcar como leida) |
 | `/api/points` | GET | Si | Balance de puntos |
 | `/api/plans/request-upgrade` | POST | Si | Solicitar upgrade a premium |
 | `/api/premium-requests` | GET | Admin | Solicitudes premium pendientes |
@@ -596,6 +596,45 @@ git push origin main
 # Cloudflare Pages detecta el push y despliega automaticamente
 # Verificar: https://holax.com.ve
 ```
+
+---
+
+## Registro de Actualizaciones
+
+### 2026-07-28 — Notificaciones y Panel Admin
+
+**Nuevas funcionalidades:**
+
+- **Notificaciones automaticas al registrar contenido** — Cuando un usuario publica un nuevo Inmueble, Producto (Bazar) o Servicio Medico, se genera automaticamente una notificacion en el sistema para el administrador. Las notificaciones incluyen titulo, mensaje descriptivo, enlace directo al modulo correspondiente y tipo diferenciado (`new_property`, `new_product`).
+- **Modal de detalle de notificacion en panel admin** — Al hacer clic en una fila de la tabla de notificaciones se abre un modal que muestra el contenido completo: tipo (con badge de color), titulo, mensaje, destinatario, fecha, enlace directo y opciones de accion (ir al recurso, eliminar, cerrar). Tipos soportados: `new_business`, `new_property`, `new_product`, `new_medical`, `system`, `premium`.
+- **Marcado de notificaciones como leidas (Dashboard)** — Al hacer clic en una notificacion desde la campanita del dashboard del usuario, la notificacion se marca como leida con feedback visual (cambio de opacidad y texto "Leida" inline). Esto requirio agregar el metodo `api.patch()` que faltaba en `js/app.js`.
+- **Iconos diferenciados por tipo de notificacion** — Cada tipo de notificacion en el dashboard muestra un icono Font Awesome especifico: `fa-house` para inmuebles, `fa-box` para productos, `fa-briefcase-medical` para servicios medicos, entre otros.
+
+**Correcciones de bugs:**
+
+- **`api.patch()` faltante en `js/app.js`** — El objeto `api` solo tenia `get`, `post`, `put`, `delete` y `postFormData`. El metodo `patch` no existia, lo que causaba que las notificaciones nunca se marcaran como leidas al hacer clic. Se agrego el metodo `patch(url, data)` que usa `method: 'PATCH'` con body JSON.
+- **Variable duplicada `window._adminNotifList` en seccion Bazar de `admin.js`** — Un script de reemplazo automatico inserto una segunda asignacion de `window._adminNotifList = notifs` en la seccion equivocada del archivo admin.js, donde la variable `notifs` no estaba definida. Esto causaba un `ReferenceError` que colapsaba toda la funcion IIFE (5,919 lineas en un solo scope), impidiendo que se renderizaran las estadisticas del panel. Se elimino la linea duplicada.
+- **Error de sintaxis: comilla de cierre faltante** — Un script Python de reemplazo de strings elimino accidentalmente una comilla simple en `'#64748b;` (falta la `'` de cierre). Esto causaba error de sintaxis y rompia la ejecucion de todo el archivo JavaScript. Corregido a `'#64748b';`.
+
+**Mejoras de mantenibilidad:**
+
+- **Comentarios de seccion en `admin.js`** — Se agregaron 17 bloques de comentarios (`// ====`) a lo largo del archivo `js/admin.js` para identificar y documentar cada seccion funcional: notificaciones, configuracion, destacados, estadisticas, usuarios, Bazar, inmuebles, servicios medicos, empleos, chat, etc. Cada bloque indica el proposito de la seccion, funciones principales y exports de `window`.
+
+**Validacion:**
+
+- Se valido la sintaxis de los 3 archivos JS principales (`app.js`, `admin.js`, `dashboard.js`) con `node -c` antes de cada cambio.
+- Se comparo con la version en produccion `9804226b.aunclick.pages.dev` para confirmar que los bugs eran introducidos por cambios recientes.
+
+**Archivos modificados:**
+
+| Archivo | Cambio |
+|---|---|
+| `js/app.js` | Agregado metodo `api.patch()` |
+| `js/admin.js` | Modal `openNotifDetail()`, labels por tipo, 17 comentarios de seccion, correccion de duplicado y sintaxis |
+| `js/dashboard.js` | Iconos `fa-house` y `fa-box` en mapa de tipos, feedback visual al marcar leida |
+| `admin.html` | Modal `#notifDetailModal` con badge tipo, contenido completo, botones de accion |
+| `functions/api/properties/index.js` | Trigger de notificacion `new_property` al crear inmueble |
+| `functions/api/marketplace/index.js` | Trigger de notificacion `new_product` al crear producto |
 
 ---
 
