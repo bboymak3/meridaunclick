@@ -342,6 +342,21 @@
             color: #4f46e5;
             flex-shrink: 0;
             border: 2px solid #e0e7ff;
+            overflow: hidden;
+            position: relative;
+        }
+        .job-card-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+        .job-card-initials {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
         }
 
         .job-card-company {
@@ -1113,7 +1128,7 @@
                     <article class="job-card">
                         <div class="job-card-header">
                             <div class="job-card-company-info">
-                                <div class="job-card-logo">${initials}</div>
+                                <div class="job-card-logo">${job.business_logo ? `<img src="${escapeHtml(job.business_logo)}" alt="${escapeHtml(job.company_name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` : ''}<span class="job-card-initials"${job.business_logo ? ' style="display:none"' : ''}>${initials}</span></div>
                                 <div class="job-card-company">
                                     <div class="job-card-company-name">${escapeHtml(job.company_name)}</div>
                                     <div class="job-card-posted">
