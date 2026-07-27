@@ -5752,6 +5752,17 @@ if (!window._renderVideoList) {
             }
         });
 
+        // Click on notification row to navigate
+        window.handleAdminNotifClick = function(tr) {
+            const link = tr.dataset.notifLink;
+            if (!link) return;
+            if (link.startsWith('http')) {
+                window.open(link, '_blank');
+            } else {
+                window.location.href = link;
+            }
+        };
+
         // Delete single notification
         window.deleteAdminNotification = async function(id) {
             if (!confirm('¿Eliminar esta notificación?')) return;
@@ -5788,16 +5799,18 @@ if (!window._renderVideoList) {
 
                 tableBody.innerHTML = notifs.map(n => {
                     const typeLabel = { new_business: 'Negocio', new_job: 'Empleo', new_property: 'Inmueble', new_product: 'Producto', review: 'Reseña', premium_request: 'Premium', announcement: 'Anuncio', alert: 'Alerta', custom: 'Personalizado' }[n.type] || n.type;
-                    const typeColor = { new_business: '#059669', new_job: '#006EE3', new_property: '#8b5cf6', new_product: '#f59e0b', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b' }[n.type] || '#64748b';
+                    const typeColor = { new_business: '#059669', new_job: '#006EE3', new_property: '#8b5cf6', new_product: '#f59e0b', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b' }[n.type] || '#64748b;
                     const date = n.created_at ? new Date(n.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
-                    return `<tr>
+                    const rowCursor = n.link ? 'cursor:pointer;' : '';
+                    const rowBg = n.link ? 'transition:background .15s;' : '';
+                    return `<tr data-notif-link="${n.link || ''}" style="${rowCursor}${rowBg}" ${n.link ? 'onclick="handleAdminNotifClick(this)"' : ''} onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
                         <td style="white-space:nowrap;">${date}</td>
                         <td><span style="background:${typeColor}15;color:${typeColor};padding:2px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;">${escapeHtml(typeLabel)}</span></td>
                         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(n.title || '')}</td>
                         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b;">${escapeHtml(n.message || '-')}</td>
                         <td style="font-size:0.8rem;">${escapeHtml(userMap[n.user_id] || 'Usuario ' + n.user_id)}</td>
                         <td>${n.is_read ? '<span style="color:#94a3b8;">Sí</span>' : '<span style="color:#006EE3;font-weight:600;">No</span>'}</td>
-                        <td><button onclick="deleteAdminNotification(${n.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.85rem;"><i class="fas fa-trash"></i></button></td>
+                        <td><button onclick="event.stopPropagation(); deleteAdminNotification(${n.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.85rem;"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 }).join('');
 

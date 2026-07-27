@@ -4341,18 +4341,25 @@ window.closeEditBusinessModal = function() {
                 </div>`;
             }).join('');
 
-            // Click handlers: mark as read + navigate if link exists
+            // Click handlers: mark as read + navigate or feedback
             list.querySelectorAll('.notif-item').forEach(item => {
                 item.addEventListener('click', async () => {
                     const id = item.dataset.id;
                     const link = item.dataset.link;
                     const hasDot = item.querySelector('div[style*="background:#006EE3"]');
+
+                    // Visual feedback immediately
+                    item.style.opacity = '0.6';
+
                     if (hasDot) {
+                        // Mark as read
                         try { await api.patch('/notifications', { action: 'mark_read', notification_id: parseInt(id) }); } catch(e) {}
                         item.style.background = '#fff';
-                        hasDot.remove();
+                        item.querySelector('div[style*="font-weight"]').style.fontWeight = '400';
+                        if (hasDot) hasDot.remove();
                         pollUnreadCount();
                     }
+
                     // Navigate to link if present
                     if (link) {
                         isOpen = false;
@@ -4362,6 +4369,17 @@ window.closeEditBusinessModal = function() {
                         } else {
                             window.location.href = link;
                         }
+                    } else {
+                        // No link — just mark as read and give feedback
+                        item.style.opacity = '1';
+                        const title = item.querySelector('div[style*="font-weight"]')?.textContent || 'Notificación';
+                        // Show brief inline feedback
+                        const feedback = document.createElement('div');
+                        feedback.style.cssText = 'position:absolute;bottom:4px;right:12px;font-size:0.7rem;color:#006EE3;font-weight:600;';
+                        feedback.textContent = '✓ Leída';
+                        item.style.position = 'relative';
+                        item.appendChild(feedback);
+                        setTimeout(() => { if(feedback.parentNode) feedback.remove(); }, 2000);
                     }
                 });
             });
