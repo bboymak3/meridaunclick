@@ -53,6 +53,10 @@ if (!window._renderVideoList) {
 (function () {
     'use strict';
 
+    // ═══════════════════════════════════════════════════════════
+    //  ESTADO GLOBAL - Variables compartidas entre secciones
+    // ═══════════════════════════════════════════════════════════
+
     // ─── State ──────────────────────────────────────────────────
     let currentTab = 'dashboard';
     let currentDeleteAction = null; // { type, id, callback }
@@ -71,6 +75,10 @@ if (!window._renderVideoList) {
     let premiumFilter = 'pending';
     let premiumActivateUserId = null;
     const PAGE_LIMIT = 15;
+
+    // ═══════════════════════════════════════════════════════════
+    //  ELEMENTOS DEL DOM - Referencias a elementos HTML
+    // ═══════════════════════════════════════════════════════════
 
     // ─── DOM Elements ───────────────────────────────────────────
     const adminDate = document.getElementById('adminDate');
@@ -291,6 +299,11 @@ if (!window._renderVideoList) {
         });
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  NAVEGACIÓN DE TABS - Sistema de pestañas del panel admin
+    //  Cada case activa una sección del sidebar y carga su contenido
+    // ═══════════════════════════════════════════════════════════
+
     function switchTab(tab) {
         currentTab = tab;
 
@@ -392,6 +405,13 @@ if (!window._renderVideoList) {
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: DASHBOARD - Estadísticas generales
+    //  Muestra totales de usuarios, negocios, mensajes, pendientes
+    //  Funciones: loadDashboardStats(), loadDashboardTab(),
+    //            loadRecentProperties(), loadRecentUsers()
+    // ═══════════════════════════════════════════════════════════
+
     // ─── Dashboard Stats ────────────────────────────────────────
     async function loadDashboardStats() {
         try {
@@ -476,6 +496,14 @@ if (!window._renderVideoList) {
     }
 
     // ─── Properties Management ──────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: NEGOCIOS - Gestión de negocios registrados
+    //  Listar, aprobar, rechazar, editar, eliminar negocios
+    //  Funciones: loadProperties(), loadUsers(), loadBizEditGallery()
+    //  Exporta: window.admin (edición inline), window._adminSetCover,
+    //            window._adminDeleteBizImage
+    // ═══════════════════════════════════════════════════════════
+
     async function loadProperties() {
         const tbody = document.getElementById('adminPropsTableBody');
         if (!tbody) return;
@@ -1469,6 +1497,11 @@ if (!window._renderVideoList) {
     }
 
     // ─── Messages Management ────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: MENSAJES - Contactos y mensajes de usuarios
+    //  Funciones: loadMessages()
+    // ═══════════════════════════════════════════════════════════
+
     async function loadMessages() {
         const tbody = document.getElementById('adminMsgsTableBody');
         if (!tbody) return;
@@ -1655,6 +1688,12 @@ if (!window._renderVideoList) {
     }
 
     // ─── Facebook Integration ───────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: FACEBOOK IMPORT - Importación desde Facebook
+    //  Configuración e historial de importaciones
+    //  Funciones: loadFacebookConfig(), loadFacebookHistory()
+    // ═══════════════════════════════════════════════════════════
+
     async function loadFacebookConfig() {
         try {
             const data = await api.get('/facebook/config');
@@ -1944,6 +1983,13 @@ if (!window._renderVideoList) {
             }
         });
     }
+
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: BAZAR/PRODUCTOS (B2) - Listado de productos
+    //  Aprobar, rechazar, editar, eliminar productos del marketplace
+    //  Funciones: loadB2Products(), loadBazarTab()
+    //  Exporta: window._adminB2Approve/Reject/Edit/Delete
+    // ═══════════════════════════════════════════════════════════
 
     async function loadB2Products() {
         const tbody = document.getElementById('b2ProductsBody');
@@ -2292,6 +2338,13 @@ if (!window._renderVideoList) {
         const formatted = Number(price).toLocaleString('es-VE');
         return `${formatted} ${curr}`;
     }
+
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: INMUEBLES - Gestión de propiedades
+    //  Aprobar, rechazar, editar, eliminar inmuebles
+    //  Funciones: loadInmueblesTab(), loadInmuebleImages()
+    //  Exporta: window._adminApproveInmueble/Reject/Delete/etc.
+    // ═══════════════════════════════════════════════════════════
 
     async function loadInmueblesTab() {
         const tbody = document.getElementById('propertiesTableBody');
@@ -2696,6 +2749,13 @@ if (!window._renderVideoList) {
     }
 
     // ─── JOBS MANAGEMENT ──────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: EMPLEO - Ofertas de trabajo
+    //  Listar, aprobar, rechazar, editar ofertas de empleo
+    //  Funciones: loadJobs(), loadBusinessesForJobSelect(),
+    //            loadFeaturedSelector(), loadFeaturedMedicalSelector()
+    // ═══════════════════════════════════════════════════════════
+
     async function loadJobs() {
         try {
             const statusFilter = document.getElementById('jobStatusFilter')?.value || 'pending';
@@ -3210,6 +3270,14 @@ if (!window._renderVideoList) {
     window._adminSaveFeaturedMedical = saveFeaturedMedical;
 
     // ─── Settings Functions ───────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: CONFIGURACIÓN - Ajustes generales del sistema
+    //  Banners, logos, ajustes de visualización
+    //  Funciones: loadSettings()
+    //  Exporta: window.handleAdminBannerSelect, window.removeAdminBanner,
+    //            window.handleHolaxLogoSelect, window.removeHolaxLogo, etc.
+    // ═══════════════════════════════════════════════════════════
+
     async function loadSettings() {
         try {
             const data = await api.get('/settings');
@@ -3779,6 +3847,14 @@ if (!window._renderVideoList) {
             loadNonPremiumUsers();
         });
     }
+
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: PREMIUM - Pagos y solicitudes premium
+    //  Aprobar/rechazar solicitudes, activación manual de premium
+    //  Funciones: loadPremiumTab(), loadPremiumStats(),
+    //            loadPremiumRequests(), loadNonPremiumUsers()
+    //  Exporta: window._adminApprovePremium/Reject, etc.
+    // ═══════════════════════════════════════════════════════════
 
     async function loadPremiumTab() {
         await Promise.all([loadPremiumRequests(), loadPremiumStats(), loadNonPremiumUsers()]);
@@ -4565,6 +4641,13 @@ if (!window._renderVideoList) {
         }
     };
 
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: EDITAR NEGOCIOS - Editor avanzado de negocios
+    //  Galería, logos, banners, imágenes, servicios
+    //  Funciones: loadEditBizList(), loadEditBizDetail()
+    //  Exporta: window.adminEditBizSave/HandleLogo/RemoveLogo/AddImage/etc.
+    // ═══════════════════════════════════════════════════════════
+
     // ─── Editar Negocios Tab ────────────────────────────────
     let editBizList = [];
     let editBizCurrent = null;
@@ -5007,6 +5090,12 @@ if (!window._renderVideoList) {
         return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: CATEGORÍAS - Gestión de categorías y sugerencias
+    //  Funciones: loadAdmin2Categories(), loadAdmin2CatSuggestions()
+    //  Exporta: window.admin2ApproveSugg/RejectCat/DeleteCat
+    // ═══════════════════════════════════════════════════════════
+
     async function loadAdmin2Categories() {
         const tbody = document.getElementById('admin2CatTableBody');
         if (!tbody) return;
@@ -5193,6 +5282,12 @@ if (!window._renderVideoList) {
     });
 
     // ─── POPUP (VENTANA EMERGENTE) TAB ──────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: VENTANA EMERGENTE (POPUP) - Banner popup del sitio
+    //  Funciones: loadPopupTab(), loadPopupBusinessSelector()
+    //  Exporta: window.savePopupSettings, window.handleAdminPopupImageSelect
+    // ═══════════════════════════════════════════════════════════
+
     async function loadPopupTab() {
         try {
             // Load settings
@@ -5397,6 +5492,12 @@ if (!window._renderVideoList) {
     document.getElementById('bazarFilter')?.addEventListener('change', () => loadBazarTab());
 
     // ─── CAROUSEL TAB ──────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: CARRUSEL DE VIDEOS - Videos destacados del homepage
+    //  Funciones: loadCarouselTab(), loadCarouselBusinessSelector()
+    //  Exporta: window.toggleCarouselVideo, window.deleteCarouselVideo
+    // ═══════════════════════════════════════════════════════════
+
     async function loadCarouselTab() {
         const list = document.getElementById('carouselVideoList');
         if (!list) return;
@@ -5616,6 +5717,15 @@ if (!window._renderVideoList) {
     // ═══════════════════════════════════════════════════════════════
     // NOTIFICATIONS ADMIN TAB
     // ═══════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: NOTIFICACIONES - Centro de notificaciones admin
+    //  Componer, enviar, ver historial, eliminar notificaciones
+    //  Funciones: setupAdminNotifications(), loadAdminNotifications(),
+    //            openNotifDetail(), deleteAdminNotification()
+    //  Exporta: window.openNotifDetail, window.deleteAdminNotification,
+    //            window.loadAdminNotifications
+    // ═══════════════════════════════════════════════════════════
+
     (function setupAdminNotifications() {
         const composeBtn = document.getElementById('adminNotifComposeBtn');
         const composeSection = document.getElementById('adminNotifComposeSection');
