@@ -4324,12 +4324,13 @@ window.closeEditBusinessModal = function() {
                 return;
             }
             list.innerHTML = notifs.map(n => {
-                const icon = n.type === 'new_business' ? 'fa-store' : n.type === 'new_job' ? 'fa-briefcase' : 'fa-bell';
+                const icon = n.type === 'new_business' ? 'fa-store' : n.type === 'new_job' ? 'fa-briefcase' : n.type === 'review' ? 'fa-star' : n.type === 'premium_request' ? 'fa-crown' : n.type === 'announcement' ? 'fa-bullhorn' : n.type === 'alert' ? 'fa-exclamation-triangle' : 'fa-bell';
                 const iconBg = n.is_read ? '#f1f5f9' : '#eff6ff';
                 const iconColor = n.is_read ? '#94a3b8' : '#006EE3';
                 const bg = n.is_read ? '#fff' : '#f8faff';
                 const timeAgo = getNotifTimeAgo(n.created_at);
-                return `<div class="notif-item" data-id="${n.id}" style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:${bg};border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .15s;">
+                const linkAttr = n.link ? `data-link="${n.link}"` : '';
+                return `<div class="notif-item" data-id="${n.id}" ${linkAttr} style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:${bg};border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .15s;">
                     <div style="width:34px;height:34px;border-radius:9px;background:${iconBg};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas ${icon}" style="font-size:0.8rem;color:${iconColor};"></i></div>
                     <div style="flex:1;min-width:0;">
                         <div style="font-size:0.82rem;font-weight:${n.is_read ? '400' : '600'};color:#1e293b;line-height:1.4;margin-bottom:2px;">${escapeNotifHtml(n.title)}</div>
@@ -4340,16 +4341,27 @@ window.closeEditBusinessModal = function() {
                 </div>`;
             }).join('');
 
-            // Click handlers: mark as read
+            // Click handlers: mark as read + navigate if link exists
             list.querySelectorAll('.notif-item').forEach(item => {
                 item.addEventListener('click', async () => {
                     const id = item.dataset.id;
+                    const link = item.dataset.link;
                     const hasDot = item.querySelector('div[style*="background:#006EE3"]');
                     if (hasDot) {
                         try { await api.patch('/notifications', { action: 'mark_read', notification_id: parseInt(id) }); } catch(e) {}
                         item.style.background = '#fff';
                         hasDot.remove();
                         pollUnreadCount();
+                    }
+                    // Navigate to link if present
+                    if (link) {
+                        isOpen = false;
+                        dropdown.style.display = 'none';
+                        if (link.startsWith('http')) {
+                            window.open(link, '_blank');
+                        } else {
+                            window.location.href = link;
+                        }
                     }
                 });
             });

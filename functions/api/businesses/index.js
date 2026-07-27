@@ -433,8 +433,8 @@ export async function onRequestPost(context) {
         const admins = await env.DB.prepare("SELECT id FROM users WHERE role = 'admin' AND is_active = 1").all();
         if (admins.results && admins.results.length > 0) {
           const adminStmts = admins.results.map(a =>
-            env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)')
-              .bind(a.id, 'new_business', notifTitle, notifMsg, businessId, 'business')
+            env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)')
+              .bind(a.id, 'new_business', notifTitle, notifMsg, `/admin.html#businesses`)
           );
           await env.DB.batch(adminStmts);
         }
@@ -445,8 +445,8 @@ export async function onRequestPost(context) {
           const allUsers = await env.DB.prepare('SELECT id FROM users WHERE is_active = 1 AND role != ?').bind('admin').all();
           if (allUsers.results && allUsers.results.length > 0) {
             const userStmts = allUsers.results.map(u =>
-              env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)')
-                .bind(u.id, 'new_business', notifTitle, notifMsg, businessId, 'business')
+              env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)')
+                .bind(u.id, 'new_business', notifTitle, notifMsg, `/negocio/${businessId}`)
             );
             await env.DB.batch(userStmts);
           }

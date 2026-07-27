@@ -1,13 +1,14 @@
 // functions/api/notifications/index.js
 // GET: List notifications for logged-in user (with unread count)
 // POST: Create notification (admin only)
-// PATCH: Mark notifications as read / mark all as read
+// PATCH: Mark notifications as read / mark all / update settings
+// DELETE: Delete notification (own) or all (admin)
 // GET ?action=unread_count — just the unread badge count
 // GET ?action=settings — get notification settings (admin only)
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
@@ -96,7 +97,7 @@ export async function onRequestGet(context) {
     const total = countRow?.total || 0;
 
     const notifications = await env.DB.prepare(
-      `SELECT id, type, title, message, related_id, related_type, is_read, created_at
+      `SELECT id, type, title, message, link, is_read, created_at
        FROM notifications ${where}
        ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(...bindings, limit, offset).all();
@@ -126,7 +127,7 @@ export async function onRequestPost(context) {
     }
 
     const body = await request.json();
-    const { target_user_ids, type, title, message, related_id, related_type } = body;
+    const { target_user_ids, type, title, message, link } = body;
 
     if (!title) {
       return new Response(JSON.stringify({ error: 'Título requerido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -138,16 +139,16 @@ export async function onRequestPost(context) {
       const users = await env.DB.prepare('SELECT id FROM users WHERE is_active = 1').all();
       if (users.results && users.results.length > 0) {
         const stmts = users.results.map(u =>
-          env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)')
-            .bind(u.id, type || 'custom', title, message || null, related_id || null, related_type || null)
+          env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)')
+            .bind(u.id, type || 'custom', title, message || null, link || null)
         );
-        const batchResult = await env.DB.batch(stmts);
+        await env.DB.batch(stmts);
         inserted = users.results.length;
       }
     } else if (Array.isArray(target_user_ids) && target_user_ids.length > 0) {
       const stmts = target_user_ids.map(uid =>
-        env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, related_id, related_type) VALUES (?, ?, ?, ?, ?, ?)')
-          .bind(uid, type || 'custom', title, message || null, related_id || null, related_type || null)
+        env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)')
+          .bind(uid, type || 'custom', title, message || null, link || null)
       );
       await env.DB.batch(stmts);
       inserted = target_user_ids.length;
@@ -206,6 +207,44 @@ export async function onRequestPatch(context) {
     }
 
     return new Response(JSON.stringify({ error: 'Acción no reconocida. Usar: mark_read, mark_all_read, update_settings' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  }
+}
+
+// ─── DELETE: Delete notification(s) ────────────────────────────
+export async function onRequestDelete(context) {
+  try {
+    const { request, env } = context;
+    const user = await requireAuth(request, env);
+    if (!user) {
+      return new Response(JSON.stringify({ error: 'Token requerido' }), { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const url = new URL(request.url);
+    const id = url.searchParams.get('id');
+    const deleteAll = url.searchParams.get('all') === '1';
+
+    // Admin can delete any notification (single or all)
+    if (user.role === 'admin') {
+      if (deleteAll) {
+        await env.DB.prepare('DELETE FROM notifications').run();
+        return new Response(JSON.stringify({ success: true, message: 'Todas las notificaciones eliminadas' }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (id) {
+        await env.DB.prepare('DELETE FROM notifications WHERE id = ?').bind(parseInt(id)).run();
+        return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      return new Response(JSON.stringify({ error: 'Especificar id o all=1' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    // Regular user can only delete their own
+    if (id) {
+      await env.DB.prepare('DELETE FROM notifications WHERE id = ? AND user_id = ?').bind(parseInt(id), user.id).run();
+      return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    return new Response(JSON.stringify({ error: 'ID requerido' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }

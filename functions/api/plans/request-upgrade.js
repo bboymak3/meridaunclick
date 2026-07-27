@@ -116,6 +116,24 @@ export async function onRequestPost(context) {
 
     const requestId = result.meta.last_row_id;
 
+    // ── Notify admin about new premium request ──
+    try {
+      const notifEnabled = await env.DB.prepare("SELECT value FROM admin_settings WHERE key = 'notifications_enabled'").first();
+      if (notifEnabled && notifEnabled.value === '1') {
+        const admins = await env.DB.prepare("SELECT id FROM users WHERE role = 'admin' AND is_active = 1").all();
+        if (admins.results && admins.results.length > 0) {
+          const userName = payload.name || payload.email || 'Un usuario';
+          const stmts = admins.results.map(a =>
+            env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)')
+              .bind(a.id, 'premium_request', 'Nueva solicitud Premium', `${userName} solicitó upgrade a Premium — pendiente de revisión.`, '/admin.html#premium')
+          );
+          await env.DB.batch(stmts);
+        }
+      }
+    } catch (notifErr) {
+      console.error('Error sending premium notification:', notifErr);
+    }
+
     return new Response(JSON.stringify({
       message: 'Solicitud de Premium enviada exitosamente. Tu comprobante sera revisado por un administrador.',
       request_id: requestId,

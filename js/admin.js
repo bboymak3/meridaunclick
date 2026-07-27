@@ -67,6 +67,7 @@ if (!window._renderVideoList) {
     let inmueblesPage = 1;
     let productsPage = 1;
     let premiumPage = 1;
+    let notifPage = 1;
     let premiumFilter = 'pending';
     let premiumActivateUserId = null;
     const PAGE_LIMIT = 15;
@@ -92,6 +93,7 @@ if (!window._renderVideoList) {
     const tabPopup = document.getElementById('tabPopup');
     const tabBazar = document.getElementById('tabBazar');
     const tabCarousel = document.getElementById('tabCarousel');
+    const tabNotifications = document.getElementById('tabNotifications');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -298,7 +300,7 @@ if (!window._renderVideoList) {
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories'), popup: tabPopup, bazar: tabBazar, carousel: tabCarousel };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories'), popup: tabPopup, bazar: tabBazar, carousel: tabCarousel, notifications: tabNotifications };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -306,7 +308,7 @@ if (!window._renderVideoList) {
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías', popup: 'Ventana Emergente', bazar: 'Bazar', carousel: 'Carrusel de Videos' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías', popup: 'Ventana Emergente', bazar: 'Bazar', carousel: 'Carrusel de Videos', notifications: 'Notificaciones' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -368,6 +370,10 @@ if (!window._renderVideoList) {
                 break;
             case 'carousel':
                 loadCarouselTab();
+                break;
+            case 'notifications':
+                notifPage = 1;
+                loadAdminNotifications();
                 break;
         }
 
@@ -5605,6 +5611,234 @@ if (!window._renderVideoList) {
                 pendingVideoFile = null;
             }
         });
+    })();
+
+    // ═══════════════════════════════════════════════════════════════
+    // NOTIFICATIONS ADMIN TAB
+    // ═══════════════════════════════════════════════════════════════
+    (function setupAdminNotifications() {
+        const composeBtn = document.getElementById('adminNotifComposeBtn');
+        const composeSection = document.getElementById('adminNotifComposeSection');
+        const cancelBtn = document.getElementById('notifCancelBtn');
+        const sendBtn = document.getElementById('notifSendBtn');
+        const deleteAllBtn = document.getElementById('adminNotifDeleteAllBtn');
+        const tableBody = document.getElementById('adminNotifTableBody');
+        const paginationEl = document.getElementById('adminNotifPagination');
+        const sendStatus = document.getElementById('notifSendStatus');
+        const userSearch = document.getElementById('notifUserSearch');
+        const userResults = document.getElementById('notifUserResults');
+        const selectedUserId = document.getElementById('notifSelectedUserId');
+        const targetRadios = document.querySelectorAll('input[name="notifTarget"]');
+
+        if (!composeBtn || !tableBody) return;
+
+        // Toggle compose section
+        composeBtn.addEventListener('click', () => {
+            composeSection.style.display = composeSection.style.display === 'none' ? 'block' : 'none';
+        });
+        cancelBtn.addEventListener('click', () => {
+            composeSection.style.display = 'none';
+        });
+
+        // Show/hide user search based on target
+        targetRadios.forEach(r => {
+            r.addEventListener('change', () => {
+                const specificWrap = document.getElementById('notifSpecificUserWrap');
+                specificWrap.style.display = r.value === 'specific' && r.checked ? 'block' : 'none';
+                if (r.value !== 'specific') {
+                    selectedUserId.value = '';
+                    userResults.style.display = 'none';
+                }
+            });
+        });
+
+        // User search for specific target
+        let searchTimeout = null;
+        userSearch.addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            const q = userSearch.value.trim();
+            if (q.length < 2) { userResults.style.display = 'none'; return; }
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const users = await api.get('/users?action=search&q=' + encodeURIComponent(q));
+                    const list = users.users || users || [];
+                    if (list.length === 0) {
+                        userResults.innerHTML = '<div style="padding:12px;text-align:center;color:#94a3b8;font-size:0.82rem;">No se encontraron usuarios</div>';
+                    } else {
+                        userResults.innerHTML = list.slice(0, 10).map(u => `
+                            <div class="notif-user-item" data-uid="${u.id}" style="display:flex;align-items:center;gap:10px;padding:8px 12px;cursor:pointer;transition:background .15s;border-bottom:1px solid #f1f5f9;">
+                                <div style="width:32px;height:32px;border-radius:50%;background:#e0e7ff;display:flex;align-items:center;justify-content:center;color:#4338ca;font-weight:700;font-size:0.75rem;">${(u.name || 'U').substring(0,1).toUpperCase()}</div>
+                                <div><div style="font-size:0.82rem;font-weight:600;color:#1e293b;">${escapeHtml(u.name || 'Sin nombre')}</div><div style="font-size:0.72rem;color:#64748b;">${escapeHtml(u.email || '')}</div></div>
+                            </div>
+                        `).join('');
+                        userResults.querySelectorAll('.notif-user-item').forEach(item => {
+                            item.addEventListener('click', () => {
+                                selectedUserId.value = item.dataset.uid;
+                                userSearch.value = item.querySelector('div[style*="font-weight:600"]').textContent;
+                                userResults.style.display = 'none';
+                            });
+                            item.addEventListener('mouseenter', () => item.style.background = '#f0f4ff');
+                            item.addEventListener('mouseleave', () => item.style.background = 'transparent');
+                        });
+                    }
+                    userResults.style.display = 'block';
+                } catch(e) {
+                    userResults.style.display = 'none';
+                }
+            }, 300);
+        });
+
+        // Send notification
+        sendBtn.addEventListener('click', async () => {
+            const title = document.getElementById('notifTitleInput').value.trim();
+            const message = document.getElementById('notifMessageInput').value.trim();
+            const link = document.getElementById('notifLinkInput').value.trim();
+            const type = document.getElementById('notifTypeSelect').value;
+            const target = document.querySelector('input[name="notifTarget"]:checked').value;
+
+            if (!title) { showToast('El título es obligatorio', 'error'); return; }
+
+            let targetUserIds;
+            if (target === 'all') {
+                targetUserIds = 'all';
+            } else if (target === 'admins') {
+                try {
+                    const users = await api.get('/users?role=admin');
+                    targetUserIds = (users.users || users || []).map(u => u.id);
+                } catch(e) {
+                    showToast('Error al obtener admins', 'error');
+                    return;
+                }
+            } else {
+                const uid = parseInt(selectedUserId.value);
+                if (!uid) { showToast('Selecciona un usuario', 'error'); return; }
+                targetUserIds = [uid];
+            }
+
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+
+            try {
+                const result = await api.post('/notifications', {
+                    target_user_ids: targetUserIds,
+                    type, title, message, link
+                });
+                showToast(`Notificación enviada a ${result.inserted} usuario(s)`, 'success');
+                // Reset form
+                document.getElementById('notifTitleInput').value = '';
+                document.getElementById('notifMessageInput').value = '';
+                document.getElementById('notifLinkInput').value = '';
+                selectedUserId.value = '';
+                userSearch.value = '';
+                composeSection.style.display = 'none';
+                loadAdminNotifications();
+            } catch(e) {
+                showToast(e.message || 'Error al enviar', 'error');
+            } finally {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar';
+            }
+        });
+
+        // Delete all notifications
+        deleteAllBtn.addEventListener('click', async () => {
+            if (!confirm('¿Eliminar TODAS las notificaciones del sistema? Esta acción no se puede deshacer.')) return;
+            try {
+                await api.delete('/notifications?all=1');
+                showToast('Todas las notificaciones eliminadas', 'success');
+                loadAdminNotifications();
+            } catch(e) {
+                showToast('Error al eliminar', 'error');
+            }
+        });
+
+        // Delete single notification
+        window.deleteAdminNotification = async function(id) {
+            if (!confirm('¿Eliminar esta notificación?')) return;
+            try {
+                await api.delete('/notifications?id=' + id);
+                showToast('Notificación eliminada', 'success');
+                loadAdminNotifications();
+            } catch(e) {
+                showToast('Error al eliminar', 'error');
+            }
+        };
+
+        // Expose load function
+        window.loadAdminNotifications = async function() {
+            try {
+                // Fetch admin notifications (we need a way to see ALL notifications)
+                // Use the admin's own notifications as a proxy, plus we can query all
+                const data = await api.get('/notifications?page=' + notifPage + '&limit=' + PAGE_LIMIT);
+                const notifs = data.notifications || [];
+                const total = data.total || 0;
+
+                if (notifs.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-bell-slash" style="font-size:1.5rem;display:block;margin-bottom:8px;"></i>No hay notificaciones</td></tr>';
+                    paginationEl.innerHTML = '';
+                    return;
+                }
+
+                // Get all users to map user_id → name
+                let userMap = {};
+                try {
+                    const allUsers = await api.get('/users?limit=1000');
+                    (allUsers.users || allUsers || []).forEach(u => { userMap[u.id] = u.name || u.email || 'ID:' + u.id; });
+                } catch(e) {}
+
+                tableBody.innerHTML = notifs.map(n => {
+                    const typeLabel = { new_business: 'Negocio', new_job: 'Empleo', review: 'Reseña', premium_request: 'Premium', announcement: 'Anuncio', alert: 'Alerta', custom: 'Personalizado' }[n.type] || n.type;
+                    const typeColor = { new_business: '#059669', new_job: '#006EE3', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b' }[n.type] || '#64748b';
+                    const date = n.created_at ? new Date(n.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
+                    return `<tr>
+                        <td style="white-space:nowrap;">${date}</td>
+                        <td><span style="background:${typeColor}15;color:${typeColor};padding:2px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;">${escapeHtml(typeLabel)}</span></td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(n.title || '')}</td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b;">${escapeHtml(n.message || '-')}</td>
+                        <td style="font-size:0.8rem;">${escapeHtml(userMap[n.user_id] || 'Usuario ' + n.user_id)}</td>
+                        <td>${n.is_read ? '<span style="color:#94a3b8;">Sí</span>' : '<span style="color:#006EE3;font-weight:600;">No</span>'}</td>
+                        <td><button onclick="deleteAdminNotification(${n.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.85rem;"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                }).join('');
+
+                // Pagination
+                const totalPages = Math.ceil(total / PAGE_LIMIT);
+                paginationEl.innerHTML = '';
+                if (totalPages > 1) {
+                    for (let i = 1; i <= totalPages; i++) {
+                        const btn = document.createElement('button');
+                        btn.textContent = i;
+                        btn.style.cssText = i === notifPage
+                            ? 'background:#006EE3;color:#fff;border:1px solid #006EE3;border-radius:6px;padding:4px 12px;font-size:0.8rem;cursor:pointer;font-weight:600;'
+                            : 'background:#fff;color:#475569;border:1px solid #e2e8f0;border-radius:6px;padding:4px 12px;font-size:0.8rem;cursor:pointer;';
+                        btn.addEventListener('click', () => { notifPage = i; loadAdminNotifications(); });
+                        paginationEl.appendChild(btn);
+                    }
+                }
+            } catch(e) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#ef4444;">Error al cargar notificaciones</td></tr>';
+            }
+        };
+
+        // Poll admin notification badge
+        async function pollAdminNotifBadge() {
+            try {
+                const data = await api.get('/notifications?action=unread_count');
+                const count = data.count || 0;
+                const badge = document.getElementById('adminNotifBadge');
+                if (badge) {
+                    if (count > 0) {
+                        badge.textContent = count > 99 ? '99+' : count;
+                        badge.style.display = 'inline';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                }
+            } catch(e) {}
+        }
+        pollAdminNotifBadge();
+        setInterval(pollAdminNotifBadge, 30000);
+
     })();
 
     // ─── Initialize on DOM Ready ────────────────────────────────

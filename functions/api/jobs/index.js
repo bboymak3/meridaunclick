@@ -347,6 +347,23 @@ export async function onRequestPost(context) {
       console.error('Error setting job expiration:', expErr);
     }
 
+    // ── Send notification to admin about new job ──
+    try {
+      const notifEnabled = await env.DB.prepare("SELECT value FROM admin_settings WHERE key = 'notifications_enabled'").first();
+      if (notifEnabled && notifEnabled.value === '1') {
+        const admins = await env.DB.prepare("SELECT id FROM users WHERE role = 'admin' AND is_active = 1").all();
+        if (admins.results && admins.results.length > 0) {
+          const stmts = admins.results.map(a =>
+            env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)')
+              .bind(a.id, 'new_job', 'Nuevo empleo registrado', `"${title.trim()}" en ${companyNameFinal} — pendiente de aprobación.`, '/admin.html#jobs')
+          );
+          await env.DB.batch(stmts);
+        }
+      }
+    } catch (notifErr) {
+      console.error('Error sending job notification:', notifErr);
+    }
+
     return new Response(JSON.stringify({
       message: 'Oferta de empleo registrada exitosamente. Está pendiente de aprobación.',
       job_id: jobId,
