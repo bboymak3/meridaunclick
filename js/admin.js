@@ -5769,7 +5769,7 @@ if (!window._renderVideoList) {
             try {
                 // Fetch admin notifications (we need a way to see ALL notifications)
                 // Use the admin's own notifications as a proxy, plus we can query all
-                const data = await api.get('/notifications?page=' + notifPage + '&limit=' + PAGE_LIMIT);
+                const data = await api.get('/notifications?page=' + notifPage + '&limit=' + PAGE_LIMIT + '&all=1');
                 const notifs = data.notifications || [];
                 const total = data.total || 0;
 

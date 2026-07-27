@@ -84,12 +84,20 @@ export async function onRequestGet(context) {
     const page = Math.max(1, parseInt(url.searchParams.get('page')) || 1);
     const limit = Math.min(50, parseInt(url.searchParams.get('limit')) || 20);
     const unreadOnly = url.searchParams.get('unread') === '1';
+    const viewAll = url.searchParams.get('all') === '1' && user.role === 'admin';
     const offset = (page - 1) * limit;
 
-    let where = 'WHERE user_id = ?';
-    const bindings = [user.id];
-    if (unreadOnly) {
-      where += ' AND is_read = 0';
+    let where, bindings;
+    if (viewAll) {
+      // Admin can see all notifications in the system
+      where = unreadOnly ? 'WHERE is_read = 0' : 'WHERE 1=1';
+      bindings = [];
+    } else {
+      where = 'WHERE user_id = ?';
+      bindings = [user.id];
+      if (unreadOnly) {
+        where += ' AND is_read = 0';
+      }
     }
 
     const countRow = await env.DB.prepare(`SELECT COUNT(*) as total FROM notifications ${where}`)
@@ -97,7 +105,7 @@ export async function onRequestGet(context) {
     const total = countRow?.total || 0;
 
     const notifications = await env.DB.prepare(
-      `SELECT id, type, title, message, link, is_read, created_at
+      `SELECT id, ${viewAll ? 'user_id,' : ''} type, title, message, link, is_read, created_at
        FROM notifications ${where}
        ORDER BY created_at DESC LIMIT ? OFFSET ?`
     ).bind(...bindings, limit, offset).all();
@@ -140,7 +148,7 @@ export async function onRequestPost(context) {
       if (users.results && users.results.length > 0) {
         const stmts = users.results.map(u =>
           env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)')
-            .bind(u.id, type || 'custom', title, message || null, link || null)
+            .bind(u.id, type || 'custom', title, message || '', link || null)
         );
         await env.DB.batch(stmts);
         inserted = users.results.length;
@@ -148,7 +156,7 @@ export async function onRequestPost(context) {
     } else if (Array.isArray(target_user_ids) && target_user_ids.length > 0) {
       const stmts = target_user_ids.map(uid =>
         env.DB.prepare('INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, ?, ?, ?, ?)')
-          .bind(uid, type || 'custom', title, message || null, link || null)
+          .bind(uid, type || 'custom', title, message || '', link || null)
       );
       await env.DB.batch(stmts);
       inserted = target_user_ids.length;
