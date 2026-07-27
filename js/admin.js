@@ -5850,7 +5850,7 @@ if (!window._renderVideoList) {
 
                 tableBody.innerHTML = notifs.map((n, idx) => {
                     const typeLabel = { new_business: 'Negocio', new_job: 'Empleo', new_property: 'Inmueble', new_product: 'Producto', review: 'Reseña', premium_request: 'Premium', announcement: 'Anuncio', alert: 'Alerta', custom: 'Personalizado', system: 'Sistema', premium: 'Premium' }[n.type] || n.type;
-                    const typeColor = { new_business: '#059669', new_job: '#006EE3', new_property: '#8b5cf6', new_product: '#f59e0b', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b' }[n.type] || '#64748b;
+                    const typeColor = { new_business: '#059669', new_job: '#006EE3', new_property: '#8b5cf6', new_product: '#f59e0b', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b' }[n.type] || '#64748b';
                     const date = n.created_at ? new Date(n.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
                     return `<tr style="cursor:pointer;transition:background .15s;" onclick="openNotifDetail(${idx})" onmouseenter="this.style.background='#f0f4ff'" onmouseleave="this.style.background=''">
                         <td style="white-space:nowrap;">${date}</td>
