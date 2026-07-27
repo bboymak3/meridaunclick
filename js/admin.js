@@ -5660,7 +5660,7 @@ if (!window._renderVideoList) {
             if (q.length < 2) { userResults.style.display = 'none'; return; }
             searchTimeout = setTimeout(async () => {
                 try {
-                    const users = await api.get('/users?action=search&q=' + encodeURIComponent(q));
+                    const users = await api.get('/users?search=' + encodeURIComponent(q) + '&limit=10');
                     const list = users.users || users || [];
                     if (list.length === 0) {
                         userResults.innerHTML = '<div style="padding:12px;text-align:center;color:#94a3b8;font-size:0.82rem;">No se encontraron usuarios</div>';

@@ -105,10 +105,9 @@ export async function onRequestPost(context) {
     // Create notification
     try {
       await env.DB.prepare(`
-        INSERT INTO notifications (user_id, title, message, type, is_read) VALUES (?, ?, ?, 'premium', 0)
+        INSERT INTO notifications (user_id, type, title, message, link) VALUES (?, 'premium', 'Plan Premium Activado', ?, 'dashboard.html')
       `).bind(
         user_id,
-        'Plan Premium Activado',
         `Tu plan Premium ha sido activado por ${days} dias. Tus publicaciones ya no caducaran.`,
       ).run();
     } catch (e) { /* notification table may not exist */ }
