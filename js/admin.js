@@ -1986,10 +1986,6 @@ if (!window._renderVideoList) {
                         </td>
                     </tr>`;
                 }).join('');
-
-                // Store references for detail modal
-                window._adminNotifList = notifs;
-                window._adminNotifUserMap = userMap;
             }
 
             const countEl = document.getElementById('b2ResultsCount');
