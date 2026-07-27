@@ -1986,6 +1986,10 @@ if (!window._renderVideoList) {
                         </td>
                     </tr>`;
                 }).join('');
+
+                // Store references for detail modal
+                window._adminNotifList = notifs;
+                window._adminNotifUserMap = userMap;
             }
 
             const countEl = document.getElementById('b2ResultsCount');
@@ -5752,15 +5756,66 @@ if (!window._renderVideoList) {
             }
         });
 
-        // Click on notification row to navigate
-        window.handleAdminNotifClick = function(tr) {
-            const link = tr.dataset.notifLink;
-            if (!link) return;
-            if (link.startsWith('http')) {
-                window.open(link, '_blank');
+        // Open notification detail modal
+        window.openNotifDetail = function(idx) {
+            const n = window._adminNotifList && window._adminNotifList[idx];
+            if (!n) return;
+            const userMap = window._adminNotifUserMap || {};
+            const typeLabel = { new_business: 'Negocio', new_job: 'Empleo', new_property: 'Inmueble', new_product: 'Producto', review: 'Reseña', premium_request: 'Premium', announcement: 'Anuncio', alert: 'Alerta', custom: 'Personalizado', system: 'Sistema', premium: 'Premium' }[n.type] || n.type;
+            const typeColor = { new_business: '#059669', new_job: '#006EE3', new_property: '#8b5cf6', new_product: '#f59e0b', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b', system: '#64748b', premium: '#8b5cf6' }[n.type] || '#64748b';
+
+            // Type badge
+            const typeBadge = document.getElementById('notifDetailTypeBadge');
+            typeBadge.textContent = typeLabel;
+            typeBadge.style.background = typeColor + '15';
+            typeBadge.style.color = typeColor;
+
+            // Read badge
+            const readBadge = document.getElementById('notifDetailReadBadge');
+            if (n.is_read) {
+                readBadge.textContent = 'Leída';
+                readBadge.style.background = '#f1f5f9';
+                readBadge.style.color = '#94a3b8';
             } else {
-                window.location.href = link;
+                readBadge.textContent = 'No leída';
+                readBadge.style.background = '#006EE315';
+                readBadge.style.color = '#006EE3';
             }
+
+            // Content
+            document.getElementById('notifDetailTitle').textContent = n.title || 'Sin título';
+            document.getElementById('notifDetailMessage').textContent = n.message || 'Sin mensaje';
+            document.getElementById('notifDetailUser').textContent = userMap[n.user_id] || 'Usuario ' + n.user_id;
+            document.getElementById('notifDetailDate').textContent = n.created_at ? new Date(n.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+
+            // Link
+            const linkWrap = document.getElementById('notifDetailLinkWrap');
+            const goBtn = document.getElementById('notifDetailGoBtn');
+            const linkEl = document.getElementById('notifDetailLink');
+            const linkText = document.getElementById('notifDetailLinkText');
+            if (n.link) {
+                linkWrap.style.display = 'block';
+                goBtn.style.display = 'inline-flex';
+                linkEl.href = n.link;
+                linkText.textContent = n.link;
+                goBtn.onclick = function() {
+                    if (n.link.startsWith('http')) { window.open(n.link, '_blank'); }
+                    else { window.location.href = n.link; }
+                };
+            } else {
+                linkWrap.style.display = 'none';
+                goBtn.style.display = 'none';
+            }
+
+            // Delete button
+            const delBtn = document.getElementById('notifDetailDeleteBtn');
+            delBtn.onclick = function() {
+                document.getElementById('notifDetailModal').classList.add('hidden');
+                deleteAdminNotification(n.id);
+            };
+
+            // Show modal
+            document.getElementById('notifDetailModal').classList.remove('hidden');
         };
 
         // Delete single notification
@@ -5797,13 +5852,11 @@ if (!window._renderVideoList) {
                     (allUsers.users || allUsers || []).forEach(u => { userMap[u.id] = u.name || u.email || 'ID:' + u.id; });
                 } catch(e) {}
 
-                tableBody.innerHTML = notifs.map(n => {
-                    const typeLabel = { new_business: 'Negocio', new_job: 'Empleo', new_property: 'Inmueble', new_product: 'Producto', review: 'Reseña', premium_request: 'Premium', announcement: 'Anuncio', alert: 'Alerta', custom: 'Personalizado' }[n.type] || n.type;
+                tableBody.innerHTML = notifs.map((n, idx) => {
+                    const typeLabel = { new_business: 'Negocio', new_job: 'Empleo', new_property: 'Inmueble', new_product: 'Producto', review: 'Reseña', premium_request: 'Premium', announcement: 'Anuncio', alert: 'Alerta', custom: 'Personalizado', system: 'Sistema', premium: 'Premium' }[n.type] || n.type;
                     const typeColor = { new_business: '#059669', new_job: '#006EE3', new_property: '#8b5cf6', new_product: '#f59e0b', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b' }[n.type] || '#64748b;
-                    const date = n.created_at ? new Date(n.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
-                    const rowCursor = n.link ? 'cursor:pointer;' : '';
-                    const rowBg = n.link ? 'transition:background .15s;' : '';
-                    return `<tr data-notif-link="${n.link || ''}" style="${rowCursor}${rowBg}" ${n.link ? 'onclick="handleAdminNotifClick(this)"' : ''} onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
+                    const date = n.created_at ? new Date(n.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                    return `<tr style="cursor:pointer;transition:background .15s;" onclick="openNotifDetail(${idx})" onmouseenter="this.style.background='#f0f4ff'" onmouseleave="this.style.background=''">
                         <td style="white-space:nowrap;">${date}</td>
                         <td><span style="background:${typeColor}15;color:${typeColor};padding:2px 8px;border-radius:6px;font-size:0.75rem;font-weight:600;">${escapeHtml(typeLabel)}</span></td>
                         <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(n.title || '')}</td>
@@ -5813,6 +5866,10 @@ if (!window._renderVideoList) {
                         <td><button onclick="event.stopPropagation(); deleteAdminNotification(${n.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.85rem;"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 }).join('');
+
+                // Store references for detail modal
+                window._adminNotifList = notifs;
+                window._adminNotifUserMap = userMap;
 
                 // Pagination
                 const totalPages = Math.ceil(total / PAGE_LIMIT);

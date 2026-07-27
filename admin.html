@@ -1363,6 +1363,62 @@
             </div>
         </div>
 
+    <!-- Notification Detail Modal -->
+    <div class="modal hidden" id="notifDetailModal">
+        <div class="modal-overlay" onclick="document.getElementById('notifDetailModal').classList.add('hidden')"></div>
+        <div class="modal-content" style="max-width:560px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                <h3 style="margin:0;font-size:1.1rem;"><i class="fas fa-envelope-open-text" style="color:#006EE3;"></i> Detalle de Notificación</h3>
+                <button onclick="document.getElementById('notifDetailModal').classList.add('hidden')" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#6b7280;padding:4px;"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+                <span id="notifDetailTypeBadge" style="padding:4px 12px;border-radius:8px;font-size:0.8rem;font-weight:600;"></span>
+                <span id="notifDetailReadBadge" style="padding:4px 12px;border-radius:8px;font-size:0.8rem;font-weight:600;"></span>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-size:0.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Título</label>
+                <div id="notifDetailTitle" style="font-size:1.05rem;font-weight:700;color:#1e293b;margin-top:4px;line-height:1.4;"></div>
+            </div>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-size:0.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Mensaje</label>
+                <div id="notifDetailMessage" style="font-size:0.95rem;color:#334155;margin-top:4px;line-height:1.6;background:#f8fafc;padding:14px;border-radius:10px;border:1px solid #e2e8f0;"></div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                <div>
+                    <label style="font-size:0.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Destinatario</label>
+                    <div id="notifDetailUser" style="font-size:0.9rem;color:#1e293b;margin-top:4px;"></div>
+                </div>
+                <div>
+                    <label style="font-size:0.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Fecha</label>
+                    <div id="notifDetailDate" style="font-size:0.9rem;color:#1e293b;margin-top:4px;"></div>
+                </div>
+            </div>
+
+            <div id="notifDetailLinkWrap" style="margin-bottom:20px;display:none;">
+                <label style="font-size:0.75rem;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.5px;">Enlace</label>
+                <a id="notifDetailLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;font-size:0.9rem;color:#006EE3;text-decoration:none;margin-top:4px;font-weight:600;">
+                    <i class="fas fa-external-link-alt"></i> <span id="notifDetailLinkText"></span>
+                </a>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+                <button id="notifDetailGoBtn" class="btn btn-primary" style="background:#006EE3;display:none;" onclick="">
+                    <i class="fas fa-arrow-right"></i> Ir al enlace
+                </button>
+                <button id="notifDetailDeleteBtn" class="btn btn-secondary" style="color:#ef4444;" onclick="">
+                    <i class="fas fa-trash"></i> Eliminar
+                </button>
+                <button class="btn btn-secondary" onclick="document.getElementById('notifDetailModal').classList.add('hidden')">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Carousel Add Video Modal -->
     <div class="modal hidden" id="carouselVideoModal">
         <div class="modal-overlay"></div>
