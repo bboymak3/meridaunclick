@@ -53,7 +53,7 @@ export async function onRequestPost(context) {
     // Ensure column exists
     try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN business_logo TEXT`).run(); } catch(e) {}
 
-    const LOGO_URL = 'api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png';
+    const LOGO_URL = '/api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png';
 
     // Update all HOLAX jobs that have no logo, empty logo, or old default logo
     const result = await env.DB.prepare(

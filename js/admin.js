@@ -2776,7 +2776,7 @@ if (!window._renderVideoList) {
             const val = jobCompany.value;
             jobLogoGroup.style.display = val ? '' : 'none';
             if (val === 'HOLAX') {
-                const holaxLogo = document.getElementById('setting_holax_logo_url')?.value || 'api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png';
+                const holaxLogo = document.getElementById('setting_holax_logo_url')?.value || '/api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png';
                 jobLogoInput.value = holaxLogo;
                 jobLogoPreview.src = holaxLogo;
                 jobLogoPreview.style.display = '';
@@ -4548,7 +4548,7 @@ if (!window._renderVideoList) {
             if (btn) btn.style.display = 'inline-flex';
         }
         // HOLAX logo preview
-        const holaxLogoUrl = document.getElementById('setting_holax_logo_url')?.value || 'api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png';
+        const holaxLogoUrl = document.getElementById('setting_holax_logo_url')?.value || '/api/serve?key=merida%2Flogos%2F6%2F1783998320478_Logo_Holax.png';
         if (holaxLogoUrl) {
             const img = document.getElementById('holaxLogoImg');
             const icon = document.getElementById('holaxLogoPlaceholder');
