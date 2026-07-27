@@ -4324,7 +4324,7 @@ window.closeEditBusinessModal = function() {
                 return;
             }
             list.innerHTML = notifs.map(n => {
-                const icon = n.type === 'new_business' ? 'fa-store' : n.type === 'new_job' ? 'fa-briefcase' : n.type === 'review' ? 'fa-star' : n.type === 'premium_request' ? 'fa-crown' : n.type === 'announcement' ? 'fa-bullhorn' : n.type === 'alert' ? 'fa-exclamation-triangle' : 'fa-bell';
+                const icon = n.type === 'new_business' ? 'fa-store' : n.type === 'new_job' ? 'fa-briefcase' : n.type === 'new_property' ? 'fa-house' : n.type === 'new_product' ? 'fa-box' : n.type === 'review' ? 'fa-star' : n.type === 'premium_request' ? 'fa-crown' : n.type === 'announcement' ? 'fa-bullhorn' : n.type === 'alert' ? 'fa-exclamation-triangle' : 'fa-bell';
                 const iconBg = n.is_read ? '#f1f5f9' : '#eff6ff';
                 const iconColor = n.is_read ? '#94a3b8' : '#006EE3';
                 const bg = n.is_read ? '#fff' : '#f8faff';

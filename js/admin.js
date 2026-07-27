@@ -5787,8 +5787,8 @@ if (!window._renderVideoList) {
                 } catch(e) {}
 
                 tableBody.innerHTML = notifs.map(n => {
-                    const typeLabel = { new_business: 'Negocio', new_job: 'Empleo', review: 'Reseña', premium_request: 'Premium', announcement: 'Anuncio', alert: 'Alerta', custom: 'Personalizado' }[n.type] || n.type;
-                    const typeColor = { new_business: '#059669', new_job: '#006EE3', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b' }[n.type] || '#64748b';
+                    const typeLabel = { new_business: 'Negocio', new_job: 'Empleo', new_property: 'Inmueble', new_product: 'Producto', review: 'Reseña', premium_request: 'Premium', announcement: 'Anuncio', alert: 'Alerta', custom: 'Personalizado' }[n.type] || n.type;
+                    const typeColor = { new_business: '#059669', new_job: '#006EE3', new_property: '#8b5cf6', new_product: '#f59e0b', review: '#f59e0b', premium_request: '#8b5cf6', announcement: '#06b6d4', alert: '#ef4444', custom: '#64748b' }[n.type] || '#64748b';
                     const date = n.created_at ? new Date(n.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'short', year: 'numeric' }) : '-';
                     return `<tr>
                         <td style="white-space:nowrap;">${date}</td>
