@@ -74,7 +74,7 @@ export async function onRequestGet(context) {
        FROM businesses b
        LEFT JOIN categories c ON b.category_id = c.id
        WHERE LOWER(b.state) = LOWER(?) AND b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != ''
-       ORDER BY b.featured DESC
+       ORDER BY b.featured DESC, b.created_at DESC
        LIMIT 50`
     ).bind(stateName).all();
 

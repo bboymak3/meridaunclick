@@ -601,6 +601,27 @@ git push origin main
 
 ## Registro de Actualizaciones
 
+### 2026-07-29 — Destacados siempre primero en todos los listados
+
+**Cambio principal:**
+
+- **Ordenamiento prioritario de destacados** — Los negocios, productos, empleos e inmuebles marcados como destacados (`featured = 1`) ahora aparecen SIEMPRE en las primeras posiciones de TODOS los listados, sin importar el tipo de ordenamiento seleccionado por el usuario. Esto aplica en: busquedas con filtros, "ver todos" desde el homepage, paginas de categoria, paginas de estado, marketplace y bolsa de empleo.
+- **Antes:** El ordenamiento por defecto priorizaba usuarios premium, luego fecha de creacion. Los destacados solo se veian primero en la pagina de inicio (grid especial) y en las paginas de categoria/estado.
+- **Ahora:** En TODOS los endpoints de listado, `featured DESC` es el primer criterio de ordenamiento, seguido del criterio que el usuario seleccione (precio, vistas, fecha, etc.).
+
+**Archivos modificados:**
+
+| Archivo | Cambio |
+|---|---|
+| `functions/api/businesses/index.js` | Todas las opciones de ORDER BY ahora incluyen `p.featured DESC` como primer criterio |
+| `functions/api/marketplace/index.js` | Todas las opciones de ORDER BY ahora incluyen `p.featured DESC` como primer criterio |
+| `functions/api/jobs/index.js` | Todas las opciones de ORDER BY ahora incluyen `j.featured DESC` como primer criterio |
+| `functions/estado/[slug].js` | Agregado orden secundario `b.created_at DESC` despues de `b.featured DESC` |
+
+**Nota:** Las paginas de categoria (`functions/categoria/[slug].js`) y el API de inmuebles (`functions/api/properties/index.js`) ya tenian `featured DESC` correcto. No requirieron cambios.
+
+---
+
 ### 2026-07-28 — Notificaciones y Panel Admin
 
 **Nuevas funcionalidades:**

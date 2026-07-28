@@ -135,13 +135,13 @@ export async function onRequestGet(context) {
 
     const whereClause = conditions.join(' AND ');
 
-    // Sort options — premium businesses get priority (shown first) in default/newest sort
+    // Sort options — featured businesses always first, then premium, then newest
     let orderBy = 'p.created_at DESC';
-    if (sort === 'views_desc') orderBy = 'p.views DESC';
-    else if (sort === 'price_asc') orderBy = 'p.price ASC';
-    else if (sort === 'price_desc') orderBy = 'p.price DESC';
-    else if (sort === 'oldest') orderBy = 'p.created_at ASC';
-    else orderBy = "(SELECT CASE WHEN u.plan_type = 'premium' THEN 0 ELSE 1 END FROM users u WHERE u.id = p.user_id), p.created_at DESC";
+    if (sort === 'views_desc') orderBy = 'p.featured DESC, p.views DESC';
+    else if (sort === 'price_asc') orderBy = 'p.featured DESC, p.price ASC';
+    else if (sort === 'price_desc') orderBy = 'p.featured DESC, p.price DESC';
+    else if (sort === 'oldest') orderBy = 'p.featured DESC, p.created_at ASC';
+    else orderBy = "p.featured DESC, (SELECT CASE WHEN u.plan_type = 'premium' THEN 0 ELSE 1 END FROM users u WHERE u.id = p.user_id), p.created_at DESC";
 
     // Count total matching businesses
     const countQuery = `SELECT COUNT(*) as total FROM businesses p WHERE ${whereClause}`;

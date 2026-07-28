@@ -127,13 +127,13 @@ export async function onRequestGet(context) {
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    // Sort options
-    let orderBy = 'p.sort_order ASC, p.created_at DESC';
-    if (sort === 'price_asc') orderBy = 'p.price ASC';
-    else if (sort === 'price_desc') orderBy = 'p.price DESC';
-    else if (sort === 'oldest') orderBy = 'p.created_at ASC';
-    else if (sort === 'name_asc') orderBy = 'p.name ASC';
-    else orderBy = 'p.sort_order ASC, p.created_at DESC';
+    // Sort options — featured products always first
+    let orderBy = 'p.featured DESC, p.sort_order ASC, p.created_at DESC';
+    if (sort === 'price_asc') orderBy = 'p.featured DESC, p.price ASC';
+    else if (sort === 'price_desc') orderBy = 'p.featured DESC, p.price DESC';
+    else if (sort === 'oldest') orderBy = 'p.featured DESC, p.created_at ASC';
+    else if (sort === 'name_asc') orderBy = 'p.featured DESC, p.name ASC';
+    else orderBy = 'p.featured DESC, p.sort_order ASC, p.created_at DESC';
 
     // Count total
     const countQuery = `SELECT COUNT(*) as total FROM products p ${whereClause}`;

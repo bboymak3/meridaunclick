@@ -118,11 +118,11 @@ export async function onRequestGet(context) {
 
     const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
 
-    // Sort
-    let orderBy = 'j.created_at DESC';
-    if (sort === 'views') orderBy = 'j.views DESC';
-    else if (sort === 'oldest') orderBy = 'j.created_at ASC';
-    else orderBy = 'j.created_at DESC';
+    // Sort — featured jobs always first
+    let orderBy = 'j.featured DESC, j.created_at DESC';
+    if (sort === 'views') orderBy = 'j.featured DESC, j.views DESC';
+    else if (sort === 'oldest') orderBy = 'j.featured DESC, j.created_at ASC';
+    else orderBy = 'j.featured DESC, j.created_at DESC';
 
     // Count total (no JOIN, so strip alias)
     const countWhere = whereClause.replace(/j\./g, 'job_listings.');
