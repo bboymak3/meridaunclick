@@ -90,6 +90,9 @@ export function renderBusinessPage(env, business, options = {}) {
     sectionLabel = null,
     tipoBreadcrumb = null,
     tipoLabel = null,
+    reviews = [],
+    avgRating = 0,
+    reviewCount = 0,
   } = options;
 
   const baseUrl = 'https://holax.com.ve';
@@ -181,6 +184,23 @@ export function renderBusinessPage(env, business, options = {}) {
       if (business.website) sameAs.push(business.website);
       if (sameAs.length) ld.sameAs = sameAs;
       if (business.schedule) ld.openingHours = business.schedule;
+      // AggregateRating + Reviews for rich snippets
+      if (reviewCount > 0) {
+        ld.aggregateRating = {
+          "@type": "AggregateRating",
+          "ratingValue": Math.round(avgRating * 10) / 10,
+          "bestRating": 5,
+          "worstRating": 1,
+          "reviewCount": reviewCount
+        };
+        const reviewItems = reviews.filter(r => r.comment).slice(0, 5).map(r => ({
+          "@type": "Review",
+          "author": { "@type": "Person", "name": r.name || 'Anónimo' },
+          "reviewRating": { "@type": "Rating", "ratingValue": r.rating, "bestRating": 5 },
+          "reviewBody": r.comment
+        }));
+        if (reviewItems.length > 0) ld.review = reviewItems;
+      }
       return ld;
     })())}</script>
     <script type="application/ld+json">${(() => {

@@ -162,6 +162,16 @@ export async function onRequestGet(context) {
       return ld;
     })())}</script>
 
+    <!-- JSON-LD: BreadcrumbList -->
+    <script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },
+        { "@type": "ListItem", "position": 2, "name": title, "item": `${baseUrl}/${bizTipo}/${bizCat}/${business.slug}` }
+      ]
+    })}</script>
+
     <!-- JSON-LD FAQ -->
     ${faqs.length > 0 ? `<script type="application/ld+json">${JSON.stringify({
       "@context": "https://schema.org",

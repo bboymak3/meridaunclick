@@ -180,25 +180,29 @@ export async function renderProductPage(env, product, options) {
     <meta name="twitter:description" content="${esc(description)}">
     <meta name="twitter:image" content="${imageUrl}">
     <!-- JSON-LD: Product + BreadcrumbList -->
-    <script type="application/ld+json">${JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "Product",
-      "name": title,
-      "description": product.description || description,
-      "image": productImages.length > 0 ? productImages : [imageUrl],
-      "url": canonicalUrl,
-      "brand": product.business_name ? { "@type": "Brand", "name": product.business_name } : undefined,
-      "offers": {
-        "@type": "Offer",
-        "price": product.price || "0",
-        "priceCurrency": "USD",
-        "availability": "https://schema.org/InStock",
-        "seller": {
-          "@type": "Organization",
-          "name": product.business_name || "HolaX"
+    <script type="application/ld+json">${JSON.stringify((() => {
+      const ld = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": title,
+        "description": product.description || description,
+        "image": productImages.length > 0 ? productImages : [imageUrl],
+        "url": canonicalUrl,
+        "brand": product.business_name ? { "@type": "Brand", "name": product.business_name } : undefined,
+        "offers": {
+          "@type": "Offer",
+          "price": product.price || "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "itemCondition": "https://schema.org/NewCondition",
+          "seller": {
+            "@type": "Organization",
+            "name": product.business_name || "HolaX"
+          }
         }
-      }
-    })}</script>
+      };
+      return ld;
+    })())}</script>
     <script type="application/ld+json">${(() => {
       const crumbs = [
         { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },

@@ -169,6 +169,18 @@ export async function onRequestGet(context) {
         { "@type": "ListItem", "position": 2, "name": stateName, "item": canonicalUrl }
       ]
     })}</script>
+    <script type="application/ld+json">${JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": `Negocios en ${stateName}`,
+      "numberOfItems": totalBiz,
+      "itemListElement": (businesses.results || []).slice(0, 20).map((b, i) => ({
+        "@type": "ListItem",
+        "position": i + 1,
+        "name": b.title,
+        "url": `https://holax.com.ve/${(b.business_type || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')}/${b.category_slug || 'otro'}/${b.slug}`
+      }))
+    })}</script>
 
     <link rel="stylesheet" href="/css/styles.css?v=4">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">

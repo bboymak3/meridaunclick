@@ -130,6 +130,21 @@ export async function onRequestGet(context) {
     const pathPrefix = '/' + tipo + '/' + categoria;
     const canonicalUrl = SITE_URL + pathPrefix + '/' + business.slug;
 
+    // Fetch reviews for rich snippets (AggregateRating)
+    let reviews = [];
+    let avgRating = 0;
+    let reviewCount = 0;
+    try {
+      const reviewRows = await env.DB.prepare(
+        'SELECT rating, comment, name, created_at FROM reviews WHERE business_id = ? AND rating IS NOT NULL AND rating > 0 ORDER BY created_at DESC LIMIT 5'
+      ).bind(business.id).all();
+      reviews = reviewRows.results || [];
+      reviewCount = reviews.length;
+      if (reviewCount > 0) {
+        avgRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount;
+      }
+    } catch (e) { /* reviews table may not exist */ }
+
     // Build breadcrumbs
     const tipoLabel = business.tipo_negocio_name || (business.business_type || 'Negocio').charAt(0).toUpperCase() + (business.business_type || 'negocio').slice(1);
 
@@ -138,6 +153,9 @@ export async function onRequestGet(context) {
       canonicalUrl: canonicalUrl,
       sectionLabel: business.category_name || tipoLabel,
       tipoLabel: tipoLabel,
+      reviews: reviews,
+      avgRating: avgRating,
+      reviewCount: reviewCount,
       categoryBreadcrumb: business.category_name ? {
         name: business.category_name,
         url: SITE_URL + '/categoria/' + business.category_slug,
