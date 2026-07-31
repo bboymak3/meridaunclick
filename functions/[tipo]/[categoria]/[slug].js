@@ -135,13 +135,18 @@ export async function onRequestGet(context) {
     let avgRating = 0;
     let reviewCount = 0;
     try {
-      const reviewRows = await env.DB.prepare(
-        'SELECT rating, comment, name, created_at FROM reviews WHERE business_id = ? AND rating IS NOT NULL AND rating > 0 ORDER BY created_at DESC LIMIT 5'
-      ).bind(business.id).all();
-      reviews = reviewRows.results || [];
-      reviewCount = reviews.length;
+      // Get total count and average first
+      const stats = await env.DB.prepare(
+        'SELECT COALESCE(AVG(rating), 0) as avg, COUNT(*) as cnt FROM reviews WHERE business_id = ? AND rating IS NOT NULL AND rating > 0'
+      ).bind(business.id).first();
+      reviewCount = stats?.cnt || 0;
+      avgRating = stats?.avg || 0;
+      // Get up to 5 most recent for Review snippets
       if (reviewCount > 0) {
-        avgRating = reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount;
+        const reviewRows = await env.DB.prepare(
+          'SELECT rating, comment, name, created_at FROM reviews WHERE business_id = ? AND rating IS NOT NULL AND rating > 0 ORDER BY created_at DESC LIMIT 5'
+        ).bind(business.id).all();
+        reviews = reviewRows.results || [];
       }
     } catch (e) { /* reviews table may not exist */ }
 

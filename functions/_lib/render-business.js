@@ -624,6 +624,7 @@ export function renderBusinessPage(env, business, options = {}) {
                     <div class="feature-chips">
                         <div class="feature-chip" id="statStateCityWrap" title="Estado / Ciudad"><i class="fas fa-map-marker-alt"></i> <span id="statStateCity">${escapeHtml((business.city || '') + (business.state ? ', ' + business.state : ''))}</span></div>
                         <div class="feature-chip" id="statCategoriaWrap" title="Categoría"><i class="fas fa-tag"></i> <span id="statCategoria">${escapeHtml(business.category_name || '--')}</span></div>
+                        ${reviewCount > 0 ? `<div class="feature-chip" style="background:linear-gradient(135deg,#fff8e1,#fff3cd);color:#f57f17;border:1px solid #ffd54f;" title="Calificación"><i class="fas fa-star" style="color:#ffc107;"></i> <span>${Math.round(avgRating * 10) / 10} (${reviewCount} reseña${reviewCount !== 1 ? 's' : ''})</span></div>` : ''}
                         ${business.especialidad ? `<div class="feature-chip" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;" title="Especialidad"><i class="fas fa-stethoscope"></i> <span>${escapeHtml(business.especialidad)}</span></div>` : ''}
                         <div class="feature-chip" id="statScheduleWrap" style="display:none;" title="Horario"><i class="fas fa-clock"></i> <span id="statSchedule">--</span></div>
                         <div class="feature-chip" id="statPhoneWrap" style="display:none;" title="Teléfono"><i class="fas fa-phone"></i> <span id="statPhone">--</span></div>
