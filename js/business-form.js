@@ -982,8 +982,26 @@
             // Show success with appropriate message
             if (editingBusinessId) {
                 showToast('Negocio actualizado exitosamente', 'success');
+                // GTM event: business updated
+                if (window.dataLayer) {
+                    window.dataLayer.push({
+                        event: 'business_updated',
+                        business_id: editingBusinessId,
+                        business_title: businessData.title || ''
+                    });
+                }
             } else {
                 showToast('Negocio registrado exitosamente. Pendiente de aprobación.', 'success');
+                // GTM event: new business created
+                if (window.dataLayer) {
+                    window.dataLayer.push({
+                        event: 'business_created',
+                        business_title: businessData.title || '',
+                        business_category: businessData.category_id || '',
+                        business_city: businessData.city || '',
+                        business_state: businessData.state || ''
+                    });
+                }
             }
 
             // Show R2 warning if needed

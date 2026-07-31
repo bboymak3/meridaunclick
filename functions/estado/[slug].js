@@ -65,18 +65,36 @@ export async function onRequestGet(context) {
     const stateDesc = `Directorio completo de negocios, productos, inmuebles y empleos en ${stateName}, Venezuela. Encuentra todo lo que necesitas en ${stateName}.`;
 
     // Fetch businesses
-    const businesses = await env.DB.prepare(
-      `SELECT b.id, b.title, b.slug, b.city, b.phone, b.whatsapp,
-              b.business_type,
-              c.name as category_name, c.slug as category_slug,
-              (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
-              b.featured
-       FROM businesses b
-       LEFT JOIN categories c ON b.category_id = c.id
-       WHERE LOWER(b.state) = LOWER(?) AND b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != ''
-       ORDER BY b.featured DESC, b.created_at DESC
-       LIMIT 50`
-    ).bind(stateName).all();
+    let businesses;
+    try {
+      businesses = await env.DB.prepare(
+        `SELECT b.id, b.title, b.slug, b.city, b.phone, b.whatsapp,
+                b.business_type,
+                c.name as category_name, c.slug as category_slug,
+                tn.slug as tipo_negocio_slug,
+                (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
+                b.featured
+         FROM businesses b
+         LEFT JOIN categories c ON b.category_id = c.id
+         LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
+         WHERE LOWER(b.state) = LOWER(?) AND b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != ''
+         ORDER BY b.featured DESC, b.created_at DESC
+         LIMIT 50`
+      ).bind(stateName).all();
+    } catch (joinErr) {
+      businesses = await env.DB.prepare(
+        `SELECT b.id, b.title, b.slug, b.city, b.phone, b.whatsapp,
+                b.business_type,
+                c.name as category_name, c.slug as category_slug,
+                (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
+                b.featured
+         FROM businesses b
+         LEFT JOIN categories c ON b.category_id = c.id
+         WHERE LOWER(b.state) = LOWER(?) AND b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != ''
+         ORDER BY b.featured DESC, b.created_at DESC
+         LIMIT 50`
+      ).bind(stateName).all();
+    }
 
     // Fetch categories with counts in this state
     const catCounts = await env.DB.prepare(
@@ -117,7 +135,7 @@ export async function onRequestGet(context) {
     // Build business cards
     const bizCards = (businesses.results || []).map(b => {
       const img = b.cover_image || '';
-      const tipo = (b.business_type || 'negocio').toLowerCase()
+      const tipo = b.tipo_negocio_slug || (b.business_type || 'negocio').toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       const cat = b.category_slug || 'otro';
       return `
@@ -185,7 +203,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         "@type": "ListItem",
         "position": i + 1,
         "name": b.title,
-        "url": `https://holax.com.ve/${(b.business_type || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')}/${b.category_slug || 'otro'}/${b.slug}`
+        "url": `https://holax.com.ve/${b.tipo_negocio_slug || (b.business_type || 'negocio').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')}/${b.category_slug || 'otro'}/${b.slug}`
       }))
     })}</script>
 

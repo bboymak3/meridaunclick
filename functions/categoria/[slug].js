@@ -42,18 +42,37 @@ export async function onRequestGet(context) {
     }
 
     // Fetch approved businesses in this category
-    const businesses = await env.DB.prepare(
-      `SELECT b.id, b.title, b.slug, b.description, b.city, b.state, b.phone, b.whatsapp,
-              b.logo, b.business_type,
-              c.name as category_name, c.slug as category_slug,
-              (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
-              b.featured, b.views
-       FROM businesses b
-       LEFT JOIN categories c ON b.category_id = c.id
-       WHERE b.category_id = ? AND b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != ''
-       ORDER BY b.featured DESC, b.views DESC
-       LIMIT 100`
-    ).bind(category.id).all();
+    let businesses;
+    try {
+      businesses = await env.DB.prepare(
+        `SELECT b.id, b.title, b.slug, b.description, b.city, b.state, b.phone, b.whatsapp,
+                b.logo, b.business_type,
+                c.name as category_name, c.slug as category_slug,
+                tn.slug as tipo_negocio_slug, tn.name as tipo_negocio_name,
+                (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
+                b.featured, b.views
+         FROM businesses b
+         LEFT JOIN categories c ON b.category_id = c.id
+         LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id
+         WHERE b.category_id = ? AND b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != ''
+         ORDER BY b.featured DESC, b.views DESC
+         LIMIT 100`
+      ).bind(category.id).all();
+    } catch (joinErr) {
+      // Fallback without tipos_negocio join
+      businesses = await env.DB.prepare(
+        `SELECT b.id, b.title, b.slug, b.description, b.city, b.state, b.phone, b.whatsapp,
+                b.logo, b.business_type,
+                c.name as category_name, c.slug as category_slug,
+                (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image,
+                b.featured, b.views
+         FROM businesses b
+         LEFT JOIN categories c ON b.category_id = c.id
+         WHERE b.category_id = ? AND b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != ''
+         ORDER BY b.featured DESC, b.views DESC
+         LIMIT 100`
+      ).bind(category.id).all();
+    }
 
     const catName = category.name || 'Categoría';
     const catIcon = category.icon || 'fas fa-tag';
@@ -73,7 +92,7 @@ export async function onRequestGet(context) {
 
     // Helper to build SEO URL segments for a business
     function bizTipo(b) {
-      return (b.business_type || 'negocio').toLowerCase()
+      return b.tipo_negocio_slug || (b.business_type || 'negocio').toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     }
 
