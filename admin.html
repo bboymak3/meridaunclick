@@ -1197,17 +1197,78 @@
                                 </div>
                             </div>
 
-                            <!-- Negocio vinculado -->
+                            <!-- Tipo de vinculo + CTA -->
                             <div class="settings-section" style="margin-bottom:20px;">
-                                <h4 class="settings-section-title"><i class="fas fa-store" style="color:#7c3aed;"></i> Negocio Vinculado (opcional)</h4>
-                                <p style="font-size:0.85rem;color:#6b7280;margin-bottom:8px;">Selecciona un negocio registrado. Al hacer clic en la ventana emergente, los usuarios seran redirigidos al perfil de ese negocio.</p>
-                                <select id="popupBusinessSelect" class="form-control" style="max-width:500px;">
-                                    <option value="">-- Sin negocio vinculado --</option>
-                                </select>
-                                <input type="hidden" id="setting_popup_link_url" data-key="popup_link_url">
-                                <p id="popupBusinessSelectedInfo" style="font-size:0.8rem;color:#059669;margin-top:6px;display:none;">
-                                    <i class="fas fa-check-circle"></i> Negocio vinculado correctamente.
+                                <h4 class="settings-section-title"><i class="fas fa-link" style="color:#7c3aed;"></i> Enlace de Destino y Llamado a la Accion</h4>
+                                <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px;">Selecciona que tipo de contenido vincular al popup. Al hacer clic en el boton CTA o en la imagen, los usuarios seran redirigidos.</p>
+
+                                <!-- Tipo de vinculo -->
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:6px;">Tipo de vinculo</label>
+                                    <select id="popupLinkType" class="form-control" style="max-width:500px;">
+                                        <option value="">-- Sin vinculo --</option>
+                                        <option value="business">Negocio</option>
+                                        <option value="property">Propiedad / Inmueble</option>
+                                        <option value="product">Producto</option>
+                                        <option value="job">Empleo</option>
+                                        <option value="custom">URL personalizada</option>
+                                    </select>
+                                </div>
+
+                                <!-- Dropdown: Negocios -->
+                                <div id="popupSelectorBusiness" class="popup-link-selector" style="margin-bottom:14px;display:none;">
+                                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:6px;"><i class="fas fa-store" style="color:#059669;margin-right:4px;"></i> Negocio</label>
+                                    <select id="popupBusinessSelect" class="form-control" style="max-width:500px;">
+                                        <option value="">-- Cargando... --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Dropdown: Propiedades -->
+                                <div id="popupSelectorProperty" class="popup-link-selector" style="margin-bottom:14px;display:none;">
+                                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:6px;"><i class="fas fa-building" style="color:#2563eb;margin-right:4px;"></i> Propiedad / Inmueble</label>
+                                    <select id="popupPropertySelect" class="form-control" style="max-width:500px;">
+                                        <option value="">-- Cargando... --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Dropdown: Productos -->
+                                <div id="popupSelectorProduct" class="popup-link-selector" style="margin-bottom:14px;display:none;">
+                                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:6px;"><i class="fas fa-box" style="color:#d97706;margin-right:4px;"></i> Producto</label>
+                                    <select id="popupProductSelect" class="form-control" style="max-width:500px;">
+                                        <option value="">-- Cargando... --</option>
+                                    </select>
+                                </div>
+
+                                <!-- Dropdown: Empleos -->
+                                <div id="popupSelectorJob" class="popup-link-selector" style="margin-bottom:14px;display:none;">
+                                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:6px;"><i class="fas fa-briefcase" style="color:#7c3aed;margin-right:4px;"></i> Empleo</label>
+                                    <select id="popupJobSelect" class="form-control" style="max-width:500px;">
+                                        <option value="">-- Cargando... --</option>
+                                    </select>
+                                </div>
+
+                                <!-- URL personalizada -->
+                                <div id="popupSelectorCustom" class="popup-link-selector" style="margin-bottom:14px;display:none;">
+                                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:6px;"><i class="fas fa-globe" style="color:#6b7280;margin-right:4px;"></i> URL personalizada</label>
+                                    <input type="url" id="popupCustomUrl" class="form-control" style="max-width:500px;" placeholder="https://ejemplo.com/pagina">
+                                    <p style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">Incluye https:// para enlaces externos o /ruta para enlaces internos.</p>
+                                </div>
+
+                                <!-- Info del vinculo -->
+                                <p id="popupLinkSelectedInfo" style="font-size:0.8rem;color:#059669;margin-bottom:14px;display:none;">
+                                    <i class="fas fa-check-circle"></i> <span id="popupLinkSelectedText">Vinculado correctamente.</span>
                                 </p>
+
+                                <!-- Texto del boton CTA -->
+                                <div style="margin-bottom:14px;">
+                                    <label style="font-weight:600;font-size:0.9rem;display:block;margin-bottom:6px;"><i class="fas fa-mouse-pointer" style="color:#dc2626;margin-right:4px;"></i> Texto del boton CTA</label>
+                                    <input type="text" id="popupCtaText" class="form-control" style="max-width:500px;" placeholder="Ej: Ver mas, Comprar ahora, Conocer mas..." maxlength="40">
+                                    <p style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">Este texto se mostrara como boton sobre la imagen. Max 40 caracteres.</p>
+                                </div>
+
+                                <input type="hidden" id="setting_popup_link_url" data-key="popup_link_url">
+                                <input type="hidden" id="setting_popup_link_type" data-key="popup_link_type">
+                                <input type="hidden" id="setting_popup_cta_text" data-key="popup_cta_text">
                             </div>
 
                             <div style="text-align:right;">

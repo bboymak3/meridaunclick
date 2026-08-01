@@ -1809,18 +1809,23 @@ async function loadFeaturedJobs() {
                 const img = document.createElement('img');
                 img.src = settings.popup_image_url;
                 img.alt = 'Publicidad';
-                img.style.cssText = 'display:block;max-width:90vw;max-height:80vh;object-fit:contain;';
+                img.style.cssText = 'display:block;max-width:90vw;max-height:80vh;object-fit:contain;cursor:pointer;';
                 img.onerror = function() { overlay.remove(); };
 
-                if (settings.popup_link_url) {
+                // Build the clickable wrapper (entire image is clickable)
+                var clickUrl = settings.popup_link_url || '';
+                var ctaText = settings.popup_cta_text || 'Ver mas';
+                var isInternal = clickUrl.startsWith('/') || clickUrl.startsWith(window.location.origin);
+
+                if (clickUrl) {
                     const a = document.createElement('a');
-                    a.href = settings.popup_link_url;
-                    if (settings.popup_link_url.startsWith('/') || settings.popup_link_url.startsWith(window.location.origin)) {
-                        a.addEventListener('click', (e) => {
+                    a.href = clickUrl;
+                    if (isInternal) {
+                        a.addEventListener('click', function(e) {
                             e.preventDefault();
                             dismiss();
                             overlay.remove();
-                            window.location.href = settings.popup_link_url;
+                            window.location.href = clickUrl;
                         });
                     } else {
                         a.target = '_blank';
@@ -1830,6 +1835,26 @@ async function loadFeaturedJobs() {
                     popup.appendChild(a);
                 } else {
                     popup.appendChild(img);
+                }
+
+                // CTA button overlay on the image
+                if (clickUrl) {
+                    const cta = document.createElement('button');
+                    cta.textContent = ctaText;
+                    cta.style.cssText = 'position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;border:none;padding:12px 32px;border-radius:50px;font-size:1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 15px rgba(124,58,237,0.5);z-index:3;white-space:nowrap;letter-spacing:0.3px;transition:transform 0.2s,box-shadow 0.2s;';
+                    cta.onmouseenter = function() { cta.style.transform = 'translateX(-50%) scale(1.05)'; cta.style.boxShadow = '0 6px 20px rgba(124,58,237,0.7)'; };
+                    cta.onmouseleave = function() { cta.style.transform = 'translateX(-50%) scale(1)'; cta.style.boxShadow = '0 4px 15px rgba(124,58,237,0.5)'; };
+                    cta.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        dismiss();
+                        overlay.remove();
+                        if (isInternal) {
+                            window.location.href = clickUrl;
+                        } else {
+                            window.open(clickUrl, '_blank', 'noopener,noreferrer');
+                        }
+                    });
+                    popup.appendChild(cta);
                 }
 
                 const closeBtn = document.createElement('button');

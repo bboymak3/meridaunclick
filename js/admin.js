@@ -5284,8 +5284,8 @@ if (!window._renderVideoList) {
     // ─── POPUP (VENTANA EMERGENTE) TAB ──────────────────────────
     // ═══════════════════════════════════════════════════════════
     //  SECCIÓN: VENTANA EMERGENTE (POPUP) - Banner popup del sitio
-    //  Funciones: loadPopupTab(), loadPopupBusinessSelector()
-    //  Exporta: window.savePopupSettings, window.handleAdminPopupImageSelect
+    //  Funciones: loadPopupTab(), loadPopupLinkSelectors(), savePopupSettings()
+    //  Exporta: window.savePopupSettings, window.handleAdminPopupImageSelect, window.removeAdminPopupImage
     // ═══════════════════════════════════════════════════════════
 
     async function loadPopupTab() {
@@ -5312,62 +5312,222 @@ if (!window._renderVideoList) {
                 if (iconEl) iconEl.style.display = '';
                 if (removeBtn) removeBtn.style.display = 'none';
             }
-            // Load businesses for the selector
-            await loadPopupBusinessSelector(s.popup_link_url || '');
+            // Link type
+            const linkTypeEl = document.getElementById('popupLinkType');
+            if (linkTypeEl) linkTypeEl.value = s.popup_link_type || '';
+            // CTA text
+            const ctaTextEl = document.getElementById('popupCtaText');
+            if (ctaTextEl) ctaTextEl.value = s.popup_cta_text || 'Ver mas';
+            // Hidden fields
+            const hiddenLinkUrl = document.getElementById('setting_popup_link_url');
+            if (hiddenLinkUrl) hiddenLinkUrl.value = s.popup_link_url || '';
+            const hiddenLinkType = document.getElementById('setting_popup_link_type');
+            if (hiddenLinkType) hiddenLinkType.value = s.popup_link_type || '';
+            const hiddenCtaText = document.getElementById('setting_popup_cta_text');
+            if (hiddenCtaText) hiddenCtaText.value = s.popup_cta_text || '';
+            // Show/hide the correct selector based on type
+            togglePopupSelector(s.popup_link_type || '');
+            // Load all dropdowns in parallel
+            await loadPopupLinkSelectors(s);
         } catch (e) {
             showToast('Error al cargar configuracion de popup', 'error');
         }
     }
 
-    // Load all approved businesses into the popup selector
-    async function loadPopupBusinessSelector(currentLink) {
-        const select = document.getElementById('popupBusinessSelect');
-        if (!select) return;
-        select.innerHTML = '<option value="">Cargando negocios...</option>';
-        select.disabled = true;
-        try {
-            const resp = await fetch('/api/businesses?status=approved&limit=500', {
-                headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken') || '') }
-            });
-            if (!resp.ok) throw new Error('HTTP ' + resp.status);
-            const data = await resp.json();
-            const businesses = Array.isArray(data.businesses) ? data.businesses : (Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []));
-            select.innerHTML = '<option value="">-- Sin negocio vinculado --</option>';
-            if (businesses.length === 0) {
-                select.innerHTML += '<option value="" disabled>No hay negocios aprobados</option>';
-            } else {
-                businesses.forEach(b => {
-                    const opt = document.createElement('option');
-                    opt.value = b.slug || b.id;
-                    opt.textContent = b.title || ('Negocio #' + b.id);
-                    if (currentLink && b.slug && (currentLink === '/negocio/' + b.slug || currentLink.endsWith('/negocio/' + b.slug))) {
-                        opt.selected = true;
-                    }
-                    select.appendChild(opt);
-                });
-            }
-            const info = document.getElementById('popupBusinessSelectedInfo');
-            if (info) info.style.display = select.value ? '' : 'none';
-        } catch (e) {
-            console.error('Error loading businesses for popup selector:', e);
-            select.innerHTML = '<option value="">-- Error al cargar negocios --</option>';
-            showToast('No se pudieron cargar los negocios. Verifica tu conexion.', 'error');
-        } finally {
-            select.disabled = false;
+    // Show/hide the correct dropdown based on link type
+    function togglePopupSelector(type) {
+        document.querySelectorAll('.popup-link-selector').forEach(el => el.style.display = 'none');
+        const map = { business: 'popupSelectorBusiness', property: 'popupSelectorProperty', product: 'popupSelectorProduct', job: 'popupSelectorJob', custom: 'popupSelectorCustom' };
+        const target = map[type];
+        if (target) {
+            const el = document.getElementById(target);
+            if (el) el.style.display = 'block';
         }
     }
 
-    // Update hidden link when business is selected
-    document.addEventListener('change', function(e) {
-        if (e.target && e.target.id === 'popupBusinessSelect') {
-            const hiddenUrl = document.getElementById('setting_popup_link_url');
-            const info = document.getElementById('popupBusinessSelectedInfo');
-            if (hiddenUrl) {
-                hiddenUrl.value = e.target.value ? '/negocio/' + e.target.value : '';
+    // Load all 4 dropdowns (business, property, product, job)
+    async function loadPopupLinkSelectors(s) {
+        const token = localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken') || '';
+        const headers = { 'Authorization': 'Bearer ' + token };
+        const currentLink = s.popup_link_url || '';
+        const currentType = s.popup_link_type || '';
+
+        // Load businesses
+        try {
+            const resp = await fetch('/api/businesses?status=approved&limit=500', { headers });
+            if (resp.ok) {
+                const data = await resp.json();
+                const items = Array.isArray(data.businesses) ? data.businesses : (Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []));
+                const select = document.getElementById('popupBusinessSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">-- Sin negocio vinculado --</option>';
+                    items.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b.slug || b.id;
+                        opt.textContent = b.title || ('Negocio #' + b.id);
+                        // Pre-select if matches current link
+                        if (currentType === 'business' && currentLink) {
+                            const bizUrl = '/' + (b.business_type ? slugifySimple(b.business_type) : 'negocio') + '/' + (b.category_slug || 'otro') + '/' + (b.slug || b.id);
+                            if (currentLink === bizUrl || currentLink === '/negocio/' + b.slug) {
+                                opt.selected = true;
+                            }
+                        }
+                        select.appendChild(opt);
+                    });
+                }
             }
-            if (info) info.style.display = e.target.value ? '' : 'none';
+        } catch (e) { console.error('Error loading businesses for popup:', e); }
+
+        // Load properties
+        try {
+            const resp = await fetch('/api/properties?limit=500', { headers });
+            if (resp.ok) {
+                const data = await resp.json();
+                const items = Array.isArray(data.properties) ? data.properties : (Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []));
+                const select = document.getElementById('popupPropertySelect');
+                if (select) {
+                    select.innerHTML = '<option value="">-- Sin propiedad vinculada --</option>';
+                    items.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.slug || p.id;
+                        opt.textContent = (p.title || p.property_type || ('Propiedad #' + p.id)) + (p.city ? ' - ' + p.city : '');
+                        if (currentType === 'property' && currentLink && (currentLink.endsWith('/' + (p.slug || p.id)) || currentLink.includes('/properties/' + (p.id || '')))) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                }
+            }
+        } catch (e) { console.error('Error loading properties for popup:', e); }
+
+        // Load products
+        try {
+            const resp = await fetch('/api/marketplace?limit=500', { headers });
+            if (resp.ok) {
+                const data = await resp.json();
+                const items = Array.isArray(data.products) ? data.products : (Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []));
+                const select = document.getElementById('popupProductSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">-- Sin producto vinculado --</option>';
+                    items.forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.slug || p.id;
+                        opt.textContent = (p.title || p.name || ('Producto #' + p.id)) + (p.price ? ' - $' + p.price : '');
+                        if (currentType === 'product' && currentLink && currentLink.endsWith('/' + (p.slug || p.id))) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                }
+            }
+        } catch (e) { console.error('Error loading products for popup:', e); }
+
+        // Load jobs
+        try {
+            const resp = await fetch('/api/jobs?limit=500', { headers });
+            if (resp.ok) {
+                const data = await resp.json();
+                const items = Array.isArray(data.jobs) ? data.jobs : (Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []));
+                const select = document.getElementById('popupJobSelect');
+                if (select) {
+                    select.innerHTML = '<option value="">-- Sin empleo vinculado --</option>';
+                    items.forEach(j => {
+                        const opt = document.createElement('option');
+                        opt.value = j.slug || j.id;
+                        opt.textContent = (j.title || ('Empleo #' + j.id)) + (j.company ? ' - ' + j.company : '');
+                        if (currentType === 'job' && currentLink && currentLink.endsWith('/' + (j.slug || j.id))) {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                }
+            }
+        } catch (e) { console.error('Error loading jobs for popup:', e); }
+
+        // Custom URL
+        const customUrlEl = document.getElementById('popupCustomUrl');
+        if (customUrlEl && currentType === 'custom') {
+            customUrlEl.value = currentLink;
         }
+    }
+
+    // Helper: slugify
+    function slugifySimple(text) {
+        if (!text) return '';
+        return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+
+    // Listen for link type changes to show/hide selectors
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'popupLinkType') {
+            togglePopupSelector(e.target.value);
+            // Clear hidden link when switching type
+            const hiddenUrl = document.getElementById('setting_popup_link_url');
+            const hiddenType = document.getElementById('setting_popup_link_type');
+            if (hiddenType) hiddenType.value = e.target.value;
+            updatePopupLinkFromSelection(e.target.value);
+        }
+        // Individual dropdown changes
+        if (e.target && e.target.id === 'popupBusinessSelect') updatePopupLinkFromSelection('business');
+        if (e.target && e.target.id === 'popupPropertySelect') updatePopupLinkFromSelection('property');
+        if (e.target && e.target.id === 'popupProductSelect') updatePopupLinkFromSelection('product');
+        if (e.target && e.target.id === 'popupJobSelect') updatePopupLinkFromSelection('job');
+        if (e.target && e.target.id === 'popupCustomUrl') updatePopupLinkFromSelection('custom');
     });
+
+    // Update hidden link URL based on current type and selection
+    function updatePopupLinkFromSelection(type) {
+        const hiddenUrl = document.getElementById('setting_popup_link_url');
+        const hiddenType = document.getElementById('setting_popup_link_type');
+        const info = document.getElementById('popupLinkSelectedInfo');
+        const infoText = document.getElementById('popupLinkSelectedText');
+        if (hiddenType) hiddenType.value = type;
+
+        let linkUrl = '';
+        let infoMsg = '';
+
+        if (type === 'business') {
+            const sel = document.getElementById('popupBusinessSelect');
+            if (sel && sel.value) {
+                linkUrl = '/negocio/' + sel.value;
+                infoMsg = 'Negocio vinculado: ' + sel.options[sel.selectedIndex].textContent;
+            }
+        } else if (type === 'property') {
+            const sel = document.getElementById('popupPropertySelect');
+            if (sel && sel.value) {
+                linkUrl = '/properties/' + sel.value;
+                infoMsg = 'Propiedad vinculada: ' + sel.options[sel.selectedIndex].textContent;
+            }
+        } else if (type === 'product') {
+            const sel = document.getElementById('popupProductSelect');
+            if (sel && sel.value) {
+                linkUrl = '/producto/general/' + sel.value;
+                infoMsg = 'Producto vinculado: ' + sel.options[sel.selectedIndex].textContent;
+            }
+        } else if (type === 'job') {
+            const sel = document.getElementById('popupJobSelect');
+            if (sel && sel.value) {
+                linkUrl = '/empleo/' + sel.value;
+                infoMsg = 'Empleo vinculado: ' + sel.options[sel.selectedIndex].textContent;
+            }
+        } else if (type === 'custom') {
+            const input = document.getElementById('popupCustomUrl');
+            if (input && input.value.trim()) {
+                linkUrl = input.value.trim();
+                infoMsg = 'URL personalizada: ' + linkUrl;
+            }
+        }
+
+        if (hiddenUrl) hiddenUrl.value = linkUrl;
+        if (info && infoText) {
+            if (linkUrl) {
+                infoText.textContent = infoMsg;
+                info.style.display = 'block';
+            } else {
+                info.style.display = 'none';
+            }
+        }
+    }
 
     // Save popup settings (called from onclick in HTML)
     window.savePopupSettings = async function() {
@@ -5379,10 +5539,14 @@ if (!window._renderVideoList) {
             const updates = {};
             const toggleEl = document.getElementById('setting_popup_enabled');
             if (toggleEl) updates.popup_enabled = toggleEl.checked ? '1' : '0';
-            const hiddenUrl = document.getElementById('setting_popup_link_url');
-            if (hiddenUrl) updates.popup_link_url = hiddenUrl.value;
             const imgUrl = document.getElementById('setting_popup_image_url');
             if (imgUrl) updates.popup_image_url = imgUrl.value;
+            const hiddenUrl = document.getElementById('setting_popup_link_url');
+            if (hiddenUrl) updates.popup_link_url = hiddenUrl.value;
+            const hiddenType = document.getElementById('setting_popup_link_type');
+            if (hiddenType) updates.popup_link_type = hiddenType.value;
+            const ctaTextEl = document.getElementById('popupCtaText');
+            if (ctaTextEl) updates.popup_cta_text = ctaTextEl.value.trim() || 'Ver mas';
             await api.put('/settings', updates);
             showToast('Configuracion de Ventana Emergente guardada', 'success');
         } catch (e) {
