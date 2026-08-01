@@ -97,9 +97,12 @@ export function renderBusinessPage(env, business, options = {}) {
 
   const baseUrl = 'https://holax.com.ve';
   const title = business.title || 'Negocio';
-  const description = business.description
-    ? business.description.substring(0, 160)
-    : `Información sobre ${title} en ${business.city || 'Venezuela'}. Dirección, contacto, servicios y más.`;
+  // Use custom SEO description if provided, otherwise auto-generate
+  const description = business.seo_description
+    ? business.seo_description.substring(0, 160)
+    : business.description
+      ? business.description.substring(0, 160)
+      : `Información sobre ${title} en ${business.city || 'Venezuela'}. Dirección, contacto, servicios y más.`;
   const imageUrl = business.cover_image || `${baseUrl}/images/Holax.png`;
   const finalCanonical = canonicalUrl || `${baseUrl}${pathPrefix || '/negocio'}/${business.slug}`;
 
@@ -158,8 +161,10 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta property="business:contact_data:region" content="${escapeHtml(business.state || '')}">
     <meta property="business:contact_data:country_name" content="${escapeHtml(business.country || 'Venezuela')}">
 
-    <!-- JSON-LD: LocalBusiness / MedicalBusiness + BreadcrumbList -->
-    <script type="application/ld+json">${JSON.stringify((() => {
+    <!-- JSON-LD: Rich Snippets -->
+    ${business.custom_jsonld
+      ? '<script type="application/ld+json">' + business.custom_jsonld + '</script>'
+      : '<script type="application/ld+json">' + JSON.stringify((() => {
       const isMedical = business.category_name && (business.category_name.toLowerCase().includes('médic') || business.category_name.toLowerCase().includes('medic'));
       const ld = {
         "@context": "https://schema.org",
@@ -218,7 +223,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         if (reviewItems.length > 0) ld.review = reviewItems;
       }
       return ld;
-    })())}</script>
+    })()) + '</script>'
+    }
     <script type="application/ld+json">${(() => {
       const crumbs = [
         { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },

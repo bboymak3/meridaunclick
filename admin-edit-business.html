@@ -399,6 +399,39 @@
                 '<textarea id="ebCustomHtml" class="eb-input eb-html-area" placeholder="Escribe o pega aquí el HTML personalizado...">' + escH(b.custom_html||'') + '</textarea>' +
             '</div>' +
 
+            /* ── SEO Meta Description ── */
+            '<div class="eb-section">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+                    '<h4 class="eb-section-title" style="margin:0;"><i class="fas fa-search" style="color:#059669;"></i> Meta Description SEO</h4>' +
+                    '<div style="display:flex;gap:6px;align-items:center;">' +
+                        '<span id="ebSeoDescCount" style="font-size:0.78rem;color:#6b7280;">0/160</span>' +
+                        '<button type="button" class="eb-btn eb-btn-danger" onclick="document.getElementById(\'ebSeoDesc\').value=\'\';updateSeoCount();showToast(\'Meta description eliminada\',\'info\');"><i class="fas fa-trash"></i></button>' +
+                    '</div>' +
+                '</div>' +
+                '<p style="font-size:0.82rem;color:#6b7280;margin:0 0 8px;">Texto que aparece en los resultados de Google. Si se deja vacío se genera automáticamente de la descripción del negocio. Max 160 caracteres.</p>' +
+                '<textarea id="ebSeoDesc" class="eb-input" style="width:100%;min-height:80px;resize:vertical;font-size:0.9rem;padding:10px 14px;border:2px solid #e5e7eb;border-radius:10px;font-family:inherit;" placeholder="Ej: Tienda Pura Sangre - Ropa deportiva en Mérida. Envíos a todo Venezuela. Horario: Lun-Sáb 9am-6pm" maxlength="200" oninput="updateSeoCount()">' + escH(b.seo_description||'') + '</textarea>' +
+                '<div id="ebSeoDescPreview" style="margin-top:8px;padding:10px 14px;background:#f0fdf4;border-radius:8px;border-left:3px solid #059669;font-size:0.85rem;color:#374151;display:none;">' +
+                    '<div style="font-size:0.72rem;color:#6b7280;margin-bottom:2px;">Vista previa en Google:</div>' +
+                    '<div style="color:#1a0dab;font-size:1.1rem;font-weight:500;">' + escH(b.title||'') + '</div>' +
+                    '<div style="color:#006621;font-size:0.82rem;">holax.com.ve › negocio › ...</div>' +
+                    '<div id="ebSeoDescPreviewText" style="color:#545454;font-size:0.88rem;">' + escH(b.seo_description || (b.description ? b.description.substring(0,160) : '')) + '</div>' +
+                '</div>' +
+            '</div>' +
+
+            /* ── Rich Snippets (JSON-LD) ── */
+            '<div class="eb-section">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+                    '<h4 class="eb-section-title" style="margin:0;"><i class="fas fa-structured-data fa-puzzle-piece" style="color:#dc2626;"></i> Rich Snippets (JSON-LD)</h4>' +
+                    '<div style="display:flex;gap:6px;">' +
+                        '<button type="button" class="eb-btn" onclick="ebValidateJsonLd()"><i class="fas fa-check-circle"></i> Validar</button>' +
+                        '<button type="button" class="eb-btn eb-btn-danger" onclick="if(confirm(\'Eliminar Rich Snippet personalizado? Se usará el automático.\')){document.getElementById(\'ebCustomJsonLd\').value=\'\';showToast(\'Rich Snippet eliminado, se usará el automático\',\'info\');}"><i class="fas fa-trash"></i> Resetear</button>' +
+                    '</div>' +
+                '</div>' +
+                '<p style="font-size:0.82rem;color:#6b7280;margin:0 0 8px;">JSON-LD personalizado para rich snippets de Google. Si se deja vacío se genera automáticamente (LocalBusiness con datos del negocio). <a href="https://schema.org/LocalBusiness" target="_blank" style="color:#7c3aed;">Ver esquema LocalBusiness</a></p>' +
+                '<textarea id="ebCustomJsonLd" class="eb-input eb-html-area" placeholder="{&#10;  \"@context\": \"https://schema.org\",&#10;  \"@type\": \"LocalBusiness\",&#10;  \"name\": \"Nombre del Negocio\",&#10;  \"description\": \"Descripción personalizada...\",&#10;  \"url\": \"https://holax.com.ve/...\",&#10;  \"telephone\": \"+584121234567\",&#10;  \"address\": {&#10;    \"@type\": \"PostalAddress\",&#10;    \"streetAddress\": \"Calle 10, entre 5 y 6\",&#10;    \"addressLocality\": \"Mérida\",&#10;    \"addressRegion\": \"Mérida\",&#10;    \"addressCountry\": \"VE\"&#10;  }&#10;}" oninput="updateJsonLdStatus()">' + escH(b.custom_jsonld||'') + '</textarea>' +
+                '<div id="ebJsonLdStatus" style="margin-top:8px;font-size:0.82rem;display:none;padding:8px 12px;border-radius:8px;"></div>' +
+            '</div>' +
+
             /* ── Save Button ── */
             '<div class="eb-save-bar">' +
                 '<button class="eb-btn eb-btn-primary" style="padding:12px 32px;font-size:0.95rem;" onclick="ebSave()"><i class="fas fa-save"></i> Guardar Cambios</button>' +
@@ -413,6 +446,10 @@
                     wrap.style.display = (cat && cat.slug === 'medicina-servicio-medico') ? '' : 'none';
                 }
             });
+
+            // Init SEO counter + JSON-LD status
+            if (typeof updateSeoCount === 'function') updateSeoCount();
+            if (typeof updateJsonLdStatus === 'function') updateJsonLdStatus();
         }
 
         // ─── Load Business Detail ────────────────────────────
@@ -464,6 +501,8 @@
                     logo: document.getElementById('ebLogoUrl').value || null,
                     banner: document.getElementById('ebBannerUrl').value || null,
                     custom_html: document.getElementById('ebCustomHtml').value || null,
+                    seo_description: document.getElementById('ebSeoDesc').value || null,
+                    custom_jsonld: document.getElementById('ebCustomJsonLd').value || null,
                     especialidad: document.getElementById('ebEspecialidad') ? document.getElementById('ebEspecialidad').value : null,
                     has_parking: document.getElementById('ebParking').checked ? 1 : 0,
                     has_wifi: document.getElementById('ebWifi').checked ? 1 : 0,
@@ -602,6 +641,68 @@
                 win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Vista Previa</title><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"><style>body{margin:0;font-family:system-ui,sans-serif;}</style></head><body>' + html + '</body></html>');
                 win.document.close();
             } else { showToast('Permite ventanas emergentes', 'error'); }
+        };
+
+        // ─── SEO Description counter + preview ──────────────────
+        window.updateSeoCount = function() {
+            var ta = document.getElementById('ebSeoDesc');
+            var countEl = document.getElementById('ebSeoDescCount');
+            var preview = document.getElementById('ebSeoDescPreview');
+            var previewText = document.getElementById('ebSeoDescPreviewText');
+            if (!ta) return;
+            var len = ta.value.length;
+            if (countEl) {
+                countEl.textContent = len + '/160';
+                countEl.style.color = len > 160 ? '#dc2626' : (len > 140 ? '#d97706' : '#6b7280');
+            }
+            if (preview && previewText) {
+                preview.style.display = ta.value.trim() ? '' : 'none';
+                previewText.textContent = ta.value || '';
+            }
+        };
+
+        // ─── JSON-LD validation ─────────────────────────────────
+        window.updateJsonLdStatus = function() {
+            var ta = document.getElementById('ebCustomJsonLd');
+            var statusEl = document.getElementById('ebJsonLdStatus');
+            if (!ta || !statusEl) return;
+            var val = ta.value.trim();
+            if (!val) { statusEl.style.display = 'none'; return; }
+            try {
+                JSON.parse(val);
+                statusEl.style.display = 'block';
+                statusEl.style.background = '#f0fdf4';
+                statusEl.style.color = '#059669';
+                statusEl.style.border = '1px solid #bbf7d0';
+                statusEl.innerHTML = '<i class="fas fa-check-circle"></i> JSON válido';
+            } catch(e) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = '#fef2f2';
+                statusEl.style.color = '#dc2626';
+                statusEl.style.border = '1px solid #fecaca';
+                statusEl.innerHTML = '<i class="fas fa-times-circle"></i> Error: ' + escH(e.message);
+            }
+        };
+
+        window.ebValidateJsonLd = function() {
+            var ta = document.getElementById('ebCustomJsonLd');
+            if (!ta) return;
+            var val = ta.value.trim();
+            if (!val) { showToast('No hay JSON-LD para validar', 'info'); return; }
+            try {
+                var obj = JSON.parse(val);
+                var issues = [];
+                if (!obj['@context']) issues.push('Falta @context (debe ser "https://schema.org")');
+                if (!obj['@type']) issues.push('Falta @type (ej: LocalBusiness, Restaurant, Store...)');
+                if (!obj.name) issues.push('Falta name (nombre del negocio)');
+                if (issues.length > 0) {
+                    showToast('Advertencias: ' + issues.join('. '), 'info');
+                } else {
+                    showToast('JSON-LD válido y completo', 'success');
+                }
+            } catch(e) {
+                showToast('JSON inválido: ' + e.message, 'error');
+            }
         };
 
         // ─── Init ────────────────────────────────────────────
