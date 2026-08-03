@@ -15,7 +15,15 @@ export function getCatIcon(c) {
 }
 export function fmtDate(d) {
   if(!d) return '';
-  try { const dt=new Date(d+'T00:00:00'); return dt.getDate()+' '+['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][dt.getMonth()]+' '+dt.getFullYear(); } catch(e) { return d; }
+  try {
+    var ds = String(d).trim();
+    if (ds.includes('T')) { /* ISO ya tiene T */ }
+    else if (ds.includes(' ')) { ds = ds.replace(' ', 'T'); } /* SQLite: 2025-01-15 12:30:00 → 2025-01-15T12:30:00 */
+    else { ds = ds + 'T00:00:00'; } /* solo fecha: 2025-01-15 */
+    const dt = new Date(ds);
+    if (isNaN(dt.getTime())) return d;
+    return dt.getDate()+' '+['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][dt.getMonth()]+' '+dt.getFullYear();
+  } catch(e) { return d; }
 }
 
 export function getVideoEmbed(url) {
@@ -476,7 +484,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     ${product.business_logo ? `<img src="${esc(product.business_logo)}" alt="" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'">` : ''}
                     <div>
                         ${bizLink ? `<a href="${bizLink}" class="pd-biz-name" style="margin:0;display:block;"><i class="fas fa-store"></i> ${esc(product.business_name || 'Negocio')}${product.city ? ' · ' + esc(product.city) : ''}</a>` : (product.business_name ? `<div class="pd-biz-name" style="margin:0;display:block;"><i class="fas fa-store"></i> ${esc(product.business_name)}</div>` : '')}
-                        ${product.created_at ? (() => { try { const pd = new Date(product.created_at + (product.created_at.includes('T') ? '' : 'T00:00:00')); const pds = pd.toLocaleDateString('es-VE', { year:'numeric', month:'long', day:'numeric' }); if (!pds.includes('NaN')) return `<div style="font-size:.8rem;color:#94a3b8;margin-top:2px;"><i class="far fa-clock"></i> Publicado ${pds}</div>`; } catch(e){} return ''; })() : ''}
+                        ${product.created_at ? (() => { try { var _ds = String(product.created_at).trim(); if (_ds.includes('T')) {} else if (_ds.includes(' ')) { _ds = _ds.replace(' ', 'T'); } else { _ds = _ds + 'T00:00:00'; } const pd = new Date(_ds); const pds = pd.toLocaleDateString('es-VE', { year:'numeric', month:'long', day:'numeric' }); if (!pds.includes('NaN')) return `<div style="font-size:.8rem;color:#94a3b8;margin-top:2px;"><i class="far fa-clock"></i> Publicado ${pds}</div>`; } catch(e){} return ''; })() : ''}
                     </div>
                 </div>
                 <h1 class="pd-title">${esc(title)}</h1>
@@ -679,7 +687,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         if (!dateStr) return '';
         try {
             var now = new Date();
-            var d = new Date(dateStr + (dateStr.includes('Z') || dateStr.includes('+') ? '' : 'T00:00:00'));
+            var _ds2 = String(dateStr).trim(); if (_ds2.includes('T') || _ds2.includes('Z') || _ds2.includes('+')) {} else if (_ds2.includes(' ')) { _ds2 = _ds2.replace(' ', 'T'); } else { _ds2 = _ds2 + 'T00:00:00'; } var d = new Date(_ds2);
             if (isNaN(d.getTime())) return dateStr;
             var diff = Math.floor((now - d) / 1000);
             if (diff < 60) return 'Ahora mismo';
