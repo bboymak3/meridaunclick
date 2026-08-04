@@ -2444,7 +2444,45 @@ window.closeEditBusinessModal = function() {
 
         } catch (error) {
             console.error('Stats error:', error);
-            showToast('Error al cargar estadísticas', 'error');
+
+            // Actualizar la tabla para que no quede en "Cargando estadísticas..."
+            const body = document.getElementById('statsPerBusinessBody');
+            if (body) {
+                let errorMsg = error.message || 'Error desconocido';
+                let actionHTML = '';
+
+                // Mensajes específicos según el tipo de error
+                if (errorMsg.includes('401') || errorMsg.includes('Token') || errorMsg.includes('token')) {
+                    errorMsg = 'Sesión expirada. Inicia sesión nuevamente.';
+                    actionHTML = ' <button onclick="window.location.href=\'/login.html\'" style="color:#dc2626;text-decoration:underline;background:none;border:none;cursor:pointer;font-weight:600;">Ir a Login</button>';
+                } else if (errorMsg.includes('403') || errorMsg.includes('denegado') || errorMsg.includes('admin')) {
+                    errorMsg = 'Acceso denegado. No tienes permisos para ver estas estadísticas.';
+                } else if (errorMsg.includes('500') || errorMsg.includes('interno')) {
+                    errorMsg = 'Error del servidor. Intenta nuevamente en unos momentos.';
+                    actionHTML = ' <button onclick="location.reload()" style="color:#dc2626;text-decoration:underline;background:none;border:none;cursor:pointer;font-weight:600;">Recargar</button>';
+                } else if (errorMsg.includes('conexión') || errorMsg.includes('fetch') || errorMsg.includes('network')) {
+                    errorMsg = 'Error de conexión. Verifica tu internet.';
+                    actionHTML = ' <button onclick="location.reload()" style="color:#dc2626;text-decoration:underline;background:none;border:none;cursor:pointer;font-weight:600;">Reintentar</button>';
+                }
+
+                body.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;">' +
+                    '<div style="color:#dc2626;margin-bottom:8px;"><i class="fas fa-exclamation-circle"></i> ' + errorMsg + actionHTML + '</div>' +
+                    '</td></tr>';
+            }
+
+            // Resetear tarjetas de resumen a 0
+            const elViews = document.getElementById('statTotalViews');
+            const elWA = document.getElementById('statTotalWA');
+            const elPhone = document.getElementById('statTotalPhone');
+            const elWeb = document.getElementById('statTotalWeb');
+            const elShares = document.getElementById('statTotalShares');
+            if (elViews) elViews.textContent = '0';
+            if (elWA) elWA.textContent = '0';
+            if (elPhone) elPhone.textContent = '0';
+            if (elWeb) elWeb.textContent = '0';
+            if (elShares) elShares.textContent = '0';
+
+            showToast('Error al cargar estadísticas: ' + error.message, 'error');
         }
     }
 
@@ -4431,5 +4469,81 @@ window.closeEditBusinessModal = function() {
     // Start polling
     pollUnreadCount();
     setInterval(pollUnreadCount, 30000);
+
+    // ─── Timeout de seguridad global ───────────────────────────
+    // Si después de 20 segundos hay elementos "Cargando..." visibles,
+    // los reemplaza por mensajes de error con botón de reintentar.
+    setTimeout(function() {
+        const errorStyle = 'color:#dc2626;text-align:center;padding:24px;';
+        const retryBtn = ' <button onclick="location.reload()" style="color:#dc2626;text-decoration:underline;background:none;border:none;cursor:pointer;font-weight:600;">Recargar página</button>';
+
+        // Stats per business table
+        const statsBody = document.getElementById('statsPerBusinessBody');
+        if (statsBody && statsBody.textContent.includes('Cargando estadísticas')) {
+            statsBody.innerHTML = '<tr><td colspan="7" style="' + errorStyle + '"><i class="fas fa-exclamation-circle"></i> Tiempo de espera agotado al cargar estadísticas.' + retryBtn + '</td></tr>';
+        }
+
+        // Recent properties table
+        const recentBody = document.getElementById('recentPropsBody');
+        if (recentBody && recentBody.textContent.includes('Cargando')) {
+            recentBody.innerHTML = '<tr class="empty-row"><td colspan="6"><div class="empty-state"><i class="fas fa-exclamation-circle" style="color:#dc2626;"></i><p>Tiempo de espera agotado.</p>' + retryBtn + '</div></td></tr>';
+        }
+
+        // My products
+        const productsContainer = document.getElementById('myProductsByStore');
+        if (productsContainer && productsContainer.textContent.includes('Cargando productos')) {
+            productsContainer.innerHTML = '<div style="' + errorStyle + '"><i class="fas fa-exclamation-circle"></i> Tiempo de espera agotado al cargar productos.' + retryBtn + '</div>';
+        }
+
+        // My properties (inmuebles)
+        const propsGrid = document.getElementById('myPropertiesGrid');
+        if (propsGrid && propsGrid.textContent.includes('Cargando inmuebles')) {
+            propsGrid.innerHTML = '<div style="' + errorStyle + '"><i class="fas fa-exclamation-circle"></i> Tiempo de espera agotado al cargar inmuebles.' + retryBtn + '</div>';
+        }
+
+        // Admin pending
+        const adminPending = document.getElementById('adminPendingBody');
+        if (adminPending && adminPending.textContent.includes('Cargando negocios pendientes')) {
+            adminPending.innerHTML = '<tr class="empty-row"><td colspan="6"><div class="empty-state"><i class="fas fa-exclamation-circle" style="color:#dc2626;"></i><p>Tiempo de espera agotado.</p>' + retryBtn + '</div></td></tr>';
+        }
+
+        // Admin all businesses
+        const adminAll = document.getElementById('adminAllBody');
+        if (adminAll && adminAll.textContent.includes('Cargando')) {
+            adminAll.innerHTML = '<tr class="empty-row"><td colspan="7"><div class="empty-state"><i class="fas fa-exclamation-circle" style="color:#dc2626;"></i><p>Tiempo de espera agotado.</p>' + retryBtn + '</div></td></tr>';
+        }
+
+        // Admin users
+        const adminUsers = document.getElementById('adminUsersBody');
+        if (adminUsers && adminUsers.textContent.includes('Cargando usuarios')) {
+            adminUsers.innerHTML = '<tr class="empty-row"><td colspan="7"><div class="empty-state"><i class="fas fa-exclamation-circle" style="color:#dc2626;"></i><p>Tiempo de espera agotado.</p>' + retryBtn + '</div></td></tr>';
+        }
+
+        // Premium requests
+        const premReqBody = document.getElementById('premiumRequestsBody');
+        if (premReqBody && premReqBody.textContent.includes('Cargando solicitudes')) {
+            premReqBody.innerHTML = '<tr class="empty-row"><td colspan="6"><div class="empty-state"><i class="fas fa-exclamation-circle" style="color:#dc2626;"></i><p>Tiempo de espera agotado.</p>' + retryBtn + '</div></td></tr>';
+        }
+
+        // Categories
+        const catBody = document.getElementById('adminCategoriesBody');
+        if (catBody && catBody.textContent.includes('Cargando categorias')) {
+            catBody.innerHTML = '<tr class="empty-row"><td colspan="6"><div class="empty-state"><i class="fas fa-exclamation-circle" style="color:#dc2626;"></i><p>Tiempo de espera agotado.</p>' + retryBtn + '</div></td></tr>';
+        }
+
+        // Reset tarjetas de stats a 0 si siguen en 0 pero hay tabla con error
+        const elViews = document.getElementById('statTotalViews');
+        const elWA = document.getElementById('statTotalWA');
+        const elPhone = document.getElementById('statTotalPhone');
+        const elWeb = document.getElementById('statTotalWeb');
+        const elShares = document.getElementById('statTotalShares');
+        if (statsBody && statsBody.textContent.includes('Tiempo de espera')) {
+            if (elViews && elViews.textContent === '0') elViews.textContent = '—';
+            if (elWA && elWA.textContent === '0') elWA.textContent = '—';
+            if (elPhone && elPhone.textContent === '0') elPhone.textContent = '—';
+            if (elWeb && elWeb.textContent === '0') elWeb.textContent = '—';
+            if (elShares && elShares.textContent === '0') elShares.textContent = '—';
+        }
+    }, 20000);
 
 })();
