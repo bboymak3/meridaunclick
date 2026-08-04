@@ -71,7 +71,14 @@ export async function onRequestGet(context) {
 
     // Fetch businesses owned by this user
     const { results } = await env.DB.prepare(
-      'SELECT id, slug, title, category, status, created_at FROM businesses WHERE user_id = ? ORDER BY created_at DESC'
+      `SELECT b.id, b.slug, b.title, b.category_id, b.business_type, b.city, b.state,
+              b.status, b.featured, b.views, b.rating, b.created_at, b.expires_at,
+              b.logo, b.banner,
+              c.name as category_name, c.slug as category_slug
+       FROM businesses b
+       LEFT JOIN categories c ON b.category_id = c.id
+       WHERE b.user_id = ?
+       ORDER BY b.created_at DESC`
     ).bind(user.id).all();
 
     return new Response(JSON.stringify({
