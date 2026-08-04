@@ -199,7 +199,31 @@
     <!-- Toast container -->
     <div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;"></div>
 
-    <script src="js/app.js?v=6"></script>
+    <!-- Modal de Estadísticas del Vendedor -->
+    <div id="statsModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;overflow-y:auto;padding:20px;">
+        <div style="background:#fff;max-width:1100px;margin:0 auto;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff;padding:20px 24px;display:flex;align-items:center;justify-content:between;">
+                <div style="flex:1;">
+                    <h2 style="margin:0;font-size:1.3rem;display:flex;align-items:center;gap:10px;">
+                        <i class="fas fa-chart-line" style="color:#00d4ff;"></i>
+                        <span id="statsModalTitle">Estadísticas del Vendedor</span>
+                    </h2>
+                    <p style="margin:4px 0 0;font-size:0.85rem;color:#94a3b8;" id="statsModalSubtitle"></p>
+                </div>
+                <button onclick="closeStatsModal()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.2rem;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="statsModalBody" style="padding:24px;max-height:75vh;overflow-y:auto;background:#f8fafc;">
+                <div style="text-align:center;padding:40px 20px;color:#64748b;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:12px;">Cargando estadísticas...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js?v=7"></script>
     <script>
     (function() {
         'use strict';
@@ -353,6 +377,7 @@
                         <td>
                             <div style="display:flex;gap:4px;flex-wrap:wrap;">
                                 <button class="btn btn-xs btn-outline" onclick="editSeller(${s.user_id})" title="Editar agente"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-xs" style="background:#2563eb;color:#fff;" onclick="viewSellerStats(${s.user_id})" title="Ver estadísticas"><i class="fas fa-chart-bar"></i></button>
                                 ${!isPremium ? `<button class="btn btn-xs" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-weight:600;" onclick="activateSellerPremium(${s.user_id})" title="Activar Premium"><i class="fas fa-crown"></i> Premium</button>` : `<button class="btn btn-xs" style="background:#f1f5f9;color:#64748b;" onclick="deactivateSellerPremium(${s.user_id})" title="Quitar Premium"><i class="fas fa-times-circle"></i> Quitar</button>`}
                             </div>
                         </td>
@@ -615,6 +640,335 @@
                 }
             });
         }
+
+        // ─── Estadísticas del Vendedor ───────────────────────────
+        window.viewSellerStats = async function(userId) {
+            const modal = document.getElementById('statsModal');
+            const body = document.getElementById('statsModalBody');
+            const titleEl = document.getElementById('statsModalTitle');
+            const subtitleEl = document.getElementById('statsModalSubtitle');
+            if (!modal || !body) return;
+
+            // Resetear y mostrar modal
+            titleEl.textContent = 'Estadísticas del Vendedor #' + userId;
+            subtitleEl.textContent = 'Cargando información...';
+            body.innerHTML = `
+                <div style="text-align:center;padding:40px 20px;color:#64748b;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:12px;">Cargando estadísticas...</p>
+                </div>
+            `;
+            modal.style.display = 'block';
+
+            try {
+                const data = await api.get('/admin/sellers/' + userId + '/stats');
+                const u = data.user || {};
+                const s = data.stats || {};
+                const items = data.items || {};
+
+                // Actualizar título
+                titleEl.innerHTML = 'Estadísticas de <span style="color:#00d4ff;">' + escHtml(u.name || 'Vendedor #' + userId) + '</span>';
+                subtitleEl.textContent = 'ID: ' + userId + ' · ' + escHtml(u.email || '—') + ' · Rol: ' + escHtml(u.role || '—');
+
+                // Construir HTML con todas las estadísticas
+                body.innerHTML = `
+                    <!-- Resumen general -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px;">
+                        <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;padding:16px;border-radius:8px;text-align:center;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#1e40af;">${s.total_businesses || 0}</div>
+                            <div style="font-size:0.75rem;color:#1e40af;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;"><i class="fas fa-store"></i> Negocios</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0;padding:16px;border-radius:8px;text-align:center;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#166534;">${s.total_jobs || 0}</div>
+                            <div style="font-size:0.75rem;color:#166534;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;"><i class="fas fa-briefcase"></i> Empleos</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #fcd34d;padding:16px;border-radius:8px;text-align:center;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#92400e;">${s.total_properties || 0}</div>
+                            <div style="font-size:0.75rem;color:#92400e;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;"><i class="fas fa-home"></i> Propiedades</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#fce7f3,#fbcfe8);border:1px solid #f9a8d4;padding:16px;border-radius:8px;text-align:center;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#9d174d;">${s.total_products || 0}</div>
+                            <div style="font-size:0.75rem;color:#9d174d;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;"><i class="fas fa-box"></i> Productos</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;padding:16px;border-radius:8px;text-align:center;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#5b21b6;">${s.total_reviews || 0}</div>
+                            <div style="font-size:0.75rem;color:#5b21b6;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;"><i class="fas fa-star"></i> Reseñas</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1px solid #fdba74;padding:16px;border-radius:8px;text-align:center;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#9a3412;">${s.total_contacts || 0}</div>
+                            <div style="font-size:0.75rem;color:#9a3412;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;"><i class="fas fa-envelope"></i> Contactos</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#ecfeff,#cffafe);border:1px solid #67e8f9;padding:16px;border-radius:8px;text-align:center;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#0e7490;">${s.total_favorites || 0}</div>
+                            <div style="font-size:0.75rem;color:#0e7490;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;"><i class="fas fa-heart"></i> Favoritos</div>
+                        </div>
+                        <div style="background:linear-gradient(135deg,#f1f5f9,#e2e8f0);border:1px solid #cbd5e1;padding:16px;border-radius:8px;text-align:center;">
+                            <div style="font-size:1.8rem;font-weight:700;color:#0f172a;">${s.total_views || 0}</div>
+                            <div style="font-size:0.75rem;color:#0f172a;text-transform:uppercase;letter-spacing:0.05em;margin-top:4px;"><i class="fas fa-eye"></i> Vistas totales</div>
+                        </div>
+                    </div>
+
+                    <!-- Métricas adicionales -->
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px;">
+                        <div style="background:#fff;border:1px solid #e2e8f0;padding:14px;border-radius:8px;">
+                            <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;"><i class="fas fa-calendar-check"></i> Fecha registro</div>
+                            <div style="font-size:0.95rem;font-weight:600;color:#0f172a;margin-top:4px;">${u.created_at ? new Date(u.created_at).toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'}</div>
+                        </div>
+                        <div style="background:#fff;border:1px solid #e2e8f0;padding:14px;border-radius:8px;">
+                            <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;"><i class="fas fa-star"></i> Rating promedio</div>
+                            <div style="font-size:0.95rem;font-weight:600;color:#0f172a;margin-top:4px;">${s.avg_rating ? Number(s.avg_rating).toFixed(1) + ' / 5.0' : 'Sin reseñas'}</div>
+                        </div>
+                        <div style="background:#fff;border:1px solid #e2e8f0;padding:14px;border-radius:8px;">
+                            <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;"><i class="fas fa-crown"></i> Plan</div>
+                            <div style="font-size:0.95rem;font-weight:600;color:#0f172a;margin-top:4px;">${u.plan_type === 'premium' ? '⭐ Premium' : 'Básico'}</div>
+                        </div>
+                        <div style="background:#fff;border:1px solid #e2e8f0;padding:14px;border-radius:8px;">
+                            <div style="font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;"><i class="fas fa-shield-alt"></i> Estado</div>
+                            <div style="font-size:0.95rem;font-weight:600;color:#0f172a;margin-top:4px;">${u.is_active ? '🟢 Activo' : '🔴 Inactivo'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Negocios -->
+                    ${items.businesses && items.businesses.length > 0 ? `
+                    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden;">
+                        <div style="background:#f8fafc;padding:12px 16px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+                            <h3 style="margin:0;font-size:0.95rem;color:#0f172a;"><i class="fas fa-store" style="color:#1e40af;"></i> Negocios registrados (${items.businesses.length})</h3>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                                <thead style="background:#f1f5f9;">
+                                    <tr>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Título</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Categoría</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Estado</th>
+                                        <th style="padding:8px 12px;text-align:right;color:#475569;font-weight:600;">Vistas</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.businesses.map(b => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:8px 12px;color:#0f172a;font-weight:500;">${escHtml(b.title || '—')}</td>
+                                            <td style="padding:8px 12px;color:#64748b;">${escHtml(b.category_name || '—')}</td>
+                                            <td style="padding:8px 12px;">
+                                                <span style="padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;background:${b.status === 'approved' ? '#dcfce7' : b.status === 'pending' ? '#fef3c7' : '#fee2e2'};color:${b.status === 'approved' ? '#166534' : b.status === 'pending' ? '#92400e' : '#991b1b'};">${escHtml(b.status || '—')}</span>
+                                            </td>
+                                            <td style="padding:8px 12px;text-align:right;color:#475569;">${b.views || 0}</td>
+                                            <td style="padding:8px 12px;color:#94a3b8;">${b.created_at ? new Date(b.created_at).toLocaleDateString('es-VE') : '—'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Empleos -->
+                    ${items.jobs && items.jobs.length > 0 ? `
+                    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden;">
+                        <div style="background:#f8fafc;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+                            <h3 style="margin:0;font-size:0.95rem;color:#0f172a;"><i class="fas fa-briefcase" style="color:#166534;"></i> Empleos publicados (${items.jobs.length})</h3>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                                <thead style="background:#f1f5f9;">
+                                    <tr>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Título</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Tipo</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Salario</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Estado</th>
+                                        <th style="padding:8px 12px;text-align:right;color:#475569;font-weight:600;">Vistas</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.jobs.map(j => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:8px 12px;color:#0f172a;font-weight:500;">${escHtml(j.title || '—')}</td>
+                                            <td style="padding:8px 12px;color:#64748b;">${escHtml(j.job_type || '—')}</td>
+                                            <td style="padding:8px 12px;color:#64748b;">${escHtml(j.salary || '—')}</td>
+                                            <td style="padding:8px 12px;">
+                                                <span style="padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;background:${j.status === 'active' || j.status === 'approved' ? '#dcfce7' : '#fee2e2'};color:${j.status === 'active' || j.status === 'approved' ? '#166534' : '#991b1b'};">${escHtml(j.status || '—')}</span>
+                                            </td>
+                                            <td style="padding:8px 12px;text-align:right;color:#475569;">${j.views || 0}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Propiedades -->
+                    ${items.properties && items.properties.length > 0 ? `
+                    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden;">
+                        <div style="background:#f8fafc;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+                            <h3 style="margin:0;font-size:0.95rem;color:#0f172a;"><i class="fas fa-home" style="color:#92400e;"></i> Propiedades (${items.properties.length})</h3>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                                <thead style="background:#f1f5f9;">
+                                    <tr>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Título</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Tipo</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Operación</th>
+                                        <th style="padding:8px 12px;text-align:right;color:#475569;font-weight:600;">Precio</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.properties.map(p => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:8px 12px;color:#0f172a;font-weight:500;">${escHtml(p.title || '—')}</td>
+                                            <td style="padding:8px 12px;color:#64748b;">${escHtml(p.property_type || '—')}</td>
+                                            <td style="padding:8px 12px;color:#64748b;">${escHtml(p.operation_type || '—')}</td>
+                                            <td style="padding:8px 12px;text-align:right;color:#475569;">${escHtml(p.price || '—')} ${escHtml(p.currency || '')}</td>
+                                            <td style="padding:8px 12px;">
+                                                <span style="padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;background:${p.status === 'approved' ? '#dcfce7' : '#fee2e2'};color:${p.status === 'approved' ? '#166534' : '#991b1b'};">${escHtml(p.status || '—')}</span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Productos -->
+                    ${items.products && items.products.length > 0 ? `
+                    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden;">
+                        <div style="background:#f8fafc;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+                            <h3 style="margin:0;font-size:0.95rem;color:#0f172a;"><i class="fas fa-box" style="color:#9d174d;"></i> Productos (${items.products.length})</h3>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                                <thead style="background:#f1f5f9;">
+                                    <tr>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Nombre</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Categoría</th>
+                                        <th style="padding:8px 12px;text-align:right;color:#475569;font-weight:600;">Precio</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.products.map(p => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:8px 12px;color:#0f172a;font-weight:500;">${escHtml(p.name || '—')}</td>
+                                            <td style="padding:8px 12px;color:#64748b;">${escHtml(p.category || '—')}</td>
+                                            <td style="padding:8px 12px;text-align:right;color:#475569;">${escHtml(p.price || '—')}</td>
+                                            <td style="padding:8px 12px;">
+                                                <span style="padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;background:${p.status === 'active' ? '#dcfce7' : '#fee2e2'};color:${p.status === 'active' ? '#166534' : '#991b1b'};">${escHtml(p.status || '—')}</span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Reseñas recibidas -->
+                    ${items.reviews && items.reviews.length > 0 ? `
+                    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden;">
+                        <div style="background:#f8fafc;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+                            <h3 style="margin:0;font-size:0.95rem;color:#0f172a;"><i class="fas fa-star" style="color:#5b21b6;"></i> Reseñas recibidas (${items.reviews.length})</h3>
+                        </div>
+                        <div style="padding:12px 16px;">
+                            ${items.reviews.map(r => `
+                                <div style="padding:8px 0;border-bottom:1px solid #f1f5f9;">
+                                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                                        <span style="color:#f59e0b;">${'★'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</span>
+                                        <span style="font-size:0.75rem;color:#94a3b8;">${r.created_at ? new Date(r.created_at).toLocaleDateString('es-VE') : ''}</span>
+                                    </div>
+                                    <p style="margin:0;font-size:0.82rem;color:#475569;">${escHtml(r.comment || 'Sin comentario')}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Contactos recibidos -->
+                    ${items.contacts && items.contacts.length > 0 ? `
+                    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:16px;overflow:hidden;">
+                        <div style="background:#f8fafc;padding:12px 16px;border-bottom:1px solid #e2e8f0;">
+                            <h3 style="margin:0;font-size:0.95rem;color:#0f172a;"><i class="fas fa-envelope" style="color:#9a3412;"></i> Contactos recibidos (${items.contacts.length})</h3>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+                                <thead style="background:#f1f5f9;">
+                                    <tr>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Nombre</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Email</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Mensaje</th>
+                                        <th style="padding:8px 12px;text-align:left;color:#475569;font-weight:600;">Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${items.contacts.map(c => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:8px 12px;color:#0f172a;font-weight:500;">${escHtml(c.sender_name || '—')}</td>
+                                            <td style="padding:8px 12px;color:#64748b;">${escHtml(c.sender_email || '—')}</td>
+                                            <td style="padding:8px 12px;color:#64748b;max-width:300px;overflow:hidden;text-overflow:ellipsis;">${escHtml((c.message || '').substring(0, 80))}${(c.message || '').length > 80 ? '...' : ''}</td>
+                                            <td style="padding:8px 12px;color:#94a3b8;">${c.created_at ? new Date(c.created_at).toLocaleDateString('es-VE') : '—'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Empty state si no hay actividad -->
+                    ${(!items.businesses || items.businesses.length === 0) && (!items.jobs || items.jobs.length === 0) && (!items.properties || items.properties.length === 0) && (!items.products || items.products.length === 0) ? `
+                        <div style="text-align:center;padding:40px 20px;color:#64748b;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
+                            <i class="fas fa-inbox fa-3x" style="color:#cbd5e1;margin-bottom:12px;"></i>
+                            <p style="font-size:0.95rem;font-weight:600;color:#475569;">Este vendedor no tiene actividad registrada</p>
+                            <p style="font-size:0.82rem;color:#94a3b8;margin-top:4px;">No ha registrado negocios, empleos, propiedades ni productos.</p>
+                        </div>
+                    ` : ''}
+
+                    <!-- JSON completo (debug) -->
+                    <details style="margin-top:16px;">
+                        <summary style="cursor:pointer;color:#64748b;font-size:0.82rem;padding:8px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;">
+                            <i class="fas fa-code"></i> Ver respuesta JSON completa (debug)
+                        </summary>
+                        <pre style="background:#0f172a;color:#e2e8f0;padding:12px;border-radius:6px;margin-top:8px;font-size:0.78rem;overflow-x:auto;max-height:400px;">${escHtml(JSON.stringify(data, null, 2))}</pre>
+                    </details>
+                `;
+
+            } catch (err) {
+                console.error('Error loading seller stats:', err);
+                let errorMsg = err.message || 'Error desconocido';
+                body.innerHTML = `
+                    <div style="text-align:center;padding:40px 20px;color:#dc2626;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;">
+                        <i class="fas fa-exclamation-triangle fa-3x" style="margin-bottom:12px;"></i>
+                        <p style="font-size:0.95rem;font-weight:600;">Error al cargar estadísticas</p>
+                        <p style="font-size:0.82rem;margin-top:4px;">${escHtml(errorMsg)}</p>
+                        <button onclick="window.viewSellerStats(${userId})" style="margin-top:16px;background:#2563eb;color:#fff;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;font-weight:600;">Reintentar</button>
+                    </div>
+                `;
+            }
+        };
+
+        window.closeStatsModal = function() {
+            const modal = document.getElementById('statsModal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // Cerrar modal al hacer click fuera
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('statsModal');
+            if (modal && e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+
+        // Cerrar modal con tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('statsModal');
+                if (modal) modal.style.display = 'none';
+            }
+        });
 
         // ─── Init ───────────────────────────────────────────────
         loadSellersPanel();
