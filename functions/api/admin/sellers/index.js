@@ -56,9 +56,9 @@ export async function onRequestGet(context) {
     if (colSet.has('avatar')) spSelects.push('sp.avatar');
     else spSelects.push("u.avatar as avatar");
     if (colSet.has('city')) spSelects.push('sp.city');
-    else spSelects.push("u.city as city");
+    else spSelects.push("(SELECT b.city FROM businesses b WHERE b.user_id = u.id LIMIT 1) as city");
     if (colSet.has('state')) spSelects.push('sp.state');
-    else spSelects.push("'' as state");
+    else spSelects.push("(SELECT b.state FROM businesses b WHERE b.user_id = u.id LIMIT 1) as state");
     if (colSet.has('phone')) spSelects.push('sp.phone');
     else spSelects.push("u.phone as phone");
     if (colSet.has('whatsapp')) spSelects.push('sp.whatsapp');
