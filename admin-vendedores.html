@@ -199,7 +199,7 @@
     <!-- Toast container -->
     <div id="toastContainer" style="position:fixed;top:20px;right:20px;z-index:10000;display:flex;flex-direction:column;gap:8px;"></div>
 
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=5"></script>
     <script>
     (function() {
         'use strict';
@@ -215,6 +215,24 @@
             window.location.href = 'index.html';
             return;
         }
+
+        // Helper: ocultar loading con seguridad (timeout)
+        function hideLoadingSafe() {
+            const loading = document.getElementById('sellersLoading');
+            if (loading) loading.style.display = 'none';
+        }
+
+        // Timeout de seguridad: si después de 15 segundos sigue cargando, mostrar error
+        setTimeout(function() {
+            const loading = document.getElementById('sellersLoading');
+            if (loading && loading.style.display !== 'none') {
+                hideLoadingSafe();
+                const table = document.getElementById('sellersTable');
+                const tbody = document.getElementById('sellersTableBody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state-sm"><p style="color:#dc2626;"><i class="fas fa-exclamation-triangle"></i> Tiempo de espera agotado. Verifica tu conexión o <button onclick="location.reload()" style="color:#2563eb;text-decoration:underline;background:none;border:none;cursor:pointer;font-weight:600;">recarga la página</button>.</p></div></td></tr>';
+                if (table) table.style.display = 'table';
+            }
+        }, 15000);
 
         // Date
         const dateEl = document.getElementById('adminDate');
@@ -287,6 +305,11 @@
             if (empty) empty.style.display = 'none';
 
             try {
+                // Verificar que api esté disponible
+                if (typeof api === 'undefined') {
+                    throw new Error('Error de carga: el módulo API no está disponible. Recarga la página.');
+                }
+
                 const data = await api.get('/admin/sellers');
                 const sellers = data.sellers || [];
 
@@ -338,7 +361,32 @@
             } catch (err) {
                 if (loading) loading.style.display = 'none';
                 console.error('Error loading sellers:', err);
-                if (tbody) tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state-sm"><p style="color:#dc2626;">Error al cargar vendedores: ${escHtml(err.message)}</p></div></td></tr>`;
+
+                // Mensaje de error más amigable según el tipo de error
+                let errorMsg = err.message || 'Error desconocido';
+                let actionHTML = '';
+
+                // Si es error 401, ofrecer ir a login
+                if (errorMsg.includes('401') || errorMsg.includes('Token') || errorMsg.includes('token')) {
+                    errorMsg = 'Sesión expirada. Por favor, inicia sesión nuevamente.';
+                    actionHTML = ' <button onclick="window.location.href=\'login.html\'" style="color:#2563eb;text-decoration:underline;background:none;border:none;cursor:pointer;font-weight:600;">Ir a Login</button>';
+                }
+                // Si es error 403, explicar permisos
+                else if (errorMsg.includes('403') || errorMsg.includes('denegado') || errorMsg.includes('admin')) {
+                    errorMsg = 'Acceso denegado. Se requiere rol de administrador para ver los vendedores.';
+                }
+                // Si es error 500, sugerir recargar
+                else if (errorMsg.includes('500') || errorMsg.includes('interno')) {
+                    errorMsg = 'Error del servidor. Intenta nuevamente en unos momentos.';
+                    actionHTML = ' <button onclick="location.reload()" style="color:#2563eb;text-decoration:underline;background:none;border:none;cursor:pointer;font-weight:600;">Recargar</button>';
+                }
+                // Si es error de conexión
+                else if (errorMsg.includes('conexión') || errorMsg.includes('fetch') || errorMsg.includes('network')) {
+                    errorMsg = 'Error de conexión. Verifica tu internet e intenta nuevamente.';
+                    actionHTML = ' <button onclick="location.reload()" style="color:#2563eb;text-decoration:underline;background:none;border:none;cursor:pointer;font-weight:600;">Reintentar</button>';
+                }
+
+                if (tbody) tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state-sm"><p style="color:#dc2626;"><i class="fas fa-exclamation-circle"></i> ${escHtml(errorMsg)}${actionHTML}</p></div></td></tr>`;
                 if (table) table.style.display = 'table';
             }
         }
