@@ -1,12 +1,8 @@
 // functions/api/agent-exam/index.js
-// GET: Get exam status and 10 random questions (only if level 10 and not passed)
-// POST: Submit exam answers
+// GET: Get exam status
+// POST: Submit exam answers - 15 questions, 80% to pass, max 3 attempts
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
-
-export async function onRequestOptions() {
-  return new Response(null, { headers: corsHeaders });
-}
 
 function calcLevel(xp) {
   const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
@@ -15,6 +11,10 @@ function calcLevel(xp) {
     if (xp >= LEVEL_XP[i]) { level = i + 1; break; }
   }
   return Math.min(level, 10);
+}
+
+export async function onRequestOptions() {
+  return new Response(null, { headers: corsHeaders });
 }
 
 export async function onRequestGet(context) {
@@ -39,8 +39,10 @@ export async function onRequestGet(context) {
       level,
       exam_passed: profile.exam_passed === 1,
       exam_passed_at: profile.exam_passed_at,
-      exam_attempts: profile.exam_attempts,
-      can_take_exam: level >= 10 && profile.exam_passed !== 1,
+      exam_attempts: profile.exam_attempts || 0,
+      max_attempts: 3,
+      attempts_remaining: Math.max(0, 3 - (profile.exam_attempts || 0)),
+      can_take_exam: level >= 7 && profile.exam_passed !== 1 && (profile.exam_attempts || 0) < 3,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -59,10 +61,11 @@ export async function onRequestPost(context) {
     const { env } = context;
     const userId = auth.user.id;
     const body = await context.request.json();
-    const { answers } = body; // [{question_id, answer: 'a'|'b'|'c'|'d'}, ...]
+    const { answers } = body;
 
-    if (!answers || !Array.isArray(answers) || answers.length !== 10) {
-      return new Response(JSON.stringify({ error: 'Debes responder exactamente 10 preguntas' }), {
+    // Accept variable number of answers (15 max)
+    if (!answers || !Array.isArray(answers) || answers.length < 10) {
+      return new Response(JSON.stringify({ error: 'Debes responder al menos 10 preguntas' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -75,10 +78,10 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Check level requirement
+    // Check level requirement (>= 7)
     const level = calcLevel(profile.xp);
-    if (level < 10) {
-      return new Response(JSON.stringify({ error: 'Necesitas alcanzar nivel 10 para tomar el examen', required_level: 10, current_level: level }), {
+    if (level < 7) {
+      return new Response(JSON.stringify({ error: 'Necesitas alcanzar nivel 7 para tomar el examen', required_level: 7, current_level: level }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -90,6 +93,13 @@ export async function onRequestPost(context) {
       });
     }
 
+    // Check max attempts
+    if ((profile.exam_attempts || 0) >= 3) {
+      return new Response(JSON.stringify({ error: 'Alcanzaste el maximo de 3 intentos' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Get all questions from all active classes (pool for exam)
     const { results: allQuestions } = await env.DB.prepare(`
       SELECT cq.* FROM class_questions cq
@@ -98,27 +108,35 @@ export async function onRequestPost(context) {
     `).bind().all();
 
     if (allQuestions.length < 10) {
-      return new Response(JSON.stringify({ error: 'No hay suficientes preguntas en el banco para generar el examen (mínimo 10)' }), {
+      return new Response(JSON.stringify({ error: 'No hay suficientes preguntas en el banco para generar el examen (minimo 10)' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Grade answers
+    // Grade answers with points
+    let totalPoints = 0;
+    let maxPoints = 0;
     let correct = 0;
+
     for (const ans of answers) {
-      const q = allQuestions.find(q => q.id === ans.question_id);
-      if (q && q.correct_answer === ans.answer) {
-        correct++;
+      const q = allQuestions.find(function(q) { return q.id === ans.question_id; });
+      if (q) {
+        maxPoints += (q.points || 10);
+        var isCorrect = String(q.correct_answer).toLowerCase() === String(ans.answer).toLowerCase();
+        if (isCorrect) {
+          correct++;
+          totalPoints += (q.points || 10);
+        }
       }
     }
 
-    const allCorrect = correct === 10;
-    const passed = allCorrect; // ALL must be correct
+    var scorePercent = maxPoints > 0 ? Math.round((totalPoints / maxPoints) * 100) : 0;
+    var passed = scorePercent >= 80;
 
     // Update exam attempts
     await env.DB.prepare(`
       UPDATE agent_profiles SET
-        exam_attempts = exam_attempts + 1,
+        exam_attempts = COALESCE(exam_attempts, 0) + 1,
         last_exam_at = datetime('now'),
         updated_at = datetime('now')
       WHERE user_id = ?
@@ -132,13 +150,13 @@ export async function onRequestPost(context) {
             exam_passed = 1,
             exam_passed_at = datetime('now'),
             is_partner = 1,
-            partner_at = datetime('now'),
+            partner_at = COALESCE(partner_at, datetime('now')),
             updated_at = datetime('now')
           WHERE user_id = ?
         `).bind(userId),
         env.DB.prepare(`
           INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon)
-          VALUES (?, 'exam_passed', 'Examen Aprobado', 'Aprobaste el examen final con todas las respuestas correctas', 'fas fa-trophy')
+          VALUES (?, 'exam_passed', 'Examen Aprobado', 'Aprobaste el examen final con ' + scorePercent + '% de calificacion', 'fas fa-trophy')
         `).bind(userId),
         env.DB.prepare(`
           INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon)
@@ -149,12 +167,16 @@ export async function onRequestPost(context) {
 
     return new Response(JSON.stringify({
       passed,
+      score_percent: scorePercent,
       correct_answers: correct,
-      total_questions: 10,
-      exam_attempts: profile.exam_attempts + 1,
+      total_questions: answers.length,
+      total_points: totalPoints,
+      max_points: maxPoints,
+      exam_attempts: (profile.exam_attempts || 0) + 1,
+      attempts_remaining: Math.max(0, 2 - profile.exam_attempts),
       message: passed
-        ? 'Felicidades! Aprobaste el examen y eres ahora un Partner Digital Certificado!'
-        : `No aprobaste. Necesitas ${10 - correct} respuestas correctas mas. Intenta de nuevo.`,
+        ? 'Felicidades! Aprobaste el examen con ' + scorePercent + '% y eres ahora un Partner Digital Certificado!'
+        : 'No aprobaste. Obtuviste ' + scorePercent + '% (necesitas 80%). Intentos restantes: ' + Math.max(0, 2 - profile.exam_attempts) + '.',
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

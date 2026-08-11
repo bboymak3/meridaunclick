@@ -765,12 +765,12 @@
 
                 <!-- ==================== ACADEMY TAB ==================== -->
                 <div class="admin-tab hidden" id="tabAcademy">
-                    <!-- Classes Management -->
+                    <!-- Stats + Classes List -->
                     <div class="admin-card" style="padding:24px;margin-bottom:20px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
                             <div>
                                 <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-graduation-cap" style="color:#7c3aed;"></i> Academia de Agentes</h3>
-                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Gestiona clases, preguntas y contenido educativo para los agentes.</p>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Gestiona clases, preguntas y progreso de los agentes.</p>
                             </div>
                             <div style="display:flex;gap:8px;">
                                 <button class="btn btn-primary" id="academyAddClassBtn" style="background:#7c3aed;"><i class="fas fa-plus"></i> Nueva Clase</button>
@@ -786,7 +786,6 @@
                             <table class="admin-table" style="width:100%;font-size:0.85rem;">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
                                         <th>Titulo</th>
                                         <th>Preguntas</th>
                                         <th>XP</th>
@@ -797,17 +796,17 @@
                                     </tr>
                                 </thead>
                                 <tbody id="academyClassesTableBody">
-                                    <tr><td colspan="8" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                    <tr><td colspan="7" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
 
-                    <!-- Class Editor (hidden by default) -->
+                    <!-- Class Creator (inline) -->
                     <div class="admin-card hidden" id="academyClassEditor" style="padding:24px;margin-bottom:20px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                             <h3 style="margin:0;font-size:1.1rem;" id="academyEditorTitle"><i class="fas fa-edit" style="color:#7c3aed;"></i> Nueva Clase</h3>
-                            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('academyClassEditor').classList.add('hidden')"><i class="fas fa-times"></i> Cerrar</button>
+                            <button class="btn btn-secondary btn-sm" id="academyCloseEditorBtn"><i class="fas fa-times"></i> Cerrar</button>
                         </div>
                         <div style="display:grid;gap:14px;">
                             <input type="hidden" id="academyClassId">
@@ -823,7 +822,7 @@
                                 <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Contenido</label>
                                 <textarea id="academyClassContent" placeholder="Contenido educativo de la clase (texto, HTML permitido)" rows="6" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
                             </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                                 <div class="form-group">
                                     <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">XP Recompensa</label>
                                     <input type="number" id="academyClassXP" value="10" min="1" max="100" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
@@ -832,104 +831,76 @@
                                     <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Orden</label>
                                     <input type="number" id="academyClassOrder" value="0" min="0" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
                                 </div>
-                                <div class="form-group">
-                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Tipo Examen</label>
-                                    <select id="academyClassExamType" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
-                                        <option value="multiple_choice">Seleccion Multiple</option>
-                                        <option value="number_select">Seleccion de Numero</option>
-                                        <option value="true_false_none">Verdadero/Falso/Ninguna</option>
-                                    </select>
-                                </div>
                             </div>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <label style="font-weight:600;font-size:0.85rem;"><input type="checkbox" id="academyClassActive" checked style="accent-color:#7c3aed;"> Activa</label>
+                            </div>
+                            <!-- AI Question Generator -->
                             <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:14px;">
                                 <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:#7c3aed;"><i class="fas fa-robot"></i> Generar Preguntas con IA</div>
                                 <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Pega un texto educativo y el sistema generara preguntas automaticamente.</p>
                                 <textarea id="academyAIText" placeholder="Pega aqui el texto del cual quieres generar preguntas..." rows="3" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;resize:vertical;margin-bottom:8px;"></textarea>
                                 <div style="display:flex;gap:8px;align-items:center;">
-                                    <button class="btn btn-primary btn-sm" id="academyGenQBtn" style="background:#7c3aed;"><i class="fas fa-magic"></i> Generar 5 Preguntas</button>
+                                    <button class="btn btn-primary btn-sm" id="academyGenQBtn" style="background:#7c3aed;"><i class="fas fa-magic"></i> Generar Preguntas</button>
                                     <input type="number" id="academyGenQCount" value="5" min="1" max="20" style="width:60px;padding:6px;border:2px solid #e2e8f0;border-radius:6px;font-size:0.85rem;text-align:center;">
                                     <span style="font-size:0.75rem;color:#6b7280;">preguntas</span>
                                 </div>
                             </div>
-                            <div style="display:flex;gap:10px;align-items:center;">
-                                <label style="font-weight:600;font-size:0.85rem;"><input type="checkbox" id="academyClassActive" checked> Activa</label>
+                            <!-- Generated Questions Preview -->
+                            <div id="academyQPreviewWrap" class="hidden" style="background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <div style="font-weight:600;font-size:0.85rem;color:#374151;"><i class="fas fa-list-ol" style="color:#7c3aed;"></i> Preguntas Generadas (<span id="academyQPreviewCount">0</span>)</div>
+                                    <button class="btn btn-secondary btn-sm" id="academyClearQPreviewBtn" style="font-size:0.75rem;"><i class="fas fa-trash"></i> Limpiar</button>
+                                </div>
+                                <div id="academyQPreviewList" style="display:grid;gap:10px;max-height:400px;overflow-y:auto;"></div>
                             </div>
                             <div style="display:flex;gap:10px;">
                                 <button class="btn btn-primary" id="academySaveClassBtn" style="background:#7c3aed;"><i class="fas fa-save"></i> Guardar Clase</button>
-                                <button class="btn btn-secondary" onclick="document.getElementById('academyClassEditor').classList.add('hidden')"><i class="fas fa-times"></i> Cancelar</button>
+                                <button class="btn btn-secondary" id="academyCancelClassBtn"><i class="fas fa-times"></i> Cancelar</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Questions Editor for selected class -->
+                    <!-- Questions Manager (inline panel) -->
                     <div class="admin-card hidden" id="academyQuestionsPanel" style="padding:24px;margin-bottom:20px;">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
                             <h3 style="margin:0;font-size:1.1rem;"><i class="fas fa-question-circle" style="color:#7c3aed;"></i> Preguntas: <span id="academyQuestionsClassName"></span></h3>
                             <div style="display:flex;gap:8px;">
-                                <button class="btn btn-primary btn-sm" id="academyAddQuestionBtn" style="background:#7c3aed;"><i class="fas fa-plus"></i> Nueva Pregunta</button>
-                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('academyQuestionsPanel').classList.add('hidden')"><i class="fas fa-arrow-left"></i> Volver</button>
+                                <button class="btn btn-primary btn-sm" id="academyAddQuestionBtn" style="background:#7c3aed;"><i class="fas fa-plus"></i> Agregar Pregunta</button>
+                                <button class="btn btn-secondary btn-sm" id="academyCloseQuestionsBtn"><i class="fas fa-arrow-left"></i> Volver</button>
                             </div>
                         </div>
-                        <div style="overflow-x:auto;">
-                            <table class="admin-table" style="width:100%;font-size:0.82rem;">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Pregunta</th>
-                                        <th>A</th>
-                                        <th>B</th>
-                                        <th>C</th>
-                                        <th>D</th>
-                                        <th>Correcta</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="academyQuestionsTableBody">
-                                    <tr><td colspan="8" style="text-align:center;padding:20px;color:#6b7280;">Cargando...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Question Add/Edit Modal -->
-                    <div class="modal hidden" id="academyQuestionModal">
-                        <div class="modal-overlay" onclick="document.getElementById('academyQuestionModal').classList.add('hidden')"></div>
-                        <div class="modal-content" style="max-width:640px;max-height:90vh;overflow-y:auto;">
-                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                                <h3 style="margin:0;font-size:1.1rem;" id="academyQModalTitle"><i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Pregunta</h3>
-                                <button onclick="document.getElementById('academyQuestionModal').classList.add('hidden')" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#6b7280;padding:4px;"><i class="fas fa-times"></i></button>
-                            </div>
-                            <div style="display:grid;gap:14px;">
-                                <input type="hidden" id="academyQId">
+                        <div id="academyQuestionsList"></div>
+                        <!-- Inline add/edit question form (hidden) -->
+                        <div id="academyInlineQForm" class="hidden" style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:16px;margin-top:12px;">
+                            <h4 style="margin:0 0 12px;font-size:0.9rem;color:#7c3aed;" id="academyInlineQFormTitle">Nueva Pregunta</h4>
+                            <input type="hidden" id="academyInlineQId">
+                            <div style="display:grid;gap:10px;">
                                 <div class="form-group">
-                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Pregunta *</label>
-                                    <textarea id="academyQText" placeholder="Texto de la pregunta" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                                    <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:block;">Pregunta *</label>
+                                    <textarea id="academyInlineQText" placeholder="Texto de la pregunta" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;resize:vertical;"></textarea>
                                 </div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                                     <div class="form-group">
-                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyCorrect" value="a" style="accent-color:#7c3aed;"> <strong>A</strong> (Correcta)</label>
-                                        <input type="text" id="academyQOptA" placeholder="Opcion A" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyInlineCorrect" value="a" style="accent-color:#7c3aed;"> <strong>A</strong></label>
+                                        <input type="text" id="academyInlineQOptA" placeholder="Opcion A" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
                                     </div>
                                     <div class="form-group">
-                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyCorrect" value="b" style="accent-color:#7c3aed;"> <strong>B</strong> (Correcta)</label>
-                                        <input type="text" id="academyQOptB" placeholder="Opcion B" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyInlineCorrect" value="b" style="accent-color:#7c3aed;"> <strong>B</strong></label>
+                                        <input type="text" id="academyInlineQOptB" placeholder="Opcion B" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
                                     </div>
                                     <div class="form-group">
-                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyCorrect" value="c" style="accent-color:#7c3aed;"> <strong>C</strong> (Correcta)</label>
-                                        <input type="text" id="academyQOptC" placeholder="Opcion C" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyInlineCorrect" value="c" style="accent-color:#7c3aed;"> <strong>C</strong></label>
+                                        <input type="text" id="academyInlineQOptC" placeholder="Opcion C" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
                                     </div>
                                     <div class="form-group">
-                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyCorrect" value="d" style="accent-color:#7c3aed;"> <strong>D</strong> (Correcta)</label>
-                                        <input type="text" id="academyQOptD" placeholder="Opcion D" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyInlineCorrect" value="d" style="accent-color:#7c3aed;"> <strong>D</strong></label>
+                                        <input type="text" id="academyInlineQOptD" placeholder="Opcion D" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Explicacion (mostrada al responder)</label>
-                                    <textarea id="academyQExplanation" placeholder="Por que esta es la respuesta correcta (opcional)" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
-                                </div>
-                                <div style="display:flex;gap:10px;">
-                                    <button class="btn btn-primary" id="academySaveQuestionBtn" style="background:#7c3aed;"><i class="fas fa-save"></i> Guardar Pregunta</button>
-                                    <button class="btn btn-secondary" onclick="document.getElementById('academyQuestionModal').classList.add('hidden')">Cancelar</button>
+                                <div style="display:flex;gap:8px;">
+                                    <button class="btn btn-primary btn-sm" id="academySaveInlineQBtn" style="background:#7c3aed;"><i class="fas fa-save"></i> Guardar</button>
+                                    <button class="btn btn-secondary btn-sm" id="academyCancelInlineQBtn"><i class="fas fa-times"></i> Cancelar</button>
                                 </div>
                             </div>
                         </div>
@@ -937,20 +908,14 @@
 
                     <!-- Agents Overview -->
                     <div class="admin-card" style="padding:24px;margin-bottom:20px;">
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                            <div>
-                                <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-users-graduate" style="color:#059669;"></i> Progreso de Agentes</h3>
-                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Gestiona agentes, asigna actividades y otorga medallas.</p>
-                            </div>
-                            <div style="display:flex;gap:8px;">
-                                <button class="btn btn-primary btn-sm" id="academyAssignBtn" style="background:#059669;"><i class="fas fa-paper-plane"></i> Asignar Actividad</button>
-                            </div>
+                        <div style="margin-bottom:20px;">
+                            <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-users-graduate" style="color:#059669;"></i> Progreso de Agentes</h3>
+                            <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Visualiza el progreso y gestiona agentes.</p>
                         </div>
                         <div style="overflow-x:auto;">
                             <table class="admin-table" style="width:100%;font-size:0.85rem;">
                                 <thead>
                                     <tr>
-                                        <th>ID</th>
                                         <th>Nombre</th>
                                         <th>Nivel</th>
                                         <th>XP</th>
@@ -962,7 +927,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="academyAgentsTableBody">
-                                    <tr><td colspan="10" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                    <tr><td colspan="8" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
                                 </tbody>
                             </table>
                         </div>

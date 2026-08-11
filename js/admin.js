@@ -6236,7 +6236,14 @@ if (!window._renderVideoList) {
         var addBtn = document.getElementById('academyAddClassBtn');
         var saveBtn = document.getElementById('academySaveClassBtn');
         var addQBtn = document.getElementById('academyAddQuestionBtn');
-        var saveQBtn = document.getElementById('academySaveQuestionBtn');
+        var saveQBtn = document.getElementById('academySaveInlineQBtn');
+        var cancelQBtn = document.getElementById('academyCancelInlineQBtn');
+        var closeEditorBtn = document.getElementById('academyCloseEditorBtn');
+        var cancelClassBtn = document.getElementById('academyCancelClassBtn');
+        var closeQuestionsBtn = document.getElementById('academyCloseQuestionsBtn');
+        var genQBtn = document.getElementById('academyGenQBtn');
+        var clearPreviewBtn = document.getElementById('academyClearQPreviewBtn');
+
         if (addBtn && !addBtn._bound) {
             addBtn._bound = true;
             addBtn.addEventListener('click', function() {
@@ -6249,6 +6256,8 @@ if (!window._renderVideoList) {
                 document.getElementById('academyClassActive').checked = true;
                 document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Clase';
                 document.getElementById('academyClassEditor').classList.remove('hidden');
+                window._pendingQuestions = [];
+                renderPendingQuestionsPreview();
             });
         }
         if (saveBtn && !saveBtn._bound) {
@@ -6257,32 +6266,46 @@ if (!window._renderVideoList) {
         }
         if (addQBtn && !addQBtn._bound) {
             addQBtn._bound = true;
-            addQBtn.addEventListener('click', function() {
-                document.getElementById('academyQId').value = '';
-                document.getElementById('academyQText').value = '';
-                document.getElementById('academyQOptA').value = '';
-                document.getElementById('academyQOptB').value = '';
-                document.getElementById('academyQOptC').value = '';
-                document.getElementById('academyQOptD').value = '';
-                document.getElementById('academyQExplanation').value = '';
-                document.querySelectorAll('input[name="academyCorrect"]').forEach(function(r) { r.checked = false; });
-                document.getElementById('academyQModalTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Pregunta';
-                document.getElementById('academyQuestionModal').classList.remove('hidden');
-            });
+            addQBtn.addEventListener('click', addQuestionInline);
         }
         if (saveQBtn && !saveQBtn._bound) {
             saveQBtn._bound = true;
-            saveQBtn.addEventListener('click', saveAcademyQuestion);
+            saveQBtn.addEventListener('click', saveQuestionInline);
         }
-        var genQBtn = document.getElementById('academyGenQBtn');
+        if (cancelQBtn && !cancelQBtn._bound) {
+            cancelQBtn._bound = true;
+            cancelQBtn.addEventListener('click', function() {
+                document.getElementById('academyInlineQForm').classList.add('hidden');
+            });
+        }
+        if (closeEditorBtn && !closeEditorBtn._bound) {
+            closeEditorBtn._bound = true;
+            closeEditorBtn.addEventListener('click', function() {
+                document.getElementById('academyClassEditor').classList.add('hidden');
+            });
+        }
+        if (cancelClassBtn && !cancelClassBtn._bound) {
+            cancelClassBtn._bound = true;
+            cancelClassBtn.addEventListener('click', function() {
+                document.getElementById('academyClassEditor').classList.add('hidden');
+            });
+        }
+        if (closeQuestionsBtn && !closeQuestionsBtn._bound) {
+            closeQuestionsBtn._bound = true;
+            closeQuestionsBtn.addEventListener('click', function() {
+                document.getElementById('academyQuestionsPanel').classList.add('hidden');
+            });
+        }
         if (genQBtn && !genQBtn._bound) {
             genQBtn._bound = true;
             genQBtn.addEventListener('click', academyGenerateQuestions);
         }
-        var assignBtn = document.getElementById('academyAssignBtn');
-        if (assignBtn && !assignBtn._bound) {
-            assignBtn._bound = true;
-            assignBtn.addEventListener('click', academyAssignActivity);
+        if (clearPreviewBtn && !clearPreviewBtn._bound) {
+            clearPreviewBtn._bound = true;
+            clearPreviewBtn.addEventListener('click', function() {
+                window._pendingQuestions = [];
+                renderPendingQuestionsPreview();
+            });
         }
     }
 
@@ -6292,8 +6315,6 @@ if (!window._renderVideoList) {
         try {
             var data = await api.get('/agent-classes');
             var classes = data.classes || [];
-
-            // Stats
             var totalQ = classes.reduce(function(s, c) { return s + (c.question_count || 0); }, 0);
             var totalComp = classes.reduce(function(s, c) { return s + (c.completions || 0); }, 0);
             var activeC = classes.filter(function(c) { return c.is_active === 1; }).length;
@@ -6313,32 +6334,69 @@ if (!window._renderVideoList) {
                     '<div style="font-size:1.5rem;font-weight:700;color:#059669;">' + totalComp + '</div>' +
                     '<div style="font-size:0.78rem;color:#6b7280;">Completados</div></div>';
             }
-
             if (!classes.length) {
-                tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-graduation-cap"></i><p>No hay clases creadas. Haz clic en "Nueva Clase" para comenzar.</p></div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7"><div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-graduation-cap"></i><p>No hay clases creadas. Haz clic en "Nueva Clase" para comenzar.</p></div></td></tr>';
                 return;
             }
             var html = '';
             classes.forEach(function(c) {
                 html += '<tr>';
-                html += '<td>' + c.id + '</td>';
                 html += '<td><strong>' + _esc(c.title) + '</strong></td>';
-                html += '<td>' + (c.question_count || 0) + '</td>';
+                html += '<td><button onclick="loadAcademyQuestions(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2563eb;"><i class="fas fa-question-circle"></i> ' + (c.question_count || 0) + '</button></td>';
                 html += '<td><span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">+' + (c.xp_reward || 0) + ' XP</span></td>';
                 html += '<td>' + (c.completions || 0) + '</td>';
                 html += '<td>' + c.sort_order + '</td>';
                 html += '<td>' + (c.is_active === 1 ? '<span style="color:#059669;font-size:0.8rem;"><i class="fas fa-check-circle"></i> Activa</span>' : '<span style="color:#dc2626;font-size:0.8rem;"><i class="fas fa-times-circle"></i> Inactiva</span>') + '</td>';
                 html += '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">' +
                     '<button onclick="academyEditClass(' + c.id + ')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#374151;" title="Editar"><i class="fas fa-edit"></i></button>' +
-                    '<button onclick="academyManageQuestions(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2563eb;" title="Preguntas"><i class="fas fa-question-circle"></i> ' + (c.question_count || 0) + '</button>' +
-                    '<button onclick="academyDeleteClass(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#dc2626;" title="Eliminar"><i class="fas fa-trash"></i></button>' +
+                    '<button onclick="loadAcademyQuestions(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2563eb;" title="Preguntas"><i class="fas fa-list"></i></button>' +
+                    '<button onclick="academyDeleteClass(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#dc2626;" title="Eliminar"><i class="fas fa-trash"></i></button>' +
                     '</div></td>';
                 html += '</tr>';
             });
             tbody.innerHTML = html;
         } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar clases</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar clases</p></div></td></tr>';
         }
+    }
+
+    async function saveAcademyClass() {
+        var id = document.getElementById('academyClassId').value;
+        var title = document.getElementById('academyClassTitle').value.trim();
+        if (!title) { showToast('El titulo es requerido', 'error'); return; }
+        var payload = {
+            title: title,
+            description: document.getElementById('academyClassDesc').value,
+            content: document.getElementById('academyClassContent').value,
+            xp_reward: parseInt(document.getElementById('academyClassXP').value) || 10,
+            sort_order: parseInt(document.getElementById('academyClassOrder').value) || 0,
+            is_active: document.getElementById('academyClassActive').checked
+        };
+        try {
+            var classId = id || null;
+            if (id) {
+                await api.put('/agent-classes/' + id, payload);
+                classId = id;
+                showToast('Clase actualizada', 'success');
+            } else {
+                var result = await api.post('/agent-classes', payload);
+                classId = result.class_id;
+                showToast('Clase creada', 'success');
+            }
+            var pending = window._pendingQuestions || [];
+            if (pending.length > 0 && classId) {
+                for (var i = 0; i < pending.length; i++) {
+                    try {
+                        await api.post('/agent-classes/' + classId + '/questions', pending[i]);
+                    } catch(eq) { console.log('Error saving question', eq); }
+                }
+                showToast(pending.length + ' preguntas guardadas', 'success');
+            }
+            window._pendingQuestions = [];
+            document.getElementById('academyClassEditor').classList.add('hidden');
+            renderPendingQuestionsPreview();
+            loadAcademyClasses();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 
     window.academyEditClass = async function(classId) {
@@ -6355,45 +6413,24 @@ if (!window._renderVideoList) {
             document.getElementById('academyClassActive').checked = cls.is_active === 1;
             document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-edit" style="color:#7c3aed;"></i> Editar Clase: ' + _esc(cls.title);
             document.getElementById('academyClassEditor').classList.remove('hidden');
+            try {
+                var qData = await api.get('/agent-classes/' + classId + '/questions');
+                window._pendingQuestions = (qData.questions || []).map(function(q) {
+                    return {
+                        question: q.question,
+                        option_a: q.option_a,
+                        option_b: q.option_b,
+                        option_c: q.option_c,
+                        option_d: q.option_d,
+                        correct_answer: q.correct_answer,
+                        points: q.points || 10,
+                        explanation: q.explanation || ''
+                    };
+                });
+            } catch(ex) { window._pendingQuestions = []; }
+            renderPendingQuestionsPreview();
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     };
-
-    async function saveAcademyClass() {
-        var id = document.getElementById('academyClassId').value;
-        var title = document.getElementById('academyClassTitle').value.trim();
-        if (!title) { showToast('El titulo es requerido', 'error'); return; }
-        var payload = {
-            title: title,
-            description: document.getElementById('academyClassDesc').value,
-            content: document.getElementById('academyClassContent').value,
-            xp_reward: parseInt(document.getElementById('academyClassXP').value) || 10,
-            sort_order: parseInt(document.getElementById('academyClassOrder').value) || 0,
-            is_active: document.getElementById('academyClassActive').checked,
-            exam_type: document.getElementById('academyClassExamType').value
-        };
-        try {
-            if (id) {
-                await api.put('/agent-classes/' + id, payload);
-                showToast('Clase actualizada', 'success');
-            } else {
-                var result = await api.post('/agent-classes', payload);
-                showToast('Clase creada', 'success');
-                // Auto-save AI-generated questions if any
-                if (window._generatedQuestions && window._generatedQuestions.length > 0) {
-                    var newClassId = result.class_id;
-                    for (var i = 0; i < window._generatedQuestions.length; i++) {
-                        try {
-                            await api.post('/agent-classes/' + newClassId + '/questions', window._generatedQuestions[i]);
-                        } catch(eq) { console.log('Error saving question', eq); }
-                    }
-                    showToast(window._generatedQuestions.length + ' preguntas guardadas automaticamente', 'success');
-                    window._generatedQuestions = null;
-                }
-            }
-            document.getElementById('academyClassEditor').classList.add('hidden');
-            loadAcademyClasses();
-        } catch(e) { showToast('Error: ' + e.message, 'error'); }
-    }
 
     window.academyDeleteClass = async function(id, name) {
         if (!confirm('Eliminar la clase "' + name + '" y todas sus preguntas?')) return;
@@ -6404,75 +6441,90 @@ if (!window._renderVideoList) {
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     };
 
-    window.academyManageQuestions = async function(classId, className) {
+    window.loadAcademyQuestions = async function(classId, className) {
         _academyCurrentClassId = classId;
         document.getElementById('academyQuestionsClassName').textContent = className;
         document.getElementById('academyQuestionsPanel').classList.remove('hidden');
+        document.getElementById('academyInlineQForm').classList.add('hidden');
+        var listEl = document.getElementById('academyQuestionsList');
+        listEl.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</div>';
         try {
             var data = await api.get('/agent-classes/' + classId + '/questions');
             var questions = data.questions || [];
-            var tbody = document.getElementById('academyQuestionsTableBody');
             if (!questions.length) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:16px;">No hay preguntas. Agrega una nueva.</td></tr>';
+                listEl.innerHTML = '<div style="text-align:center;color:#94a3b8;padding:20px;">No hay preguntas. Haz clic en "Agregar Pregunta".</div>';
                 return;
             }
             var html = '';
-            questions.forEach(function(q) {
-                html += '<tr>';
-                html += '<td>' + q.id + '</td>';
-                html += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + _esc(q.question) + '">' + _esc(q.question) + '</td>';
-                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc((q.option_a || '').substring(0, 30)) + '</td>';
-                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc((q.option_b || '').substring(0, 30)) + '</td>';
-                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc((q.option_c || '').substring(0, 30)) + '</td>';
-                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc((q.option_d || '').substring(0, 30)) + '</td>';
-                html += '<td><span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;">' + (q.correct_answer || '?').toUpperCase() + '</span></td>';
-                html += '<td><div style="display:flex;gap:4px;">' +
-                    '<button onclick="academyEditQuestion(' + q.id + ')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#374151;"><i class="fas fa-edit"></i></button>' +
-                    '<button onclick="academyDeleteQuestion(' + q.id + ')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#dc2626;"><i class="fas fa-trash"></i></button>' +
-                    '</div></td>';
-                html += '</tr>';
+            questions.forEach(function(q, idx) {
+                var opts = { a: q.option_a, b: q.option_b, c: q.option_c, d: q.option_d };
+                html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:8px;">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">';
+                html += '<div style="flex:1;">';
+                html += '<div style="font-weight:600;font-size:0.85rem;margin-bottom:6px;">[Q' + (idx + 1) + '] ' + _esc(q.question) + '</div>';
+                var letters = ['a', 'b', 'c', 'd'];
+                letters.forEach(function(l) {
+                    var isCorrect = q.correct_answer === l;
+                    var prefix = isCorrect ? '<span style="color:#059669;font-weight:700;">&#10003; ' + l.toUpperCase() + '</span>' : '<span style="color:#6b7280;">&nbsp;&nbsp;&nbsp;' + l.toUpperCase() + '</span>';
+                    html += '<div style="font-size:0.82rem;padding:2px 0 2px 16px;">' + prefix + ') ' + _esc(opts[l] || '') + '</div>';
+                });
+                html += '</div>';
+                html += '<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;">';
+                html += '<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;white-space:nowrap;">' + (q.points || 10) + ' pts</span>';
+                html += '<div style="display:flex;gap:4px;">';
+                html += '<button onclick="editQuestionInline(' + q.id + ')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 6px;cursor:pointer;font-size:0.72rem;color:#374151;" title="Editar"><i class="fas fa-edit"></i></button>';
+                html += '<button onclick="deleteQuestionInline(' + q.id + ')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 6px;cursor:pointer;font-size:0.72rem;color:#dc2626;" title="Eliminar"><i class="fas fa-trash"></i></button>';
+                html += '</div></div></div></div>';
             });
-            tbody.innerHTML = html;
-        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+            listEl.innerHTML = html;
+        } catch(e) {
+            listEl.innerHTML = '<div style="text-align:center;color:#f59e0b;padding:20px;"><i class="fas fa-exclamation-triangle"></i> Error al cargar preguntas</div>';
+        }
     };
 
-    window.academyEditQuestion = async function(qId) {
+    function addQuestionInline() {
+        document.getElementById('academyInlineQId').value = '';
+        document.getElementById('academyInlineQText').value = '';
+        document.getElementById('academyInlineQOptA').value = '';
+        document.getElementById('academyInlineQOptB').value = '';
+        document.getElementById('academyInlineQOptC').value = '';
+        document.getElementById('academyInlineQOptD').value = '';
+        document.querySelectorAll('input[name="academyInlineCorrect"]').forEach(function(r) { r.checked = false; });
+        document.getElementById('academyInlineQFormTitle').textContent = 'Nueva Pregunta';
+        document.getElementById('academyInlineQForm').classList.remove('hidden');
+    }
+
+    window.editQuestionInline = async function(qId) {
         try {
-            // Fetch from full class endpoint (admin sees correct_answer)
             var data = await api.get('/agent-classes/' + _academyCurrentClassId);
             var q = (data.questions || []).find(function(q) { return q.id === qId; });
             if (!q) { showToast('Pregunta no encontrada', 'error'); return; }
-            document.getElementById('academyQId').value = q.id;
-            document.getElementById('academyQText').value = q.question;
-            document.getElementById('academyQOptA').value = q.option_a;
-            document.getElementById('academyQOptB').value = q.option_b;
-            document.getElementById('academyQOptC').value = q.option_c;
-            document.getElementById('academyQOptD').value = q.option_d;
-            document.getElementById('academyQExplanation').value = q.explanation || '';
-            document.querySelectorAll('input[name="academyCorrect"]').forEach(function(r) { r.checked = r.value === q.correct_answer; });
-            document.getElementById('academyQModalTitle').innerHTML = '<i class="fas fa-edit" style="color:#7c3aed;"></i> Editar Pregunta';
-            document.getElementById('academyQuestionModal').classList.remove('hidden');
+            document.getElementById('academyInlineQId').value = q.id;
+            document.getElementById('academyInlineQText').value = q.question;
+            document.getElementById('academyInlineQOptA').value = q.option_a || '';
+            document.getElementById('academyInlineQOptB').value = q.option_b || '';
+            document.getElementById('academyInlineQOptC').value = q.option_c || '';
+            document.getElementById('academyInlineQOptD').value = q.option_d || '';
+            document.querySelectorAll('input[name="academyInlineCorrect"]').forEach(function(r) { r.checked = r.value === q.correct_answer; });
+            document.getElementById('academyInlineQFormTitle').textContent = 'Editar Pregunta';
+            document.getElementById('academyInlineQForm').classList.remove('hidden');
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     };
 
-    async function saveAcademyQuestion() {
-        var qId = document.getElementById('academyQId').value;
-        var question = document.getElementById('academyQText').value.trim();
-        var optA = document.getElementById('academyQOptA').value.trim();
-        var optB = document.getElementById('academyQOptB').value.trim();
-        var optC = document.getElementById('academyQOptC').value.trim();
-        var optD = document.getElementById('academyQOptD').value.trim();
-        var correct = document.querySelector('input[name="academyCorrect"]:checked');
-        var explanation = document.getElementById('academyQExplanation').value;
-
+    async function saveQuestionInline() {
+        var qId = document.getElementById('academyInlineQId').value;
+        var question = document.getElementById('academyInlineQText').value.trim();
+        var optA = document.getElementById('academyInlineQOptA').value.trim();
+        var optB = document.getElementById('academyInlineQOptB').value.trim();
+        var optC = document.getElementById('academyInlineQOptC').value.trim();
+        var optD = document.getElementById('academyInlineQOptD').value.trim();
+        var correct = document.querySelector('input[name="academyInlineCorrect"]:checked');
         if (!question || !optA || !optB || !optC || !optD) { showToast('Todos los campos son requeridos', 'error'); return; }
         if (!correct) { showToast('Selecciona la respuesta correcta', 'error'); return; }
-
         var payload = {
             question: question,
             option_a: optA, option_b: optB, option_c: optC, option_d: optD,
-            correct_answer: correct.value,
-            explanation: explanation
+            correct_answer: correct.value
         };
         try {
             if (qId) {
@@ -6482,39 +6534,19 @@ if (!window._renderVideoList) {
                 await api.post('/agent-classes/' + _academyCurrentClassId + '/questions', payload);
                 showToast('Pregunta creada', 'success');
             }
-            document.getElementById('academyQuestionModal').classList.add('hidden');
-            academyManageQuestions(_academyCurrentClassId, document.getElementById('academyQuestionsClassName').textContent);
+            document.getElementById('academyInlineQForm').classList.add('hidden');
+            loadAcademyQuestions(_academyCurrentClassId, document.getElementById('academyQuestionsClassName').textContent);
             loadAcademyClasses();
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 
-    window.academyDeleteQuestion = async function(qId) {
+    window.deleteQuestionInline = async function(qId) {
         if (!confirm('Eliminar esta pregunta?')) return;
         try {
             await api.delete('/agent-classes/' + _academyCurrentClassId + '/questions/' + qId);
             showToast('Pregunta eliminada', 'success');
-            academyManageQuestions(_academyCurrentClassId, document.getElementById('academyQuestionsClassName').textContent);
+            loadAcademyQuestions(_academyCurrentClassId, document.getElementById('academyQuestionsClassName').textContent);
             loadAcademyClasses();
-        } catch(e) { showToast('Error: ' + e.message, 'error'); }
-    };
-
-    // Assign activity to agents
-    window.academyAssignActivity = async function() {
-        var classes = document.querySelectorAll('#academyClassesTableBody tr');
-        if (!classes.length) { showToast('No hay clases disponibles', 'error'); return; }
-        var classId = prompt('ID de la clase a asignar (numero):');
-        if (!classId) return;
-        var userIds = prompt('IDs de los agentes (separados por coma):');
-        if (!userIds) return;
-        var ids = userIds.split(',').map(function(s) { return parseInt(s.trim()); }).filter(function(n) { return !isNaN(n); });
-        if (!ids.length) { showToast('IDs invalidos', 'error'); return; }
-        try {
-            var data = await api.post('/admin/agent-actions', {
-                action: 'assign_class',
-                class_id: parseInt(classId),
-                user_ids: ids
-            });
-            showToast('Actividad asignada a ' + data.assigned + ' agentes', 'success');
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     };
 
@@ -6527,13 +6559,10 @@ if (!window._renderVideoList) {
             });
             var data = await resp.json();
             var users = data.users || data.results || [];
-
             if (!users.length) {
-                tbody.innerHTML = '<tr><td colspan="10"><div style="text-align:center;color:#94a3b8;padding:16px;">No hay agentes registrados</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#94a3b8;padding:16px;">No hay agentes registrados</div></td></tr>';
                 return;
             }
-
-            // Fetch agent profiles for each user
             var profiles = {};
             for (var i = 0; i < users.length; i++) {
                 try {
@@ -6544,74 +6573,126 @@ if (!window._renderVideoList) {
                     profiles[users[i].id] = pData;
                 } catch(ex) {}
             }
-
             var html = '';
+            var lvlColors = ['#6b7280','#7c3aed','#2563eb','#059669','#d97706','#dc2626','#8b5cf6','#0891b2','#65a30d','#ea580c'];
             for (var i = 0; i < users.length; i++) {
                 var u = users[i];
                 var p = profiles[u.id] || {};
                 var lvl = p.level || 1;
                 var xp = p.xp || 0;
                 var grad = p.is_graduated || p.graduated || false;
-
+                var xpForNext = lvl * 100;
+                var xpPrev = (lvl - 1) * 100;
+                var xpInLevel = xp - xpPrev;
+                var xpNeeded = xpForNext - xpPrev;
+                var pct = Math.min(100, Math.max(0, Math.round((xpInLevel / xpNeeded) * 100)));
+                var lvlColor = lvlColors[Math.min(lvl - 1, lvlColors.length - 1)];
                 html += '<tr>';
-                html += '<td>' + u.id + '</td>';
-                html += '<td><strong>' + _esc(u.name) + '</strong></td>';
-                html += '<td><span style="background:#f5f3ff;color:#7c3aed;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Nivel ' + lvl + '</span></td>';
-                html += '<td>' + xp + ' XP</td>';
+                html += '<td><div style="display:flex;align-items:center;gap:8px;">';
+                if (u.avatar) {
+                    html += '<img src="' + _esc(u.avatar) + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">';
+                } else {
+                    html += '<div style="width:28px;height:28px;border-radius:50%;background:' + lvlColor + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;">' + _esc(u.name).charAt(0).toUpperCase() + '</div>';
+                }
+                html += '<strong>' + _esc(u.name) + '</strong></div></td>';
+                html += '<td><span style="background:' + lvlColor + '15;color:' + lvlColor + ';border:1px solid ' + lvlColor + '30;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;">Nivel ' + lvl + '</span></td>';
+                html += '<td style="min-width:120px;"><div style="font-size:0.72rem;color:#6b7280;margin-bottom:3px;">' + xp + ' XP</div><div style="background:#e5e7eb;border-radius:6px;height:6px;overflow:hidden;"><div style="background:' + lvlColor + ';height:100%;border-radius:6px;width:' + pct + '%;transition:width 0.3s;"></div></div></td>';
                 html += '<td>' + (p.total_classes_completed || 0) + '</td>';
                 html += '<td>' + (p.total_badges || 0) + '</td>';
-                html += '<td>' + (p.exam_passed ? '<span style="color:#059669;"><i class="fas fa-check"></i> Si</span>' : '<span style="color:#94a3b8;">No</span>') + '</td>';
-                html += '<td>' + (p.is_partner ? '<span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Partner</span>' : (grad ? '<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Graduado</span>' : '<span style="color:#94a3b8;">-</span>')) + '</td>';
-                html += '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">';
-                html += '<a href="/perfil.html?id=' + u.id + '" target="_blank" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#2563eb;text-decoration:none;"><i class="fas fa-external-link-alt"></i></a>';
-                if (!grad) {
-                    html += '<button onclick="academyGraduateAgent(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#d97706;" title="Graduar"><i class="fas fa-graduation-cap"></i></button>';
+                html += '<td>';
+                if (p.exam_passed) {
+                    html += '<span style="color:#059669;font-size:0.8rem;"><i class="fas fa-check-circle"></i> Aprobado</span>';
+                } else if (p.exam_attempts > 0) {
+                    html += '<span style="color:#dc2626;font-size:0.8rem;"><i class="fas fa-times-circle"></i> ' + p.exam_attempts + ' intentos</span>';
+                } else {
+                    html += '<span style="color:#94a3b8;font-size:0.8rem;">-</span>';
                 }
-                html += '<button onclick="academyAwardBadge(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid #ddd6fe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#7c3aed;" title="Dar Medalla"><i class="fas fa-medal"></i></button>';
+                html += '</td>';
+                html += '<td>';
+                if (p.is_partner) {
+                    html += '<span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Partner</span>';
+                } else if (grad) {
+                    html += '<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Graduado</span>';
+                } else {
+                    html += '<span style="color:#94a3b8;font-size:0.8rem;">-</span>';
+                }
+                html += '</td>';
+                html += '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">';
+                html += '<a href="/perfil.html?id=' + u.id + '" target="_blank" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#2563eb;text-decoration:none;" title="Ver Perfil"><i class="fas fa-external-link-alt"></i></a>';
+                if (!grad) {
+                    html += '<button onclick="academyGraduateAgent(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#d97706;" title="Graduar"><i class="fas fa-graduation-cap"></i></button>';
+                }
+                html += '<button onclick="academyAwardBadge(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #ddd6fe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#7c3aed;" title="Dar Medalla"><i class="fas fa-medal"></i></button>';
                 html += '</div></td>';
                 html += '</tr>';
             }
             tbody.innerHTML = html;
         } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="10"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar agentes</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar agentes</p></div></td></tr>';
         }
     }
 
-    // Generate questions with AI
+    function renderPendingQuestionsPreview() {
+        var wrap = document.getElementById('academyQPreviewWrap');
+        var list = document.getElementById('academyQPreviewList');
+        var count = document.getElementById('academyQPreviewCount');
+        var questions = window._pendingQuestions || [];
+        if (!wrap || !list) return;
+        count.textContent = questions.length;
+        if (!questions.length) {
+            wrap.classList.add('hidden');
+            return;
+        }
+        wrap.classList.remove('hidden');
+        var html = '';
+        questions.forEach(function(q, idx) {
+            html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px;position:relative;">';
+            html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">';
+            html += '<div style="flex:1;">';
+            html += '<div style="font-weight:600;font-size:0.83rem;margin-bottom:4px;">[Q' + (idx + 1) + '] ' + _esc(q.question) + '</div>';
+            var opts = { a: q.option_a, b: q.option_b, c: q.option_c, d: q.option_d };
+            ['a','b','c','d'].forEach(function(l) {
+                var isCorrect = q.correct_answer === l;
+                var prefix = isCorrect ? '<span style="color:#059669;font-weight:700;">&#10003; ' + l.toUpperCase() + '</span>' : '<span style="color:#6b7280;">&nbsp;&nbsp;&nbsp;' + l.toUpperCase() + '</span>';
+                html += '<div style="font-size:0.8rem;padding:1px 0 1px 14px;">' + prefix + ') ' + _esc(opts[l] || '') + '</div>';
+            });
+            html += '</div>';
+            html += '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">';
+            html += '<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:10px;font-size:0.7rem;font-weight:600;">' + (q.points || 10) + ' pts</span>';
+            html += '<button onclick="removePendingQuestion(' + idx + ')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:2px 6px;cursor:pointer;font-size:0.72rem;color:#dc2626;" title="Eliminar"><i class="fas fa-times"></i></button>';
+            html += '</div></div></div>';
+        });
+        list.innerHTML = html;
+    }
+
+    window.removePendingQuestion = function(idx) {
+        var questions = window._pendingQuestions || [];
+        questions.splice(idx, 1);
+        renderPendingQuestionsPreview();
+    };
+
     window.academyGenerateQuestions = async function() {
         var text = document.getElementById('academyAIText').value.trim();
         if (!text) { showToast('Pega un texto para generar preguntas', 'error'); return; }
         var count = parseInt(document.getElementById('academyGenQCount').value) || 5;
-        var examType = document.getElementById('academyClassExamType').value;
         var btn = document.getElementById('academyGenQBtn');
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
         try {
-            var data = await api.post('/agent-classes/generate-questions', { text: text, exam_type: examType, num_questions: count });
+            var data = await api.post('/agent-classes/generate-questions', { text: text, num_questions: count });
             if (data.questions && data.questions.length > 0) {
-                // Show preview of generated questions
-                var preview = 'Se generaron ' + data.questions.length + ' preguntas:\n\n';
-                data.questions.forEach(function(q, i) {
-                    preview += (i+1) + '. ' + q.question + '\n';
-                    preview += '   A) ' + q.option_a + '\n';
-                    preview += '   B) ' + q.option_b + '\n';
-                    preview += '   C) ' + q.option_c + '\n';
-                    preview += '   D) ' + q.option_d + '\n';
-                    preview += '   Correcta: ' + q.correct_answer.toUpperCase() + ' (' + q.points + ' pts)\n\n';
-                });
-                alert(preview);
-                // Store for later saving
-                window._generatedQuestions = data.questions;
-                showToast('Preguntas generadas. Guarda la clase primero, luego agrega las preguntas.', 'success');
+                if (!window._pendingQuestions) window._pendingQuestions = [];
+                data.questions.forEach(function(q) { window._pendingQuestions.push(q); });
+                renderPendingQuestionsPreview();
+                showToast(data.questions.length + ' preguntas generadas. Revisa la vista previa antes de guardar.', 'success');
             } else {
                 showToast('No se pudieron generar preguntas. Intenta con mas texto.', 'error');
             }
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-magic"></i> Generar ' + count + ' Preguntas';
+        btn.innerHTML = '<i class="fas fa-magic"></i> Generar Preguntas';
     };
 
-    // Graduate agent
     window.academyGraduateAgent = async function(userId, name) {
         if (!confirm('Confirmar graduacion de "' + name + '"? Se le otorgara medalla de graduacion y estatus de Partner.')) return;
         try {
@@ -6626,22 +6707,42 @@ if (!window._renderVideoList) {
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     };
 
-    // Award custom badge
-    window.academyAwardBadge = async function(userId, name) {
-        var badgeName = prompt('Nombre de la medalla para ' + name + ':');
-        if (!badgeName) return;
-        var badgeDesc = prompt('Descripcion (opcional):') || '';
-        try {
-            await api.post('/admin/agent-actions', {
-                action: 'award_badge',
-                user_id: userId,
-                badge_name: badgeName,
-                badge_description: badgeDesc
-            });
-            showToast('Medalla "' + badgeName + '" otorgada a ' + name, 'success');
-            loadAcademyAgents();
-        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    window.academyAwardBadge = function(userId, name) {
+        var existing = document.getElementById('academyBadgeInline_' + userId);
+        if (existing) { existing.remove(); return; }
+        var td = event.target.closest('td');
+        if (!td) return;
+        var form = document.createElement('div');
+        form.id = 'academyBadgeInline_' + userId;
+        form.style.cssText = 'position:absolute;right:0;top:100%;background:#fff;border:1px solid #ddd6fe;border-radius:10px;padding:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);z-index:50;width:240px;margin-top:4px;';
+        form.innerHTML = '<div style="font-weight:600;font-size:0.8rem;color:#7c3aed;margin-bottom:8px;"><i class="fas fa-medal"></i> Medalla para ' + _esc(name) + '</div>' +
+            '<input type="text" id="academyBadgeName_' + userId + '" placeholder="Nombre de la medalla" style="width:100%;padding:6px 10px;border:2px solid #e2e8f0;border-radius:6px;font-size:0.82rem;outline:none;margin-bottom:6px;">' +
+            '<input type="text" id="academyBadgeDesc_' + userId + '" placeholder="Descripcion (opcional)" style="width:100%;padding:6px 10px;border:2px solid #e2e8f0;border-radius:6px;font-size:0.82rem;outline:none;margin-bottom:8px;">' +
+            '<div style="display:flex;gap:6px;">' +
+            '<button class="btn btn-primary btn-sm" style="background:#7c3aed;font-size:0.75rem;" id="academyBadgeSave_' + userId + '"><i class="fas fa-check"></i> Otorgar</button>' +
+            '<button class="btn btn-secondary btn-sm" style="font-size:0.75rem;" id="academyBadgeCancel_' + userId + '"><i class="fas fa-times"></i></button>' +
+            '</div>';
+        td.style.position = 'relative';
+        td.appendChild(form);
+        document.getElementById('academyBadgeCancel_' + userId).addEventListener('click', function() { form.remove(); });
+        document.getElementById('academyBadgeSave_' + userId).addEventListener('click', async function() {
+            var bName = document.getElementById('academyBadgeName_' + userId).value.trim();
+            if (!bName) { showToast('El nombre de la medalla es requerido', 'error'); return; }
+            var bDesc = document.getElementById('academyBadgeDesc_' + userId).value.trim();
+            try {
+                await api.post('/admin/agent-actions', {
+                    action: 'award_badge',
+                    user_id: userId,
+                    badge_name: bName,
+                    badge_description: bDesc
+                });
+                showToast('Medalla "' + bName + '" otorgada a ' + name, 'success');
+                form.remove();
+                loadAcademyAgents();
+            } catch(e) { showToast('Error: ' + e.message, 'error'); }
+        });
     };
+
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {

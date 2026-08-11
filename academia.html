@@ -1,1632 +1,838 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<!-- Google Tag Manager -->
-<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','GTM-TMH9V9QQ');</script>
-<!-- End Google Tag Manager -->
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-RYF2N8ZD15"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-RYF2N8ZD15');
-</script>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Academia de Agentes AunClick - Aprende, gana XP y conviértete en Partner Digital Certificado.">
-    <title>Academia de Agentes - AunClick</title>
-    <meta property="og:title" content="Academia de Agentes - AunClick">
-    <meta property="og:description" content="Aprende y crece como agente digital. Clases, exámenes y certificaciones.">
-    <meta property="og:site_name" content="AunClick">
-    <meta property="og:locale" content="es_VE">
-    <meta property="og:type" content="website">
-    <link rel="stylesheet" href="/css/styles.css?v=11">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-    /* ─── Academy Theme Variables ─── */
-    :root {
-        --academy-purple: #7c3aed;
-        --academy-purple-light: #ede9fe;
-        --academy-purple-dark: #5b21b6;
-        --academy-green: #059669;
-        --academy-green-light: #d1fae5;
-        --academy-amber: #d97706;
-        --academy-amber-light: #fef3c7;
-        --academy-bg: #f5f3ff;
-        --academy-card: #ffffff;
-        --academy-text: #1e1b4b;
-        --academy-text-muted: #6b7280;
-        --academy-border: #e9e5f5;
-        --academy-radius: 16px;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Academia de Agentes AunClick - Aprende, gana XP y conviértete en Partner Digital Certificado.">
+<title>Academia de Agentes - AunClick</title>
+<meta property="og:title" content="Academia de Agentes - AunClick">
+<meta property="og:description" content="Aprende y crece como agente digital. Clases, exámenes y certificaciones.">
+<meta property="og:site_name" content="AunClick">
+<meta property="og:locale" content="es_VE">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#7c3aed;--primary-light:#ede9fe;--primary-dark:#5b21b6;
+  --success:#10b981;--success-light:#d1fae5;
+  --danger:#ef4444;--danger-light:#fee2e2;
+  --warning:#f59e0b;--warning-light:#fef3c7;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
+  --gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+  --shadow-md:0 4px 6px rgba(0,0,0,.07),0 2px 4px rgba(0,0,0,.06);
+  --shadow-lg:0 10px 15px rgba(0,0,0,.08),0 4px 6px rgba(0,0,0,.05);
+  --header-h:60px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f0f0f5;color:var(--gray-800);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+img{max-width:100%;display:block}
+button{cursor:pointer;font-family:inherit;border:none;outline:none}
+button:active{transform:scale(.97)}
 
-    /* ─── Page Layout ─── */
-    .academy-page {
-        min-height: 100vh;
-        background: var(--academy-bg);
-        padding-bottom: 60px;
-    }
-    .academy-container {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 24px 16px;
-    }
+/* Header */
+.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:#fff;border-bottom:1px solid var(--gray-200);display:flex;align-items:center;padding:0 16px;z-index:100;box-shadow:var(--shadow)}
+.header-logo{font-size:18px;font-weight:800;color:var(--primary);display:flex;align-items:center;gap:8px;flex-shrink:0}
+.header-logo i{font-size:22px}
+.header-spacer{flex:1}
+.header-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary-light);border:2px solid var(--primary);cursor:pointer;object-fit:cover;display:flex;align-items:center;justify-content:center;overflow:hidden;font-size:14px;color:var(--primary);flex-shrink:0}
+.header-avatar img{width:100%;height:100%;object-fit:cover}
+.header-logout{background:none;color:var(--gray-500);font-size:18px;padding:6px 10px;margin-left:8px;flex-shrink:0}
 
-    /* ─── Loading State ─── */
-    .academy-loading {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 80px 20px;
-        color: var(--academy-purple);
-    }
-    .academy-loading i { font-size: 2.5rem; margin-bottom: 16px; }
-    .academy-loading p { color: var(--academy-text-muted); font-size: 0.95rem; }
+/* Toast */
+.toast-container{position:fixed;top:72px;left:50%;transform:translateX(-50%);z-index:999;width:90%;max-width:400px;pointer-events:none}
+.toast{background:var(--gray-800);color:#fff;padding:12px 20px;border-radius:var(--radius-sm);font-size:14px;text-align:center;box-shadow:var(--shadow-lg);opacity:0;transform:translateY(-10px);transition:all .3s ease;pointer-events:auto}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.success{background:var(--success)}
+.toast.error{background:var(--danger)}
 
-    /* ─── Profile Section ─── */
-    .academy-profile {
-        background: linear-gradient(135deg, var(--academy-purple) 0%, #a78bfa 100%);
-        border-radius: var(--academy-radius);
-        padding: 32px;
-        margin-bottom: 24px;
-        color: #fff;
-        position: relative;
-        overflow: hidden;
-    }
-    .academy-profile::before {
-        content: '';
-        position: absolute;
-        top: -40%; right: -10%;
-        width: 300px; height: 300px;
-        background: rgba(255,255,255,0.07);
-        border-radius: 50%;
-    }
-    .academy-profile::after {
-        content: '';
-        position: absolute;
-        bottom: -50%; left: 20%;
-        width: 250px; height: 250px;
-        background: rgba(255,255,255,0.05);
-        border-radius: 50%;
-    }
-    .academy-profile-inner {
-        position: relative;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        gap: 24px;
-        flex-wrap: wrap;
-    }
-    .academy-avatar-wrap {
-        position: relative;
-        flex-shrink: 0;
-    }
-    .academy-avatar {
-        width: 90px; height: 90px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid rgba(255,255,255,0.6);
-        background: rgba(255,255,255,0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 2.2rem;
-        color: rgba(255,255,255,0.8);
-    }
-    .academy-avatar img {
-        width: 100%; height: 100%;
-        border-radius: 50%;
-        object-fit: cover;
-    }
-    .academy-avatar-upload {
-        position: absolute;
-        bottom: 2px; right: 2px;
-        width: 30px; height: 30px;
-        border-radius: 50%;
-        background: #fff;
-        color: var(--academy-purple);
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        transition: transform 0.2s;
-    }
-    .academy-avatar-upload:hover { transform: scale(1.1); }
-    .academy-avatar-upload input { display: none; }
+/* Loading spinner */
+.page-loader{text-align:center;padding:80px 20px}
+.spinner{width:40px;height:40px;border:3px solid var(--gray-200);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    .academy-profile-info { flex: 1; min-width: 200px; }
-    .academy-profile-name {
-        font-size: 1.5rem;
-        font-weight: 800;
-        margin: 0 0 4px;
-    }
-    .academy-profile-email {
-        font-size: 0.88rem;
-        opacity: 0.85;
-        margin: 0 0 12px;
-    }
+/* Main */
+.main{padding:calc(var(--header-h) + 16px) 16px 32px;max-width:640px;margin:0 auto}
 
-    /* Level Badge */
-    .academy-level-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(255,255,255,0.2);
-        backdrop-filter: blur(6px);
-        border: 1px solid rgba(255,255,255,0.3);
-        border-radius: 20px;
-        padding: 4px 14px;
-        font-size: 0.82rem;
-        font-weight: 700;
-        margin-bottom: 12px;
-    }
-    .academy-level-badge i { font-size: 0.9rem; color: #fbbf24; }
+/* Card */
+.card{background:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:20px;margin-bottom:16px}
+.card-title{font-size:16px;font-weight:700;color:var(--gray-900);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title i{color:var(--primary)}
 
-    /* XP Bar */
-    .academy-xp-bar-wrap {
-        max-width: 320px;
-    }
-    .academy-xp-label {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.78rem;
-        opacity: 0.9;
-        margin-bottom: 6px;
-    }
-    .academy-xp-bar {
-        height: 10px;
-        background: rgba(255,255,255,0.2);
-        border-radius: 10px;
-        overflow: hidden;
-    }
-    .academy-xp-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #fbbf24, #f59e0b);
-        border-radius: 10px;
-        transition: width 0.8s ease;
-        min-width: 0;
-    }
+/* Profile card */
+.profile-card{text-align:center;position:relative}
+.profile-avatar-wrap{position:relative;width:90px;height:90px;margin:0 auto 12px}
+.profile-avatar{width:90px;height:90px;border-radius:50%;border:3px solid var(--primary);object-fit:cover;cursor:pointer;display:flex;align-items:center;justify-content:center;background:var(--primary-light);color:var(--primary);font-size:32px;overflow:hidden}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-avatar-overlay{position:absolute;bottom:0;left:0;right:0;height:30px;border-radius:0 0 50% 50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;cursor:pointer}
+.profile-avatar-wrap:hover .profile-avatar-overlay{opacity:1}
+.profile-avatar-overlay i{color:#fff;font-size:12px}
+.profile-name{font-size:20px;font-weight:700;color:var(--gray-900)}
+.profile-bio{font-size:14px;color:var(--gray-500);margin-top:4px;margin-bottom:16px;max-width:400px;margin-left:auto;margin-right:auto}
 
-    /* Profile Share Link */
-    .academy-share {
-        margin-top: 14px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.8rem;
-        opacity: 0.9;
-        flex-wrap: wrap;
-    }
-    .academy-share-link {
-        color: #fff;
-        text-decoration: none;
-        background: rgba(255,255,255,0.15);
-        padding: 4px 10px;
-        border-radius: 8px;
-        word-break: break-all;
-        max-width: 340px;
-        font-size: 0.78rem;
-        transition: background 0.2s;
-    }
-    .academy-share-link:hover { background: rgba(255,255,255,0.25); }
+/* Level badge */
+.level-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:12px}
+.level-1{background:#fee2e2;color:#dc2626}.level-2{background:#fef3c7;color:#d97706}
+.level-3{background:#fef3c7;color:#d97706}.level-4{background:#e0e7ff;color:#4f46e5}
+.level-5{background:#e0e7ff;color:#4f46e5}.level-6{background:#ede9fe;color:#7c3aed}
+.level-7{background:#ede9fe;color:#7c3aed}.level-8{background:#fce7f3;color:#db2777}
+.level-9{background:#fce7f3;color:#db2777}.level-10{background:#fef3c7;color:#b45309}
 
-    /* Edit Profile Button */
-    .academy-edit-btn {
-        background: rgba(255,255,255,0.2);
-        border: 1px solid rgba(255,255,255,0.3);
-        color: #fff;
-        padding: 8px 18px;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 0.85rem;
-        font-weight: 600;
-        font-family: inherit;
-        transition: background 0.2s;
-        flex-shrink: 0;
-        align-self: flex-start;
-    }
-    .academy-edit-btn:hover { background: rgba(255,255,255,0.3); }
+/* XP bar */
+.xp-bar-wrap{margin-bottom:16px}
+.xp-label{display:flex;justify-content:space-between;font-size:12px;color:var(--gray-500);margin-bottom:6px}
+.xp-bar{height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-dark));border-radius:4px;transition:width .6s ease}
 
-    /* Edit Profile Form */
-    .academy-edit-form {
-        display: none;
-        background: var(--academy-card);
-        border-radius: var(--academy-radius);
-        padding: 24px;
-        margin-bottom: 24px;
-        border: 1px solid var(--academy-border);
-        box-shadow: 0 4px 20px rgba(124,58,237,0.08);
-    }
-    .academy-edit-form.active { display: block; }
-    .academy-edit-form h3 {
-        margin: 0 0 18px;
-        font-size: 1.1rem;
-        color: var(--academy-purple);
-    }
-    .academy-edit-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-    }
-    .academy-edit-field label {
-        display: block;
-        font-size: 0.8rem;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 4px;
-    }
-    .academy-edit-field input,
-    .academy-edit-field textarea {
-        width: 100%;
-        padding: 10px 14px;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 10px;
-        font-size: 0.9rem;
-        font-family: inherit;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        box-sizing: border-box;
-    }
-    .academy-edit-field input:focus,
-    .academy-edit-field textarea:focus {
-        outline: none;
-        border-color: var(--academy-purple);
-        box-shadow: 0 0 0 3px rgba(124,58,237,0.1);
-    }
-    .academy-edit-field.full { grid-column: 1 / -1; }
-    .academy-edit-actions {
-        display: flex;
-        gap: 10px;
-        margin-top: 18px;
-    }
-    .academy-btn {
-        padding: 10px 22px;
-        border-radius: 10px;
-        font-size: 0.88rem;
-        font-weight: 600;
-        font-family: inherit;
-        cursor: pointer;
-        border: none;
-        transition: all 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .academy-btn-primary {
-        background: var(--academy-purple);
-        color: #fff;
-    }
-    .academy-btn-primary:hover { background: var(--academy-purple-dark); }
-    .academy-btn-secondary {
-        background: #f3f4f6;
-        color: #374151;
-    }
-    .academy-btn-secondary:hover { background: #e5e7eb; }
-    .academy-btn-success {
-        background: var(--academy-green);
-        color: #fff;
-    }
-    .academy-btn-success:hover { background: #047857; }
-    .academy-btn-amber {
-        background: var(--academy-amber);
-        color: #fff;
-    }
-    .academy-btn-amber:hover { background: #b45309; }
-    .academy-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
+/* Stats row */
+.stats-row{display:flex;justify-content:center;gap:24px;margin-bottom:16px}
+.stat-item{text-align:center}
+.stat-value{font-size:20px;font-weight:800;color:var(--gray-900)}
+.stat-label{font-size:11px;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px}
 
-    /* ─── Stats Cards ─── */
-    .academy-stats {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 16px;
-        margin-bottom: 32px;
-    }
-    .academy-stat-card {
-        background: var(--academy-card);
-        border-radius: var(--academy-radius);
-        padding: 20px;
-        text-align: center;
-        border: 1px solid var(--academy-border);
-        box-shadow: 0 2px 8px rgba(124,58,237,0.04);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .academy-stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(124,58,237,0.1);
-    }
-    .academy-stat-icon {
-        width: 44px; height: 44px;
-        border-radius: 12px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.1rem;
-        margin-bottom: 10px;
-    }
-    .academy-stat-icon.purple { background: var(--academy-purple-light); color: var(--academy-purple); }
-    .academy-stat-icon.amber { background: var(--academy-amber-light); color: var(--academy-amber); }
-    .academy-stat-icon.green { background: var(--academy-green-light); color: var(--academy-green); }
-    .academy-stat-icon.blue { background: #dbeafe; color: #2563eb; }
-    .academy-stat-icon.rose { background: #fce7f3; color: #db2777; }
-    .academy-stat-value {
-        font-size: 1.6rem;
-        font-weight: 800;
-        color: var(--academy-text);
-        line-height: 1.2;
-    }
-    .academy-stat-label {
-        font-size: 0.78rem;
-        color: var(--academy-text-muted);
-        margin-top: 4px;
-    }
-    .academy-stat-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 6px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        margin-top: 6px;
-    }
-    .academy-stat-badge.locked { background: #f3f4f6; color: #6b7280; }
-    .academy-stat-badge.available { background: var(--academy-green-light); color: var(--academy-green); }
-    .academy-stat-badge.passed { background: var(--academy-purple-light); color: var(--academy-purple); }
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;transition:all .2s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{opacity:.9}
+.btn-outline{background:#fff;color:var(--primary);border:2px solid var(--primary)}
+.btn-outline:hover{background:var(--primary-light)}
+.btn-sm{padding:8px 14px;font-size:13px}
+.btn-block{width:100%;justify-content:center}
+.btn:disabled{opacity:.5;pointer-events:none}
 
-    /* ─── Section Titles ─── */
-    .academy-section-title {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 1.3rem;
-        font-weight: 800;
-        color: var(--academy-text);
-        margin: 0 0 20px;
-    }
-    .academy-section-title i {
-        color: var(--academy-purple);
-        font-size: 1.1rem;
-    }
-    .academy-section {
-        margin-bottom: 36px;
-    }
+/* Share button */
+.share-btn{background:var(--primary-light);color:var(--primary);border:1.5px solid var(--primary-light);margin:0 auto}
+.share-btn:hover{background:var(--primary);color:#fff}
 
-    /* ─── Classes Grid ─── */
-    .academy-classes-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 18px;
-    }
-    .academy-class-card {
-        background: var(--academy-card);
-        border-radius: var(--academy-radius);
-        border: 1px solid var(--academy-border);
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(124,58,237,0.04);
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .academy-class-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(124,58,237,0.1);
-    }
-    .academy-class-header {
-        padding: 20px 20px 0;
-    }
-    .academy-class-title {
-        font-size: 1.05rem;
-        font-weight: 700;
-        color: var(--academy-text);
-        margin: 0 0 6px;
-    }
-    .academy-class-desc {
-        font-size: 0.85rem;
-        color: var(--academy-text-muted);
-        margin: 0 0 12px;
-        line-height: 1.5;
-    }
-    .academy-class-meta {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        font-size: 0.8rem;
-        color: var(--academy-text-muted);
-        padding: 0 20px;
-        margin-bottom: 16px;
-    }
-    .academy-class-meta span {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-    }
-    .academy-class-meta .xp-badge {
-        color: var(--academy-amber);
-        font-weight: 700;
-    }
-    .academy-class-actions {
-        padding: 0 20px 20px;
-    }
-    .academy-class-completed {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        color: var(--academy-green);
-        font-weight: 700;
-        font-size: 0.9rem;
-    }
-    .academy-class-completed i { font-size: 1.1rem; }
-    .academy-class-start {
-        width: 100%;
-        padding: 11px;
-        border-radius: 10px;
-        background: var(--academy-purple);
-        color: #fff;
-        font-size: 0.9rem;
-        font-weight: 700;
-        border: none;
-        cursor: pointer;
-        font-family: inherit;
-        transition: background 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-    }
-    .academy-class-start:hover { background: var(--academy-purple-dark); }
+/* Class cards */
+.classes-grid{display:grid;gap:12px}
+.class-card{background:#fff;border-radius:var(--radius);border:1.5px solid var(--gray-200);padding:16px;transition:border-color .2s}
+.class-card:hover{border-color:var(--primary-light)}
+.class-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.class-title{font-size:15px;font-weight:700;color:var(--gray-900)}
+.class-desc{font-size:13px;color:var(--gray-500);margin-top:4px;line-height:1.5}
+.class-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;align-items:center}
+.class-meta-item{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--gray-500)}
+.class-meta-item i{font-size:11px}
+.class-status{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px}
+.class-status.completed{background:var(--success-light);color:var(--success)}
+.class-status.available{background:var(--primary-light);color:var(--primary)}
+.class-xp{background:var(--warning-light);color:#92400e;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;display:inline-flex;align-items:center;gap:4px}
 
-    /* ─── Class Quiz Expanded ─── */
-    .academy-class-quiz {
-        display: none;
-        border-top: 1px solid var(--academy-border);
-        padding: 20px;
-        background: #faf8ff;
-    }
-    .academy-class-quiz.active { display: block; }
-    .academy-class-content {
-        margin-bottom: 20px;
-        padding: 16px;
-        background: #fff;
-        border-radius: 12px;
-        border: 1px solid #e9e5f5;
-        font-size: 0.9rem;
-        line-height: 1.7;
-        color: #374151;
-        white-space: pre-wrap;
-    }
-    .academy-class-content h4 {
-        margin: 0 0 10px;
-        color: var(--academy-purple);
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .academy-question {
-        margin-bottom: 20px;
-        padding: 16px;
-        background: #fff;
-        border-radius: 12px;
-        border: 1px solid #e9e5f5;
-    }
-    .academy-question-text {
-        font-weight: 600;
-        font-size: 0.92rem;
-        color: var(--academy-text);
-        margin: 0 0 12px;
-        line-height: 1.5;
-    }
-    .academy-question-text span {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px; height: 24px;
-        border-radius: 50%;
-        background: var(--academy-purple-light);
-        color: var(--academy-purple);
-        font-size: 0.75rem;
-        font-weight: 700;
-        margin-right: 8px;
-    }
-    .academy-options {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-    }
-    .academy-option {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        border: 1.5px solid #e5e7eb;
-        border-radius: 10px;
-        cursor: pointer;
-        font-size: 0.88rem;
-        transition: all 0.2s;
-        color: #374151;
-    }
-    .academy-option:hover { border-color: var(--academy-purple); background: var(--academy-purple-light); }
-    .academy-option.selected { border-color: var(--academy-purple); background: var(--academy-purple-light); color: var(--academy-purple); font-weight: 600; }
-    .academy-option.correct { border-color: var(--academy-green); background: var(--academy-green-light); color: var(--academy-green); }
-    .academy-option.wrong { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
-    .academy-option input { display: none; }
-    .academy-option-letter {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 26px; height: 26px;
-        border-radius: 50%;
-        background: #f3f4f6;
-        font-size: 0.78rem;
-        font-weight: 700;
-        flex-shrink: 0;
-        transition: all 0.2s;
-    }
-    .academy-option.selected .academy-option-letter { background: var(--academy-purple); color: #fff; }
-    .academy-option.correct .academy-option-letter { background: var(--academy-green); color: #fff; }
-    .academy-option.wrong .academy-option-letter { background: #dc2626; color: #fff; }
-    .academy-question-explanation {
-        margin-top: 10px;
-        padding: 10px 14px;
-        background: #eff6ff;
-        border-radius: 8px;
-        font-size: 0.83rem;
-        color: #1e40af;
-        line-height: 1.5;
-        display: none;
-    }
-    .academy-question-explanation.visible { display: block; }
-    .academy-quiz-submit {
-        margin-top: 8px;
-        width: 100%;
-    }
-    .academy-quiz-results {
-        margin-top: 16px;
-        padding: 16px;
-        border-radius: 12px;
-        text-align: center;
-        display: none;
-    }
-    .academy-quiz-results.active { display: block; }
-    .academy-quiz-results.perfect { background: var(--academy-green-light); color: var(--academy-green); }
-    .academy-quiz-results.partial { background: var(--academy-amber-light); color: var(--academy-amber); }
-    .academy-quiz-results h4 { margin: 0 0 6px; font-size: 1rem; }
-    .academy-quiz-results p { margin: 0 0 4px; font-size: 0.88rem; }
-    .academy-quiz-results .xp-earned {
-        font-size: 1.1rem;
-        font-weight: 800;
-    }
+/* Quiz panel */
+.quiz-panel{background:var(--gray-50);border-radius:var(--radius);margin-top:12px;padding:16px;border:1.5px solid var(--primary-light)}
+.quiz-progress{display:flex;align-items:center;gap:8px;margin-bottom:16px;font-size:13px;color:var(--gray-500)}
+.quiz-progress-bar{flex:1;height:6px;background:var(--gray-200);border-radius:3px;overflow:hidden}
+.quiz-progress-fill{height:100%;background:var(--primary);border-radius:3px;transition:width .3s}
+.quiz-question{font-size:15px;font-weight:600;color:var(--gray-900);margin-bottom:14px}
+.quiz-options{display:grid;gap:8px}
+.quiz-option{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#fff;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;font-size:14px;color:var(--gray-700)}
+.quiz-option:hover{border-color:var(--primary);background:var(--primary-light)}
+.quiz-option.selected{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark)}
+.quiz-option-letter{width:28px;height:28px;border-radius:50%;background:var(--gray-100);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;transition:all .15s}
+.quiz-option.selected .quiz-option-letter{background:var(--primary);color:#fff}
+.quiz-nav{display:flex;gap:10px;margin-top:16px}
 
-    /* ─── Exam Section ─── */
-    .academy-exam-card {
-        background: var(--academy-card);
-        border-radius: var(--academy-radius);
-        border: 1px solid var(--academy-border);
-        overflow: hidden;
-        box-shadow: 0 4px 16px rgba(124,58,237,0.06);
-    }
-    .academy-exam-header {
-        padding: 24px;
-        background: linear-gradient(135deg, var(--academy-purple-dark) 0%, var(--academy-purple) 100%);
-        color: #fff;
-    }
-    .academy-exam-header h3 { margin: 0 0 4px; font-size: 1.15rem; }
-    .academy-exam-header p { margin: 0; font-size: 0.88rem; opacity: 0.85; }
-    .academy-exam-body { padding: 24px; }
-    .academy-exam-locked {
-        text-align: center;
-        padding: 30px 20px;
-    }
-    .academy-exam-locked i {
-        font-size: 2.5rem;
-        color: #d1d5db;
-        margin-bottom: 12px;
-    }
-    .academy-exam-locked h4 { margin: 0 0 6px; color: #374151; }
-    .academy-exam-locked p { margin: 0; font-size: 0.88rem; color: var(--academy-text-muted); }
-    .academy-exam-available {
-        text-align: center;
-        padding: 20px;
-    }
-    .academy-exam-available i {
-        font-size: 2.5rem;
-        color: var(--academy-green);
-        margin-bottom: 12px;
-    }
-    .academy-exam-available h4 { margin: 0 0 6px; color: var(--academy-green); }
-    .academy-exam-available p { margin: 0 0 18px; font-size: 0.88rem; color: var(--academy-text-muted); }
-    .academy-exam-passed {
-        text-align: center;
-        padding: 30px 20px;
-    }
-    .academy-exam-passed i {
-        font-size: 3rem;
-        color: var(--academy-amber);
-        margin-bottom: 12px;
-        animation: examPulse 2s ease infinite;
-    }
-    @keyframes examPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.1); }
-    }
-    .academy-exam-passed h4 { margin: 0 0 6px; color: var(--academy-purple); font-size: 1.2rem; }
-    .academy-exam-passed p { margin: 0 0 4px; font-size: 0.9rem; color: var(--academy-text-muted); }
-    .academy-exam-passed .partner-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        margin-top: 12px;
-        padding: 8px 18px;
-        background: var(--academy-purple-light);
-        color: var(--academy-purple);
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 0.88rem;
-    }
+/* Results panel */
+.results-panel{text-align:center;padding:20px}
+.results-score{font-size:48px;font-weight:800;margin:12px 0}
+.results-score.pass{color:var(--success)}
+.results-score.fail{color:var(--danger)}
+.results-message{font-size:15px;color:var(--gray-600);margin-bottom:8px}
+.results-xp{font-size:14px;font-weight:700;color:var(--primary);margin-bottom:4px}
+.results-levelup{background:var(--warning-light);color:#92400e;padding:10px 16px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;margin-top:12px;display:inline-flex;align-items:center;gap:6px}
+.results-actions{margin-top:16px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
-    /* Exam Quiz */
-    .academy-exam-quiz {
-        display: none;
-        padding: 24px;
-    }
-    .academy-exam-quiz.active { display: block; }
-    .academy-exam-progress {
-        margin-bottom: 20px;
-        padding: 12px 16px;
-        background: var(--academy-purple-light);
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 0.85rem;
-        color: var(--academy-purple);
-        font-weight: 600;
-    }
-    .academy-exam-progress-bar {
-        flex: 1;
-        height: 6px;
-        background: rgba(124,58,237,0.15);
-        border-radius: 6px;
-        overflow: hidden;
-    }
-    .academy-exam-progress-fill {
-        height: 100%;
-        background: var(--academy-purple);
-        border-radius: 6px;
-        transition: width 0.4s ease;
-    }
+/* Exam section */
+.exam-card{text-align:center}
+.exam-locked{padding:24px}
+.exam-locked i{font-size:36px;color:var(--gray-300);margin-bottom:12px}
+.exam-locked h3{font-size:16px;font-weight:700;color:var(--gray-700);margin-bottom:6px}
+.exam-locked p{font-size:14px;color:var(--gray-500)}
+.exam-info{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;margin-bottom:20px}
+.exam-info-item{text-align:center}
+.exam-info-value{font-size:22px;font-weight:800;color:var(--gray-900)}
+.exam-info-label{font-size:11px;color:var(--gray-500);text-transform:uppercase}
+.exam-passed{padding:20px}
+.exam-passed i{font-size:48px;color:var(--success);margin-bottom:8px}
+.exam-passed h3{font-size:18px;font-weight:700;color:var(--success);margin-bottom:4px}
+.exam-passed p{font-size:14px;color:var(--gray-600)}
 
-    /* Exam Results */
-    .academy-exam-results {
-        display: none;
-        padding: 30px 24px;
-        text-align: center;
-    }
-    .academy-exam-results.active { display: block; }
-    .academy-exam-results.passed { background: linear-gradient(135deg, #d1fae5, #a7f3d0); }
-    .academy-exam-results.failed { background: #fef2f2; }
-    .academy-exam-results.passed i { font-size: 3rem; color: var(--academy-green); margin-bottom: 12px; }
-    .academy-exam-results.failed i { font-size: 3rem; color: #dc2626; margin-bottom: 12px; }
-    .academy-exam-results h4 { margin: 0 0 6px; font-size: 1.2rem; }
-    .academy-exam-results.passed h4 { color: var(--academy-green); }
-    .academy-exam-results.failed h4 { color: #dc2626; }
-    .academy-exam-results p { margin: 0 0 4px; font-size: 0.9rem; color: #374151; }
-    .academy-confetti {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        pointer-events: none;
-        z-index: 9999;
-        overflow: hidden;
-    }
-    .academy-confetti-piece {
-        position: absolute;
-        width: 10px; height: 10px;
-        top: -10px;
-        animation: confettiFall 3s ease-out forwards;
-    }
-    @keyframes confettiFall {
-        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-    }
+/* Badges grid */
+.badges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.badge-card{background:#fff;border-radius:var(--radius);border:1.5px solid var(--gray-200);padding:16px 12px;text-align:center;transition:transform .2s}
+.badge-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.badge-icon{width:48px;height:48px;border-radius:50%;background:var(--warning-light);color:#d97706;display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 10px}
+.badge-card .badge-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 10px}
+.badge-name{font-size:13px;font-weight:700;color:var(--gray-800);margin-bottom:4px}
+.badge-desc{font-size:11px;color:var(--gray-500);line-height:1.4}
+.badge-date{font-size:10px;color:var(--gray-400);margin-top:6px}
+.no-badges{text-align:center;padding:32px;color:var(--gray-400);font-size:14px}
+.no-badges i{font-size:32px;margin-bottom:8px;display:block}
 
-    /* ─── Badges Section ─── */
-    .academy-badges-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-        gap: 16px;
-    }
-    .academy-badge-card {
-        background: var(--academy-card);
-        border-radius: var(--academy-radius);
-        border: 1px solid var(--academy-border);
-        padding: 20px;
-        text-align: center;
-        box-shadow: 0 2px 8px rgba(124,58,237,0.04);
-        transition: transform 0.2s;
-    }
-    .academy-badge-card:hover { transform: translateY(-2px); }
-    .academy-badge-icon {
-        width: 56px; height: 56px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        margin-bottom: 10px;
-    }
-    .academy-badge-icon.gold { background: var(--academy-amber-light); color: var(--academy-amber); }
-    .academy-badge-icon.purple { background: var(--academy-purple-light); color: var(--academy-purple); }
-    .academy-badge-icon.green { background: var(--academy-green-light); color: var(--academy-green); }
-    .academy-badge-icon.blue { background: #dbeafe; color: #2563eb; }
-    .academy-badge-icon.rose { background: #fce7f3; color: #db2777; }
-    .academy-badge-name {
-        font-weight: 700;
-        font-size: 0.92rem;
-        color: var(--academy-text);
-        margin-bottom: 4px;
-    }
-    .academy-badge-desc {
-        font-size: 0.8rem;
-        color: var(--academy-text-muted);
-        line-height: 1.4;
-        margin-bottom: 8px;
-    }
-    .academy-badge-date {
-        font-size: 0.75rem;
-        color: #9ca3af;
-    }
-    .academy-no-badges {
-        text-align: center;
-        padding: 40px 20px;
-        color: var(--academy-text-muted);
-    }
-    .academy-no-badges i { font-size: 2rem; margin-bottom: 10px; color: #d1d5db; }
-    .academy-no-badges p { font-size: 0.9rem; }
+/* File input hidden */
+.hidden-input{display:none}
 
-    /* ─── Responsive ─── */
-    @media (max-width: 768px) {
-        .academy-stats { grid-template-columns: repeat(3, 1fr); }
-        .academy-classes-grid { grid-template-columns: 1fr; }
-        .academy-profile-inner { flex-direction: column; text-align: center; }
-        .academy-xp-bar-wrap { max-width: 100%; margin: 0 auto; }
-        .academy-share { justify-content: center; }
-        .academy-edit-grid { grid-template-columns: 1fr; }
-        .academy-edit-field.full { grid-column: 1; }
-        .academy-options { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 480px) {
-        .academy-stats { grid-template-columns: repeat(2, 1fr); }
-        .academy-container { padding: 16px 10px; }
-        .academy-profile { padding: 20px; }
-        .academy-avatar { width: 70px; height: 70px; font-size: 1.8rem; }
-        .academy-profile-name { font-size: 1.2rem; }
-    }
+/* Section empty state */
+.empty-state{text-align:center;padding:32px;color:var(--gray-400);font-size:14px}
+.empty-state i{font-size:32px;margin-bottom:8px;display:block}
 
-    /* XP Notification Toast */
-    .academy-xp-toast {
-        position: fixed;
-        top: 80px;
-        right: 20px;
-        background: linear-gradient(135deg, var(--academy-amber), #f59e0b);
-        color: #fff;
-        padding: 14px 22px;
-        border-radius: 14px;
-        font-weight: 700;
-        font-size: 0.95rem;
-        box-shadow: 0 8px 30px rgba(217,119,6,0.3);
-        z-index: 9000;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        animation: xpToastIn 0.4s ease, xpToastOut 0.4s ease 2.6s forwards;
-    }
-    @keyframes xpToastIn {
-        from { opacity: 0; transform: translateX(60px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes xpToastOut {
-        from { opacity: 1; transform: translateX(0); }
-        to { opacity: 0; transform: translateX(60px); }
-    }
-    .academy-xp-toast i { font-size: 1.2rem; }
-
-    /* Level Up Notification */
-    .academy-levelup-toast {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(135deg, var(--academy-purple-dark), var(--academy-purple), #a78bfa);
-        color: #fff;
-        padding: 30px 40px;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 20px 60px rgba(124,58,237,0.4);
-        z-index: 10000;
-        animation: levelUpIn 0.5s ease;
-    }
-    @keyframes levelUpIn {
-        from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
-        to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    }
-    .academy-levelup-toast i { font-size: 2.5rem; color: #fbbf24; margin-bottom: 8px; }
-    .academy-levelup-toast h3 { margin: 0 0 4px; font-size: 1.3rem; }
-    .academy-levelup-toast p { margin: 0; font-size: 0.9rem; opacity: 0.9; }
-    .academy-levelup-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.4);
-        z-index: 9999;
-    }
-    </style>
+/* Responsive */
+@media(min-width:480px){
+  .main{padding:calc(var(--header-h) + 24px) 24px 48px}
+  .card{padding:24px}
+  .badges-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(min-width:768px){
+  .main{max-width:720px}
+}
+</style>
 </head>
 <body>
-<!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TMH9V9QQ"
-height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-<!-- End Google Tag Manager (noscript) -->
 
-    <!-- Navigation -->
-    <nav class="navbar" id="navbar">
-        <div class="nav-container">
-            <a href="/" class="nav-logo">
-                <img src="/images/favicon.jpeg" alt="AunClick" style="height:36px;border-radius:8px;">
-                <span>AunClick</span>
-            </a>
-            <div class="nav-links" id="navLinks">
-                <a href="/" class="nav-link">Inicio</a>
-                <a href="/search.html" class="nav-link">Directorio</a>
-                <a href="/academia.html" class="nav-link active">Academia</a>
-            </div>
-            <div class="nav-actions" id="navActions">
-                <!-- Dynamic: login/register or user menu -->
-            </div>
-            <button class="nav-toggle" id="navToggle"><i class="fas fa-bars"></i></button>
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Header -->
+<header class="header">
+  <a href="/" class="header-logo">
+    <i class="fas fa-graduation-cap"></i>
+    AunClick Academy
+  </a>
+  <div class="header-spacer"></div>
+  <a id="headerAvatarLink" href="#" title="Mi perfil">
+    <div class="header-avatar" id="headerAvatar">
+      <i class="fas fa-user"></i>
+    </div>
+  </a>
+  <button class="header-logout" id="logoutBtn" title="Cerrar sesión">
+    <i class="fas fa-sign-out-alt"></i>
+  </button>
+</header>
+
+<!-- Main content -->
+<main class="main" id="mainContent">
+  <div class="page-loader" id="pageLoader">
+    <div class="spinner"></div>
+    <p style="color:var(--gray-500);font-size:14px">Cargando tu perfil...</p>
+  </div>
+</main>
+
+<!-- Hidden file input for avatar -->
+<input type="file" class="hidden-input" id="avatarInput" accept="image/*">
+
+<script>
+(function(){
+  'use strict';
+
+  // ── Config ──
+  const API = (localStorage.getItem('api_url') || window.location.origin).replace(/\/+$/,'');
+  let TOKEN = localStorage.getItem('token');
+  let USER_ID = localStorage.getItem('user_id') || '';
+  let userProfile = null;
+  let agentProgress = null;
+  let classes = [];
+  let examStatus = null;
+
+  // ── Helpers ──
+  function apiHeaders(){ return {'Content-Type':'application/json','Authorization':'Bearer '+TOKEN} }
+
+  async function apiGet(path){
+    const r = await fetch(API+path,{headers:apiHeaders()});
+    if(r.status===401){ localStorage.clear(); window.location.href='/login.html'; return null; }
+    if(!r.ok) throw await r.json();
+    return r.json();
+  }
+
+  async function apiPost(path,body){
+    const r = await fetch(API+path,{method:'POST',headers:apiHeaders(),body:JSON.stringify(body)});
+    if(r.status===401){ localStorage.clear(); window.location.href='/login.html'; return null; }
+    if(!r.ok){ const e=await r.json(); throw new Error(e.error||'Error'); }
+    return r.json();
+  }
+
+  function showToast(msg, type){
+    const c=document.getElementById('toastContainer');
+    const t=document.createElement('div');
+    t.className='toast'+(type?' '+type:'');
+    t.textContent=msg;
+    c.appendChild(t);
+    requestAnimationFrame(()=>t.classList.add('show'));
+    setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},2500);
+  }
+
+  function getLevelName(l){return{3:'Aprendiz',5:'Intermedio',7:'Avanzado',10:'Experto'}[l]||''}
+
+  function levelBadgeClass(l){ return 'level-'+Math.min(l,10) }
+
+  function formatBadgeIcon(icon){
+    if(!icon) return 'fas fa-medal';
+    return icon;
+  }
+
+  // ── Auth check ──
+  if(!TOKEN){ window.location.href='/login.html'; return; }
+
+  // ── Header ──
+  document.getElementById('logoutBtn').addEventListener('click',function(){
+    localStorage.removeItem('token');
+    localStorage.removeItem('user_id');
+    window.location.href='/login.html';
+  });
+
+  // ── Avatar upload ──
+  document.getElementById('avatarInput').addEventListener('change',async function(e){
+    const file=e.target.files[0];
+    if(!file) return;
+    try{
+      const fd=new FormData();
+      fd.append('file',file);
+      fd.append('product_type','avatar');
+      const r=await fetch(API+'/upload',{method:'POST',headers:{'Authorization':'Bearer '+TOKEN},body:fd});
+      if(r.status===401){ localStorage.clear(); window.location.href='/login.html'; return; }
+      const upData=await r.json();
+      if(!upData.url) throw new Error('No URL returned');
+      await fetch(API+'/user-profile',{method:'PUT',headers:apiHeaders(),body:JSON.stringify({avatar:upData.url})});
+      userProfile.avatar=upData.url;
+      renderProfile();
+      showToast('Avatar actualizado','success');
+    }catch(err){
+      showToast('Error al subir avatar: '+err.message,'error');
+    }
+    e.target.value='';
+  });
+
+  // ── Initialize ──
+  async function init(){
+    try{
+      // Load profile + progress + classes + exam in parallel
+      const [profileData, progressData, classesData, examData] = await Promise.all([
+        apiGet('/user-profile'),
+        apiGet('/agent-progress'),
+        apiGet('/agent-classes'),
+        apiGet('/agent-exam')
+      ]);
+      if(!profileData||!progressData||!classesData||!examData){ return; }
+
+      userProfile = profileData.profile || profileData;
+      USER_ID = userProfile.id || USER_ID;
+      localStorage.setItem('user_id', USER_ID);
+
+      agentProgress = progressData;
+      classes = classesData.classes || [];
+      examStatus = examData;
+
+      // Update header avatar link
+      document.getElementById('headerAvatarLink').href='/perfil.html?id='+USER_ID;
+
+      render();
+    }catch(err){
+      document.getElementById('pageLoader').innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar datos</p><p style="font-size:12px;margin-top:4px;color:var(--gray-400)">'+err.message+'</p></div>';
+    }
+  }
+
+  function render(){
+    const m=document.getElementById('mainContent');
+    m.innerHTML='';
+
+    m.innerHTML += renderProfileCard();
+    m.innerHTML += renderClassesSection();
+    m.innerHTML += renderExamSection();
+    m.innerHTML += renderBadgesSection();
+
+    bindClassEvents();
+  }
+
+  // ── Render: Profile Card ──
+  function renderProfileCard(){
+    const p=agentProgress;
+    const lvl=p.level;
+    const xpPercent=p.progress_percent;
+    const completedClasses=p.completed_classes? p.completed_classes.length : 0;
+    const totalBadges=p.total_badges||0;
+    const avatarHTML=userProfile.avatar
+      ? '<img src="'+userProfile.avatar+'" alt="Avatar">'
+      : '<i class="fas fa-user"></i>';
+    const headerAvatarHTML=userProfile.avatar
+      ? '<img src="'+userProfile.avatar+'" alt="Avatar">'
+      : '<i class="fas fa-user"></i>';
+    document.getElementById('headerAvatar').innerHTML=headerAvatarHTML;
+
+    let levelLabel='Nivel '+lvl;
+    const ln=getLevelName(lvl);
+    if(ln) levelLabel+=' · '+ln;
+
+    return `
+    <div class="card profile-card">
+      <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
+        <div class="profile-avatar">${avatarHTML}</div>
+        <div class="profile-avatar-overlay"><i class="fas fa-camera"></i></div>
+      </div>
+      <div class="profile-name">${userProfile.name||'Agente'}</div>
+      ${userProfile.bio?'<div class="profile-bio">'+escapeHTML(userProfile.bio)+'</div>':''}
+      <span class="level-badge ${levelBadgeClass(lvl)}"><i class="fas fa-star"></i> ${levelLabel}</span>
+      <div class="xp-bar-wrap">
+        <div class="xp-label"><span>${p.xp} XP</span><span>${p.xp_in_current_level} / ${p.xp_needed_for_next} XP</span></div>
+        <div class="xp-bar"><div class="xp-bar-fill" style="width:${xpPercent}%"></div></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-item"><div class="stat-value">${completedClasses}</div><div class="stat-label">Clases</div></div>
+        <div class="stat-item"><div class="stat-value">${totalBadges}</div><div class="stat-label">Medallas</div></div>
+        <div class="stat-item"><div class="stat-value">${examStatus.exam_passed?'✓':'—'}</div><div class="stat-label">Examen</div></div>
+      </div>
+      <button class="btn btn-sm share-btn" onclick="copyProfileLink()">
+        <i class="fas fa-share-alt"></i> Compartir mi perfil
+      </button>
+    </div>`;
+  }
+
+  function copyProfileLink(){
+    const url=window.location.origin+'/perfil.html?id='+USER_ID;
+    navigator.clipboard.writeText(url).then(()=>showToast('Link copiado al portapapeles','success')).catch(()=>showToast('No se pudo copiar','error'));
+  }
+  window.copyProfileLink=copyProfileLink;
+
+  // ── Render: Classes Section ──
+  function renderClassesSection(){
+    if(!classes.length){
+      return '<div class="card"><div class="card-title"><i class="fas fa-book-open"></i> Mis Clases</div><div class="empty-state"><i class="fas fa-inbox"></i><p>No hay clases disponibles aún</p></div></div>';
+    }
+    let cards=classes.map(function(c){
+      const completed=c.is_completed===1||c.is_completed===true;
+      const statusHTML=completed
+        ?'<span class="class-status completed"><i class="fas fa-check-circle"></i> Completada</span>'
+        :'<span class="class-status available"><i class="fas fa-play-circle"></i> Disponible</span>';
+      return `
+      <div class="class-card" id="classCard-${c.id}">
+        <div class="class-card-top">
+          <div style="flex:1">
+            <div class="class-title">${escapeHTML(c.title)}</div>
+            ${c.description?'<div class="class-desc">'+escapeHTML(c.description)+'</div>':''}
+          </div>
         </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="academy-page">
-        <div class="academy-container">
-
-            <!-- Loading -->
-            <div class="academy-loading" id="academyLoading">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Cargando tu academia...</p>
-            </div>
-
-            <!-- Content (hidden until loaded) -->
-            <div id="academyContent" style="display:none;">
-
-                <!-- 1. Profile Section -->
-                <section class="academy-profile" id="academyProfile">
-                    <div class="academy-profile-inner">
-                        <div class="academy-avatar-wrap">
-                            <div class="academy-avatar" id="academyAvatar">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <label class="academy-avatar-upload" title="Cambiar foto de perfil">
-                                <i class="fas fa-camera"></i>
-                                <input type="file" id="avatarUploadInput" accept="image/*">
-                            </label>
-                        </div>
-                        <div class="academy-profile-info">
-                            <h1 class="academy-profile-name" id="profileName">--</h1>
-                            <p class="academy-profile-email" id="profileEmail">--</p>
-                            <div class="academy-level-badge">
-                                <i class="fas fa-star"></i>
-                                <span>Nivel <strong id="profileLevel">1</strong></span>
-                            </div>
-                            <div class="academy-xp-bar-wrap">
-                                <div class="academy-xp-label">
-                                    <span id="xpCurrentLabel">0 XP</span>
-                                    <span id="xpNextLabel">Siguiente: 100 XP</span>
-                                </div>
-                                <div class="academy-xp-bar">
-                                    <div class="academy-xp-fill" id="xpFill" style="width:0%"></div>
-                                </div>
-                            </div>
-                            <div class="academy-share">
-                                <i class="fas fa-share-alt"></i>
-                                <span>Compartir mi perfil:</span>
-                                <a class="academy-share-link" id="profileShareLink" href="#" target="_blank">--</a>
-                            </div>
-                        </div>
-                        <button class="academy-edit-btn" id="editProfileBtn" onclick="toggleEditProfile()">
-                            <i class="fas fa-pen"></i> Editar Perfil
-                        </button>
-                    </div>
-                </section>
-
-                <!-- Edit Profile Form (hidden) -->
-                <div class="academy-edit-form" id="editProfileForm">
-                    <h3><i class="fas fa-user-edit"></i> Editar Perfil</h3>
-                    <div class="academy-edit-grid">
-                        <div class="academy-edit-field">
-                            <label for="editName">Nombre</label>
-                            <input type="text" id="editName" placeholder="Tu nombre completo">
-                        </div>
-                        <div class="academy-edit-field">
-                            <label for="editPhone">Teléfono</label>
-                            <input type="tel" id="editPhone" placeholder="+58 412 1234567">
-                        </div>
-                        <div class="academy-edit-field">
-                            <label for="editWhatsapp">WhatsApp</label>
-                            <input type="tel" id="editWhatsapp" placeholder="+58 412 1234567">
-                        </div>
-                        <div class="academy-edit-field">
-                            <label>&nbsp;</label>
-                            <!-- spacer for grid alignment -->
-                        </div>
-                        <div class="academy-edit-field full">
-                            <label for="editBio">Biografía</label>
-                            <textarea id="editBio" rows="3" placeholder="Cuéntanos sobre ti..."></textarea>
-                        </div>
-                    </div>
-                    <div class="academy-edit-actions">
-                        <button class="academy-btn academy-btn-primary" onclick="saveProfile()">
-                            <i class="fas fa-save"></i> Guardar Cambios
-                        </button>
-                        <button class="academy-btn academy-btn-secondary" onclick="toggleEditProfile()">
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 2. Stats Cards Row -->
-                <section class="academy-stats" id="academyStats">
-                    <div class="academy-stat-card">
-                        <div class="academy-stat-icon purple"><i class="fas fa-layer-group"></i></div>
-                        <div class="academy-stat-value" id="statLevel">1</div>
-                        <div class="academy-stat-label">Nivel Actual</div>
-                    </div>
-                    <div class="academy-stat-card">
-                        <div class="academy-stat-icon amber"><i class="fas fa-bolt"></i></div>
-                        <div class="academy-stat-value" id="statXP">0</div>
-                        <div class="academy-stat-label">XP Total</div>
-                    </div>
-                    <div class="academy-stat-card">
-                        <div class="academy-stat-icon green"><i class="fas fa-book-open"></i></div>
-                        <div class="academy-stat-value" id="statClasses">0</div>
-                        <div class="academy-stat-label">Clases Completadas</div>
-                    </div>
-                    <div class="academy-stat-card">
-                        <div class="academy-stat-icon blue"><i class="fas fa-medal"></i></div>
-                        <div class="academy-stat-value" id="statBadges">0</div>
-                        <div class="academy-stat-label">Medallas Ganadas</div>
-                    </div>
-                    <div class="academy-stat-card">
-                        <div class="academy-stat-icon rose"><i class="fas fa-award"></i></div>
-                        <div class="academy-stat-value" id="statExam">--</div>
-                        <div class="academy-stat-label">Estado del Examen</div>
-                        <div class="academy-stat-badge locked" id="statExamBadge">Bloqueado</div>
-                    </div>
-                </section>
-
-                <!-- 3. Classes List Section -->
-                <section class="academy-section">
-                    <h2 class="academy-section-title">
-                        <i class="fas fa-graduation-cap"></i> Clases Disponibles
-                    </h2>
-                    <div class="academy-classes-grid" id="classesGrid">
-                        <!-- Rendered dynamically -->
-                    </div>
-                </section>
-
-                <!-- 4. Exam Section -->
-                <section class="academy-section">
-                    <h2 class="academy-section-title">
-                        <i class="fas fa-trophy"></i> Examen Final
-                    </h2>
-                    <div class="academy-exam-card" id="examCard">
-                        <div class="academy-exam-header">
-                            <h3><i class="fas fa-scroll"></i> Examen de Certificación</h3>
-                            <p>Demuestra tus conocimientos para convertirte en Partner Digital Certificado</p>
-                        </div>
-                        <div class="academy-exam-body" id="examBody">
-                            <!-- Rendered dynamically based on state -->
-                        </div>
-                        <div class="academy-exam-quiz" id="examQuiz">
-                            <!-- Exam questions rendered here -->
-                        </div>
-                        <div class="academy-exam-results" id="examResults">
-                            <!-- Exam results rendered here -->
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 5. Badges Section -->
-                <section class="academy-section">
-                    <h2 class="academy-section-title">
-                        <i class="fas fa-medal"></i> Mis Medallas
-                    </h2>
-                    <div id="badgesContainer">
-                        <!-- Rendered dynamically -->
-                    </div>
-                </section>
-
-            </div>
+        <div class="class-meta">
+          <span class="class-meta-item"><i class="fas fa-question-circle"></i> ${c.question_count||0} preguntas</span>
+          <span class="class-xp"><i class="fas fa-bolt"></i> +${c.xp_reward||10} XP</span>
+          ${statusHTML}
+          ${!completed?'<button class="btn btn-sm btn-primary" onclick="startQuiz('+c.id+')" style="margin-left:auto"><i class="fas fa-play"></i> Comenzar</button>':''}
         </div>
-    </main>
+        <div id="quizPanel-${c.id}"></div>
+      </div>`;
+    }).join('');
 
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    return '<div class="card"><div class="card-title"><i class="fas fa-book-open"></i> Mis Clases</div><div class="classes-grid">'+cards+'</div></div>';
+  }
 
-    <!-- Load app.js first -->
-    <script src="/js/app.js?v=11"></script>
+  // ── Quiz State ──
+  const quizStates={};
 
-    <!-- Academy Page Script -->
-    <script>
-    (function() {
-        'use strict';
+  function bindClassEvents(){}
 
-        // ─── State ───────────────────────────────────────────
-        let progressData = null;
-        let classesData = [];
-        let userData = null;
-        let examQuestions = [];
-        let expandedClassId = null;
+  async function startQuiz(classId){
+    const panel=document.getElementById('quizPanel-'+classId);
+    if(!panel) return;
+    panel.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div><p style="font-size:13px;color:var(--gray-500)">Cargando preguntas...</p></div>';
 
-        // ─── Init ────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', init);
+    try{
+      const data=await apiGet('/agent-classes/'+classId);
+      if(!data) return;
+      const questions=data.questions||[];
+      if(!questions.length){
+        panel.innerHTML='<div class="empty-state" style="padding:12px"><i class="fas fa-exclamation-circle"></i><p>No hay preguntas para esta clase</p></div>';
+        return;
+      }
+      quizStates[classId]={questions:questions,current:0,answers:[]};
+      renderQuestion(classId);
+    }catch(err){
+      panel.innerHTML='<div class="empty-state" style="padding:12px;color:var(--danger)"><i class="fas fa-exclamation-triangle"></i><p>Error: '+err.message+'</p></div>';
+    }
+  }
+  window.startQuiz=startQuiz;
 
-        async function init() {
-            if (!isAuthenticated()) {
-                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname);
-                return;
-            }
-            try {
-                await Promise.all([loadProgress(), loadClasses(), loadUser()]);
-                document.getElementById('academyLoading').style.display = 'none';
-                document.getElementById('academyContent').style.display = 'block';
-            } catch (err) {
-                document.getElementById('academyLoading').innerHTML =
-                    '<i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i>' +
-                    '<p style="color:#dc2626;">Error al cargar: ' + err.message + '</p>' +
-                    '<a href="/" style="margin-top:12px;color:#7c3aed;text-decoration:underline;">Volver al inicio</a>';
-            }
+  function renderQuestion(classId){
+    const qs=quizStates[classId];
+    const q=qs.questions[qs.current];
+    const total=qs.questions.length;
+    const current=qs.current+1;
+    const pct=Math.round((current/total)*100);
+
+    const letters=['A','B','C','D'];
+    const options=[q.option_a,q.option_b,q.option_c,q.option_d].filter(Boolean);
+    const selected=qs.answers[qs.current]||'';
+
+    const optionsHTML=options.map(function(opt,i){
+      const letter=letters[i];
+      const sel=selected===letter?' selected':'';
+      return `<div class="quiz-option${sel}" onclick="selectOption(${classId},'${letter}')" data-letter="${letter}">
+        <span class="quiz-option-letter">${letter}</span>
+        <span>${escapeHTML(opt)}</span>
+      </div>`;
+    }).join('');
+
+    const isLast=current===total;
+
+    document.getElementById('quizPanel-'+classId).innerHTML=`
+    <div class="quiz-panel">
+      <div class="quiz-progress">
+        <span>${current} / ${total}</span>
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="quiz-question">${current}. ${escapeHTML(q.question)}</div>
+      <div class="quiz-options">${optionsHTML}</div>
+      <div class="quiz-nav">
+        ${current>1?'<button class="btn btn-sm btn-outline" onclick="prevQuestion('+classId+')"><i class="fas fa-arrow-left"></i> Anterior</button>':''}
+        <div style="flex:1"></div>
+        <button class="btn btn-sm btn-primary" onclick="${isLast?'submitQuiz('+classId+')':'nextQuestion('+classId+')'}" ${!selected?'disabled':''}>
+          ${isLast?'<i class="fas fa-check"></i> Enviar':'Siguiente <i class="fas fa-arrow-right"></i>'}
+        </button>
+      </div>
+    </div>`;
+  }
+
+  function selectOption(classId,letter){
+    quizStates[classId].answers[quizStates[classId].current]=letter;
+    // Update UI
+    const panel=document.getElementById('quizPanel-'+classId);
+    panel.querySelectorAll('.quiz-option').forEach(function(el){
+      el.classList.toggle('selected',el.dataset.letter===letter);
+    });
+    // Enable submit button
+    const btn=panel.querySelector('.quiz-nav .btn-primary');
+    if(btn) btn.disabled=false;
+  }
+  window.selectOption=selectOption;
+
+  function nextQuestion(classId){
+    const qs=quizStates[classId];
+    if(qs.current<qs.questions.length-1){
+      qs.current++;
+      renderQuestion(classId);
+      document.getElementById('quizPanel-'+classId).scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  }
+  window.nextQuestion=nextQuestion;
+
+  function prevQuestion(classId){
+    const qs=quizStates[classId];
+    if(qs.current>0){
+      qs.current--;
+      renderQuestion(classId);
+    }
+  }
+  window.prevQuestion=prevQuestion;
+
+  async function submitQuiz(classId){
+    const qs=quizStates[classId];
+    const panel=document.getElementById('quizPanel-'+classId);
+    panel.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div><p style="font-size:13px;color:var(--gray-500)">Calificando...</p></div>';
+
+    // Build answers array
+    const answers=qs.questions.map(function(q,i){
+      return {question_id:q.id, answer:qs.answers[i]||''};
+    });
+
+    try{
+      const result=await apiPost('/agent-progress',{class_id:classId,answers:answers});
+      if(!result) return;
+      renderQuizResults(classId,result);
+      // Refresh progress
+      const freshProgress=await apiGet('/agent-progress');
+      if(freshProgress) agentProgress=freshProgress;
+    }catch(err){
+      panel.innerHTML='<div class="results-panel" style="color:var(--danger)"><i class="fas fa-exclamation-triangle" style="font-size:24px;margin-bottom:8px"></i><p>'+escapeHTML(err.message)+'</p><button class="btn btn-sm btn-outline" onclick="startQuiz('+classId+')" style="margin-top:12px"><i class="fas fa-redo"></i> Reintentar</button></div>';
+    }
+  }
+  window.submitQuiz=submitQuiz;
+
+  function renderQuizResults(classId,r){
+    const passed=r.score_percent>=70;
+    const cls=classes.find(function(c){return c.id===classId});
+
+    let html=`<div class="quiz-panel results-panel">`;
+    html+=`<i class="fas ${passed?'fa-check-circle':'fa-times-circle'}" style="font-size:40px;color:${passed?'var(--success)':'var(--danger)'}"></i>`;
+    html+=`<div class="results-score ${passed?'pass':'fail'}">${r.score_percent}%</div>`;
+    html+=`<div class="results-message">${r.correct_answers} de ${r.total_questions} correctas</div>`;
+    html+=`<div class="results-xp"><i class="fas fa-bolt"></i> +${r.xp_earned} XP ganados</div>`;
+    if(r.leveled_up){
+      html+=`<div class="results-levelup"><i class="fas fa-arrow-up"></i> ¡Subiste al nivel ${r.new_level}! ${getLevelName(r.new_level)?'· '+getLevelName(r.new_level):''}</div>`;
+    }
+    html+=`<div class="results-actions">`;
+    html+=`<button class="btn btn-sm btn-outline" onclick="closeQuiz(${classId})">Cerrar</button>`;
+    if(!passed && cls){
+      html+=`<button class="btn btn-sm btn-primary" onclick="startQuiz(${classId})"><i class="fas fa-redo"></i> Reintentar</button>`;
+    }
+    html+=`</div></div>`;
+
+    document.getElementById('quizPanel-'+classId).innerHTML=html;
+
+    // Update the class card to show completed
+    const card=document.getElementById('classCard-'+classId);
+    if(passed && card){
+      const c=classes.find(function(c){return c.id===classId});
+      if(c) c.is_completed=1;
+      // Re-render to update status
+      const metaDiv=card.querySelector('.class-meta');
+      if(metaDiv){
+        const statusEl=metaDiv.querySelector('.class-status');
+        if(statusEl){
+          statusEl.className='class-status completed';
+          statusEl.innerHTML='<i class="fas fa-check-circle"></i> Completada';
         }
-
-        // ─── Load Data ───────────────────────────────────────
-        async function loadUser() {
-            try {
-                const data = await api.get('/user-profile');
-                userData = data.user;
-                renderProfile();
-            } catch (e) {
-                // Fallback to cached user
-                userData = getCachedUser();
-                if (userData) renderProfile();
-            }
-        }
-
-        async function loadProgress() {
-            progressData = await api.get('/agent-progress');
-            renderStats();
-            renderBadges();
-            renderExamState();
-        }
-
-        async function loadClasses() {
-            const data = await api.get('/agent-classes');
-            classesData = data.classes || [];
-            renderClasses();
-        }
-
-        // ─── Render Profile ──────────────────────────────────
-        function renderProfile() {
-            if (!userData) return;
-
-            const nameEl = document.getElementById('profileName');
-            const emailEl = document.getElementById('profileEmail');
-            const avatarEl = document.getElementById('academyAvatar');
-            const shareEl = document.getElementById('profileShareLink');
-
-            nameEl.textContent = userData.name || 'Agente';
-            emailEl.textContent = userData.email || '';
-
-            if (userData.avatar) {
-                avatarEl.innerHTML = '<img src="' + userData.avatar + '" alt="Avatar">';
-            }
-
-            const userId = userData.id;
-            const profileUrl = 'https://aunclick.pages.dev/perfil.html?id=' + userId;
-            shareEl.href = profileUrl;
-            shareEl.textContent = profileUrl;
-
-            // Fill edit form
-            document.getElementById('editName').value = userData.name || '';
-            document.getElementById('editPhone').value = userData.phone || '';
-            document.getElementById('editWhatsapp').value = userData.whatsapp || '';
-            document.getElementById('editBio').value = userData.bio || '';
-        }
-
-        // ─── Render Stats ────────────────────────────────────
-        function renderStats() {
-            if (!progressData) return;
-
-            const level = progressData.level;
-            const xp = progressData.xp;
-            const xpInLevel = progressData.xp_in_current_level;
-            const xpNeeded = progressData.xp_needed_for_next;
-            const pct = progressData.progress_percent;
-            const completedClasses = progressData.completed_classes ? progressData.completed_classes.length : 0;
-            const totalBadges = progressData.total_badges || 0;
-
-            // Profile section
-            document.getElementById('profileLevel').textContent = level;
-            document.getElementById('xpCurrentLabel').textContent = xp + ' XP';
-            if (level >= 10) {
-                document.getElementById('xpNextLabel').textContent = 'Nivel Máximo';
-            } else {
-                document.getElementById('xpNextLabel').textContent = 'Siguiente: ' + xpNeeded + ' XP';
-            }
-            document.getElementById('xpFill').style.width = pct + '%';
-
-            // Stat cards
-            document.getElementById('statLevel').textContent = level;
-            document.getElementById('statXP').textContent = xp;
-            document.getElementById('statClasses').textContent = completedClasses;
-            document.getElementById('statBadges').textContent = totalBadges;
-
-            // Exam state
-            const examBadge = document.getElementById('statExamBadge');
-            const examStat = document.getElementById('statExam');
-            if (progressData.profile && progressData.profile.exam_passed === 1) {
-                examBadge.textContent = 'Aprobado';
-                examBadge.className = 'academy-stat-badge passed';
-                examStat.innerHTML = '<i class="fas fa-check" style="color:var(--academy-green);"></i>';
-            } else if (level >= 10) {
-                examBadge.textContent = 'Disponible';
-                examBadge.className = 'academy-stat-badge available';
-                examStat.innerHTML = '<i class="fas fa-unlock" style="color:var(--academy-green);"></i>';
-            } else {
-                examBadge.textContent = 'Bloqueado';
-                examBadge.className = 'academy-stat-badge locked';
-                examStat.innerHTML = '<i class="fas fa-lock" style="color:#9ca3af;"></i>';
-            }
-        }
-
-        // ─── Render Classes ──────────────────────────────────
-        function renderClasses() {
-            const grid = document.getElementById('classesGrid');
-            if (!classesData.length) {
-                grid.innerHTML = '<div class="academy-no-badges" style="grid-column:1/-1;"><i class="fas fa-book"></i><p>No hay clases disponibles aún.</p></div>';
-                return;
-            }
-            grid.innerHTML = classesData.map(function(cls) {
-                const completed = cls.is_completed === 1;
-                const qCount = cls.question_count || 0;
-                const xpReward = cls.xp_reward || 10;
-                return '\n                <div class="academy-class-card" id="classCard-' + cls.id + '">\n                    <div class="academy-class-header">\n                        <h3 class="academy-class-title">' + escapeHtml(cls.title) + '</h3>\n                        <p class="academy-class-desc">' + escapeHtml(cls.description || '') + '</p>\n                    </div>\n                    <div class="academy-class-meta">\n                        <span><i class="fas fa-question-circle"></i> ' + qCount + ' preguntas</span>\n                        <span class="xp-badge"><i class="fas fa-bolt"></i> +' + xpReward + ' XP</span>\n                    </div>\n                    <div class="academy-class-actions">\n                        ' + (completed
-                            ? '<div class="academy-class-completed"><i class="fas fa-check-circle"></i> Completada</div>'
-                            : '<button class="academy-class-start" onclick="window._academiaStartClass(' + cls.id + ')"><i class="fas fa-play"></i> Comenzar</button>'
-                        ) + '\n                    </div>\n                    <div class="academy-class-quiz" id="classQuiz-' + cls.id + '">\n                        <!-- Quiz loaded on demand -->\n                    </div>\n                </div>';
-            }).join('');
-        }
-
-        // ─── Start Class (expand quiz) ───────────────────────
-        window._academiaStartClass = async function(classId) {
-            // Toggle if already expanded
-            const quizEl = document.getElementById('classQuiz-' + classId);
-            if (expandedClassId === classId && quizEl.classList.contains('active')) {
-                quizEl.classList.remove('active');
-                expandedClassId = null;
-                return;
-            }
-            // Collapse previous
-            if (expandedClassId) {
-                const prev = document.getElementById('classQuiz-' + expandedClassId);
-                if (prev) prev.classList.remove('active');
-            }
-            expandedClassId = classId;
-            quizEl.classList.add('active');
-            quizEl.innerHTML = '<div style="text-align:center;padding:30px;"><i class="fas fa-spinner fa-spin" style="font-size:1.5rem;color:var(--academy-purple);"></i><p style="margin-top:8px;color:var(--academy-text-muted);">Cargando clase...</p></div>';
-
-            try {
-                // Load questions
-                const data = await api.get('/agent-classes/' + classId + '/questions');
-                const cls = classesData.find(function(c) { return c.id === classId; });
-                const questions = data.questions || [];
-
-                let html = '';
-                // Class content
-                if (cls && cls.content) {
-                    html += '<div class="academy-class-content"><h4><i class="fas fa-book-reader"></i> Contenido de la Clase</h4>' + escapeHtml(cls.content) + '</div>';
-                }
-
-                if (!questions.length) {
-                    html += '<div style="text-align:center;padding:20px;color:var(--academy-text-muted);"><i class="fas fa-info-circle"></i> No hay preguntas para esta clase.</div>';
-                    quizEl.innerHTML = html;
-                    return;
-                }
-
-                // Questions
-                html += questions.map(function(q, idx) {
-                    return '\n                    <div class="academy-question" id="q-' + classId + '-' + q.id + '">\n                        <p class="academy-question-text"><span>' + (idx + 1) + '</span>' + escapeHtml(q.question) + '</p>\n                        <div class="academy-options">\n                            <label class="academy-option" data-qid="' + q.id + '" data-answer="a">\n                                <input type="radio" name="q' + q.id + '" value="a">\n                                <span class="academy-option-letter">A</span>\n                                <span>' + escapeHtml(q.option_a) + '</span>\n                            </label>\n                            <label class="academy-option" data-qid="' + q.id + '" data-answer="b">\n                                <input type="radio" name="q' + q.id + '" value="b">\n                                <span class="academy-option-letter">B</span>\n                                <span>' + escapeHtml(q.option_b) + '</span>\n                            </label>\n                            <label class="academy-option" data-qid="' + q.id + '" data-answer="c">\n                                <input type="radio" name="q' + q.id + '" value="c">\n                                <span class="academy-option-letter">C</span>\n                                <span>' + escapeHtml(q.option_c) + '</span>\n                            </label>\n                            <label class="academy-option" data-qid="' + q.id + '" data-answer="d">\n                                <input type="radio" name="q' + q.id + '" value="d">\n                                <span class="academy-option-letter">D</span>\n                                <span>' + escapeHtml(q.option_d) + '</span>\n                            </label>\n                        </div>\n                        <div class="academy-question-explanation" id="exp-' + q.id + '"></div>\n                    </div>';
-                }).join('');
-
-                html += '<button class="academy-btn academy-btn-primary academy-quiz-submit" id="submitClass-' + classId + '" onclick="window._academiaSubmitClass(' + classId + ')"><i class="fas fa-paper-plane"></i> Enviar Respuestas</button>';
-                html += '<div class="academy-quiz-results" id="classResults-' + classId + '"></div>';
-
-                quizEl.innerHTML = html;
-
-                // Bind option clicks
-                quizEl.querySelectorAll('.academy-option').forEach(function(opt) {
-                    opt.addEventListener('click', function() {
-                        const qid = opt.dataset.qid;
-                        // Deselect siblings
-                        quizEl.querySelectorAll('.academy-option[data-qid="' + qid + '"]').forEach(function(o) {
-                            o.classList.remove('selected');
-                        });
-                        opt.classList.add('selected');
-                        opt.querySelector('input').checked = true;
-                    });
-                });
-
-            } catch (err) {
-                quizEl.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626;"><i class="fas fa-exclamation-circle"></i> Error al cargar: ' + escapeHtml(err.message) + '</div>';
-            }
-        };
-
-        // ─── Submit Class Quiz ───────────────────────────────
-        window._academiaSubmitClass = async function(classId) {
-            const quizEl = document.getElementById('classQuiz-' + classId);
-            const options = quizEl.querySelectorAll('.academy-option.selected');
-            if (!options.length) {
-                showToast('Selecciona al menos una respuesta', 'warning');
-                return;
-            }
-
-            const submitBtn = document.getElementById('submitClass-' + classId);
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-
-            // Collect answers
-            const answers = [];
-            options.forEach(function(opt) {
-                answers.push({
-                    question_id: parseInt(opt.dataset.qid),
-                    answer: opt.dataset.answer
-                });
-            });
-
-            try {
-                const result = await api.post('/agent-progress', {
-                    class_id: classId,
-                    answers: answers
-                });
-
-                // Show results
-                const resultsEl = document.getElementById('classResults-' + classId);
-                resultsEl.className = 'academy-quiz-results active ' + (result.all_correct ? 'perfect' : 'partial');
-                resultsEl.innerHTML = '<h4>' + (result.all_correct ? '\u{1F389} ¡Perfecto!' : '\u{1F44D} Clase completada') + '</h4>' +
-                    '<p>Respuestas correctas: ' + result.correct_answers + ' / ' + result.total_questions + '</p>' +
-                    '<p class="xp-earned"><i class="fas fa-bolt"></i> +' + result.xp_earned + ' XP</p>';
-
-                // Disable further submissions
-                submitBtn.style.display = 'none';
-
-                // Disable option clicks
-                quizEl.querySelectorAll('.academy-option').forEach(function(o) {
-                    o.style.pointerEvents = 'none';
-                });
-
-                // Show XP toast
-                showXPToast(result.xp_earned);
-
-                // Level up?
-                if (result.leveled_up) {
-                    showLevelUp(result.new_level);
-                }
-
-                // Refresh data
-                await Promise.all([loadProgress(), loadClasses()]);
-
-                // Re-expand this class quiz
-                setTimeout(function() {
-                    expandedClassId = null;
-                    // Mark as completed in the card
-                    const cardActions = document.querySelector('#classCard-' + classId + ' .academy-class-actions');
-                    if (cardActions) {
-                        cardActions.innerHTML = '<div class="academy-class-completed"><i class="fas fa-check-circle"></i> Completada</div>';
-                    }
-                }, 500);
-
-            } catch (err) {
-                showToast(err.message, 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Respuestas';
-            }
-        };
-
-        // ─── Render Exam State ───────────────────────────────
-        function renderExamState() {
-            if (!progressData) return;
-            const body = document.getElementById('examBody');
-            const level = progressData.level;
-            const passed = progressData.profile && progressData.profile.exam_passed === 1;
-            const passedAt = progressData.profile && progressData.profile.exam_passed_at;
-
-            if (passed) {
-                body.innerHTML = '\n                    <div class="academy-exam-passed">\n                        <i class="fas fa-trophy"></i>\n                        <h4>\u00a1Examen Aprobado!</h4>\n                        <p>Eres un <strong>Partner Digital Certificado</strong></p>\n                        <p>Aprobado el ' + formatDate(passedAt) + '</p>\n                        <div class="partner-badge"><i class="fas fa-certificate"></i> Partner Digital Certificado</div>\n                    </div>';
-            } else if (level >= 10) {
-                body.innerHTML = '\n                    <div class="academy-exam-available">\n                        <i class="fas fa-unlock-alt"></i>\n                        <h4>\u00a1Examen Disponible!</h4>\n                        <p>Has alcanzado el Nivel 10. Estás listo para el examen final.</p>\n                        <p style="font-size:0.82rem;color:#6b7280;">Debes responder las 10 preguntas correctamente para aprobar.</p>\n                        <button class="academy-btn academy-btn-success" onclick="window._academiaStartExam()"><i class="fas fa-play-circle"></i> Tomar Examen</button>\n                    </div>';
-            } else {
-                body.innerHTML = '\n                    <div class="academy-exam-locked">\n                        <i class="fas fa-lock"></i>\n                        <h4>Examen Bloqueado</h4>\n                        <p>Necesitas alcanzar <strong>Nivel 10</strong> para desbloquear el examen.</p>\n                        <p style="margin-top:8px;">Nivel actual: ' + level + ' / 10</p>\n                    </div>';
-            }
-        }
-
-        // ─── Start Exam ──────────────────────────────────────
-        window._academiaStartExam = async function() {
-            const examBody = document.getElementById('examBody');
-            const examQuiz = document.getElementById('examQuiz');
-            const examResults = document.getElementById('examResults');
-
-            examBody.style.display = 'none';
-            examResults.className = 'academy-exam-results';
-            examResults.style.display = 'none';
-            examQuiz.classList.add('active');
-            examQuiz.innerHTML = '<div style="text-align:center;padding:40px;"><i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--academy-purple);"></i><p style="margin-top:12px;color:var(--academy-text-muted);">Generando examen...</p></div>';
-
-            try {
-                const data = await api.get('/agent-exam/questions');
-                examQuestions = data.questions || [];
-
-                let html = '\n                <div class="academy-exam-progress">\n                    <i class="fas fa-clipboard-list"></i>\n                    <span>' + examQuestions.length + ' preguntas</span>\n                    <div class="academy-exam-progress-bar"><div class="academy-exam-progress-fill" id="examProgressFill" style="width:0%"></div></div>\n                    <span id="examAnswered">0/' + examQuestions.length + '</span>\n                </div>';
-
-                html += examQuestions.map(function(q, idx) {
-                    return '\n                <div class="academy-question" id="examQ-' + q.id + '">\n                    <p class="academy-question-text"><span>' + (idx + 1) + '</span>' + escapeHtml(q.question) + '</p>\n                    <p style="font-size:0.78rem;color:#9ca3af;margin:0 0 10px 36px;"><i class="fas fa-book"></i> ' + escapeHtml(q.class_name || '') + '</p>\n                    <div class="academy-options">\n                        <label class="academy-option" data-qid="' + q.id + '" data-answer="a">\n                            <input type="radio" name="eq' + q.id + '" value="a">\n                            <span class="academy-option-letter">A</span>\n                            <span>' + escapeHtml(q.option_a) + '</span>\n                        </label>\n                        <label class="academy-option" data-qid="' + q.id + '" data-answer="b">\n                            <input type="radio" name="eq' + q.id + '" value="b">\n                            <span class="academy-option-letter">B</span>\n                            <span>' + escapeHtml(q.option_b) + '</span>\n                        </label>\n                        <label class="academy-option" data-qid="' + q.id + '" data-answer="c">\n                            <input type="radio" name="eq' + q.id + '" value="c">\n                            <span class="academy-option-letter">C</span>\n                            <span>' + escapeHtml(q.option_c) + '</span>\n                        </label>\n                        <label class="academy-option" data-qid="' + q.id + '" data-answer="d">\n                            <input type="radio" name="eq' + q.id + '" value="d">\n                            <span class="academy-option-letter">D</span>\n                            <span>' + escapeHtml(q.option_d) + '</span>\n                        </label>\n                    </div>\n                </div>';
-                }).join('');
-
-                html += '<button class="academy-btn academy-btn-primary academy-quiz-submit" id="submitExam" onclick="window._academiaSubmitExam()" style="margin-top:16px;width:100%;"><i class="fas fa-paper-plane"></i> Enviar Examen</button>';
-
-                examQuiz.innerHTML = html;
-
-                // Bind option clicks and update progress
-                examQuiz.querySelectorAll('.academy-option').forEach(function(opt) {
-                    opt.addEventListener('click', function() {
-                        const qid = opt.dataset.qid;
-                        examQuiz.querySelectorAll('.academy-option[data-qid="' + qid + '"]').forEach(function(o) {
-                            o.classList.remove('selected');
-                        });
-                        opt.classList.add('selected');
-                        opt.querySelector('input').checked = true;
-                        updateExamProgress();
-                    });
-                });
-
-            } catch (err) {
-                examQuiz.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626;"><i class="fas fa-exclamation-circle"></i> ' + escapeHtml(err.message) + '</div>';
-            }
-        };
-
-        function updateExamProgress() {
-            const answered = document.querySelectorAll('#examQuiz .academy-option.selected').length;
-            const total = examQuestions.length;
-            const fill = document.getElementById('examProgressFill');
-            const label = document.getElementById('examAnswered');
-            if (fill) fill.style.width = (answered / total * 100) + '%';
-            if (label) label.textContent = answered + '/' + total;
-        }
-
-        // ─── Submit Exam ─────────────────────────────────────
-        window._academiaSubmitExam = async function() {
-            const examQuiz = document.getElementById('examQuiz');
-            const selected = examQuiz.querySelectorAll('.academy-option.selected');
-
-            if (selected.length < examQuestions.length) {
-                showToast('Debes responder todas las ' + examQuestions.length + ' preguntas', 'warning');
-                return;
-            }
-
-            const submitBtn = document.getElementById('submitExam');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calificando...';
-
-            const answers = [];
-            selected.forEach(function(opt) {
-                answers.push({
-                    question_id: parseInt(opt.dataset.qid),
-                    answer: opt.dataset.answer
-                });
-            });
-
-            try {
-                const result = await api.post('/agent-exam', { answers: answers });
-
-                examQuiz.classList.remove('active');
-                const resultsEl = document.getElementById('examResults');
-                resultsEl.style.display = 'block';
-
-                if (result.passed) {
-                    resultsEl.className = 'academy-exam-results active passed';
-                    resultsEl.innerHTML = '\n                        <i class="fas fa-trophy"></i>\n                        <h4>\u00a1Felicidades! Aprobaste!</h4>\n                        <p>Eres ahora un <strong>Partner Digital Certificado</strong></p>\n                        <p>Respuestas correctas: ' + result.correct_answers + ' / ' + result.total_questions + '</p>\n                        <div class="partner-badge" style="margin-top:14px;"><i class="fas fa-certificate"></i> Partner Digital Certificado</div>';
-                    launchConfetti();
-                } else {
-                    resultsEl.className = 'academy-exam-results active failed';
-                    resultsEl.innerHTML = '\n                        <i class="fas fa-times-circle"></i>\n                        <h4>No aprobaste</h4>\n                        <p>Respuestas correctas: ' + result.correct_answers + ' / ' + result.total_questions + '</p>\n                        <p>Necesitas las 10 respuestas correctas. Intenta de nuevo.</p>\n                        <p style="font-size:0.82rem;color:#6b7280;margin-top:8px;">Intentos realizados: ' + result.exam_attempts + '</p>\n                        <button class="academy-btn academy-btn-secondary" style="margin-top:14px;" onclick="window._academiaRetryExam()"><i class="fas fa-redo"></i> Intentar de Nuevo</button>';
-                }
-
-                // Refresh progress
-                await loadProgress();
-
-            } catch (err) {
-                showToast(err.message, 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Examen';
-            }
-        };
-
-        // ─── Retry Exam ──────────────────────────────────────
-        window._academiaRetryExam = function() {
-            document.getElementById('examResults').style.display = 'none';
-            document.getElementById('examResults').className = 'academy-exam-results';
-            document.getElementById('examBody').style.display = 'block';
-            renderExamState();
-        };
-
-        // ─── Render Badges ───────────────────────────────────
-        function renderBadges() {
-            const container = document.getElementById('badgesContainer');
-            const badges = progressData && progressData.badges ? progressData.badges : [];
-
-            if (!badges.length) {
-                container.innerHTML = '\n                <div class="academy-no-badges">\n                    <i class="fas fa-medal"></i>\n                    <p>Aún no has ganado medallas. \u00a1Completa clases para ganar tu primera medalla!</p>\n                </div>';
-                return;
-            }
-
-            const colorMap = {
-                'level_up': 'gold',
-                'first_class': 'green',
-                'exam_passed': 'purple',
-                'partner': 'blue',
-            };
-
-            container.innerHTML = '<div class="academy-badges-grid">' +
-                badges.map(function(badge) {
-                    const color = colorMap[badge.badge_type] || 'purple';
-                    return '\n                <div class="academy-badge-card">\n                    <div class="academy-badge-icon ' + color + '"><i class="' + (badge.badge_icon || 'fas fa-medal') + '"></i></div>\n                    <div class="academy-badge-name">' + escapeHtml(badge.badge_name) + '</div>\n                    <div class="academy-badge-desc">' + escapeHtml(badge.badge_description) + '</div>\n                    <div class="academy-badge-date"><i class="fas fa-calendar-alt"></i> ' + formatDate(badge.earned_at) + '</div>\n                </div>';
-                }).join('') + '\n            </div>';
-        }
-
-        // ─── Edit Profile ────────────────────────────────────
-        window.toggleEditProfile = function() {
-            const form = document.getElementById('editProfileForm');
-            form.classList.toggle('active');
-        };
-
-        window.saveProfile = async function() {
-            const btn = event.target.closest('button');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
-
-            const name = document.getElementById('editName').value.trim();
-            const phone = document.getElementById('editPhone').value.trim();
-            const whatsapp = document.getElementById('editWhatsapp').value.trim();
-            const bio = document.getElementById('editBio').value.trim();
-
-            try {
-                await api.put('/user-profile', { name, phone, whatsapp, bio });
-                if (userData) {
-                    userData.name = name;
-                    userData.phone = phone;
-                    userData.whatsapp = whatsapp;
-                    userData.bio = bio;
-                }
-                renderProfile();
-                toggleEditProfile();
-                showToast('Perfil actualizado correctamente', 'success');
-            } catch (err) {
-                showToast(err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios';
-            }
-        };
-
-        // ─── Avatar Upload ───────────────────────────────────
-        document.getElementById('avatarUploadInput').addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            if (file.size > 5 * 1024 * 1024) {
-                showToast('La imagen no debe superar 5MB', 'warning');
-                return;
-            }
-
-            showToast('Subiendo foto...', 'info');
-
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('product_type', 'avatar');
-
-                const uploadRes = await api.postFormData('/upload', formData);
-                const url = uploadRes.url || uploadRes.file_url;
-
-                if (!url) throw new Error('No se recibió la URL de la imagen');
-
-                await api.put('/user-profile', { avatar: url });
-
-                if (userData) userData.avatar = url;
-                renderProfile();
-                showToast('Foto de perfil actualizada', 'success');
-            } catch (err) {
-                showToast('Error al subir foto: ' + err.message, 'error');
-            }
-
-            // Reset input
-            e.target.value = '';
-        });
-
-        // ─── XP Toast ────────────────────────────────────────
-        function showXPToast(xp) {
-            const toast = document.createElement('div');
-            toast.className = 'academy-xp-toast';
-            toast.innerHTML = '<i class="fas fa-bolt"></i> +' + xp + ' XP';
-            document.body.appendChild(toast);
-            setTimeout(function() { toast.remove(); }, 3200);
-        }
-
-        // ─── Level Up Notification ────────────────────────────
-        function showLevelUp(newLevel) {
-            const overlay = document.createElement('div');
-            overlay.className = 'academy-levelup-overlay';
-            document.body.appendChild(overlay);
-
-            const modal = document.createElement('div');
-            modal.className = 'academy-levelup-toast';
-            modal.innerHTML = '<i class="fas fa-arrow-up"></i><h3>\u00a1Subiste de Nivel!</h3><p>Ahora eres Nivel ' + newLevel + '</p>';
-            document.body.appendChild(modal);
-
-            setTimeout(function() {
-                modal.remove();
-                overlay.remove();
-            }, 3000);
-        }
-
-        // ─── Confetti ────────────────────────────────────────
-        function launchConfetti() {
-            const container = document.createElement('div');
-            container.className = 'academy-confetti';
-            document.body.appendChild(container);
-
-            const colors = ['#7c3aed', '#fbbf24', '#059669', '#dc2626', '#2563eb', '#ec4899', '#f97316'];
-            for (let i = 0; i < 80; i++) {
-                const piece = document.createElement('div');
-                piece.className = 'academy-confetti-piece';
-                piece.style.left = Math.random() * 100 + '%';
-                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
-                piece.style.animationDelay = Math.random() * 1.5 + 's';
-                piece.style.animationDuration = (2 + Math.random() * 2) + 's';
-                const size = 6 + Math.random() * 10;
-                piece.style.width = size + 'px';
-                piece.style.height = size + 'px';
-                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-                container.appendChild(piece);
-            }
-
-            setTimeout(function() { container.remove(); }, 5000);
-        }
-
-        // ─── Helpers ─────────────────────────────────────────
-        function escapeHtml(str) {
-            if (!str) return '';
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-
-    })();
-    </script>
+        const btn=metaDiv.querySelector('.btn-primary');
+        if(btn) btn.remove();
+      }
+    }
+
+    // Update header stats quickly
+    render();
+  }
+
+  function closeQuiz(classId){
+    document.getElementById('quizPanel-'+classId).innerHTML='';
+    delete quizStates[classId];
+  }
+  window.closeQuiz=closeQuiz;
+
+  // ── Render: Exam Section ──
+  function renderExamSection(){
+    const lvl=examStatus.level||agentProgress.level||1;
+    const passed=examStatus.exam_passed;
+    const attemptsRemaining=examStatus.attempts_remaining;
+    const canTake=examStatus.can_take_exam;
+
+    let content='';
+
+    if(lvl<7){
+      content=`
+      <div class="exam-locked">
+        <i class="fas fa-lock"></i>
+        <h3>Examen Bloqueado</h3>
+        <p>Necesitas <strong>nivel 7</strong> para desbloquear el examen final.</p>
+        <p style="margin-top:8px;font-size:13px;color:var(--gray-400)">Tu nivel actual: ${lvl}</p>
+      </div>`;
+    } else if(passed){
+      const passedDate=examStatus.exam_passed_at ? formatDate(examStatus.exam_passed_at) : '';
+      content=`
+      <div class="exam-passed">
+        <i class="fas fa-trophy"></i>
+        <h3>Examen Aprobado</h3>
+        <p>${examStatus.score_percent?'Calificación: '+examStatus.score_percent+'%':'¡Felicidades!'}</p>
+        ${passedDate?'<p style="font-size:12px;color:var(--gray-400);margin-top:4px">'+passedDate+'</p>':''}
+      </div>`;
+    } else {
+      content=`
+      <div class="exam-info">
+        <div class="exam-info-item"><div class="exam-info-value">15</div><div class="exam-info-label">Preguntas</div></div>
+        <div class="exam-info-item"><div class="exam-info-value">80%</div><div class="exam-info-label">Para aprobar</div></div>
+        <div class="exam-info-item"><div class="exam-info-value">${attemptsRemaining}</div><div class="exam-info-label">Intentos restantes</div></div>
+      </div>
+      ${canTake
+        ?'<button class="btn btn-primary btn-block" onclick="startExam()"><i class="fas fa-file-alt"></i> Comenzar Examen</button>'
+        :'<div style="color:var(--gray-400);font-size:13px">No tienes intentos disponibles. Contacta al administrador.</div>'}
+      <div id="examPanel"></div>`;
+    }
+
+    return `<div class="card exam-card"><div class="card-title"><i class="fas fa-award"></i> Examen Final</div>${content}</div>`;
+  }
+
+  // ── Exam State ──
+  let examQuestions=[];
+
+  async function startExam(){
+    const panel=document.getElementById('examPanel');
+    if(!panel) return;
+    panel.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div><p style="font-size:13px;color:var(--gray-500)">Cargando examen...</p></div>';
+
+    try{
+      const data=await apiGet('/agent-exam/questions');
+      if(!data) return;
+      examQuestions=data.questions||[];
+      if(!examQuestions.length){
+        panel.innerHTML='<div class="empty-state" style="padding:12px"><i class="fas fa-exclamation-circle"></i><p>No hay preguntas disponibles</p></div>';
+        return;
+      }
+      renderExamQuestion(0,new Array(examQuestions.length).fill(''));
+    }catch(err){
+      panel.innerHTML='<div style="color:var(--danger);text-align:center;padding:12px"><i class="fas fa-exclamation-triangle"></i><p>'+escapeHTML(err.message)+'</p></div>';
+    }
+  }
+  window.startExam=startExam;
+
+  let examCurrentIdx=0;
+  let examAnswers=[];
+
+  function renderExamQuestion(idx,answers){
+    examCurrentIdx=idx;
+    examAnswers=answers;
+    const q=examQuestions[idx];
+    const total=examQuestions.length;
+    const current=idx+1;
+    const pct=Math.round((current/total)*100);
+
+    const letters=['A','B','C','D'];
+    const options=[q.option_a,q.option_b,q.option_c,q.option_d].filter(Boolean);
+    const selected=answers[idx]||'';
+
+    const optionsHTML=options.map(function(opt,i){
+      const letter=letters[i];
+      const sel=selected===letter?' selected':'';
+      return `<div class="quiz-option${sel}" onclick="selectExamOption('${letter}')" data-letter="${letter}">
+        <span class="quiz-option-letter">${letter}</span>
+        <span>${escapeHTML(opt)}</span>
+      </div>`;
+    }).join('');
+
+    const isLast=current===total;
+
+    document.getElementById('examPanel').innerHTML=`
+    <div class="quiz-panel">
+      <div class="quiz-progress">
+        <span>${current} / ${total}</span>
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="quiz-question">${current}. ${escapeHTML(q.question)}</div>
+      ${q.class_name?'<div style="font-size:11px;color:var(--gray-400);margin-bottom:12px"><i class="fas fa-book"></i> '+escapeHTML(q.class_name)+'</div>':''}
+      <div class="quiz-options">${optionsHTML}</div>
+      <div class="quiz-nav">
+        ${current>1?'<button class="btn btn-sm btn-outline" onclick="examPrev()"><i class="fas fa-arrow-left"></i> Anterior</button>':''}
+        <div style="flex:1"></div>
+        <button class="btn btn-sm btn-primary" onclick="${isLast?'submitExam()':'examNext()'}" ${!selected?'disabled':''}>
+          ${isLast?'<i class="fas fa-check"></i> Enviar Examen':'Siguiente <i class="fas fa-arrow-right"></i>'}
+        </button>
+      </div>
+    </div>`;
+  }
+
+  function selectExamOption(letter){
+    examAnswers[examCurrentIdx]=letter;
+    const panel=document.getElementById('examPanel');
+    panel.querySelectorAll('.quiz-option').forEach(function(el){
+      el.classList.toggle('selected',el.dataset.letter===letter);
+    });
+    const btn=panel.querySelector('.quiz-nav .btn-primary');
+    if(btn) btn.disabled=false;
+  }
+  window.selectExamOption=selectExamOption;
+
+  function examNext(){
+    if(examCurrentIdx<examQuestions.length-1){
+      renderExamQuestion(examCurrentIdx+1,examAnswers);
+      document.getElementById('examPanel').scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  }
+  window.examNext=examNext;
+
+  function examPrev(){
+    if(examCurrentIdx>0){
+      renderExamQuestion(examCurrentIdx-1,examAnswers);
+    }
+  }
+  window.examPrev=examPrev;
+
+  async function submitExam(){
+    const panel=document.getElementById('examPanel');
+    panel.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div><p style="font-size:13px;color:var(--gray-500)">Calificando examen...</p></div>';
+
+    const answers=examQuestions.map(function(q,i){
+      return {question_id:q.id, answer:examAnswers[i]||''};
+    });
+
+    try{
+      const result=await apiPost('/agent-exam',{answers:answers});
+      if(!result) return;
+      renderExamResults(result);
+    }catch(err){
+      panel.innerHTML='<div class="results-panel" style="color:var(--danger)"><i class="fas fa-exclamation-triangle" style="font-size:24px;margin-bottom:8px"></i><p>'+escapeHTML(err.message)+'</p><button class="btn btn-sm btn-outline" onclick="startExam()" style="margin-top:12px"><i class="fas fa-redo"></i> Reintentar</button></div>';
+    }
+  }
+  window.submitExam=submitExam;
+
+  function renderExamResults(r){
+    const panel=document.getElementById('examPanel');
+    let html=`<div class="quiz-panel results-panel">`;
+    if(r.passed){
+      html+=`<i class="fas fa-trophy" style="font-size:48px;color:var(--success)"></i>`;
+      html+=`<div class="results-score pass">${r.score_percent}%</div>`;
+      html+=`<div class="results-message" style="font-size:16px;font-weight:700;color:var(--success)">¡Aprobaste!</div>`;
+      html+=`<div class="results-message">Eres ahora un <strong>Partner Digital Certificado</strong></div>`;
+    }else{
+      html+=`<i class="fas fa-times-circle" style="font-size:48px;color:var(--danger)"></i>`;
+      html+=`<div class="results-score fail">${r.score_percent}%</div>`;
+      html+=`<div class="results-message">No aprobaste (necesitas 80%)</div>`;
+      html+=`<div class="results-message">Intentos restantes: ${r.attempts_remaining}</div>`;
+    }
+    html+=`<div class="results-message" style="margin-top:4px">${r.correct_answers} de ${r.total_questions} correctas</div>`;
+    html+=`<div class="results-actions">`;
+    if(!r.passed && r.attempts_remaining>0){
+      html+=`<button class="btn btn-sm btn-primary" onclick="startExam()"><i class="fas fa-redo"></i> Reintentar</button>`;
+    }
+    html+=`<button class="btn btn-sm btn-outline" onclick="closeExam()">Cerrar</button>`;
+    html+=`</div></div>`;
+    panel.innerHTML=html;
+  }
+
+  function closeExam(){
+    const panel=document.getElementById('examPanel');
+    if(panel) panel.innerHTML='';
+    examQuestions=[];
+    examAnswers=[];
+    examCurrentIdx=0;
+    // Refresh exam status
+    apiGet('/agent-exam').then(function(d){
+      if(d){ examStatus=d; render(); }
+    });
+  }
+  window.closeExam=closeExam;
+
+  // ── Render: Badges Section ──
+  function renderBadgesSection(){
+    const badges=agentProgress.badges||[];
+    if(!badges.length){
+      return '<div class="card"><div class="card-title"><i class="fas fa-medal"></i> Medallas</div><div class="no-badges"><i class="fas fa-lock"></i><p>Completa clases y sube de nivel para ganar medallas</p></div></div>';
+    }
+
+    const cards=badges.map(function(b){
+      const icon=b.badge_icon||'fas fa-medal';
+      const earnedDate=b.earned_at ? formatDate(b.earned_at) : '';
+      return `
+      <div class="badge-card">
+        <div class="badge-icon"><i class="${icon}"></i></div>
+        <div class="badge-name">${escapeHTML(b.badge_name)}</div>
+        <div class="badge-desc">${escapeHTML(b.badge_description)}</div>
+        ${earnedDate?'<div class="badge-date"><i class="fas fa-calendar"></i> '+earnedDate+'</div>':''}
+      </div>`;
+    }).join('');
+
+    return '<div class="card"><div class="card-title"><i class="fas fa-medal"></i> Medallas (${badges.length})</div><div class="badges-grid">'+cards+'</div></div>';
+  }
+
+  // ── Utilities ──
+  function escapeHTML(str){
+    if(!str) return '';
+    const div=document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+  }
+
+  function formatDate(dateStr){
+    if(!dateStr) return '';
+    try{
+      const d=new Date(dateStr+'Z');
+      if(isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString('es-VE',{day:'numeric',month:'short',year:'numeric'});
+    }catch(e){ return dateStr; }
+  }
+
+  // ── Start ──
+  init();
+
+})();
+</script>
 </body>
 </html>

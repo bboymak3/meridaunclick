@@ -1,5 +1,5 @@
-// functions/api/agent-exam/questions.js
-// GET: Get 10 random exam questions (without correct answers)
+// GET: Get 15 random exam questions (without correct answers)
+// Requirements: level >= 7 (lowered from 10), not passed, max 3 attempts
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
 
@@ -31,10 +31,10 @@ export async function onRequestGet(context) {
       profile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
     }
 
-    // Check prerequisites
+    // Check prerequisites: level >= 7
     const level = calcLevel(profile.xp);
-    if (level < 10) {
-      return new Response(JSON.stringify({ error: 'Necesitas nivel 10 para ver las preguntas del examen', required_level: 10, current_level: level }), {
+    if (level < 7) {
+      return new Response(JSON.stringify({ error: 'Necesitas nivel 7 para ver las preguntas del examen', required_level: 7, current_level: level }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -45,30 +45,40 @@ export async function onRequestGet(context) {
       });
     }
 
-    // Get all questions
+    // Max 3 attempts
+    if (profile.exam_attempts >= 3 && !profile.exam_passed) {
+      return new Response(JSON.stringify({ error: 'Alcanzaste el maximo de 3 intentos. Contacta al admin.', max_attempts: 3 }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get all questions from active classes
     const { results: allQuestions } = await env.DB.prepare(`
-      SELECT cq.id, cq.question, cq.option_a, cq.option_b, cq.option_c, cq.option_d, ac.title as class_name
+      SELECT cq.id, cq.question, cq.option_a, cq.option_b, cq.option_c, cq.option_d, cq.points, ac.title as class_name
       FROM class_questions cq
       JOIN agent_classes ac ON ac.id = cq.class_id
       WHERE ac.is_active = 1
     `).bind().all();
 
     if (allQuestions.length < 10) {
-      return new Response(JSON.stringify({ error: 'No hay suficientes preguntas (mínimo 10 requeridas)' }), {
+      return new Response(JSON.stringify({ error: 'No hay suficientes preguntas (minimo 10 requeridas)' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Shuffle and pick 10 (Fisher-Yates)
+    // Shuffle and pick 15 (Fisher-Yates)
     const shuffled = [...allQuestions];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
+    const examQuestions = shuffled.slice(0, 15);
+
     return new Response(JSON.stringify({
-      questions: shuffled.slice(0, 10),
+      questions: examQuestions,
       total_available: allQuestions.length,
+      attempts_remaining: 3 - profile.exam_attempts,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
