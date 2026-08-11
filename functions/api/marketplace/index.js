@@ -96,8 +96,7 @@ export async function onRequestGet(context) {
     // Only show approved products to public (unless admin mode)
     if (!allProducts) {
       conditions.push("(p.status = 'approved' OR p.status IS NULL)");
-      // Filter expired posts
-      conditions.push("(p.expires_at IS NULL OR p.expires_at > datetime('now'))");
+      // Expired products go to the end, not hidden
     } else if (statusFilter) {
       conditions.push('p.status = ?');
       bindings.push(statusFilter);
@@ -128,12 +127,12 @@ export async function onRequestGet(context) {
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
     // Sort options — featured products always first
-    let orderBy = 'p.featured DESC, p.sort_order ASC, p.created_at DESC';
-    if (sort === 'price_asc') orderBy = 'p.featured DESC, p.price ASC';
-    else if (sort === 'price_desc') orderBy = 'p.featured DESC, p.price DESC';
-    else if (sort === 'oldest') orderBy = 'p.featured DESC, p.created_at ASC';
-    else if (sort === 'name_asc') orderBy = 'p.featured DESC, p.name ASC';
-    else orderBy = 'p.featured DESC, p.sort_order ASC, p.created_at DESC';
+    let orderBy = "p.featured DESC, CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.sort_order ASC, p.created_at DESC";
+    if (sort === 'price_asc') orderBy = "p.featured DESC, CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.price ASC";
+    else if (sort === 'price_desc') orderBy = "p.featured DESC, CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.price DESC";
+    else if (sort === 'oldest') orderBy = "p.featured DESC, CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.created_at ASC";
+    else if (sort === 'name_asc') orderBy = "p.featured DESC, CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.name ASC";
+    else orderBy = "p.featured DESC, CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.sort_order ASC, p.created_at DESC";
 
     // Count total
     const countQuery = `SELECT COUNT(*) as total FROM products p ${whereClause}`;
@@ -146,7 +145,7 @@ export async function onRequestGet(context) {
       // Admin mode: include user info
       query = `
         SELECT p.id, p.name, p.price, p.category, p.image, p.description, p.sort_order,
-               p.user_id, p.business_id, p.status, p.created_at, p.updated_at,
+               p.user_id, p.business_id, p.status, p.created_at, p.updated_at, p.expires_at,
                u.name as owner_name, u.email as owner_email, b.title as business_name
         FROM products p
         LEFT JOIN users u ON p.user_id = u.id
@@ -155,7 +154,7 @@ export async function onRequestGet(context) {
     } else {
       query = `
         SELECT p.id, p.name, p.price, p.category, p.image, p.description, p.sort_order,
-               p.user_id, p.business_id, p.status, p.created_at, p.updated_at, p.slug,
+               p.user_id, p.business_id, p.status, p.created_at, p.updated_at, p.slug, p.expires_at,
                b.title as business_name, b.slug as business_slug,
                b.city as business_city, b.state as business_state,
                b.phone as business_phone, b.whatsapp as business_whatsapp

@@ -476,8 +476,11 @@ window.closeEditBusinessModal = function() {
                         </tr>
                     `;
                 } else {
-                    recentPropsBody.innerHTML = recent.map(p => `
-                        <tr>
+                    recentPropsBody.innerHTML = recent.map(p => {
+                        var isExp = p.expires_at && new Date(p.expires_at) < new Date();
+                        var expBadge = isExp ? ' <span style="font-size:0.68rem;background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:4px;">Expirado</span>' : '';
+                        return `
+                        <tr style="${isExp ? 'opacity:0.65;' : ''}">
                             <td>
                                 <div class="dash-prop-name">
                                     ${(p.cover_image || p.image_count > 0) ? `<img src="${p.cover_image || ''}" alt="" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}
@@ -486,15 +489,16 @@ window.closeEditBusinessModal = function() {
                             </td>
                             <td>${getBusinessTypeLabel(p.business_type)}</td>
                             <td class="dash-price">${formatPrice(p.price, p.currency)}</td>
-                            <td>${getStatusBadge(p.status)}</td>
+                            <td>${getStatusBadge(p.status)}${expBadge}</td>
                             <td>${p.views || 0}</td>
                             <td class="dash-actions">
+                                ${isExp && p.status === 'approved' ? `<button class="btn-icon" onclick="republishBusiness(${p.id})" title="Republicar" style="color:#059669;"><i class="fas fa-redo"></i></button>` : ''}
                                 <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
                                 <a onclick="openEditBusinessModal(${p.id})" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
                                 <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </td>
-                        </tr>
-                    `).join('');
+                        </tr>`;
+                    }).join('');
                 }
             }
         } catch (error) {
@@ -545,24 +549,29 @@ window.closeEditBusinessModal = function() {
                         </tr>
                     `;
                 } else {
-                    allPropsBody.innerHTML = userProperties.map(p => `
-                        <tr>
+                    allPropsBody.innerHTML = userProperties.map(p => {
+                        var isExpired = p.expires_at && new Date(p.expires_at) < new Date();
+                        var expiredBadge = isExpired ? ' <span style="font-size:0.68rem;background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:4px;">Expirado</span>' : '';
+                        var statusHtml = getStatusBadge(p.status) + expiredBadge;
+                        return `
+                        <tr style="${isExpired ? 'opacity:0.65;' : ''}">
                             <td>
                                 ${(p.cover_image || p.image_count > 0) ? `<img src="${p.cover_image || ''}" alt="" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}
                             </td>
                             <td>${truncateText(p.title, 30)}</td>
                             <td>${getBusinessTypeLabel(p.business_type)}</td>
                             <td>${p.city || '--'}, ${p.state || '--'}</td>
-                            <td>${getStatusBadge(p.status)}</td>
+                            <td>${statusHtml}</td>
                             <td>${p.views || 0}</td>
                             <td class="dash-actions">
+                                ${isExpired && p.status === 'approved' ? `<button class="btn-icon" onclick="republishBusiness(${p.id})" title="Republicar" style="color:#059669;"><i class="fas fa-redo"></i></button>` : ''}
                                 <button class="btn-icon" onclick="openServicesManager(${p.id}, '${escapeAttr(p.title)}')" title="Servicios"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i></button>
                                 <a href="/negocio/${p.slug || p.id}" class="btn-icon" title="Ver"><i class="fas fa-eye"></i></a>
                                 <a onclick="openEditBusinessModal(${p.id})" class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
                                 <button class="btn-icon btn-icon-danger" onclick="confirmDeleteBusiness(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </td>
-                        </tr>
-                    `).join('');
+                        </tr>`;
+                    }).join('');
                 }
             }
         } catch (error) {
@@ -842,6 +851,31 @@ window.closeEditBusinessModal = function() {
         }
     }
 
+    // ─── Republish Functions ──────────────────────────────────
+    window.republishBusiness = async function(id) {
+        if (!confirm('Quieres republicar este negocio? Volvera a aparecer en las primeras posiciones por 20 dias.')) return;
+        try {
+            await api.post('/businesses/' + id + '/republish', {});
+            showToast('Negocio republicado exitosamente. Volvera a aparecer en las primeras posiciones.', 'success');
+            const activeSection = document.querySelector('.sidebar-link.active');
+            if (activeSection) switchSection(activeSection.dataset.section);
+            else loadOverviewData();
+        } catch (error) {
+            showToast(error.message || 'Error al republicar', 'error');
+        }
+    };
+
+    window.republishProduct = async function(id) {
+        if (!confirm('Quieres republicar este producto? Volvera a aparecer en las primeras posiciones por 20 dias.')) return;
+        try {
+            await api.post('/marketplace/' + id + '/republish', {});
+            showToast('Producto republicado exitosamente.', 'success');
+            loadMyProducts();
+        } catch (error) {
+            showToast(error.message || 'Error al republicar', 'error');
+        }
+    };
+
     // ─── My Products (Marketplace) ──────────────────────────────
     async function loadMyProducts() {
         const container = document.getElementById('myProductsByStore');
@@ -932,14 +966,17 @@ window.closeEditBusinessModal = function() {
 
         products.forEach(p => {
             const statusLabel = p.status === 'approved' ? '<span class="status-badge status-approved">Activo</span>' : p.status === 'pending' ? '<span class="status-badge status-pending">Pendiente</span>' : p.status === 'rejected' ? '<span class="status-badge status-rejected">Rechazado</span>' : '<span class="status-badge">' + (p.status || '-') + '</span>';
+            var isProdExpired = p.expires_at && new Date(p.expires_at) < new Date();
+            var prodExpBadge = isProdExpired ? ' <span style="font-size:0.68rem;background:#fef2f2;color:#dc2626;padding:2px 8px;border-radius:10px;font-weight:600;margin-left:4px;">Expirado</span>' : '';
             html += `
-                                <tr>
+                                <tr style="${isProdExpired ? 'opacity:0.65;' : ''}">
                                     <td><div class="dash-prop-name">${p.image ? `<img src="${p.image}" class="dash-thumb" onerror="this.style.display='none'">` : '<i class="fas fa-image dash-thumb-placeholder"></i>'}<span>${p.name || 'Sin nombre'}</span></div></td>
                                     <td>${p.category || 'General'}</td>
                                     <td class="dash-price">$${Number(p.price || 0).toLocaleString('es-VE')}</td>
-                                    <td>${statusLabel}</td>
+                                    <td>${statusLabel}${prodExpBadge}</td>
                                     <td>${formatDate(p.created_at)}</td>
                                     <td class="dash-actions">
+                                        ${isProdExpired && (p.status === 'approved' || !p.status) ? `<button class="btn-icon" onclick="republishProduct(${p.id})" title="Republicar" style="color:#059669;"><i class="fas fa-redo"></i></button>` : ''}
                                         <button class="btn-icon" onclick="editProduct(${p.id})" title="Editar" style="color:#006EE3;"><i class="fas fa-pen"></i></button>
                                         <button class="btn-icon btn-icon-danger" onclick="deleteProduct(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                                     </td>

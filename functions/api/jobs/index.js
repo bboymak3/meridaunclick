@@ -86,10 +86,7 @@ export async function onRequestGet(context) {
       conditions.push('j.status = ?');
       bindings.push(status);
     }
-    // Filter expired posts for public views
-    if (status === 'approved') {
-      conditions.push("(j.expires_at IS NULL OR j.expires_at > datetime('now'))");
-    }
+    // Expired posts go to the end, not hidden
 
     if (businessId) {
       conditions.push('j.business_id = ?');
@@ -118,11 +115,11 @@ export async function onRequestGet(context) {
 
     const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
 
-    // Sort — featured jobs always first
-    let orderBy = 'j.featured DESC, j.created_at DESC';
-    if (sort === 'views') orderBy = 'j.featured DESC, j.views DESC';
-    else if (sort === 'oldest') orderBy = 'j.featured DESC, j.created_at ASC';
-    else orderBy = 'j.featured DESC, j.created_at DESC';
+    // Sort — featured jobs always first, expired last
+    let orderBy = "j.featured DESC, CASE WHEN j.expires_at IS NOT NULL AND j.expires_at <= datetime('now') THEN 1 ELSE 0 END, j.created_at DESC";
+    if (sort === 'views') orderBy = "j.featured DESC, CASE WHEN j.expires_at IS NOT NULL AND j.expires_at <= datetime('now') THEN 1 ELSE 0 END, j.views DESC";
+    else if (sort === 'oldest') orderBy = "j.featured DESC, CASE WHEN j.expires_at IS NOT NULL AND j.expires_at <= datetime('now') THEN 1 ELSE 0 END, j.created_at ASC";
+    else orderBy = "j.featured DESC, CASE WHEN j.expires_at IS NOT NULL AND j.expires_at <= datetime('now') THEN 1 ELSE 0 END, j.created_at DESC";
 
     // Count total (no JOIN, so strip alias)
     const countWhere = whereClause.replace(/j\./g, 'job_listings.');

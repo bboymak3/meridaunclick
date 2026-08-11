@@ -124,10 +124,8 @@ export async function onRequestGet(context) {
       conditions.push('p.especialidad LIKE ?');
       bindings.push(`%${especialidad}%`);
     }
-    // Filter expired posts for public views
-    if (status === 'approved') {
-      conditions.push("(p.expires_at IS NULL OR p.expires_at > datetime('now'))");
-    }
+    // Expired posts go to the end, not hidden
+    // No filter — expired posts are sorted last via ORDER BY
     if (search) {
       conditions.push('(p.title LIKE ? OR p.description LIKE ? OR p.address LIKE ? OR p.especialidad LIKE ?)');
       bindings.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
@@ -141,7 +139,7 @@ export async function onRequestGet(context) {
     else if (sort === 'price_asc') orderBy = 'p.featured DESC, p.price ASC';
     else if (sort === 'price_desc') orderBy = 'p.featured DESC, p.price DESC';
     else if (sort === 'oldest') orderBy = 'p.featured DESC, p.created_at ASC';
-    else orderBy = "p.featured DESC, (SELECT CASE WHEN u.plan_type = 'premium' THEN 0 ELSE 1 END FROM users u WHERE u.id = p.user_id), p.created_at DESC";
+    else orderBy = "p.featured DESC, (SELECT CASE WHEN u.plan_type = 'premium' THEN 0 ELSE 1 END FROM users u WHERE u.id = p.user_id), CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.created_at DESC";
 
     // Count total matching businesses
     const countQuery = `SELECT COUNT(*) as total FROM businesses p WHERE ${whereClause}`;

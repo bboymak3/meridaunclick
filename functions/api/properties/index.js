@@ -87,10 +87,7 @@ export async function onRequestGet(context) {
       conditions.push('(p.featured = 1 OR EXISTS(SELECT 1 FROM featured_items fi WHERE fi.item_id = p.id AND fi.item_type = ? AND fi.is_active = 1))');
       bindings.push('property');
     }
-    // Filter expired posts for public views
-    if (status === 'approved') {
-      conditions.push("(p.expires_at IS NULL OR p.expires_at > datetime('now'))");
-    }
+    // Expired posts go to the end, not hidden
     if (propertyType) {
       conditions.push('p.property_type = ?');
       bindings.push(propertyType);
@@ -146,7 +143,7 @@ export async function onRequestGet(context) {
       FROM properties p
       LEFT JOIN users u ON p.user_id = u.id
       WHERE ${whereClause}
-      ORDER BY p.featured DESC, p.created_at DESC
+      ORDER BY p.featured DESC, CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.created_at DESC
       LIMIT ? OFFSET ?
     `;
 

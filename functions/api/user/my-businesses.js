@@ -67,6 +67,7 @@ export async function onRequestGet(context) {
 
     const businesses = await env.DB.prepare(
       `SELECT b.id, b.title, b.slug, b.city, b.state, b.status, b.category_id,
+              b.expires_at, b.business_type, b.views, b.created_at,
               c.name as category_name,
               (SELECT url FROM images WHERE business_id = b.id AND is_cover = 1 LIMIT 1) as cover_image
        FROM businesses b
