@@ -94,7 +94,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    const ALLOWED_PRODUCT_TYPES = ['marketplace', 'video', 'logo', 'banner', 'business', 'business_image', 'property', 'job', 'popup'];
+    const ALLOWED_PRODUCT_TYPES = ['marketplace', 'video', 'logo', 'banner', 'business', 'business_image', 'property', 'job', 'popup', 'category_banner'];
     if (!businessId && !propertyId && !ALLOWED_PRODUCT_TYPES.includes(productType)) {
       return new Response(JSON.stringify({ error: 'business_id, property_id es requerido o product_type debe ser ' + ALLOWED_PRODUCT_TYPES.join('/') }), {
         status: 400,
@@ -131,8 +131,8 @@ export async function onRequestPost(context) {
     // Verify ownership based on product_type
     if (productType === 'marketplace' || productType === 'video' || productType === 'job' || productType === 'popup') {
       // Marketplace/video/job uploads - any authenticated user can upload
-    } else if (productType === 'logo' || productType === 'banner') {
-      // Logo/banner uploads - any authenticated user (admin) can upload, no business_id required
+    } else if (productType === 'logo' || productType === 'banner' || productType === 'category_banner') {
+      // Logo/banner/category_banner uploads - any authenticated user (admin) can upload, no business_id required
     } else if (productType === 'property' || propertyId) {
       // Property uploads - verify property ownership
       const property = await env.DB.prepare('SELECT * FROM properties WHERE id = ?').bind(propertyId).first();
@@ -187,6 +187,8 @@ export async function onRequestPost(context) {
       key = `${r2Folder}/jobs/${user.id}/${timestamp}_${sanitizedName}`;
     } else if (productType === 'popup') {
       key = `${r2Folder}/popup/${timestamp}_${sanitizedName}`;
+    } else if (productType === 'category_banner') {
+      key = `${r2Folder}/banners/categories/${timestamp}_${sanitizedName}`;
     } else {
       // 'business', 'business_image', or fallback
       key = `${r2Folder}/businesses/${businessId || user.id}/${timestamp}_${sanitizedName}`;
