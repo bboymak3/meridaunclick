@@ -1,12 +1,24 @@
-// functions/api/partners/[id].js
 // GET: Public profile of a user/agent (with badges, levels, etc.)
+// Public endpoint - no auth required
 
 import { corsHeaders } from '../../_lib/auth.js';
 
+async function ensureTables(db) {
+  var tables = [
+    "CREATE TABLE IF NOT EXISTS agent_profiles (user_id INTEGER PRIMARY KEY, level INTEGER DEFAULT 1, xp INTEGER DEFAULT 0, xp_to_next_level INTEGER DEFAULT 100, total_classes_completed INTEGER DEFAULT 0, exam_passed INTEGER DEFAULT 0, exam_passed_at TEXT, exam_attempts INTEGER DEFAULT 0, last_exam_at TEXT, is_partner INTEGER DEFAULT 0, partner_at TEXT, graduated INTEGER DEFAULT 0, graduated_at TEXT, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS user_badges (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, badge_type TEXT NOT NULL, badge_name TEXT NOT NULL, badge_description TEXT DEFAULT '', badge_icon TEXT DEFAULT 'fas fa-medal', earned_at TEXT DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS user_class_progress (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, class_id INTEGER NOT NULL, completed INTEGER DEFAULT 0, correct_answers INTEGER DEFAULT 0, total_questions INTEGER DEFAULT 0, total_points INTEGER DEFAULT 0, xp_earned INTEGER DEFAULT 0, completed_at TEXT, UNIQUE(user_id, class_id))",
+    "CREATE TABLE IF NOT EXISTS agent_classes (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, content TEXT DEFAULT '', xp_reward INTEGER DEFAULT 10, sort_order INTEGER DEFAULT 0, is_active INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))"
+  ];
+  for (var i = 0; i < tables.length; i++) {
+    try { await db.prepare(tables[i]).run(); } catch(e) {}
+  }
+}
+
 function calcLevel(xp) {
-  const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
-  let level = 1;
-  for (let i = LEVEL_XP.length - 1; i >= 0; i--) {
+  var LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
+  var level = 1;
+  for (var i = LEVEL_XP.length - 1; i >= 0; i--) {
     if (xp >= LEVEL_XP[i]) { level = i + 1; break; }
   }
   return Math.min(level, 10);
@@ -18,10 +30,12 @@ export async function onRequestOptions() {
 
 export async function onRequestGet(context) {
   try {
-    const { env, params } = context;
-    const userId = params.id;
+    var env = context.env;
+    var userId = context.params.id;
 
-    const user = await env.DB.prepare(
+    await ensureTables(env.DB);
+
+    var user = await env.DB.prepare(
       'SELECT id, name, avatar, bio, phone, whatsapp, role, created_at FROM users WHERE id = ? AND is_active = 1'
     ).bind(userId).first();
 
@@ -31,38 +45,41 @@ export async function onRequestGet(context) {
       });
     }
 
-    // Get agent profile
-    const agentProfile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
+    // Get or create agent profile
+    var agentProfile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
+    if (!agentProfile) {
+      await env.DB.prepare('INSERT INTO agent_profiles (user_id) VALUES (?)').bind(userId).run();
+      agentProfile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
+    }
 
     // Get badges
-    const { results: badges } = await env.DB.prepare(
+    var badgeResult = await env.DB.prepare(
       'SELECT * FROM user_badges WHERE user_id = ? ORDER BY earned_at DESC'
     ).bind(userId).all();
+    var badges = badgeResult.results || [];
 
     // Get completed classes
-    const { results: completedClasses } = await env.DB.prepare(`
+    var classResult = await env.DB.prepare(`
       SELECT ucp.*, ac.title
       FROM user_class_progress ucp
       JOIN agent_classes ac ON ac.id = ucp.class_id
       WHERE ucp.user_id = ? AND ucp.completed = 1
       ORDER BY ucp.completed_at DESC
     `).bind(userId).all();
+    var completedClasses = classResult.results || [];
 
     // Calculate level
-    let level = 1;
-    let xp = 0;
-    if (agentProfile) {
-      xp = agentProfile.xp || 0;
-      level = calcLevel(xp);
-    }
+    var xp = agentProfile ? (agentProfile.xp || 0) : 0;
+    var level = calcLevel(xp);
 
     return new Response(JSON.stringify({
-      user,
+      user: user,
       agent_profile: agentProfile,
-      level,
-      xp,
+      level: level,
+      xp: xp,
       is_partner: agentProfile ? agentProfile.is_partner === 1 : false,
-      badges,
+      is_graduated: agentProfile ? agentProfile.graduated === 1 : false,
+      badges: badges,
       completed_classes: completedClasses,
       total_badges: badges.length,
       total_classes_completed: completedClasses.length,
