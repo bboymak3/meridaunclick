@@ -5109,7 +5109,7 @@ if (!window._renderVideoList) {
             let html = '';
             cats.forEach(c => {
                 var bannerThumb = c.banner_url
-                    ? '<img src="' + _esc(c.banner_url) + '" style="width:80px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.style.display=\'none\'">'
+                    ? '<img src="' + _esc(c.banner_url) + '" style="width:160px;height:61px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.style.display=\'none\'">'
                     : '<span style="font-size:0.72rem;color:#94a3b8;">Sin banner</span>';
                 html += '<tr>';
                 html += '<td>' + c.id + '</td>';
