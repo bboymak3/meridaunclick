@@ -823,7 +823,7 @@
                                 <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Contenido</label>
                                 <textarea id="academyClassContent" placeholder="Contenido educativo de la clase (texto, HTML permitido)" rows="6" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
                             </div>
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
                                 <div class="form-group">
                                     <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">XP Recompensa</label>
                                     <input type="number" id="academyClassXP" value="10" min="1" max="100" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
@@ -831,6 +831,24 @@
                                 <div class="form-group">
                                     <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Orden</label>
                                     <input type="number" id="academyClassOrder" value="0" min="0" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Tipo Examen</label>
+                                    <select id="academyClassExamType" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                        <option value="multiple_choice">Seleccion Multiple</option>
+                                        <option value="number_select">Seleccion de Numero</option>
+                                        <option value="true_false_none">Verdadero/Falso/Ninguna</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:14px;">
+                                <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:#7c3aed;"><i class="fas fa-robot"></i> Generar Preguntas con IA</div>
+                                <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Pega un texto educativo y el sistema generara preguntas automaticamente.</p>
+                                <textarea id="academyAIText" placeholder="Pega aqui el texto del cual quieres generar preguntas..." rows="3" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;resize:vertical;margin-bottom:8px;"></textarea>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <button class="btn btn-primary btn-sm" id="academyGenQBtn" style="background:#7c3aed;"><i class="fas fa-magic"></i> Generar 5 Preguntas</button>
+                                    <input type="number" id="academyGenQCount" value="5" min="1" max="20" style="width:60px;padding:6px;border:2px solid #e2e8f0;border-radius:6px;font-size:0.85rem;text-align:center;">
+                                    <span style="font-size:0.75rem;color:#6b7280;">preguntas</span>
                                 </div>
                             </div>
                             <div style="display:flex;gap:10px;align-items:center;">
@@ -922,7 +940,10 @@
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                             <div>
                                 <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-users-graduate" style="color:#059669;"></i> Progreso de Agentes</h3>
-                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Todos los usuarios registrados como agentes y su progreso.</p>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Gestiona agentes, asigna actividades y otorga medallas.</p>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-primary btn-sm" id="academyAssignBtn" style="background:#059669;"><i class="fas fa-paper-plane"></i> Asignar Actividad</button>
                             </div>
                         </div>
                         <div style="overflow-x:auto;">
@@ -937,11 +958,11 @@
                                         <th>Medallas</th>
                                         <th>Examen</th>
                                         <th>Partner</th>
-                                        <th>Perfil</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="academyAgentsTableBody">
-                                    <tr><td colspan="9" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                    <tr><td colspan="10" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
                                 </tbody>
                             </table>
                         </div>

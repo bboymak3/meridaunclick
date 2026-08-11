@@ -6274,6 +6274,16 @@ if (!window._renderVideoList) {
             saveQBtn._bound = true;
             saveQBtn.addEventListener('click', saveAcademyQuestion);
         }
+        var genQBtn = document.getElementById('academyGenQBtn');
+        if (genQBtn && !genQBtn._bound) {
+            genQBtn._bound = true;
+            genQBtn.addEventListener('click', academyGenerateQuestions);
+        }
+        var assignBtn = document.getElementById('academyAssignBtn');
+        if (assignBtn && !assignBtn._bound) {
+            assignBtn._bound = true;
+            assignBtn.addEventListener('click', academyAssignActivity);
+        }
     }
 
     async function loadAcademyClasses() {
@@ -6358,15 +6368,27 @@ if (!window._renderVideoList) {
             content: document.getElementById('academyClassContent').value,
             xp_reward: parseInt(document.getElementById('academyClassXP').value) || 10,
             sort_order: parseInt(document.getElementById('academyClassOrder').value) || 0,
-            is_active: document.getElementById('academyClassActive').checked
+            is_active: document.getElementById('academyClassActive').checked,
+            exam_type: document.getElementById('academyClassExamType').value
         };
         try {
             if (id) {
                 await api.put('/agent-classes/' + id, payload);
                 showToast('Clase actualizada', 'success');
             } else {
-                await api.post('/agent-classes', payload);
+                var result = await api.post('/agent-classes', payload);
                 showToast('Clase creada', 'success');
+                // Auto-save AI-generated questions if any
+                if (window._generatedQuestions && window._generatedQuestions.length > 0) {
+                    var newClassId = result.class_id;
+                    for (var i = 0; i < window._generatedQuestions.length; i++) {
+                        try {
+                            await api.post('/agent-classes/' + newClassId + '/questions', window._generatedQuestions[i]);
+                        } catch(eq) { console.log('Error saving question', eq); }
+                    }
+                    showToast(window._generatedQuestions.length + ' preguntas guardadas automaticamente', 'success');
+                    window._generatedQuestions = null;
+                }
             }
             document.getElementById('academyClassEditor').classList.add('hidden');
             loadAcademyClasses();
@@ -6476,12 +6498,30 @@ if (!window._renderVideoList) {
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     };
 
+    // Assign activity to agents
+    window.academyAssignActivity = async function() {
+        var classes = document.querySelectorAll('#academyClassesTableBody tr');
+        if (!classes.length) { showToast('No hay clases disponibles', 'error'); return; }
+        var classId = prompt('ID de la clase a asignar (numero):');
+        if (!classId) return;
+        var userIds = prompt('IDs de los agentes (separados por coma):');
+        if (!userIds) return;
+        var ids = userIds.split(',').map(function(s) { return parseInt(s.trim()); }).filter(function(n) { return !isNaN(n); });
+        if (!ids.length) { showToast('IDs invalidos', 'error'); return; }
+        try {
+            var data = await api.post('/admin/agent-actions', {
+                action: 'assign_class',
+                class_id: parseInt(classId),
+                user_ids: ids
+            });
+            showToast('Actividad asignada a ' + data.assigned + ' agentes', 'success');
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
+
     async function loadAcademyAgents() {
         var tbody = document.getElementById('academyAgentsTableBody');
         if (!tbody) return;
         try {
-            var { results: agents } = await api.rawFetch ? api.get('/users?role=agent&limit=100') : { results: [] };
-            // Fetch agents via users endpoint with role filter
             var resp = await fetch(API + '/users?role=agent&limit=200', {
                 headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
             });
@@ -6489,42 +6529,119 @@ if (!window._renderVideoList) {
             var users = data.users || data.results || [];
 
             if (!users.length) {
-                tbody.innerHTML = '<tr><td colspan="9"><div style="text-align:center;color:#94a3b8;padding:16px;">No hay agentes registrados</div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10"><div style="text-align:center;color:#94a3b8;padding:16px;">No hay agentes registrados</div></td></tr>';
                 return;
             }
 
-            // Fetch agent profiles for all users
-            var agentData = {};
+            // Fetch agent profiles for each user
+            var profiles = {};
             for (var i = 0; i < users.length; i++) {
                 try {
-                    var profResp = await fetch(API + '/agent-progress', {
+                    var pResp = await fetch(API + '/partners/' + users[i].id, {
                         headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
                     });
-                    // We can't call agent-progress for other users, use partner endpoint instead
+                    var pData = await pResp.json();
+                    profiles[users[i].id] = pData;
                 } catch(ex) {}
             }
 
-            // Simpler: fetch from partners endpoint for partner info
             var html = '';
             for (var i = 0; i < users.length; i++) {
                 var u = users[i];
+                var p = profiles[u.id] || {};
+                var lvl = p.level || 1;
+                var xp = p.xp || 0;
+                var grad = p.is_graduated || p.graduated || false;
+
                 html += '<tr>';
                 html += '<td>' + u.id + '</td>';
                 html += '<td><strong>' + _esc(u.name) + '</strong></td>';
-                html += '<td><span style="background:#f5f3ff;color:#7c3aed;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Nivel ' + (u.agent_level || 1) + '</span></td>';
-                html += '<td>' + (u.agent_xp || 0) + ' XP</td>';
-                html += '<td>' + (u.classes_completed || 0) + '</td>';
-                html += '<td>' + (u.badge_count || 0) + '</td>';
-                html += '<td>' + (u.exam_passed ? '<span style="color:#059669;"><i class="fas fa-check"></i></span>' : '<span style="color:#94a3b8;">-</span>') + '</td>';
-                html += '<td>' + (u.is_partner ? '<span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Partner</span>' : '<span style="color:#94a3b8;">-</span>') + '</td>';
-                html += '<td><a href="/perfil.html?id=' + u.id + '" target="_blank" style="color:#2563eb;font-size:0.78rem;"><i class="fas fa-external-link-alt"></i> Ver</a></td>';
+                html += '<td><span style="background:#f5f3ff;color:#7c3aed;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Nivel ' + lvl + '</span></td>';
+                html += '<td>' + xp + ' XP</td>';
+                html += '<td>' + (p.total_classes_completed || 0) + '</td>';
+                html += '<td>' + (p.total_badges || 0) + '</td>';
+                html += '<td>' + (p.exam_passed ? '<span style="color:#059669;"><i class="fas fa-check"></i> Si</span>' : '<span style="color:#94a3b8;">No</span>') + '</td>';
+                html += '<td>' + (p.is_partner ? '<span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Partner</span>' : (grad ? '<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Graduado</span>' : '<span style="color:#94a3b8;">-</span>')) + '</td>';
+                html += '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">';
+                html += '<a href="/perfil.html?id=' + u.id + '" target="_blank" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#2563eb;text-decoration:none;"><i class="fas fa-external-link-alt"></i></a>';
+                if (!grad) {
+                    html += '<button onclick="academyGraduateAgent(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#d97706;" title="Graduar"><i class="fas fa-graduation-cap"></i></button>';
+                }
+                html += '<button onclick="academyAwardBadge(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid #ddd6fe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#7c3aed;" title="Dar Medalla"><i class="fas fa-medal"></i></button>';
+                html += '</div></td>';
                 html += '</tr>';
             }
             tbody.innerHTML = html;
         } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="9"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar agentes</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar agentes</p></div></td></tr>';
         }
     }
+
+    // Generate questions with AI
+    window.academyGenerateQuestions = async function() {
+        var text = document.getElementById('academyAIText').value.trim();
+        if (!text) { showToast('Pega un texto para generar preguntas', 'error'); return; }
+        var count = parseInt(document.getElementById('academyGenQCount').value) || 5;
+        var examType = document.getElementById('academyClassExamType').value;
+        var btn = document.getElementById('academyGenQBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        try {
+            var data = await api.post('/agent-classes/generate-questions', { text: text, exam_type: examType, num_questions: count });
+            if (data.questions && data.questions.length > 0) {
+                // Show preview of generated questions
+                var preview = 'Se generaron ' + data.questions.length + ' preguntas:\n\n';
+                data.questions.forEach(function(q, i) {
+                    preview += (i+1) + '. ' + q.question + '\n';
+                    preview += '   A) ' + q.option_a + '\n';
+                    preview += '   B) ' + q.option_b + '\n';
+                    preview += '   C) ' + q.option_c + '\n';
+                    preview += '   D) ' + q.option_d + '\n';
+                    preview += '   Correcta: ' + q.correct_answer.toUpperCase() + ' (' + q.points + ' pts)\n\n';
+                });
+                alert(preview);
+                // Store for later saving
+                window._generatedQuestions = data.questions;
+                showToast('Preguntas generadas. Guarda la clase primero, luego agrega las preguntas.', 'success');
+            } else {
+                showToast('No se pudieron generar preguntas. Intenta con mas texto.', 'error');
+            }
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-magic"></i> Generar ' + count + ' Preguntas';
+    };
+
+    // Graduate agent
+    window.academyGraduateAgent = async function(userId, name) {
+        if (!confirm('Confirmar graduacion de "' + name + '"? Se le otorgara medalla de graduacion y estatus de Partner.')) return;
+        try {
+            await api.post('/admin/agent-actions', {
+                action: 'graduate',
+                user_id: userId,
+                badge_name: 'Graduado del Programa',
+                badge_description: 'Completo exitosamente el programa de capacitacion'
+            });
+            showToast(name + ' graduado exitosamente!', 'success');
+            loadAcademyAgents();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
+
+    // Award custom badge
+    window.academyAwardBadge = async function(userId, name) {
+        var badgeName = prompt('Nombre de la medalla para ' + name + ':');
+        if (!badgeName) return;
+        var badgeDesc = prompt('Descripcion (opcional):') || '';
+        try {
+            await api.post('/admin/agent-actions', {
+                action: 'award_badge',
+                user_id: userId,
+                badge_name: badgeName,
+                badge_description: badgeDesc
+            });
+            showToast('Medalla "' + badgeName + '" otorgada a ' + name, 'success');
+            loadAcademyAgents();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {
