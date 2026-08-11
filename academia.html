@@ -232,7 +232,7 @@ button:active{transform:scale(.97)}
   'use strict';
 
   // ── Config ──
-  const API = (localStorage.getItem('api_url') || window.location.origin).replace(/\/+$/,'');
+  const API = '/api';
   let TOKEN = localStorage.getItem('meridaunclick_token') || localStorage.getItem('token');
   let USER_ID = localStorage.getItem('meridaunclick_user') ? JSON.parse(localStorage.getItem('meridaunclick_user')).id : (localStorage.getItem('user_id') || '');
   let userProfile = null;
