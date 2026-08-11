@@ -5103,17 +5103,21 @@ if (!window._renderVideoList) {
             const data = await api.get('/categories');
             const cats = data.categories || [];
             if (!cats.length) {
-                tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-tags"></i><p>No hay categorías</p></div></td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9"><div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-tags"></i><p>No hay categorías</p></div></td></tr>';
                 return;
             }
             let html = '';
             cats.forEach(c => {
+                var bannerThumb = c.banner_url
+                    ? '<img src="' + _esc(c.banner_url) + '" style="width:80px;height:36px;object-fit:cover;border-radius:6px;border:1px solid #e5e7eb;" onerror="this.style.display=\'none\'">'
+                    : '<span style="font-size:0.72rem;color:#94a3b8;">Sin banner</span>';
                 html += '<tr>';
                 html += '<td>' + c.id + '</td>';
                 html += '<td><strong>' + _esc(c.name) + '</strong></td>';
                 html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc(c.slug) + '</td>';
                 html += '<td><i class="' + _esc(c.icon || 'fas fa-store') + '" style="color:' + _esc(c.color || '#607d8b') + ';"></i> <span style="font-size:0.75rem;color:#6b7280;">' + _esc(c.icon || '') + '</span></td>';
                 html += '<td><span style="display:inline-block;width:18px;height:18px;border-radius:4px;background:' + _esc(c.color || '#607d8b') + ';vertical-align:middle;border:1px solid #e5e7eb;"></span></td>';
+                html += '<td><div style="display:flex;align-items:center;gap:6px;">' + bannerThumb + '<input type="file" id="catBanner_' + c.id + '" accept="image/*" style="display:none;" onchange="admin2UploadCatBanner(' + c.id + ',this)"><button onclick="document.getElementById(\'catBanner_' + c.id + '\').click()" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#374151;" title="Subir banner"><i class="fas fa-upload"></i></button>' + (c.banner_url ? '<button onclick="admin2RemoveCatBanner(' + c.id + ')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#dc2626;" title="Quitar banner"><i class="fas fa-times"></i></button>' : '') + '</div></td>';
                 html += '<td>' + (c.business_count || 0) + '</td>';
                 html += '<td>' + c.sort_order + '</td>';
                 html += '<td><button onclick="admin2DeleteCat(' + c.id + ',\'' + _esc(c.name).replace(/'/g, "\\'") + '\')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:0.82rem;" title="Desactivar"><i class="fas fa-trash"></i></button></td>';
@@ -5121,9 +5125,39 @@ if (!window._renderVideoList) {
             });
             tbody.innerHTML = html;
         } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar</p></div></td></tr>';
         }
     }
+
+    window.admin2UploadCatBanner = async function(catId, input) {
+        var file = input.files[0];
+        if (!file) return;
+        try {
+            var fd = new FormData();
+            fd.append('file', file);
+            fd.append('product_type', 'category_banner');
+            var data = await api.postFormData('/upload', fd);
+            if (data.url) {
+                await api.put('/categories/' + catId, { banner_url: data.url });
+                showToast('Banner de categoría actualizado', 'success');
+                loadAdmin2Categories();
+            }
+        } catch(e) {
+            showToast('Error al subir banner: ' + e.message, 'error');
+        }
+        input.value = '';
+    };
+
+    window.admin2RemoveCatBanner = async function(catId) {
+        if (!confirm('Quitar el banner de esta categoría?')) return;
+        try {
+            await api.put('/categories/' + catId, { banner_url: null });
+            showToast('Banner eliminado', 'success');
+            loadAdmin2Categories();
+        } catch(e) {
+            showToast('Error al eliminar banner', 'error');
+        }
+    };
 
     async function loadAdmin2CatSuggestions() {
         const container = document.getElementById('admin2CatSuggestionsList');

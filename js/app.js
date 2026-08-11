@@ -1452,6 +1452,9 @@ async function loadSiteStats() {
         const activeFiltersEl = document.getElementById('activeFilters');
         const clearFiltersBtn = document.getElementById('clearFiltersBtn');
         const paginationEl = document.getElementById('pagination');
+        const categoryBannerEl = document.getElementById('categoryBanner');
+        const categoryBannerImg = document.getElementById('categoryBannerImg');
+        const categoryBannerTitle = document.getElementById('categoryBannerTitle');
 
         if (!searchGrid) return;
 
@@ -1469,6 +1472,26 @@ async function loadSiteStats() {
         const especialidad = document.getElementById('sEspecialidad')?.value?.trim() || '';
         const q = document.getElementById('sQuery')?.value?.trim() || '';
         const sort = document.getElementById('sSort')?.value || document.getElementById('sOrdenar')?.value || '';
+
+        // Load category banner if filtering by category
+        if (categoria && categoryBannerEl) {
+            try {
+                const catData = await api.get('/categories');
+                const cats = catData.categories || [];
+                const matchedCat = cats.find(c => c.slug === categoria || c.name.toLowerCase() === categoria.toLowerCase());
+                if (matchedCat && matchedCat.banner_url) {
+                    categoryBannerImg.src = matchedCat.banner_url;
+                    categoryBannerTitle.textContent = matchedCat.name;
+                    categoryBannerEl.style.display = 'block';
+                } else {
+                    categoryBannerEl.style.display = 'none';
+                }
+            } catch(e) {
+                if (categoryBannerEl) categoryBannerEl.style.display = 'none';
+            }
+        } else {
+            if (categoryBannerEl) categoryBannerEl.style.display = 'none';
+        }
 
         // Build API endpoint
         let endpoint = `/businesses?status=approved&page=${page}&limit=12`;

@@ -70,6 +70,9 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Auto-migrate: add banner_url column if missing
+    try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN banner_url TEXT').run(); } catch(e) {}
+
     // Try with tipos_negocio JOIN first; fallback to simple query if table doesn't exist
     let categories;
     try {

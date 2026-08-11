@@ -71,7 +71,10 @@ export async function onRequestPut(context) {
     }
 
     const body = await request.json();
-    const { name, icon, color, sort_order, is_active } = body;
+    const { name, icon, color, sort_order, is_active, banner_url } = body;
+
+    // Auto-migrate: add banner_url column if missing
+    try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN banner_url TEXT').run(); } catch(e) {}
 
     const existing = await env.DB.prepare('SELECT id FROM categories WHERE id = ?').bind(catId).first();
     if (!existing) {
@@ -87,6 +90,7 @@ export async function onRequestPut(context) {
     if (color !== undefined) { updates.push('color = ?'); values.push(color); }
     if (sort_order !== undefined) { updates.push('sort_order = ?'); values.push(parseInt(sort_order)); }
     if (is_active !== undefined) { updates.push('is_active = ?'); values.push(is_active ? 1 : 0); }
+    if (banner_url !== undefined) { updates.push('banner_url = ?'); values.push(banner_url); }
 
     if (updates.length === 0) {
       return new Response(JSON.stringify({ error: 'No se proporcionaron campos para actualizar.' }), {
