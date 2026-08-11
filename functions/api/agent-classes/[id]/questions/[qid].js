@@ -2,7 +2,7 @@
 // PUT: Update a question (admin only)
 // DELETE: Delete a question (admin only)
 
-import { corsHeaders, requireAdmin } from '../../../../../_lib/auth.js';
+import { corsHeaders, requireAdmin } from '../../../../_lib/auth.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
