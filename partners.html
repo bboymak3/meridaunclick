@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Directorio de Partners Digitales Certificados de HolaX - Agentes profesionales verificados.">
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+    <title>Partners Digitales Certificados - HolaX</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ===== Page-Specific Styles ===== */
+        .page-body {
+            padding-top: var(--navbar-height);
+            min-height: 100vh;
+            background: #f8fafc;
+        }
+
+        /* --- Hero Header --- */
+        .partners-hero {
+            background: linear-gradient(135deg, #059669 0%, #047857 40%, #065f46 100%);
+            padding: 60px 24px 48px;
+            text-align: center;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .partners-hero::before {
+            content: '';
+            position: absolute;
+            top: -40%;
+            right: -15%;
+            width: 500px;
+            height: 500px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+        }
+        .partners-hero::after {
+            content: '';
+            position: absolute;
+            bottom: -40%;
+            left: -10%;
+            width: 350px;
+            height: 350px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 50%;
+        }
+        .partners-hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .partners-hero-icon {
+            font-size: 2.8rem;
+            margin-bottom: 16px;
+            display: block;
+            color: #fbbf24;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+        }
+        .partners-hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0 0 12px 0;
+            line-height: 1.2;
+            text-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        }
+        .partners-hero p {
+            font-size: 1rem;
+            opacity: 0.85;
+            margin: 0 0 20px 0;
+            line-height: 1.5;
+        }
+        .partners-count-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(6px);
+            padding: 8px 20px;
+            border-radius: var(--radius-full);
+            font-size: 0.9rem;
+            font-weight: 700;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .partners-count-badge i {
+            color: #fbbf24;
+        }
+
+        /* --- Partners Grid --- */
+        .partners-section {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px var(--space-md) 60px;
+        }
+        .partners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: var(--space-lg);
+        }
+        .partner-card {
+            background: var(--color-white);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            border: 1px solid var(--color-border-light);
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .partner-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        .partner-card-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .partner-card-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #d1fae5;
+            background: #ecfdf5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: #059669;
+            font-weight: 700;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .partner-card-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .partner-card-name {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--color-dark);
+            margin: 0 0 4px 0;
+            line-height: 1.3;
+        }
+        .partner-cert-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #ecfdf5;
+            color: #059669;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .partner-cert-badge i {
+            font-size: 0.68rem;
+            color: #d97706;
+        }
+        .partner-card-stats {
+            display: flex;
+            gap: 16px;
+            padding: 14px 0;
+            border-top: 1px solid var(--color-border-light);
+            border-bottom: 1px solid var(--color-border-light);
+            margin-bottom: 16px;
+        }
+        .partner-card-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+        }
+        .partner-card-stat-value {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--color-dark);
+            line-height: 1.2;
+        }
+        .partner-card-stat-label {
+            font-size: 0.7rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+        .partner-card-stat:nth-child(1) .partner-card-stat-value { color: #7c3aed; }
+        .partner-card-stat:nth-child(2) .partner-card-stat-value { color: #059669; }
+        .partner-card-stat:nth-child(3) .partner-card-stat-value { color: #d97706; }
+        .partner-card-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: auto;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: #fff;
+            border-radius: var(--radius-full);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.88rem;
+            transition: box-shadow 0.2s, transform 0.2s;
+            text-align: center;
+        }
+        .partner-card-link:hover {
+            box-shadow: 0 4px 16px rgba(5, 150, 105, 0.35);
+            transform: translateY(-1px);
+            color: #fff;
+        }
+
+        /* --- Empty State --- */
+        .partners-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-muted);
+        }
+        .partners-empty i {
+            font-size: 3rem;
+            color: #059669;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .partners-empty h3 {
+            font-size: 1.2rem;
+            color: var(--color-dark);
+            margin-bottom: 8px;
+        }
+
+        /* --- CTA Section --- */
+        .cta-section {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            padding: 60px 24px;
+            text-align: center;
+            color: #fff;
+        }
+        .cta-section-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .cta-section h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0 0 12px 0;
+        }
+        .cta-section p {
+            font-size: 0.95rem;
+            opacity: 0.85;
+            margin: 0 0 24px 0;
+            line-height: 1.5;
+        }
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #78350f;
+            border-radius: var(--radius-full);
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1rem;
+            box-shadow: 0 4px 20px rgba(251, 191, 36, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 28px rgba(251, 191, 36, 0.5);
+            color: #78350f;
+        }
+
+        /* --- Loading --- */
+        .page-loading {
+            text-align: center;
+            padding: 80px 20px;
+        }
+        .page-loading i {
+            font-size: 2.5rem;
+            color: #059669;
+            animation: spin 1s linear infinite;
+        }
+        .page-loading p {
+            margin-top: 12px;
+            color: var(--color-text-muted);
+            font-size: 0.92rem;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* --- Hidden --- */
+        .hidden { display: none !important; }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .partners-hero {
+                padding: 44px 20px 36px;
+            }
+            .partners-hero h1 {
+                font-size: 1.5rem;
+            }
+            .partners-section {
+                padding: 28px var(--space-md) 40px;
+            }
+            .partners-grid {
+                grid-template-columns: 1fr;
+            }
+            .cta-section {
+                padding: 44px 20px;
+            }
+            .cta-section h2 {
+                font-size: 1.3rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .partners-hero h1 {
+                font-size: 1.3rem;
+            }
+            .partner-card {
+                padding: 18px;
+            }
+            .partner-card-stats {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="nav-logo">
+                <img src="/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name">HolaX</span>
+            </a>
+            <button class="nav-toggle" id="navToggle" aria-label="Abrir menú">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="index.html" class="nav-link"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="search.html" class="nav-link"><i class="fas fa-search"></i> Directorio</a></li>
+                <li><a href="academia.html" class="nav-link"><i class="fas fa-graduation-cap"></i> Academia</a></li>
+                <li><a href="partners.html" class="nav-link active"><i class="fas fa-handshake"></i> Partners</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="page-body">
+        <!-- Hero Header -->
+        <section class="partners-hero">
+            <div class="partners-hero-content">
+                <i class="fas fa-handshake-angle partners-hero-icon"></i>
+                <h1>Partners Digitales Certificados</h1>
+                <p>Agentes que han completado exitosamente nuestro programa de formación</p>
+                <div class="partners-count-badge" id="partnersCountBadge">
+                    <i class="fas fa-certificate"></i>
+                    <span id="partnersCountText">Cargando...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Partners Grid -->
+        <section class="partners-section">
+            <div id="partnersLoading" class="page-loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Cargando partners...</p>
+            </div>
+            <div id="partnersGrid" class="partners-grid hidden"></div>
+            <div id="partnersEmpty" class="partners-empty hidden">
+                <i class="fas fa-user-group"></i>
+                <h3>Aún no hay partners certificados</h3>
+                <p>Sé el primero en completar el programa de formación</p>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="cta-section-content">
+                <h2><i class="fas fa-rocket"></i> ¿Quieres ser Partner?</h2>
+                <p>Completa todas las clases, alcanza Nivel 10 y aprueba el examen final para convertirte en un Partner Digital Certificado.</p>
+                <a href="academia.html" class="cta-btn">
+                    <i class="fas fa-graduation-cap"></i>
+                    Ir a la Academia
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/app.js"></script>
+    <script>
+        // --- Mobile nav toggle ---
+        document.getElementById('navToggle').addEventListener('click', () => {
+            document.getElementById('navMenu').classList.toggle('active');
+        });
+
+        // --- Helpers ---
+        function getInitials(name) {
+            if (!name) return '?';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            return parts[0].substring(0, 2).toUpperCase();
+        }
+
+        function renderAvatarHTML(avatarUrl, name) {
+            if (avatarUrl) {
+                return '<img src="' + avatarUrl + '" alt="' + (name || '') + '" onerror="this.parentNode.textContent=\'' + getInitials(name) + '\'">';
+            }
+            return getInitials(name);
+        }
+
+        // --- Main ---
+        async function loadPartners() {
+            try {
+                const data = await api.get('/partners?detailed=1');
+
+                document.getElementById('partnersLoading').classList.add('hidden');
+
+                const partners = data.partners || [];
+                const total = data.total || partners.length;
+
+                // Update count badge
+                document.getElementById('partnersCountText').textContent =
+                    total === 1 ? '1 Partner Certificado' : total + ' Partners Certificados';
+
+                if (partners.length === 0) {
+                    document.getElementById('partnersEmpty').classList.remove('hidden');
+                    return;
+                }
+
+                const grid = document.getElementById('partnersGrid');
+                grid.classList.remove('hidden');
+                grid.innerHTML = partners.map(function(p) {
+                    return '<div class="partner-card">' +
+                        '<div class="partner-card-top">' +
+                            '<div class="partner-card-avatar">' + renderAvatarHTML(p.avatar, p.name) + '</div>' +
+                            '<div>' +
+                                '<div class="partner-card-name">' + (p.name || 'Agente') + '</div>' +
+                                '<span class="partner-cert-badge"><i class="fas fa-certificate"></i> Partner Certificado</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="partner-card-stats">' +
+                            '<div class="partner-card-stat">' +
+                                '<span class="partner-card-stat-value">' + (p.level || 1) + '</span>' +
+                                '<span class="partner-card-stat-label">Nivel</span>' +
+                            '</div>' +
+                            '<div class="partner-card-stat">' +
+                                '<span class="partner-card-stat-value">' + (p.xp || 0).toLocaleString('es-ES') + '</span>' +
+                                '<span class="partner-card-stat-label">XP</span>' +
+                            '</div>' +
+                            '<div class="partner-card-stat">' +
+                                '<span class="partner-card-stat-value">' + (p.badge_count || 0) + '</span>' +
+                                '<span class="partner-card-stat-label">Medallas</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<a href="perfil.html?id=' + p.id + '" class="partner-card-link">' +
+                            '<i class="fas fa-user"></i> Ver Perfil' +
+                        '</a>' +
+                    '</div>';
+                }).join('');
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('partnersLoading').classList.add('hidden');
+                document.getElementById('partnersEmpty').classList.remove('hidden');
+                document.getElementById('partnersEmpty').querySelector('h3').textContent = 'Error al cargar';
+                document.getElementById('partnersEmpty').querySelector('p').textContent = 'No se pudo obtener la lista de partners. Intenta de nuevo más tarde.';
+            }
+        }
+
+        // Init
+        loadPartners();
+    </script>
+</body>
+</html>

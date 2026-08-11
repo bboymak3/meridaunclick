@@ -102,6 +102,7 @@ if (!window._renderVideoList) {
     const tabBazar = document.getElementById('tabBazar');
     const tabCarousel = document.getElementById('tabCarousel');
     const tabNotifications = document.getElementById('tabNotifications');
+    const tabAcademy = document.getElementById('tabAcademy');
 
     // Stat elements
     const adminTotalProps = document.getElementById('adminTotalProps');
@@ -313,7 +314,7 @@ if (!window._renderVideoList) {
         });
 
         // Hide all tab panels
-        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories'), popup: tabPopup, bazar: tabBazar, carousel: tabCarousel, notifications: tabNotifications };
+        const panels = { dashboard: tabDashboard, businesses: tabProperties, products: tabProducts, users: tabUsers, messages: tabMessages, facebook: tabFacebook, jobs: tabJobs, inmuebles: tabInmuebles, settings: tabSettings, premium: tabPremium, editbiz: tabEditBiz, categories: document.getElementById('tabCategories'), popup: tabPopup, bazar: tabBazar, carousel: tabCarousel, notifications: tabNotifications, academy: tabAcademy };
         for (const [key, panel] of Object.entries(panels)) {
             if (panel) {
                 panel.classList.toggle('hidden', key !== tab);
@@ -321,7 +322,7 @@ if (!window._renderVideoList) {
         }
 
         // Update page title
-        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías', popup: 'Ventana Emergente', bazar: 'Bazar', carousel: 'Carrusel de Videos', notifications: 'Notificaciones' };
+        const titles = { dashboard: 'Dashboard', businesses: 'Negocios', users: 'Usuarios', messages: 'Mensajes', facebook: 'Facebook Import', jobs: 'Empleo', inmuebles: 'Inmuebles', settings: 'Configuración', premium: 'Pagos Premium', editbiz: 'Editar Negocios', categories: 'Categorías', popup: 'Ventana Emergente', bazar: 'Bazar', carousel: 'Carrusel de Videos', notifications: 'Notificaciones', academy: 'Academia' };
         if (adminPageTitle) {
             adminPageTitle.textContent = titles[tab] || 'Dashboard';
         }
@@ -387,6 +388,9 @@ if (!window._renderVideoList) {
             case 'notifications':
                 notifPage = 1;
                 loadAdminNotifications();
+                break;
+            case 'academy':
+                loadAcademyTab();
                 break;
         }
 
@@ -6214,6 +6218,313 @@ if (!window._renderVideoList) {
         setInterval(pollAdminNotifBadge, 30000);
 
     })();
+
+    // ═══════════════════════════════════════════════════════════
+    //  SECCIÓN: ACADEMIA - Clases, Preguntas, Agentes
+    //  Funciones: loadAcademyTab, loadAcademyClasses, loadAcademyAgents
+    // ═══════════════════════════════════════════════════════════
+
+    var _academyCurrentClassId = null;
+
+    async function loadAcademyTab() {
+        loadAcademyClasses();
+        loadAcademyAgents();
+        setupAcademyHandlers();
+    }
+
+    function setupAcademyHandlers() {
+        var addBtn = document.getElementById('academyAddClassBtn');
+        var saveBtn = document.getElementById('academySaveClassBtn');
+        var addQBtn = document.getElementById('academyAddQuestionBtn');
+        var saveQBtn = document.getElementById('academySaveQuestionBtn');
+        if (addBtn && !addBtn._bound) {
+            addBtn._bound = true;
+            addBtn.addEventListener('click', function() {
+                document.getElementById('academyClassId').value = '';
+                document.getElementById('academyClassTitle').value = '';
+                document.getElementById('academyClassDesc').value = '';
+                document.getElementById('academyClassContent').value = '';
+                document.getElementById('academyClassXP').value = '10';
+                document.getElementById('academyClassOrder').value = '0';
+                document.getElementById('academyClassActive').checked = true;
+                document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Clase';
+                document.getElementById('academyClassEditor').classList.remove('hidden');
+            });
+        }
+        if (saveBtn && !saveBtn._bound) {
+            saveBtn._bound = true;
+            saveBtn.addEventListener('click', saveAcademyClass);
+        }
+        if (addQBtn && !addQBtn._bound) {
+            addQBtn._bound = true;
+            addQBtn.addEventListener('click', function() {
+                document.getElementById('academyQId').value = '';
+                document.getElementById('academyQText').value = '';
+                document.getElementById('academyQOptA').value = '';
+                document.getElementById('academyQOptB').value = '';
+                document.getElementById('academyQOptC').value = '';
+                document.getElementById('academyQOptD').value = '';
+                document.getElementById('academyQExplanation').value = '';
+                document.querySelectorAll('input[name="academyCorrect"]').forEach(function(r) { r.checked = false; });
+                document.getElementById('academyQModalTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Pregunta';
+                document.getElementById('academyQuestionModal').classList.remove('hidden');
+            });
+        }
+        if (saveQBtn && !saveQBtn._bound) {
+            saveQBtn._bound = true;
+            saveQBtn.addEventListener('click', saveAcademyQuestion);
+        }
+    }
+
+    async function loadAcademyClasses() {
+        var tbody = document.getElementById('academyClassesTableBody');
+        if (!tbody) return;
+        try {
+            var data = await api.get('/agent-classes');
+            var classes = data.classes || [];
+
+            // Stats
+            var totalQ = classes.reduce(function(s, c) { return s + (c.question_count || 0); }, 0);
+            var totalComp = classes.reduce(function(s, c) { return s + (c.completions || 0); }, 0);
+            var activeC = classes.filter(function(c) { return c.is_active === 1; }).length;
+            var statsEl = document.getElementById('academyStats');
+            if (statsEl) {
+                statsEl.innerHTML =
+                    '<div style="background:#f5f3ff;border-radius:10px;padding:14px;text-align:center;">' +
+                    '<div style="font-size:1.5rem;font-weight:700;color:#7c3aed;">' + classes.length + '</div>' +
+                    '<div style="font-size:0.78rem;color:#6b7280;">Total Clases</div></div>' +
+                    '<div style="background:#eff6ff;border-radius:10px;padding:14px;text-align:center;">' +
+                    '<div style="font-size:1.5rem;font-weight:700;color:#2563eb;">' + activeC + '</div>' +
+                    '<div style="font-size:0.78rem;color:#6b7280;">Activas</div></div>' +
+                    '<div style="background:#fef3c7;border-radius:10px;padding:14px;text-align:center;">' +
+                    '<div style="font-size:1.5rem;font-weight:700;color:#d97706;">' + totalQ + '</div>' +
+                    '<div style="font-size:0.78rem;color:#6b7280;">Preguntas</div></div>' +
+                    '<div style="background:#ecfdf5;border-radius:10px;padding:14px;text-align:center;">' +
+                    '<div style="font-size:1.5rem;font-weight:700;color:#059669;">' + totalComp + '</div>' +
+                    '<div style="font-size:0.78rem;color:#6b7280;">Completados</div></div>';
+            }
+
+            if (!classes.length) {
+                tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-graduation-cap"></i><p>No hay clases creadas. Haz clic en "Nueva Clase" para comenzar.</p></div></td></tr>';
+                return;
+            }
+            var html = '';
+            classes.forEach(function(c) {
+                html += '<tr>';
+                html += '<td>' + c.id + '</td>';
+                html += '<td><strong>' + _esc(c.title) + '</strong></td>';
+                html += '<td>' + (c.question_count || 0) + '</td>';
+                html += '<td><span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">+' + (c.xp_reward || 0) + ' XP</span></td>';
+                html += '<td>' + (c.completions || 0) + '</td>';
+                html += '<td>' + c.sort_order + '</td>';
+                html += '<td>' + (c.is_active === 1 ? '<span style="color:#059669;font-size:0.8rem;"><i class="fas fa-check-circle"></i> Activa</span>' : '<span style="color:#dc2626;font-size:0.8rem;"><i class="fas fa-times-circle"></i> Inactiva</span>') + '</td>';
+                html += '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">' +
+                    '<button onclick="academyEditClass(' + c.id + ')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#374151;" title="Editar"><i class="fas fa-edit"></i></button>' +
+                    '<button onclick="academyManageQuestions(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2563eb;" title="Preguntas"><i class="fas fa-question-circle"></i> ' + (c.question_count || 0) + '</button>' +
+                    '<button onclick="academyDeleteClass(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\'") + '\')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#dc2626;" title="Eliminar"><i class="fas fa-trash"></i></button>' +
+                    '</div></td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar clases</p></div></td></tr>';
+        }
+    }
+
+    window.academyEditClass = async function(classId) {
+        try {
+            var data = await api.get('/agent-classes/' + classId);
+            var cls = data.class;
+            if (!cls) { showToast('Clase no encontrada', 'error'); return; }
+            document.getElementById('academyClassId').value = cls.id;
+            document.getElementById('academyClassTitle').value = cls.title;
+            document.getElementById('academyClassDesc').value = cls.description || '';
+            document.getElementById('academyClassContent').value = cls.content || '';
+            document.getElementById('academyClassXP').value = cls.xp_reward || 10;
+            document.getElementById('academyClassOrder').value = cls.sort_order || 0;
+            document.getElementById('academyClassActive').checked = cls.is_active === 1;
+            document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-edit" style="color:#7c3aed;"></i> Editar Clase: ' + _esc(cls.title);
+            document.getElementById('academyClassEditor').classList.remove('hidden');
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
+
+    async function saveAcademyClass() {
+        var id = document.getElementById('academyClassId').value;
+        var title = document.getElementById('academyClassTitle').value.trim();
+        if (!title) { showToast('El titulo es requerido', 'error'); return; }
+        var payload = {
+            title: title,
+            description: document.getElementById('academyClassDesc').value,
+            content: document.getElementById('academyClassContent').value,
+            xp_reward: parseInt(document.getElementById('academyClassXP').value) || 10,
+            sort_order: parseInt(document.getElementById('academyClassOrder').value) || 0,
+            is_active: document.getElementById('academyClassActive').checked
+        };
+        try {
+            if (id) {
+                await api.put('/agent-classes/' + id, payload);
+                showToast('Clase actualizada', 'success');
+            } else {
+                await api.post('/agent-classes', payload);
+                showToast('Clase creada', 'success');
+            }
+            document.getElementById('academyClassEditor').classList.add('hidden');
+            loadAcademyClasses();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    window.academyDeleteClass = async function(id, name) {
+        if (!confirm('Eliminar la clase "' + name + '" y todas sus preguntas?')) return;
+        try {
+            await api.delete('/agent-classes/' + id);
+            showToast('Clase eliminada', 'success');
+            loadAcademyClasses();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
+
+    window.academyManageQuestions = async function(classId, className) {
+        _academyCurrentClassId = classId;
+        document.getElementById('academyQuestionsClassName').textContent = className;
+        document.getElementById('academyQuestionsPanel').classList.remove('hidden');
+        try {
+            var data = await api.get('/agent-classes/' + classId + '/questions');
+            var questions = data.questions || [];
+            var tbody = document.getElementById('academyQuestionsTableBody');
+            if (!questions.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:16px;">No hay preguntas. Agrega una nueva.</td></tr>';
+                return;
+            }
+            var html = '';
+            questions.forEach(function(q) {
+                html += '<tr>';
+                html += '<td>' + q.id + '</td>';
+                html += '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + _esc(q.question) + '">' + _esc(q.question) + '</td>';
+                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc((q.option_a || '').substring(0, 30)) + '</td>';
+                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc((q.option_b || '').substring(0, 30)) + '</td>';
+                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc((q.option_c || '').substring(0, 30)) + '</td>';
+                html += '<td style="color:#6b7280;font-size:0.78rem;">' + _esc((q.option_d || '').substring(0, 30)) + '</td>';
+                html += '<td><span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:700;">' + (q.correct_answer || '?').toUpperCase() + '</span></td>';
+                html += '<td><div style="display:flex;gap:4px;">' +
+                    '<button onclick="academyEditQuestion(' + q.id + ')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#374151;"><i class="fas fa-edit"></i></button>' +
+                    '<button onclick="academyDeleteQuestion(' + q.id + ')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#dc2626;"><i class="fas fa-trash"></i></button>' +
+                    '</div></td>';
+                html += '</tr>';
+            });
+            tbody.innerHTML = html;
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
+
+    window.academyEditQuestion = async function(qId) {
+        try {
+            // Fetch from full class endpoint (admin sees correct_answer)
+            var data = await api.get('/agent-classes/' + _academyCurrentClassId);
+            var q = (data.questions || []).find(function(q) { return q.id === qId; });
+            if (!q) { showToast('Pregunta no encontrada', 'error'); return; }
+            document.getElementById('academyQId').value = q.id;
+            document.getElementById('academyQText').value = q.question;
+            document.getElementById('academyQOptA').value = q.option_a;
+            document.getElementById('academyQOptB').value = q.option_b;
+            document.getElementById('academyQOptC').value = q.option_c;
+            document.getElementById('academyQOptD').value = q.option_d;
+            document.getElementById('academyQExplanation').value = q.explanation || '';
+            document.querySelectorAll('input[name="academyCorrect"]').forEach(function(r) { r.checked = r.value === q.correct_answer; });
+            document.getElementById('academyQModalTitle').innerHTML = '<i class="fas fa-edit" style="color:#7c3aed;"></i> Editar Pregunta';
+            document.getElementById('academyQuestionModal').classList.remove('hidden');
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
+
+    async function saveAcademyQuestion() {
+        var qId = document.getElementById('academyQId').value;
+        var question = document.getElementById('academyQText').value.trim();
+        var optA = document.getElementById('academyQOptA').value.trim();
+        var optB = document.getElementById('academyQOptB').value.trim();
+        var optC = document.getElementById('academyQOptC').value.trim();
+        var optD = document.getElementById('academyQOptD').value.trim();
+        var correct = document.querySelector('input[name="academyCorrect"]:checked');
+        var explanation = document.getElementById('academyQExplanation').value;
+
+        if (!question || !optA || !optB || !optC || !optD) { showToast('Todos los campos son requeridos', 'error'); return; }
+        if (!correct) { showToast('Selecciona la respuesta correcta', 'error'); return; }
+
+        var payload = {
+            question: question,
+            option_a: optA, option_b: optB, option_c: optC, option_d: optD,
+            correct_answer: correct.value,
+            explanation: explanation
+        };
+        try {
+            if (qId) {
+                await api.put('/agent-classes/' + _academyCurrentClassId + '/questions/' + qId, payload);
+                showToast('Pregunta actualizada', 'success');
+            } else {
+                await api.post('/agent-classes/' + _academyCurrentClassId + '/questions', payload);
+                showToast('Pregunta creada', 'success');
+            }
+            document.getElementById('academyQuestionModal').classList.add('hidden');
+            academyManageQuestions(_academyCurrentClassId, document.getElementById('academyQuestionsClassName').textContent);
+            loadAcademyClasses();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    }
+
+    window.academyDeleteQuestion = async function(qId) {
+        if (!confirm('Eliminar esta pregunta?')) return;
+        try {
+            await api.delete('/agent-classes/' + _academyCurrentClassId + '/questions/' + qId);
+            showToast('Pregunta eliminada', 'success');
+            academyManageQuestions(_academyCurrentClassId, document.getElementById('academyQuestionsClassName').textContent);
+            loadAcademyClasses();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
+
+    async function loadAcademyAgents() {
+        var tbody = document.getElementById('academyAgentsTableBody');
+        if (!tbody) return;
+        try {
+            var { results: agents } = await api.rawFetch ? api.get('/users?role=agent&limit=100') : { results: [] };
+            // Fetch agents via users endpoint with role filter
+            var resp = await fetch(API + '/users?role=agent&limit=200', {
+                headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
+            });
+            var data = await resp.json();
+            var users = data.users || data.results || [];
+
+            if (!users.length) {
+                tbody.innerHTML = '<tr><td colspan="9"><div style="text-align:center;color:#94a3b8;padding:16px;">No hay agentes registrados</div></td></tr>';
+                return;
+            }
+
+            // Fetch agent profiles for all users
+            var agentData = {};
+            for (var i = 0; i < users.length; i++) {
+                try {
+                    var profResp = await fetch(API + '/agent-progress', {
+                        headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
+                    });
+                    // We can't call agent-progress for other users, use partner endpoint instead
+                } catch(ex) {}
+            }
+
+            // Simpler: fetch from partners endpoint for partner info
+            var html = '';
+            for (var i = 0; i < users.length; i++) {
+                var u = users[i];
+                html += '<tr>';
+                html += '<td>' + u.id + '</td>';
+                html += '<td><strong>' + _esc(u.name) + '</strong></td>';
+                html += '<td><span style="background:#f5f3ff;color:#7c3aed;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">Nivel ' + (u.agent_level || 1) + '</span></td>';
+                html += '<td>' + (u.agent_xp || 0) + ' XP</td>';
+                html += '<td>' + (u.classes_completed || 0) + '</td>';
+                html += '<td>' + (u.badge_count || 0) + '</td>';
+                html += '<td>' + (u.exam_passed ? '<span style="color:#059669;"><i class="fas fa-check"></i></span>' : '<span style="color:#94a3b8;">-</span>') + '</td>';
+                html += '<td>' + (u.is_partner ? '<span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Partner</span>' : '<span style="color:#94a3b8;">-</span>') + '</td>';
+                html += '<td><a href="/perfil.html?id=' + u.id + '" target="_blank" style="color:#2563eb;font-size:0.78rem;"><i class="fas fa-external-link-alt"></i> Ver</a></td>';
+                html += '</tr>';
+            }
+            tbody.innerHTML = html;
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="9"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar agentes</p></div></td></tr>';
+        }
+    }
 
     // ─── Initialize on DOM Ready ────────────────────────────────
     if (document.readyState === 'loading') {

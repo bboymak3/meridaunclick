@@ -118,6 +118,10 @@
                         <span>Categorías</span>
                         <span class="badge badge-gold" id="adminCatSuggBadgeSide" style="display:none;">0</span>
                     </a>
+                    <a href="#" class="admin-nav-link" data-tab="academy">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Academia</span>
+                    </a>
                     <a href="#" class="admin-nav-link" data-tab="settings">
                         <i class="fas fa-sliders-h"></i>
                         <span>Configuración</span>
@@ -755,6 +759,191 @@
                                 <i class="fas fa-info-circle" style="flex-shrink:0;"></i>
                                 <span>Se recomienda subir banners con dimensiones de <strong>1064 x 405 px</strong> para una visualización óptima en todas las pantallas.</span>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ==================== ACADEMY TAB ==================== -->
+                <div class="admin-tab hidden" id="tabAcademy">
+                    <!-- Classes Management -->
+                    <div class="admin-card" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-graduation-cap" style="color:#7c3aed;"></i> Academia de Agentes</h3>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Gestiona clases, preguntas y contenido educativo para los agentes.</p>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-primary" id="academyAddClassBtn" style="background:#7c3aed;"><i class="fas fa-plus"></i> Nueva Clase</button>
+                                <button class="btn btn-secondary" onclick="window.open('/partners.html','_blank')"><i class="fas fa-certificate"></i> Ver Partners</button>
+                            </div>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div id="academyStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;"></div>
+
+                        <!-- Classes Table -->
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" style="width:100%;font-size:0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Titulo</th>
+                                        <th>Preguntas</th>
+                                        <th>XP</th>
+                                        <th>Completados</th>
+                                        <th>Orden</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="academyClassesTableBody">
+                                    <tr><td colspan="8" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Class Editor (hidden by default) -->
+                    <div class="admin-card hidden" id="academyClassEditor" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                            <h3 style="margin:0;font-size:1.1rem;" id="academyEditorTitle"><i class="fas fa-edit" style="color:#7c3aed;"></i> Nueva Clase</h3>
+                            <button class="btn btn-secondary btn-sm" onclick="document.getElementById('academyClassEditor').classList.add('hidden')"><i class="fas fa-times"></i> Cerrar</button>
+                        </div>
+                        <div style="display:grid;gap:14px;">
+                            <input type="hidden" id="academyClassId">
+                            <div class="form-group">
+                                <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Titulo *</label>
+                                <input type="text" id="academyClassTitle" placeholder="Nombre de la clase" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Descripcion</label>
+                                <textarea id="academyClassDesc" placeholder="Descripcion breve de la clase" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Contenido</label>
+                                <textarea id="academyClassContent" placeholder="Contenido educativo de la clase (texto, HTML permitido)" rows="6" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">XP Recompensa</label>
+                                    <input type="number" id="academyClassXP" value="10" min="1" max="100" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Orden</label>
+                                    <input type="number" id="academyClassOrder" value="0" min="0" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <label style="font-weight:600;font-size:0.85rem;"><input type="checkbox" id="academyClassActive" checked> Activa</label>
+                            </div>
+                            <div style="display:flex;gap:10px;">
+                                <button class="btn btn-primary" id="academySaveClassBtn" style="background:#7c3aed;"><i class="fas fa-save"></i> Guardar Clase</button>
+                                <button class="btn btn-secondary" onclick="document.getElementById('academyClassEditor').classList.add('hidden')"><i class="fas fa-times"></i> Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Questions Editor for selected class -->
+                    <div class="admin-card hidden" id="academyQuestionsPanel" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                            <h3 style="margin:0;font-size:1.1rem;"><i class="fas fa-question-circle" style="color:#7c3aed;"></i> Preguntas: <span id="academyQuestionsClassName"></span></h3>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-primary btn-sm" id="academyAddQuestionBtn" style="background:#7c3aed;"><i class="fas fa-plus"></i> Nueva Pregunta</button>
+                                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('academyQuestionsPanel').classList.add('hidden')"><i class="fas fa-arrow-left"></i> Volver</button>
+                            </div>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" style="width:100%;font-size:0.82rem;">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Pregunta</th>
+                                        <th>A</th>
+                                        <th>B</th>
+                                        <th>C</th>
+                                        <th>D</th>
+                                        <th>Correcta</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="academyQuestionsTableBody">
+                                    <tr><td colspan="8" style="text-align:center;padding:20px;color:#6b7280;">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Question Add/Edit Modal -->
+                    <div class="modal hidden" id="academyQuestionModal">
+                        <div class="modal-overlay" onclick="document.getElementById('academyQuestionModal').classList.add('hidden')"></div>
+                        <div class="modal-content" style="max-width:640px;max-height:90vh;overflow-y:auto;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                                <h3 style="margin:0;font-size:1.1rem;" id="academyQModalTitle"><i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Pregunta</h3>
+                                <button onclick="document.getElementById('academyQuestionModal').classList.add('hidden')" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#6b7280;padding:4px;"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div style="display:grid;gap:14px;">
+                                <input type="hidden" id="academyQId">
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Pregunta *</label>
+                                    <textarea id="academyQText" placeholder="Texto de la pregunta" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyCorrect" value="a" style="accent-color:#7c3aed;"> <strong>A</strong> (Correcta)</label>
+                                        <input type="text" id="academyQOptA" placeholder="Opcion A" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyCorrect" value="b" style="accent-color:#7c3aed;"> <strong>B</strong> (Correcta)</label>
+                                        <input type="text" id="academyQOptB" placeholder="Opcion B" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyCorrect" value="c" style="accent-color:#7c3aed;"> <strong>C</strong> (Correcta)</label>
+                                        <input type="text" id="academyQOptC" placeholder="Opcion C" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyCorrect" value="d" style="accent-color:#7c3aed;"> <strong>D</strong> (Correcta)</label>
+                                        <input type="text" id="academyQOptD" placeholder="Opcion D" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Explicacion (mostrada al responder)</label>
+                                    <textarea id="academyQExplanation" placeholder="Por que esta es la respuesta correcta (opcional)" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                                </div>
+                                <div style="display:flex;gap:10px;">
+                                    <button class="btn btn-primary" id="academySaveQuestionBtn" style="background:#7c3aed;"><i class="fas fa-save"></i> Guardar Pregunta</button>
+                                    <button class="btn btn-secondary" onclick="document.getElementById('academyQuestionModal').classList.add('hidden')">Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agents Overview -->
+                    <div class="admin-card" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                            <div>
+                                <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-users-graduate" style="color:#059669;"></i> Progreso de Agentes</h3>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Todos los usuarios registrados como agentes y su progreso.</p>
+                            </div>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" style="width:100%;font-size:0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nombre</th>
+                                        <th>Nivel</th>
+                                        <th>XP</th>
+                                        <th>Clases</th>
+                                        <th>Medallas</th>
+                                        <th>Examen</th>
+                                        <th>Partner</th>
+                                        <th>Perfil</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="academyAgentsTableBody">
+                                    <tr><td colspan="9" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
