@@ -6243,6 +6243,7 @@ if (!window._renderVideoList) {
         var closeQuestionsBtn = document.getElementById('academyCloseQuestionsBtn');
         var genQBtn = document.getElementById('academyGenQBtn');
         var clearPreviewBtn = document.getElementById('academyClearQPreviewBtn');
+        var refreshBtn = document.getElementById('academyRefreshBtn');
 
         if (addBtn && !addBtn._bound) {
             addBtn._bound = true;
@@ -6305,6 +6306,14 @@ if (!window._renderVideoList) {
             clearPreviewBtn.addEventListener('click', function() {
                 window._pendingQuestions = [];
                 renderPendingQuestionsPreview();
+            });
+        }
+        if (refreshBtn && !refreshBtn._bound) {
+            refreshBtn._bound = true;
+            refreshBtn.addEventListener('click', function() {
+                loadAcademyClasses();
+                loadAcademyAgents();
+                showToast('Lista actualizada', 'success');
             });
         }
     }
@@ -6395,7 +6404,8 @@ if (!window._renderVideoList) {
             window._pendingQuestions = [];
             document.getElementById('academyClassEditor').classList.add('hidden');
             renderPendingQuestionsPreview();
-            loadAcademyClasses();
+            // Small delay to ensure DB consistency before refresh
+            setTimeout(function() { loadAcademyClasses(); }, 300);
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 

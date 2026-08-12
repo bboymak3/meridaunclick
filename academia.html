@@ -307,7 +307,7 @@ button:active{transform:scale(.97)}
       if(!upData.url) throw new Error('No URL returned');
       await fetch(API+'/user-profile',{method:'PUT',headers:apiHeaders(),body:JSON.stringify({avatar:upData.url})});
       userProfile.avatar=upData.url;
-      renderProfile();
+      render();
       showToast('Avatar actualizado','success');
     }catch(err){
       showToast('Error al subir avatar: '+err.message,'error');
