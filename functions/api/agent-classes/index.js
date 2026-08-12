@@ -14,6 +14,14 @@ async function ensureTables(db) {
   for (var i = 0; i < tables.length; i++) {
     try { await db.prepare(tables[i]).run(); } catch(e) {}
   }
+  // Ensure columns added by later migrations exist (migration may have created tables without these)
+  var alters = [
+    "ALTER TABLE class_questions ADD COLUMN points INTEGER DEFAULT 10",
+    "ALTER TABLE user_class_progress ADD COLUMN total_points INTEGER DEFAULT 0"
+  ];
+  for (var j = 0; j < alters.length; j++) {
+    try { await db.prepare(alters[j]).run(); } catch(e) { /* column already exists */ }
+  }
 }
 
 export async function onRequestOptions() {
@@ -39,7 +47,8 @@ export async function onRequestGet(context) {
       params = [auth.user.id];
     }
 
-    var result = await env.DB.prepare(query).bind.apply(null, params).all();
+    var stmt = env.DB.prepare(query);
+    var result = params.length > 0 ? await stmt.bind(...params).all() : await stmt.all();
     return new Response(JSON.stringify({ classes: result.results || [] }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

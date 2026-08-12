@@ -35,6 +35,9 @@ async function ensureTables(db) {
   for (var i = 0; i < tables.length; i++) {
     try { await db.prepare(tables[i]).run(); } catch(e) {}
   }
+  // Ensure columns exist (migration may have created tables without these)
+  try { await db.prepare("ALTER TABLE class_questions ADD COLUMN points INTEGER DEFAULT 10").run(); } catch(e) {}
+  try { await db.prepare("ALTER TABLE user_class_progress ADD COLUMN total_points INTEGER DEFAULT 0").run(); } catch(e) {}
 }
 
 export async function onRequestOptions() {

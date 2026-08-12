@@ -66,7 +66,7 @@ export async function onRequestGet(context) {
       try {
         badgeResult = await env.DB.prepare(
           'SELECT * FROM user_badges WHERE user_id IN (' + placeholders + ') ORDER BY earned_at DESC'
-        ).bind.apply(null, userIds).all();
+        ).bind(...userIds).all();
       } catch(e) {
         badgeResult = { results: [] };
       }

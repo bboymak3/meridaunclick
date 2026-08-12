@@ -21,6 +21,8 @@ async function ensureTables(db) {
   for (var i = 0; i < tables.length; i++) {
     try { await db.prepare(tables[i]).run(); } catch(e) {}
   }
+  // Ensure points column exists (migration may have created table without it)
+  try { await db.prepare("ALTER TABLE class_questions ADD COLUMN points INTEGER DEFAULT 10").run(); } catch(e) {}
 }
 
 export async function onRequestOptions() {

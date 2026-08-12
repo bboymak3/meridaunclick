@@ -52,6 +52,7 @@ export async function onRequestGet(context) {
           option_d TEXT NOT NULL,
           correct_answer TEXT NOT NULL CHECK(correct_answer IN ('a', 'b', 'c', 'd')),
           explanation TEXT DEFAULT '',
+          points INTEGER DEFAULT 10,
           sort_order INTEGER DEFAULT 0,
           created_at TEXT DEFAULT (datetime('now')),
           FOREIGN KEY (class_id) REFERENCES agent_classes(id) ON DELETE CASCADE
@@ -72,6 +73,7 @@ export async function onRequestGet(context) {
           completed INTEGER DEFAULT 0,
           correct_answers INTEGER DEFAULT 0,
           total_questions INTEGER DEFAULT 0,
+          total_points INTEGER DEFAULT 0,
           xp_earned INTEGER DEFAULT 0,
           completed_at TEXT,
           UNIQUE(user_id, class_id),
@@ -134,6 +136,22 @@ export async function onRequestGet(context) {
       results.push({ table: 'users', column: 'avatar', status: 'added' });
     } catch (e) {
       results.push({ table: 'users', column: 'avatar', status: e.message && e.message.includes('duplicate') ? 'already exists' : 'error: ' + e.message });
+    }
+
+    // 7. Ensure points column in class_questions (may be missing from older migrations)
+    try {
+      await env.DB.prepare('ALTER TABLE class_questions ADD COLUMN points INTEGER DEFAULT 10').run();
+      results.push({ table: 'class_questions', column: 'points', status: 'added' });
+    } catch (e) {
+      results.push({ table: 'class_questions', column: 'points', status: 'already exists or error: ' + (e.message || '').substring(0, 50) });
+    }
+
+    // 8. Ensure total_points column in user_class_progress (may be missing from older migrations)
+    try {
+      await env.DB.prepare('ALTER TABLE user_class_progress ADD COLUMN total_points INTEGER DEFAULT 0').run();
+      results.push({ table: 'user_class_progress', column: 'total_points', status: 'added' });
+    } catch (e) {
+      results.push({ table: 'user_class_progress', column: 'total_points', status: 'already exists or error: ' + (e.message || '').substring(0, 50) });
     }
 
     return new Response(JSON.stringify({ success: true, message: 'Migracion Agent Academy completada', results }), {

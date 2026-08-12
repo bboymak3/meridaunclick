@@ -6365,7 +6365,8 @@ if (!window._renderVideoList) {
             });
             tbody.innerHTML = html;
         } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="7"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar clases</p></div></td></tr>';
+            console.error('loadAcademyClasses error:', e);
+            tbody.innerHTML = '<tr><td colspan="7"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar clases</p><p style="font-size:0.75rem;color:#94a3b8;margin-top:4px;">' + _esc(e.message || 'Error desconocido') + '</p><p style="font-size:0.72rem;color:#94a3b8;margin-top:8px;"><button onclick="loadAcademyClasses()" style="background:#7c3aed;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:0.8rem;">Reintentar</button></p></div></td></tr>';
         }
     }
 
