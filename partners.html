@@ -386,7 +386,7 @@
               '<span class="initials" style="display:none">' + escapeHtml(initials) + '</span>'
             : '<span class="initials">' + escapeHtml(initials) + '</span>';
 
-          return
+          return (
             '<div class="card">' +
               '<div class="avatar-ring">' + avatarHtml + '</div>' +
               '<div class="name">' + escapeHtml(p.name) + '</div>' +
@@ -402,7 +402,8 @@
               '<a href="/perfil.html?id=' + p.id + '" class="btn-profile">' +
                 '<i class="fa-solid fa-arrow-right"></i> Ver Perfil' +
               '</a>' +
-            '</div>';
+            '</div>'
+          );
         }).join('');
       }
 
