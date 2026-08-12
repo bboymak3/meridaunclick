@@ -1,5 +1,5 @@
 // GET: List all classes (admin gets all, agents get active only)
-// Also works without auth for public class listing
+// POST: Create new class (admin only)
 
 import { corsHeaders, requireAuth, requireAdmin } from '../../_lib/auth.js';
 
@@ -44,8 +44,10 @@ export async function onRequestGet(context) {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ classes: [], error: error.message }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    // BUG #1 FIX: Return 500 so frontend shows error, NOT 200 with empty classes
+    console.error('GET /agent-classes error:', error.message);
+    return new Response(JSON.stringify({ error: 'Error al cargar clases', details: error.message }), {
+      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 }
@@ -72,14 +74,15 @@ export async function onRequestPost(context) {
 
     await ensureTables(env.DB);
 
+    // BUG #8 FIX: Use !== undefined instead of || to allow explicit 0 values
     var result = await env.DB.prepare(
       'INSERT INTO agent_classes (title, description, content, xp_reward, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?)'
     ).bind(
       title.trim(),
       description || '',
       content || '',
-      xp_reward || 10,
-      sort_order || 0,
+      xp_reward !== undefined ? xp_reward : 10,
+      sort_order !== undefined ? sort_order : 0,
       is_active !== undefined ? (is_active ? 1 : 0) : 1
     ).run();
 

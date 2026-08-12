@@ -6591,11 +6591,12 @@ if (!window._renderVideoList) {
                 var lvl = p.level || 1;
                 var xp = p.xp || 0;
                 var grad = p.is_graduated || p.graduated || false;
-                var xpForNext = lvl * 100;
-                var xpPrev = (lvl - 1) * 100;
+                var LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
+                var xpPrev = lvl <= 1 ? 0 : LEVEL_XP[lvl - 2];
+                var xpForNext = lvl >= 10 ? LEVEL_XP[9] : LEVEL_XP[lvl - 1];
                 var xpInLevel = xp - xpPrev;
                 var xpNeeded = xpForNext - xpPrev;
-                var pct = Math.min(100, Math.max(0, Math.round((xpInLevel / xpNeeded) * 100)));
+                var pct = lvl >= 10 ? 100 : Math.min(100, Math.max(0, Math.round((xpInLevel / xpNeeded) * 100)));
                 var lvlColor = lvlColors[Math.min(lvl - 1, lvlColors.length - 1)];
                 html += '<tr>';
                 html += '<td><div style="display:flex;align-items:center;gap:8px;">';

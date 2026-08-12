@@ -471,15 +471,20 @@ button:active{transform:scale(.97)}
     const pct=Math.round((current/total)*100);
 
     const letters=['A','B','C','D'];
-    const options=[q.option_a,q.option_b,q.option_c,q.option_d].filter(Boolean);
+    const options=[
+      {letter:'A', text:q.option_a},
+      {letter:'B', text:q.option_b},
+      {letter:'C', text:q.option_c},
+      {letter:'D', text:q.option_d}
+    ].filter(function(o){ return o.text; });
     const selected=qs.answers[qs.current]||'';
 
     const optionsHTML=options.map(function(opt,i){
-      const letter=letters[i];
+      const letter=opt.letter;
       const sel=selected===letter?' selected':'';
       return `<div class="quiz-option${sel}" onclick="selectOption(${classId},'${letter}')" data-letter="${letter}">
         <span class="quiz-option-letter">${letter}</span>
-        <span>${escapeHTML(opt)}</span>
+        <span>${escapeHTML(opt.text)}</span>
       </div>`;
     }).join('');
 
@@ -684,15 +689,20 @@ button:active{transform:scale(.97)}
     const pct=Math.round((current/total)*100);
 
     const letters=['A','B','C','D'];
-    const options=[q.option_a,q.option_b,q.option_c,q.option_d].filter(Boolean);
+    const options=[
+      {letter:'A', text:q.option_a},
+      {letter:'B', text:q.option_b},
+      {letter:'C', text:q.option_c},
+      {letter:'D', text:q.option_d}
+    ].filter(function(o){ return o.text; });
     const selected=answers[idx]||'';
 
     const optionsHTML=options.map(function(opt,i){
-      const letter=letters[i];
+      const letter=opt.letter;
       const sel=selected===letter?' selected':'';
       return `<div class="quiz-option${sel}" onclick="selectExamOption('${letter}')" data-letter="${letter}">
         <span class="quiz-option-letter">${letter}</span>
-        <span>${escapeHTML(opt)}</span>
+        <span>${escapeHTML(opt.text)}</span>
       </div>`;
     }).join('');
 

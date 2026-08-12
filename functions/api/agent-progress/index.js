@@ -1,6 +1,6 @@
 // functions/api/agent-progress/index.js
 // GET: Get agent profile (level, XP, badges, progress)
-// POST: Submit class answers (complete a class) - scoring by points, 70% to pass
+// POST: Submit class answers - scoring by points, 70% to pass, allows retries if failed
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
 
@@ -30,21 +30,10 @@ async function ensureTables(db) {
     "CREATE TABLE IF NOT EXISTS class_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, class_id INTEGER NOT NULL, question TEXT NOT NULL, option_a TEXT NOT NULL, option_b TEXT NOT NULL, option_c TEXT DEFAULT '', option_d TEXT DEFAULT '', correct_answer TEXT NOT NULL, explanation TEXT DEFAULT '', points INTEGER DEFAULT 10, sort_order INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))",
     "CREATE TABLE IF NOT EXISTS user_class_progress (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, class_id INTEGER NOT NULL, completed INTEGER DEFAULT 0, correct_answers INTEGER DEFAULT 0, total_questions INTEGER DEFAULT 0, total_points INTEGER DEFAULT 0, xp_earned INTEGER DEFAULT 0, completed_at TEXT, UNIQUE(user_id, class_id))",
     "CREATE TABLE IF NOT EXISTS agent_profiles (user_id INTEGER PRIMARY KEY, level INTEGER DEFAULT 1, xp INTEGER DEFAULT 0, xp_to_next_level INTEGER DEFAULT 100, total_classes_completed INTEGER DEFAULT 0, exam_passed INTEGER DEFAULT 0, exam_passed_at TEXT, exam_attempts INTEGER DEFAULT 0, last_exam_at TEXT, is_partner INTEGER DEFAULT 0, partner_at TEXT, graduated INTEGER DEFAULT 0, graduated_at TEXT, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))",
-    "CREATE TABLE IF NOT EXISTS user_badges (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, badge_type TEXT NOT NULL, badge_name TEXT NOT NULL, badge_description TEXT DEFAULT '', badge_icon TEXT DEFAULT 'fas fa-medal', earned_at TEXT DEFAULT (datetime('now')))",
-    "CREATE TABLE IF NOT EXISTS class_assignments (id INTEGER PRIMARY KEY AUTOINCREMENT, class_id INTEGER NOT NULL, user_id INTEGER NOT NULL, assigned_by INTEGER, assigned_at TEXT DEFAULT (datetime('now')), status TEXT DEFAULT 'pending' CHECK(status IN ('pending','in_progress','completed','failed')), score INTEGER DEFAULT 0, max_score INTEGER DEFAULT 0, completed_at TEXT, UNIQUE(class_id, user_id))"
+    "CREATE TABLE IF NOT EXISTS user_badges (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, badge_type TEXT NOT NULL, badge_name TEXT NOT NULL, badge_description TEXT DEFAULT '', badge_icon TEXT DEFAULT 'fas fa-medal', earned_at TEXT DEFAULT (datetime('now')))"
   ];
   for (var i = 0; i < tables.length; i++) {
     try { await db.prepare(tables[i]).run(); } catch(e) {}
-  }
-  var cols = [
-    "ALTER TABLE class_questions ADD COLUMN points INTEGER DEFAULT 10",
-    "ALTER TABLE user_class_progress ADD COLUMN total_points INTEGER DEFAULT 0",
-    "ALTER TABLE agent_profiles ADD COLUMN graduated INTEGER DEFAULT 0",
-    "ALTER TABLE agent_profiles ADD COLUMN graduated_at TEXT",
-    "ALTER TABLE users ADD COLUMN avatar TEXT"
-  ];
-  for (var j = 0; j < cols.length; j++) {
-    try { await db.prepare(cols[j]).run(); } catch(e) {}
   }
 }
 
@@ -142,12 +131,12 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Check if already completed
+    // BUG #2 FIX: Allow retries if not yet passed (completed !== 1)
     var existing = await env.DB.prepare(
       'SELECT * FROM user_class_progress WHERE user_id = ? AND class_id = ?'
     ).bind(userId, class_id).first();
     if (existing && existing.completed === 1) {
-      return new Response(JSON.stringify({ error: 'Esta clase ya fue completada', already_completed: true }), {
+      return new Response(JSON.stringify({ error: 'Esta clase ya fue aprobada', already_completed: true }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -184,29 +173,52 @@ export async function onRequestPost(context) {
     var totalQuestions = questions.length;
     var scorePercent = maxPoints > 0 ? Math.round((totalPoints / maxPoints) * 100) : 0;
 
-    // XP earned: full if >= 70%, half otherwise
-    var xpEarned = scorePercent >= 70 ? cls.xp_reward : Math.floor(cls.xp_reward * 0.5);
+    // BUG #2 FIX: Only mark completed if score >= 70%
+    var passed = scorePercent >= 70;
 
-    // Save or update progress
+    // XP earned: full if passed, half otherwise (but only on first pass or first attempt)
+    var xpEarned = passed ? cls.xp_reward : Math.floor(cls.xp_reward * 0.5);
+
+    // BUG #2 FIX: Only count as completed when passed
+    // BUG #3 FIX: Only add XP and increment count on first pass
     if (existing) {
-      await env.DB.prepare(
-        "UPDATE user_class_progress SET completed = 1, correct_answers = ?, total_questions = ?, total_points = ?, xp_earned = ?, completed_at = datetime('now') WHERE user_id = ? AND class_id = ?"
-      ).bind(correct, totalQuestions, totalPoints, xpEarned, userId, class_id).run();
+      // Update existing record
+      if (passed) {
+        // First time passing — set completed and award full XP
+        await env.DB.prepare(
+          "UPDATE user_class_progress SET completed = 1, correct_answers = ?, total_questions = ?, total_points = ?, xp_earned = ?, completed_at = datetime('now') WHERE user_id = ? AND class_id = ?"
+        ).bind(correct, totalQuestions, totalPoints, xpEarned, userId, class_id).run();
+
+        // BUG #3 FIX: Only add XP if this is first time passing (existing was not completed)
+        if (existing.completed !== 1) {
+          await env.DB.prepare(
+            "UPDATE agent_profiles SET xp = xp + ?, total_classes_completed = total_classes_completed + 1, updated_at = datetime('now') WHERE user_id = ?"
+          ).bind(xpEarned, userId).run();
+        }
+      } else {
+        // Failed attempt — update score but keep completed = 0, no XP
+        await env.DB.prepare(
+          "UPDATE user_class_progress SET correct_answers = ?, total_questions = ?, total_points = ?, xp_earned = 0 WHERE user_id = ? AND class_id = ?"
+        ).bind(correct, totalQuestions, totalPoints, userId, class_id).run();
+      }
     } else {
+      // First attempt
       await env.DB.prepare(
-        "INSERT INTO user_class_progress (user_id, class_id, completed, correct_answers, total_questions, total_points, xp_earned, completed_at) VALUES (?, ?, 1, ?, ?, ?, ?, datetime('now'))"
-      ).bind(userId, class_id, correct, totalQuestions, totalPoints, xpEarned).run();
+        "INSERT INTO user_class_progress (user_id, class_id, completed, correct_answers, total_questions, total_points, xp_earned, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))"
+      ).bind(userId, class_id, passed ? 1 : 0, correct, totalQuestions, totalPoints, passed ? xpEarned : 0).run();
+
+      // BUG #3 FIX: Only add XP if passed
+      if (passed) {
+        await env.DB.prepare(
+          "UPDATE agent_profiles SET xp = xp + ?, total_classes_completed = total_classes_completed + 1, updated_at = datetime('now') WHERE user_id = ?"
+        ).bind(xpEarned, userId).run();
+      }
     }
 
-    // Update agent profile XP
-    await env.DB.prepare(
-      "UPDATE agent_profiles SET xp = xp + ?, total_classes_completed = total_classes_completed + 1, updated_at = datetime('now') WHERE user_id = ?"
-    ).bind(xpEarned, userId).run();
-
-    // Check level up
+    // Check level up (only if XP was awarded)
     var updated = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
     var newLevel = calcLevel(updated.xp);
-    var oldLevel = calcLevel(updated.xp - xpEarned);
+    var oldLevel = calcLevel(updated.xp - (passed ? xpEarned : 0));
 
     var leveledUp = false;
     if (newLevel > oldLevel) {
@@ -214,18 +226,25 @@ export async function onRequestPost(context) {
       await env.DB.prepare('UPDATE agent_profiles SET level = ? WHERE user_id = ?').bind(newLevel, userId).run();
       var milestones = { 3: 'Aprendiz', 5: 'Intermedio', 7: 'Avanzado', 10: 'Experto' };
       if (milestones[newLevel]) {
-        await env.DB.prepare(
-          "INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon) VALUES (?, 'level_up', ?, ?, 'fas fa-star')"
-        ).bind(userId, 'Nivel ' + newLevel + ': ' + milestones[newLevel], 'Alcanzaste el nivel ' + newLevel).run();
+        // BUG #6 FIX: Check for existing badge before inserting
+        var badgeExists = await env.DB.prepare("SELECT COUNT(*) as cnt FROM user_badges WHERE user_id = ? AND badge_type = 'level_up_" + newLevel + "'").bind(userId).first();
+        if (badgeExists.cnt === 0) {
+          await env.DB.prepare(
+            "INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon) VALUES (?, 'level_up_" + newLevel + "', ?, ?, 'fas fa-star')"
+          ).bind(userId, 'Nivel ' + newLevel + ': ' + milestones[newLevel], 'Alcanzaste el nivel ' + newLevel).run();
+        }
       }
     }
 
     // Badge for first class completed
     var progressCount = await env.DB.prepare('SELECT COUNT(*) as cnt FROM user_class_progress WHERE user_id = ? AND completed = 1').bind(userId).first();
     if (progressCount.cnt === 1) {
-      await env.DB.prepare(
-        "INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon) VALUES (?, 'first_class', 'Primera Clase', 'Completaste tu primera clase', 'fas fa-graduation-cap')"
-      ).bind(userId).run();
+      var firstExists = await env.DB.prepare("SELECT COUNT(*) as cnt FROM user_badges WHERE user_id = ? AND badge_type = 'first_class'").bind(userId).first();
+      if (firstExists.cnt === 0) {
+        await env.DB.prepare(
+          "INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon) VALUES (?, 'first_class', 'Primera Clase', 'Completaste tu primera clase', 'fas fa-graduation-cap')"
+        ).bind(userId).run();
+      }
     }
 
     // Perfect score badge (>= 90% with 5+ questions)
@@ -233,19 +252,20 @@ export async function onRequestPost(context) {
       var perfectExists = await env.DB.prepare("SELECT COUNT(*) as cnt FROM user_badges WHERE user_id = ? AND badge_type = 'perfect_score'").bind(userId).first();
       if (perfectExists.cnt === 0) {
         await env.DB.prepare(
-          "INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon) VALUES (?, 'perfect_score', 'Puntuacion Perfecta', 'Obtuviste ' + scorePercent + '% en un examen', 'fas fa-crown')"
+          "INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon) VALUES (?, 'perfect_score', 'Puntuacion Perfecta', 'Obtuviste ' + scorePercent + '% en un quiz', 'fas fa-crown')"
         ).bind(userId).run();
       }
     }
 
     return new Response(JSON.stringify({
-      message: scorePercent >= 70 ? 'Clase completada! Calificacion: ' + scorePercent + '%' : 'Clase completada con ' + scorePercent + '% (aprobado con 70%)',
+      message: passed ? 'Clase aprobada! Calificacion: ' + scorePercent + '%' : 'Clase no aprobada: ' + scorePercent + '% (necesitas 70%)',
       correct_answers: correct,
       total_questions: totalQuestions,
       total_points: totalPoints,
       max_points: maxPoints,
       score_percent: scorePercent,
-      xp_earned: xpEarned,
+      passed: passed,
+      xp_earned: passed ? xpEarned : 0,
       leveled_up: leveledUp,
       new_level: newLevel,
       old_level: oldLevel,

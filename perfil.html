@@ -909,9 +909,11 @@
       $('#hero-name').textContent = profileName;
       $('#level-text').textContent = `Nivel ${level}: ${getLevelName(level)}`;
 
-      // XP bar (assume max XP per level is 500 for display purposes)
-      const xpInLevel = xp % 500;
-      const xpPercent = Math.min((xpInLevel / 500) * 100, 100);
+      // XP bar - use correct level thresholds (non-linear)
+      const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
+      const xpInLevel = xp - (level <= 1 ? 0 : LEVEL_XP[level - 2]);
+      const xpNeeded = level >= 10 ? LEVEL_XP[9] - LEVEL_XP[8] : LEVEL_XP[level - 1] - (level <= 1 ? 0 : LEVEL_XP[level - 2]);
+      const xpPercent = level >= 10 ? 100 : Math.min((xpInLevel / xpNeeded) * 100, 100);
       $('#xp-text').textContent = `${xp} XP`;
       // Animate XP bar after a short delay
       setTimeout(() => {

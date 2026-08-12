@@ -1,5 +1,5 @@
 // GET: Get 15 random exam questions (without correct answers)
-// Requirements: level >= 7 (lowered from 10), not passed, max 3 attempts
+// Requirements: level >= 7, not passed, max 3 attempts
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
 
@@ -10,6 +10,17 @@ function calcLevel(xp) {
     if (xp >= LEVEL_XP[i]) { level = i + 1; break; }
   }
   return Math.min(level, 10);
+}
+
+async function ensureTables(db) {
+  var tables = [
+    "CREATE TABLE IF NOT EXISTS agent_profiles (user_id INTEGER PRIMARY KEY, level INTEGER DEFAULT 1, xp INTEGER DEFAULT 0, xp_to_next_level INTEGER DEFAULT 100, total_classes_completed INTEGER DEFAULT 0, exam_passed INTEGER DEFAULT 0, exam_passed_at TEXT, exam_attempts INTEGER DEFAULT 0, last_exam_at TEXT, is_partner INTEGER DEFAULT 0, partner_at TEXT, graduated INTEGER DEFAULT 0, graduated_at TEXT, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS agent_classes (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, content TEXT DEFAULT '', xp_reward INTEGER DEFAULT 10, sort_order INTEGER DEFAULT 0, is_active INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS class_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, class_id INTEGER NOT NULL, question TEXT NOT NULL, option_a TEXT NOT NULL, option_b TEXT NOT NULL, option_c TEXT DEFAULT '', option_d TEXT DEFAULT '', correct_answer TEXT NOT NULL, explanation TEXT DEFAULT '', points INTEGER DEFAULT 10, sort_order INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))"
+  ];
+  for (var i = 0; i < tables.length; i++) {
+    try { await db.prepare(tables[i]).run(); } catch(e) {}
+  }
 }
 
 export async function onRequestOptions() {
@@ -23,6 +34,9 @@ export async function onRequestGet(context) {
 
     const { env } = context;
     const userId = auth.user.id;
+
+    // BUG #7 FIX: Ensure tables exist
+    await ensureTables(env.DB);
 
     // Get profile
     let profile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();

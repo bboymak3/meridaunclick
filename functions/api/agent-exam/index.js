@@ -13,6 +13,18 @@ function calcLevel(xp) {
   return Math.min(level, 10);
 }
 
+async function ensureTables(db) {
+  var tables = [
+    "CREATE TABLE IF NOT EXISTS agent_profiles (user_id INTEGER PRIMARY KEY, level INTEGER DEFAULT 1, xp INTEGER DEFAULT 0, xp_to_next_level INTEGER DEFAULT 100, total_classes_completed INTEGER DEFAULT 0, exam_passed INTEGER DEFAULT 0, exam_passed_at TEXT, exam_attempts INTEGER DEFAULT 0, last_exam_at TEXT, is_partner INTEGER DEFAULT 0, partner_at TEXT, graduated INTEGER DEFAULT 0, graduated_at TEXT, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS user_badges (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, badge_type TEXT NOT NULL, badge_name TEXT NOT NULL, badge_description TEXT DEFAULT '', badge_icon TEXT DEFAULT 'fas fa-medal', earned_at TEXT DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS agent_classes (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, description TEXT, content TEXT DEFAULT '', xp_reward INTEGER DEFAULT 10, sort_order INTEGER DEFAULT 0, is_active INTEGER DEFAULT 1, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS class_questions (id INTEGER PRIMARY KEY AUTOINCREMENT, class_id INTEGER NOT NULL, question TEXT NOT NULL, option_a TEXT NOT NULL, option_b TEXT NOT NULL, option_c TEXT DEFAULT '', option_d TEXT DEFAULT '', correct_answer TEXT NOT NULL, explanation TEXT DEFAULT '', points INTEGER DEFAULT 10, sort_order INTEGER DEFAULT 0, created_at TEXT DEFAULT (datetime('now')))"
+  ];
+  for (var i = 0; i < tables.length; i++) {
+    try { await db.prepare(tables[i]).run(); } catch(e) {}
+  }
+}
+
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
 }
@@ -24,6 +36,9 @@ export async function onRequestGet(context) {
 
     const { env } = context;
     const userId = auth.user.id;
+
+    // BUG #7 FIX: Ensure tables exist
+    await ensureTables(env.DB);
 
     // Get profile
     let profile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
@@ -63,12 +78,14 @@ export async function onRequestPost(context) {
     const body = await context.request.json();
     const { answers } = body;
 
-    // Accept variable number of answers (15 max)
     if (!answers || !Array.isArray(answers) || answers.length < 10) {
       return new Response(JSON.stringify({ error: 'Debes responder al menos 10 preguntas' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
+
+    // BUG #7 FIX: Ensure tables exist
+    await ensureTables(env.DB);
 
     // Get profile
     let profile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
@@ -143,27 +160,34 @@ export async function onRequestPost(context) {
     `).bind(userId).run();
 
     if (passed) {
-      // Award exam passed badge and partner status
-      await env.DB.batch([
-        env.DB.prepare(`
-          UPDATE agent_profiles SET
-            exam_passed = 1,
-            exam_passed_at = datetime('now'),
-            is_partner = 1,
-            partner_at = COALESCE(partner_at, datetime('now')),
-            updated_at = datetime('now')
-          WHERE user_id = ?
-        `).bind(userId),
-        env.DB.prepare(`
-          INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon)
-          VALUES (?, 'exam_passed', 'Examen Aprobado', 'Aprobaste el examen final con ' + scorePercent + '% de calificacion', 'fas fa-trophy')
-        `).bind(userId),
-        env.DB.prepare(`
-          INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon)
-          VALUES (?, 'partner', 'Partner Digital Certificado', 'Eres un Partner Digital certificado de AunClick', 'fas fa-certificate')
-        `).bind(userId),
-      ]);
+      // BUG #6 FIX: Check for existing badges before inserting (prevent duplicates)
+      var existingPassed = await env.DB.prepare("SELECT COUNT(*) as cnt FROM user_badges WHERE user_id = ? AND badge_type = 'exam_passed'").bind(userId).first();
+
+      if (existingPassed.cnt === 0) {
+        // Award exam passed badge and partner status
+        await env.DB.batch([
+          env.DB.prepare(`
+            UPDATE agent_profiles SET
+              exam_passed = 1,
+              exam_passed_at = datetime('now'),
+              is_partner = 1,
+              partner_at = COALESCE(partner_at, datetime('now')),
+              updated_at = datetime('now')
+            WHERE user_id = ?
+          `).bind(userId),
+          env.DB.prepare(`
+            INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon)
+            VALUES (?, 'exam_passed', 'Examen Aprobado', 'Aprobaste el examen final con ' + scorePercent + '% de calificacion', 'fas fa-trophy')
+          `).bind(userId),
+          env.DB.prepare(`
+            INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon)
+            VALUES (?, 'partner', 'Partner Digital Certificado', 'Eres un Partner Digital certificado de AunClick', 'fas fa-certificate')
+          `).bind(userId),
+        ]);
+      }
     }
+
+    var newAttempts = (profile.exam_attempts || 0) + 1;
 
     return new Response(JSON.stringify({
       passed,
@@ -172,11 +196,11 @@ export async function onRequestPost(context) {
       total_questions: answers.length,
       total_points: totalPoints,
       max_points: maxPoints,
-      exam_attempts: (profile.exam_attempts || 0) + 1,
-      attempts_remaining: Math.max(0, 2 - profile.exam_attempts),
+      exam_attempts: newAttempts,
+      attempts_remaining: Math.max(0, 3 - newAttempts),
       message: passed
         ? 'Felicidades! Aprobaste el examen con ' + scorePercent + '% y eres ahora un Partner Digital Certificado!'
-        : 'No aprobaste. Obtuviste ' + scorePercent + '% (necesitas 80%). Intentos restantes: ' + Math.max(0, 2 - profile.exam_attempts) + '.',
+        : 'No aprobaste. Obtuviste ' + scorePercent + '% (necesitas 80%). Intentos restantes: ' + Math.max(0, 3 - newAttempts) + '.',
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
