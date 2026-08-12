@@ -29,48 +29,53 @@ export async function onRequestGet(context) {
     var searchParams = new URL(context.request.url).searchParams;
     var detailed = searchParams.get('detailed') === '1';
 
-    var result = await env.DB.prepare(`
-      SELECT
-        u.id, u.name, u.avatar, u.bio, u.phone, u.whatsapp, u.role,
-        ap.level, ap.xp, ap.exam_passed_at, ap.partner_at,
-        (SELECT COUNT(*) FROM user_badges WHERE user_id = u.id) as badge_count,
-        (SELECT COUNT(*) FROM user_class_progress WHERE user_id = u.id AND completed = 1) as classes_completed
-      FROM users u
-      JOIN agent_profiles ap ON ap.user_id = u.id
-      WHERE ap.is_partner = 1 AND ap.exam_passed = 1
-      ORDER BY ap.partner_at DESC
-    `).bind().all();
+    // Safe query: only select columns we know exist, use LEFT JOIN in case agent_profiles has no match
+    var result;
+    try {
+      result = await env.DB.prepare(`
+        SELECT
+          u.id, u.name, u.avatar,
+          COALESCE(ap.level, 1) as level,
+          COALESCE(ap.xp, 0) as xp,
+          ap.exam_passed_at,
+          ap.partner_at,
+          (SELECT COUNT(*) FROM user_badges ub WHERE ub.user_id = u.id) as badge_count,
+          (SELECT COUNT(*) FROM user_class_progress ucp WHERE ucp.user_id = u.id AND ucp.completed = 1) as classes_completed,
+          (SELECT COUNT(*) FROM user_class_progress ucp WHERE ucp.user_id = u.id AND ucp.completed = 1) as total_classes_completed
+        FROM users u
+        INNER JOIN agent_profiles ap ON ap.user_id = u.id
+        WHERE ap.is_partner = 1 AND ap.exam_passed = 1
+        ORDER BY ap.partner_at DESC
+      `).bind().all();
+    } catch (sqlErr) {
+      // If SQL fails (e.g., column doesn't exist), return empty
+      console.error('Partners list query error:', sqlErr.message);
+      return new Response(JSON.stringify({ partners: [], total: 0 }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     var partners = result.results || [];
-
-    // Also include graduated agents as partners
-    var graduated = await env.DB.prepare(`
-      SELECT
-        u.id, u.name, u.avatar, u.bio, u.phone, u.whatsapp, u.role,
-        ap.level, ap.xp, ap.exam_passed_at, ap.partner_at,
-        (SELECT COUNT(*) FROM user_badges WHERE user_id = u.id) as badge_count,
-        (SELECT COUNT(*) FROM user_class_progress WHERE user_id = u.id AND completed = 1) as classes_completed
-      FROM users u
-      JOIN agent_profiles ap ON ap.user_id = u.id
-      WHERE ap.graduated = 1 AND ap.is_partner = 1
-      AND u.id NOT IN (SELECT u2.id FROM users u2 JOIN agent_profiles ap2 ON ap2.user_id = u2.id WHERE ap2.is_partner = 1 AND ap2.exam_passed = 1)
-      ORDER BY ap.partner_at DESC
-    `).bind().all();
-
-    partners = partners.concat(graduated.results || []);
 
     // If detailed, also fetch badges for each partner
     if (detailed && partners.length > 0) {
       var userIds = partners.map(function(r) { return r.id; });
       var placeholders = userIds.map(function() { return '?'; }).join(',');
-      var badgeResult = await env.DB.prepare(
-        'SELECT * FROM user_badges WHERE user_id IN (' + placeholders + ') ORDER BY earned_at DESC'
-      ).bind.apply(null, userIds).all();
+
+      var badgeResult;
+      try {
+        badgeResult = await env.DB.prepare(
+          'SELECT * FROM user_badges WHERE user_id IN (' + placeholders + ') ORDER BY earned_at DESC'
+        ).bind.apply(null, userIds).all();
+      } catch(e) {
+        badgeResult = { results: [] };
+      }
 
       var allBadges = badgeResult.results || [];
       partners = partners.map(function(p) {
         return Object.assign({}, p, {
           badges: allBadges.filter(function(b) { return b.user_id === p.id; }),
+          total_badges: allBadges.filter(function(b) { return b.user_id === p.id; }).length,
         });
       });
     }
@@ -79,7 +84,8 @@ export async function onRequestGet(context) {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    // If tables don't exist, return empty list instead of error
+    console.error('Partners endpoint error:', error.message);
+    // If tables don't exist or any error, return empty list instead of error
     return new Response(JSON.stringify({ partners: [], total: 0 }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

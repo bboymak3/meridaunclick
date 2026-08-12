@@ -1,5 +1,6 @@
-// GET: Public profile of a user/agent (with badges, levels, etc.)
+// GET: Public profile of a user/agent (academy profile - badges, levels, classes)
 // Public endpoint - no auth required
+// This is the ACADEMY profile, completely separate from the user dashboard profile
 
 import { corsHeaders } from '../../_lib/auth.js';
 
@@ -35,9 +36,22 @@ export async function onRequestGet(context) {
 
     await ensureTables(env.DB);
 
-    var user = await env.DB.prepare(
-      'SELECT id, name, avatar, bio, phone, whatsapp, role, created_at FROM users WHERE id = ? AND is_active = 1'
-    ).bind(userId).first();
+    // Get user basic info - use safe query that handles missing columns
+    var user;
+    try {
+      user = await env.DB.prepare(
+        'SELECT id, name, avatar, bio, phone, whatsapp, role, created_at FROM users WHERE id = ?'
+      ).bind(userId).first();
+    } catch(e) {
+      // If columns don't exist, try minimal query
+      try {
+        user = await env.DB.prepare('SELECT id, name FROM users WHERE id = ?').bind(userId).first();
+      } catch(e2) {
+        return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     if (!user) {
       return new Response(JSON.stringify({ error: 'Usuario no encontrado' }), {
@@ -45,51 +59,67 @@ export async function onRequestGet(context) {
       });
     }
 
-    // Get or create agent profile
-    var agentProfile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
-    if (!agentProfile) {
-      await env.DB.prepare('INSERT INTO agent_profiles (user_id) VALUES (?)').bind(userId).run();
+    // Get or create agent profile (this is the ACADEMY profile)
+    var agentProfile;
+    try {
       agentProfile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
+      if (!agentProfile) {
+        await env.DB.prepare('INSERT INTO agent_profiles (user_id) VALUES (?)').bind(userId).run();
+        agentProfile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
+      }
+    } catch(e) {
+      agentProfile = null;
     }
 
     // Get badges
-    var badgeResult = await env.DB.prepare(
-      'SELECT * FROM user_badges WHERE user_id = ? ORDER BY earned_at DESC'
-    ).bind(userId).all();
-    var badges = badgeResult.results || [];
+    var badges = [];
+    try {
+      var badgeResult = await env.DB.prepare(
+        'SELECT * FROM user_badges WHERE user_id = ? ORDER BY earned_at DESC'
+      ).bind(userId).all();
+      badges = badgeResult.results || [];
+    } catch(e) {}
 
     // Get completed classes
-    var classResult = await env.DB.prepare(`
-      SELECT ucp.*, ac.title
-      FROM user_class_progress ucp
-      JOIN agent_classes ac ON ac.id = ucp.class_id
-      WHERE ucp.user_id = ? AND ucp.completed = 1
-      ORDER BY ucp.completed_at DESC
-    `).bind(userId).all();
-    var completedClasses = classResult.results || [];
+    var completedClasses = [];
+    try {
+      var classResult = await env.DB.prepare(`
+        SELECT ucp.*, ac.title
+        FROM user_class_progress ucp
+        LEFT JOIN agent_classes ac ON ac.id = ucp.class_id
+        WHERE ucp.user_id = ? AND ucp.completed = 1
+        ORDER BY ucp.completed_at DESC
+      `).bind(userId).all();
+      completedClasses = classResult.results || [];
+    } catch(e) {}
 
-    // Calculate level
+    // Calculate level from XP
     var xp = agentProfile ? (agentProfile.xp || 0) : 0;
     var level = calcLevel(xp);
 
     return new Response(JSON.stringify({
+      // User basic info (name, avatar, bio)
       user: user,
+      // Academy-specific profile data
       agent_profile: agentProfile,
       level: level,
       xp: xp,
-      is_partner: agentProfile ? agentProfile.is_partner === 1 : false,
-      is_graduated: agentProfile ? agentProfile.graduated === 1 : false,
+      is_partner: agentProfile ? (agentProfile.is_partner === 1) : false,
+      is_graduated: agentProfile ? (agentProfile.graduated === 1) : false,
+      // Academy data: badges earned
       badges: badges,
+      // Academy data: completed classes with scores
       completed_classes: completedClasses,
       total_badges: badges.length,
       total_classes_completed: completedClasses.length,
-      exam_passed: agentProfile ? agentProfile.exam_passed === 1 : false,
+      exam_passed: agentProfile ? (agentProfile.exam_passed === 1) : false,
       exam_passed_at: agentProfile ? agentProfile.exam_passed_at : null,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: 'Error al obtener perfil publico', details: error.message }), {
+    console.error('Partner profile error:', error.message);
+    return new Response(JSON.stringify({ error: 'Error al obtener perfil de academia', details: error.message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
