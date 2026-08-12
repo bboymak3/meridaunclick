@@ -101,6 +101,8 @@ export async function onRequestGet(context) {
           last_exam_at TEXT,
           is_partner INTEGER DEFAULT 0,
           partner_at TEXT,
+          graduated INTEGER DEFAULT 0,
+          graduated_at TEXT,
           created_at TEXT DEFAULT (datetime('now')),
           updated_at TEXT DEFAULT (datetime('now')),
           FOREIGN KEY (user_id) REFERENCES users(id)
@@ -152,6 +154,21 @@ export async function onRequestGet(context) {
       results.push({ table: 'user_class_progress', column: 'total_points', status: 'added' });
     } catch (e) {
       results.push({ table: 'user_class_progress', column: 'total_points', status: 'already exists or error: ' + (e.message || '').substring(0, 50) });
+    }
+
+    // 9. Ensure graduated columns in agent_profiles (may be missing from older migrations)
+    try {
+      await env.DB.prepare('ALTER TABLE agent_profiles ADD COLUMN graduated INTEGER DEFAULT 0').run();
+      results.push({ table: 'agent_profiles', column: 'graduated', status: 'added' });
+    } catch (e) {
+      results.push({ table: 'agent_profiles', column: 'graduated', status: 'already exists or error: ' + (e.message || '').substring(0, 50) });
+    }
+
+    try {
+      await env.DB.prepare('ALTER TABLE agent_profiles ADD COLUMN graduated_at TEXT').run();
+      results.push({ table: 'agent_profiles', column: 'graduated_at', status: 'added' });
+    } catch (e) {
+      results.push({ table: 'agent_profiles', column: 'graduated_at', status: 'already exists or error: ' + (e.message || '').substring(0, 50) });
     }
 
     return new Response(JSON.stringify({ success: true, message: 'Migracion Agent Academy completada', results }), {

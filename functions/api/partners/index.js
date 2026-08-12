@@ -13,6 +13,14 @@ async function ensureTables(db) {
   for (var i = 0; i < tables.length; i++) {
     try { await db.prepare(tables[i]).run(); } catch(e) {}
   }
+  // Ensure columns that may be missing (migration may have created table without these)
+  var alters = [
+    "ALTER TABLE agent_profiles ADD COLUMN graduated INTEGER DEFAULT 0",
+    "ALTER TABLE agent_profiles ADD COLUMN graduated_at TEXT"
+  ];
+  for (var j = 0; j < alters.length; j++) {
+    try { await db.prepare(alters[j]).run(); } catch(e) { /* column already exists */ }
+  }
 }
 
 export async function onRequestOptions() {
