@@ -39,12 +39,14 @@ export async function onRequestGet(context) {
           COALESCE(ap.xp, 0) as xp,
           ap.exam_passed_at,
           ap.partner_at,
+          ap.graduated,
+          ap.graduated_at,
           (SELECT COUNT(*) FROM user_badges ub WHERE ub.user_id = u.id) as badge_count,
           (SELECT COUNT(*) FROM user_class_progress ucp WHERE ucp.user_id = u.id AND ucp.completed = 1) as classes_completed,
           (SELECT COUNT(*) FROM user_class_progress ucp WHERE ucp.user_id = u.id AND ucp.completed = 1) as total_classes_completed
         FROM users u
         INNER JOIN agent_profiles ap ON ap.user_id = u.id
-        WHERE ap.is_partner = 1 AND ap.exam_passed = 1
+        WHERE ap.is_partner = 1 AND (ap.exam_passed = 1 OR ap.graduated = 1)
         ORDER BY ap.partner_at DESC
       `).bind().all();
     } catch (sqlErr) {
