@@ -74,7 +74,7 @@ export async function onRequestPut(context) {
       title ? title.trim() : null,
       description || null,
       content !== undefined ? content : null,
-      xp_reward || null,
+      xp_reward !== undefined ? xp_reward : null,
       sort_order !== undefined ? sort_order : null,
       is_active !== undefined ? (is_active ? 1 : 0) : null,
       classId

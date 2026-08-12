@@ -6507,7 +6507,7 @@ if (!window._renderVideoList) {
 
     window.editQuestionInline = async function(qId) {
         try {
-            var data = await api.get('/agent-classes/' + _academyCurrentClassId);
+            var data = await api.get('/agent-classes/' + _academyCurrentClassId + '/questions');
             var q = (data.questions || []).find(function(q) { return q.id === qId; });
             if (!q) { showToast('Pregunta no encontrada', 'error'); return; }
             document.getElementById('academyInlineQId').value = q.id;

@@ -975,7 +975,7 @@
       if (badges.length > 0) {
         let badgesHtml = '<div class="badges-grid">';
         badges.forEach(b => {
-          const icon = b.badge_icon || 'fas fa-medal';
+          const icon = (b.badge_icon || 'fas fa-medal').replace(/[^a-zA-Z0-9\s\-]/g, '');
           badgesHtml += `
             <div class="badge-item">
               <div class="badge-icon-wrap"><i class="${icon}"></i></div>

@@ -816,7 +816,7 @@ button:active{transform:scale(.97)}
     }
 
     const cards=badges.map(function(b){
-      const icon=b.badge_icon||'fas fa-medal';
+      const icon=(b.badge_icon||'fas fa-medal').replace(/[^a-zA-Z0-9\s\-]/g,'');
       const earnedDate=b.earned_at ? formatDate(b.earned_at) : '';
       return `
       <div class="badge-card">

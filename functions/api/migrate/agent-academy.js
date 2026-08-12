@@ -171,6 +171,24 @@ export async function onRequestGet(context) {
       results.push({ table: 'agent_profiles', column: 'graduated_at', status: 'already exists or error: ' + (e.message || '').substring(0, 50) });
     }
 
+    // 10. Create class_assignments table (for assign_class admin action)
+    try {
+      await env.DB.prepare(`
+        CREATE TABLE IF NOT EXISTS class_assignments (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          class_id INTEGER NOT NULL,
+          user_id INTEGER NOT NULL,
+          assigned_by INTEGER NOT NULL,
+          status TEXT DEFAULT 'pending',
+          assigned_at TEXT DEFAULT (datetime('now')),
+          UNIQUE(class_id, user_id)
+        )
+      `).run();
+      results.push({ table: 'class_assignments', status: 'created' });
+    } catch (e) {
+      results.push({ table: 'class_assignments', status: 'error: ' + (e.message || '').substring(0, 50) });
+    }
+
     return new Response(JSON.stringify({ success: true, message: 'Migracion Agent Academy completada', results }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
