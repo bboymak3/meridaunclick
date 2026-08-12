@@ -6318,6 +6318,18 @@ if (!window._renderVideoList) {
                 showToast('Lista actualizada', 'success');
             });
         }
+        var analyticsBtn = document.getElementById('academyAnalyticsBtn');
+        var closeAnalyticsBtn = document.getElementById('academyCloseAnalyticsBtn');
+        if (analyticsBtn && !analyticsBtn._bound) {
+            analyticsBtn._bound = true;
+            analyticsBtn.addEventListener('click', loadAcademyAnalytics);
+        }
+        if (closeAnalyticsBtn && !closeAnalyticsBtn._bound) {
+            closeAnalyticsBtn._bound = true;
+            closeAnalyticsBtn.addEventListener('click', function() {
+                document.getElementById('academyAnalyticsPanel').classList.add('hidden');
+            });
+        }
     }
 
     async function loadAcademyClasses() {
@@ -6772,6 +6784,68 @@ if (!window._renderVideoList) {
             } catch(e) { showToast('Error: ' + e.message, 'error'); }
         });
     };
+
+    async function loadAcademyAnalytics() {
+        var panel = document.getElementById('academyAnalyticsPanel');
+        var content = document.getElementById('academyAnalyticsContent');
+        if (!panel || !content) return;
+        panel.classList.remove('hidden');
+        content.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando analíticas...</div>';
+        try {
+            var data = await api.post('/admin/academy-analytics', {});
+            var o = data.overview;
+            var html = '';
+            // Overview cards
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px;">';
+            var cards = [
+                {label:'Clases', val:o.total_classes, icon:'fa-book', color:'#7c3aed'},
+                {label:'Preguntas', val:o.total_questions, icon:'fa-question-circle', color:'#2563eb'},
+                {label:'Agentes', val:o.total_agents, icon:'fa-users', color:'#059669'},
+                {label:'Aprobación Clases', val:o.overall_pass_rate+'%', icon:'fa-check-double', color:o.overall_pass_rate >= 70 ? '#059669' : '#dc2626'},
+                {label:'Aprobación Examen', val:o.exam_pass_rate+'%', icon:'fa-trophy', color:o.exam_pass_rate >= 70 ? '#059669' : '#dc2626'},
+                {label:'Partners', val:o.total_partners, icon:'fa-certificate', color:'#d97706'},
+            ];
+            cards.forEach(function(c) {
+                html += '<div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center;"><div style="font-size:1.3rem;font-weight:700;color:' + c.color + ';">' + c.val + '</div><div style="font-size:0.75rem;color:#6b7280;"><i class="fas ' + c.icon + '"></i> ' + c.label + '</div></div>';
+            });
+            html += '</div>';
+
+            // Class pass rates
+            if (data.class_stats && data.class_stats.length > 0) {
+                html += '<h4 style="margin:16px 0 8px;font-size:0.95rem;color:#374151;"><i class="fas fa-chart-bar" style="color:#7c3aed;"></i> Tasa de Aprobación por Clase</h4>';
+                html += '<div style="overflow-x:auto;"><table class="admin-table" style="width:100%;font-size:0.82rem;"><thead><tr><th>Clase</th><th>Módulo</th><th>Intentos</th><th>Aprobados</th><th>Tasa</th></tr></thead><tbody>';
+                data.class_stats.forEach(function(c) {
+                    var rateColor = c.pass_rate >= 70 ? '#059669' : c.pass_rate >= 50 ? '#d97706' : '#dc2626';
+                    html += '<tr><td>' + _esc(c.title) + '</td><td><span style="background:#f5f3ff;color:#7c3aed;padding:2px 8px;border-radius:10px;font-size:0.72rem;">' + _esc(c.module || 'General') + '</span></td><td>' + c.total_attempts + '</td><td>' + c.passed + '</td><td style="color:' + rateColor + ';font-weight:700;">' + c.pass_rate + '%</td></tr>';
+                });
+                html += '</tbody></table></div>';
+            }
+
+            // Failed questions
+            if (data.failed_questions && data.failed_questions.length > 0) {
+                html += '<h4 style="margin:16px 0 8px;font-size:0.95rem;color:#374151;"><i class="fas fa-exclamation-triangle" style="color:#dc2626;"></i> Preguntas con Mayor Tasa de Fallo</h4>';
+                data.failed_questions.forEach(function(q) {
+                    html += '<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px;margin-bottom:8px;"><div style="font-size:0.82rem;"><strong>Q' + q.id + '</strong> (' + _esc(q.class_title) + ')</div><div style="font-size:0.78rem;color:#6b7280;margin-top:4px;">' + _esc(q.question) + '</div><div style="font-size:0.72rem;margin-top:4px;">' + q.times_answered + ' intentos, ' + q.times_correct + ' correctos (' + q.fail_rate + '% fallo)</div></div>';
+                });
+            }
+
+            // Level distribution
+            if (data.level_distribution && data.level_distribution.length > 0) {
+                html += '<h4 style="margin:16px 0 8px;font-size:0.95rem;color:#374151;"><i class="fas fa-layer-group" style="color:#2563eb;"></i> Distribución de Niveles</h4>';
+                html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+                var lvlColors = ['#6b7280','#7c3aed','#2563eb','#059669','#d97706','#dc2626','#8b5cf6','#0891b2','#65a30d','#ea580c'];
+                data.level_distribution.forEach(function(l) {
+                    var lc = lvlColors[Math.min(l.level - 1, 9)];
+                    html += '<div style="background:' + lc + '15;border:1px solid ' + lc + '30;border-radius:8px;padding:8px 14px;text-align:center;min-width:60px;"><div style="font-size:1.1rem;font-weight:700;color:' + lc + ';">' + l.count + '</div><div style="font-size:0.7rem;color:#6b7280;">Nivel ' + l.level + '</div></div>';
+                });
+                html += '</div>';
+            }
+
+            content.innerHTML = html;
+        } catch(e) {
+            content.innerHTML = '<div style="text-align:center;color:#f59e0b;padding:20px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar analíticas: ' + _esc(e.message) + '</p></div>';
+        }
+    }
 
 
     // ─── Initialize on DOM Ready ────────────────────────────────

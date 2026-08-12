@@ -775,6 +775,7 @@
                             <div style="display:flex;gap:8px;">
                                 <button class="btn btn-primary" id="academyAddClassBtn" style="background:#7c3aed;"><i class="fas fa-plus"></i> Nueva Clase</button>
                                 <button class="btn btn-secondary" id="academyRefreshBtn" title="Refrescar lista"><i class="fas fa-sync-alt"></i></button>
+                                <button class="btn btn-secondary" id="academyAnalyticsBtn" title="Analíticas" style="color:#7c3aed;border-color:#ddd6fe;"><i class="fas fa-chart-bar"></i></button>
                                 <button class="btn btn-secondary" onclick="window.open('/partners.html','_blank')"><i class="fas fa-certificate"></i> Ver Partners</button>
                             </div>
                         </div>
@@ -947,6 +948,17 @@
                                     <tr><td colspan="8" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+
+                        <!-- Analytics Panel (hidden by default) -->
+                        <div class="admin-card hidden" id="academyAnalyticsPanel" style="padding:24px;margin-bottom:20px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                                <h3 style="margin:0;font-size:1.1rem;"><i class="fas fa-chart-bar" style="color:#7c3aed;"></i> Analíticas de Academia</h3>
+                                <button class="btn btn-secondary btn-sm" id="academyCloseAnalyticsBtn"><i class="fas fa-times"></i> Cerrar</button>
+                            </div>
+                            <div id="academyAnalyticsContent" style="font-size:0.88rem;color:#374151;">
+                                <div style="text-align:center;padding:20px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando analíticas...</div>
+                            </div>
                         </div>
                     </div>
                 </div>
