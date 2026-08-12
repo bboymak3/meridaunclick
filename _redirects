@@ -18,7 +18,7 @@ https://www.holax.com.ve/* https://holax.com.ve/:splat 301
 /eventos /entretenimiento.html 301
 /negocio.html /search.html 301
 /registro.html /new-business.html 301
-/perfil.html /dashboard.html 301
+# /perfil.html ya no se redirige — es la página pública de perfil del partner
 
 # Sitemap: ahora manejado directamente por Function en /functions/sitemap.xml/index.js
 # (el status 200 en _redirects no invoca Functions de forma confiable)

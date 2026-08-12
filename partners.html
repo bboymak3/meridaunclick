@@ -421,7 +421,7 @@
           .replace(/>/g, '&gt;');
       }
 
-      fetch(window.location.origin + '/partners?detailed=1')
+      fetch(window.location.origin + '/api/partners?detailed=1')
         .then(function (res) {
           if (!res.ok) throw new Error(res.status);
           return res.json();
