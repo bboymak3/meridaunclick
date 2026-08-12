@@ -6255,6 +6255,8 @@ if (!window._renderVideoList) {
                 document.getElementById('academyClassXP').value = '10';
                 document.getElementById('academyClassOrder').value = '0';
                 document.getElementById('academyClassActive').checked = true;
+                document.getElementById('academyClassModule').value = 'General';
+                document.getElementById('academyClassModuleOrder').value = '0';
                 document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Clase';
                 document.getElementById('academyClassEditor').classList.remove('hidden');
                 window._pendingQuestions = [];
@@ -6348,7 +6350,18 @@ if (!window._renderVideoList) {
                 return;
             }
             var html = '';
+            // Group classes by module
+            var grouped = {};
             classes.forEach(function(c) {
+                var mod = c.module || 'General';
+                if (!grouped[mod]) grouped[mod] = [];
+                grouped[mod].push(c);
+            });
+            var modColors = {'General':'#6b7280','Fundamentos':'#059669','Intermedio':'#2563eb','Avanzado':'#d97706','Examen Final':'#dc2626'};
+            Object.keys(grouped).sort().forEach(function(mod) {
+                var mColor = modColors[mod] || '#7c3aed';
+                html += '<tr><td colspan="7" style="background:linear-gradient(90deg,' + mColor + '12,' + mColor + '06);padding:10px 12px;font-weight:700;font-size:0.85rem;color:' + mColor + ';"><i class="fas fa-book"></i> ' + _esc(mod) + ' (' + grouped[mod].length + ' clases)</td></tr>';
+                grouped[mod].forEach(function(c) {
                 html += '<tr>';
                 html += '<td><strong>' + _esc(c.title) + '</strong></td>';
                 html += '<td><button onclick="loadAcademyQuestions(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2563eb;"><i class="fas fa-question-circle"></i> ' + (c.question_count || 0) + '</button></td>';
@@ -6362,6 +6375,7 @@ if (!window._renderVideoList) {
                     '<button onclick="academyDeleteClass(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #fca5a5;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#dc2626;" title="Eliminar"><i class="fas fa-trash"></i></button>' +
                     '</div></td>';
                 html += '</tr>';
+                });
             });
             tbody.innerHTML = html;
         } catch(e) {
@@ -6380,7 +6394,9 @@ if (!window._renderVideoList) {
             content: document.getElementById('academyClassContent').value,
             xp_reward: parseInt(document.getElementById('academyClassXP').value) || 10,
             sort_order: parseInt(document.getElementById('academyClassOrder').value) || 0,
-            is_active: document.getElementById('academyClassActive').checked
+            is_active: document.getElementById('academyClassActive').checked,
+            module: document.getElementById('academyClassModule').value,
+            module_order: parseInt(document.getElementById('academyClassModuleOrder').value) || 0
         };
         try {
             var classId = id || null;
@@ -6422,6 +6438,8 @@ if (!window._renderVideoList) {
             document.getElementById('academyClassXP').value = cls.xp_reward || 10;
             document.getElementById('academyClassOrder').value = cls.sort_order || 0;
             document.getElementById('academyClassActive').checked = cls.is_active === 1;
+            document.getElementById('academyClassModule').value = cls.module || 'General';
+            document.getElementById('academyClassModuleOrder').value = cls.module_order || 0;
             document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-edit" style="color:#7c3aed;"></i> Editar Clase: ' + _esc(cls.title);
             document.getElementById('academyClassEditor').classList.remove('hidden');
             try {

@@ -836,6 +836,22 @@
                             <div style="display:flex;gap:10px;align-items:center;">
                                 <label style="font-weight:600;font-size:0.85rem;"><input type="checkbox" id="academyClassActive" checked style="accent-color:#7c3aed;"> Activa</label>
                             </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Módulo</label>
+                                    <select id="academyClassModule" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                        <option value="General">General</option>
+                                        <option value="Fundamentos">Fundamentos</option>
+                                        <option value="Intermedio">Intermedio</option>
+                                        <option value="Avanzado">Avanzado</option>
+                                        <option value="Examen Final">Examen Final</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Orden en Módulo</label>
+                                    <input type="number" id="academyClassModuleOrder" value="0" min="0" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                </div>
+                            </div>
                             <!-- AI Question Generator -->
                             <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:14px;">
                                 <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:#7c3aed;"><i class="fas fa-robot"></i> Generar Preguntas con IA</div>

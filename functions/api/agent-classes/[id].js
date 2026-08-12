@@ -51,7 +51,7 @@ export async function onRequestPut(context) {
     const { env, params } = context;
     const classId = params.id;
     const body = await context.request.json();
-    const { title, description, content, xp_reward, sort_order, is_active } = body;
+    const { title, description, content, xp_reward, sort_order, is_active, module, module_order } = body;
 
     const existing = await env.DB.prepare('SELECT id FROM agent_classes WHERE id = ?').bind(classId).first();
     if (!existing) {
@@ -68,6 +68,8 @@ export async function onRequestPut(context) {
         xp_reward = COALESCE(?, xp_reward),
         sort_order = COALESCE(?, sort_order),
         is_active = COALESCE(?, is_active),
+        module = COALESCE(?, module),
+        module_order = COALESCE(?, module_order),
         updated_at = datetime('now')
       WHERE id = ?
     `).bind(
@@ -77,6 +79,8 @@ export async function onRequestPut(context) {
       xp_reward !== undefined ? xp_reward : null,
       sort_order !== undefined ? sort_order : null,
       is_active !== undefined ? (is_active ? 1 : 0) : null,
+      module || null,
+      module_order !== undefined ? module_order : null,
       classId
     ).run();
 

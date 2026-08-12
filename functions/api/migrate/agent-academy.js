@@ -189,6 +189,21 @@ export async function onRequestGet(context) {
       results.push({ table: 'class_assignments', status: 'error: ' + (e.message || '').substring(0, 50) });
     }
 
+    // 11. Add module columns to agent_classes
+    try {
+      await env.DB.prepare('ALTER TABLE agent_classes ADD COLUMN module TEXT DEFAULT \'General\'').run();
+      results.push({ table: 'agent_classes', column: 'module', status: 'added' });
+    } catch (e) {
+      results.push({ table: 'agent_classes', column: 'module', status: 'already exists' });
+    }
+
+    try {
+      await env.DB.prepare('ALTER TABLE agent_classes ADD COLUMN module_order INTEGER DEFAULT 0').run();
+      results.push({ table: 'agent_classes', column: 'module_order', status: 'added' });
+    } catch (e) {
+      results.push({ table: 'agent_classes', column: 'module_order', status: 'already exists' });
+    }
+
     return new Response(JSON.stringify({ success: true, message: 'Migracion Agent Academy completada', results }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

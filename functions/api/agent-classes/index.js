@@ -17,7 +17,9 @@ async function ensureTables(db) {
   // Ensure columns added by later migrations exist (migration may have created tables without these)
   var alters = [
     "ALTER TABLE class_questions ADD COLUMN points INTEGER DEFAULT 10",
-    "ALTER TABLE user_class_progress ADD COLUMN total_points INTEGER DEFAULT 0"
+    "ALTER TABLE user_class_progress ADD COLUMN total_points INTEGER DEFAULT 0",
+    "ALTER TABLE agent_classes ADD COLUMN module TEXT DEFAULT 'General'",
+    "ALTER TABLE agent_classes ADD COLUMN module_order INTEGER DEFAULT 0"
   ];
   for (var j = 0; j < alters.length; j++) {
     try { await db.prepare(alters[j]).run(); } catch(e) { /* column already exists */ }
@@ -74,6 +76,8 @@ export async function onRequestPost(context) {
     var xp_reward = body.xp_reward;
     var sort_order = body.sort_order;
     var is_active = body.is_active;
+    var module = body.module;
+    var module_order = body.module_order;
 
     if (!title || !title.trim()) {
       return new Response(JSON.stringify({ error: 'El titulo es requerido' }), {
@@ -85,14 +89,16 @@ export async function onRequestPost(context) {
 
     // BUG #8 FIX: Use !== undefined instead of || to allow explicit 0 values
     var result = await env.DB.prepare(
-      'INSERT INTO agent_classes (title, description, content, xp_reward, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?)'
+      'INSERT INTO agent_classes (title, description, content, xp_reward, sort_order, is_active, module, module_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     ).bind(
       title.trim(),
       description || '',
       content || '',
       xp_reward !== undefined ? xp_reward : 10,
       sort_order !== undefined ? sort_order : 0,
-      is_active !== undefined ? (is_active ? 1 : 0) : 1
+      is_active !== undefined ? (is_active ? 1 : 0) : 1,
+      module || 'General',
+      module_order !== undefined ? module_order : 0
     ).run();
 
     return new Response(JSON.stringify({
