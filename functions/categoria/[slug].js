@@ -11,6 +11,9 @@ export async function onRequestGet(context) {
       return new Response('Database unavailable', { status: 500 });
     }
 
+    // Auto-migrate: add banner_url column if missing (same as /api/categories)
+    try { await env.DB.prepare('ALTER TABLE categories ADD COLUMN banner_url TEXT').run(); } catch(e) {}
+
     const baseUrl = 'https://holax.com.ve';
 
     // Look up category by slug
@@ -203,11 +206,13 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .cat-nav-inner { max-width: 1200px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; height: 60px; }
         .cat-nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; font-size: 1.2rem; font-weight: 800; color: #006EE3; }
         .cat-nav-logo:hover { opacity: 0.9; }
-        .cat-hero { background: linear-gradient(135deg, #0a0f1a 0%, #1e293b 100%); padding: 60px 20px 50px; text-align: center; color: #fff; }
-        .cat-hero-icon { width: 64px; height: 64px; border-radius: 18px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; margin: 0 auto 20px; color: #fbbf24; }
-        .cat-hero h1 { font-size: 2.2rem; font-weight: 800; margin: 0 0 12px; }
-        .cat-hero p { font-size: 1.05rem; color: rgba(255,255,255,0.7); max-width: 600px; margin: 0 auto 20px; line-height: 1.6; }
-        .cat-hero-count { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px 20px; border-radius: 50px; font-size: 0.9rem; font-weight: 600; }
+        /* Hero: solo banner (sin capa gris, sin texto visible). H1 queda oculto para SEO. */
+        .cat-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+        .cat-hero { position: relative; width: 100%; background: #f5f5f5; overflow: hidden; margin: 0; padding: 0; line-height: 0; }
+        .cat-hero-banner { display: block; width: 100%; height: auto; max-height: 480px; object-fit: cover; object-position: center; }
+        @media (max-width: 1024px) { .cat-hero-banner { max-height: 360px; } }
+        @media (max-width: 768px)  { .cat-hero-banner { max-height: 240px; } }
+        @media (max-width: 480px)  { .cat-hero-banner { max-height: 160px; } }
         .cat-breadcrumb { max-width: 1200px; margin: 0 auto; padding: 16px 20px; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #94a3b8; }
         .cat-breadcrumb a { color: #006EE3; text-decoration: none; }
         .cat-breadcrumb a:hover { text-decoration: underline; }
@@ -237,8 +242,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         @media (max-width: 1024px) { .cat-grid { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 768px) {
             .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-            .cat-hero { padding: 40px 16px 36px; }
-            .cat-hero h1 { font-size: 1.6rem; }
             .cat-content { padding: 0 12px 40px; }
         }
     </style>
@@ -257,12 +260,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </nav>
 
+    <!-- H1 oculto visualmente, preservado para SEO -->
+    <h1 class="cat-sr-only">${esc(catName)} en Venezuela</h1>
+
+    ${category.banner_url ? `
     <section class="cat-hero">
-        <div class="cat-hero-icon"><i class="${esc(catIcon)}"></i></div>
-        <h1>${esc(catName)} en Venezuela</h1>
-        <p>${esc(catDescription)}</p>
-        <div class="cat-hero-count"><i class="fas fa-store"></i> ${totalBiz} negocio${totalBiz !== 1 ? 's' : ''} registrado${totalBiz !== 1 ? 's' : ''}</div>
+        <img src="${esc(category.banner_url)}" alt="${esc(catName)}" class="cat-hero-banner" loading="eager" decoding="async">
     </section>
+    ` : ''}
 
     <div class="cat-breadcrumb">
         <a href="/">Inicio</a> <span>/</span>
