@@ -982,6 +982,15 @@ function addAgencyFooterLinks() {
         ];
 
         links.forEach(([href, label]) => {
+            const existingLink = [...footerBottom.querySelectorAll('a')]
+                .find((link) => link.href.includes('coporo.pages.dev') && href.includes('coporo.pages.dev'));
+            if (existingLink) {
+                existingLink.href = href;
+                existingLink.target = '_blank';
+                existingLink.rel = 'noopener noreferrer';
+                existingLink.textContent = label;
+                return;
+            }
             if (footerBottom.querySelector(`a[href="${href}"]`)) return;
             const paragraph = document.createElement('p');
             const link = document.createElement('a');
