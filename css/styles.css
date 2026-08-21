@@ -687,7 +687,7 @@ strong {
 .home-map-wrapper {
     position: relative;
     width: 100%;
-    height: 350px;
+    aspect-ratio: 4 / 3;
     border-radius: var(--radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
@@ -740,10 +740,6 @@ strong {
 }
 
 @media (max-width: 768px) {
-    .home-map-wrapper {
-        height: 280px;
-    }
-
     .hero-compact .hero-title {
         font-size: var(--font-size-2xl);
     }
@@ -7852,7 +7848,7 @@ a.btn-icon {
 }
 
 #searchMiniMap {
-    height: 500px;
+    aspect-ratio: 4 / 3;
     border-radius: 0 0 var(--radius-md) var(--radius-md);
     overflow: hidden;
 }
@@ -9640,7 +9636,7 @@ a.btn-icon {
     }
 
     #searchMiniMap {
-        height: 300px;
+        aspect-ratio: 4 / 3;
     }
 
     .search-filters-row {

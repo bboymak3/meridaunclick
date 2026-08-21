@@ -664,6 +664,12 @@
     function setupMiniMapToggle() {
         if (!mapToggleBtn || !searchMapContainer || !searchMiniMap) return;
 
+        if (!searchMapContainer.classList.contains('hidden')) {
+            initMiniMap();
+            miniMapInitialized = true;
+            mapToggleBtn.classList.add('active');
+        }
+
         mapToggleBtn.addEventListener('click', function () {
             var isHidden = searchMapContainer.classList.contains('hidden');
             if (isHidden) {
