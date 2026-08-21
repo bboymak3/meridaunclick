@@ -723,6 +723,16 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <div class="pd-lightbox-counter" id="pdLightboxCounter"></div>
     </div>
 
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; ${new Date().getFullYear()} HolaX. Todos los derechos reservados.</p>
+                <p><a href="https://maps.app.goo.gl/Jz2QTADrNNneQtGd9" target="_blank" rel="noopener noreferrer">Página web desarrollada por Grupo 360 Soluciones</a></p>
+                <p><a href="http://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Diseño de páginas webs - SEO Local -</a></p>
+            </div>
+        </div>
+    </footer>
+
     <script>
     var _pdImages = ${JSON.stringify(productImages)};
     var _pdActiveImg = 0;
