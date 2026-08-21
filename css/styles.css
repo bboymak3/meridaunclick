@@ -1637,8 +1637,10 @@ body.search-modal-open .cb-chat-btn {
 /* --- Map Wrapper --- */
 .idx-map-wrapper {
     position: relative;
-    width: 100%;
-    aspect-ratio: 4 / 3;
+    width: min(1300px, calc(100vw - 32px));
+    margin-left: 50%;
+    transform: translateX(-50%);
+    aspect-ratio: 1300 / 644;
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0,0,0,0.06);
@@ -2039,7 +2041,10 @@ body.search-modal-open .cb-chat-btn {
     }
 
     .idx-map-wrapper {
-        aspect-ratio: 4 / 3;
+        width: 100%;
+        margin-left: 0;
+        transform: none;
+        aspect-ratio: 1300 / 644;
     }
 
     .idx-cta-card {
