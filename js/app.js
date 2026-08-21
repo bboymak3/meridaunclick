@@ -1396,7 +1396,7 @@ async function loadSiteStats() {
 (function initSearchPage() {
     document.addEventListener('DOMContentLoaded', () => {
         const searchGrid = document.getElementById('searchResultsGrid');
-        if (!searchGrid) return; // Not on search page
+        if (!searchGrid || searchGrid.classList.contains('property-grid')) return; // Not on business search page
 
         // Populate filter fields from URL params
         const params = getSearchParams();
