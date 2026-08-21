@@ -10464,6 +10464,19 @@ a.btn-icon {
     display: block;
 }
 
+.map-popup-image.map-popup-logo {
+    height: 105px;
+    padding: 10px;
+    background: #f8fafc;
+    box-sizing: border-box;
+}
+
+.map-popup-image.map-popup-logo img {
+    width: 70%;
+    margin: 0 auto;
+    object-fit: contain;
+}
+
 .map-popup-content {
     padding: 14px;
 }

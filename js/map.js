@@ -269,13 +269,14 @@
         if (!business._lat || !business._lng || typeof L === 'undefined') return null;
 
         var coverImage = business.logo || business.cover_image || '';
+        var isLogo = Boolean(business.logo);
         var title = escapeMapText(business.title || 'Negocio');
         var typeLabel = escapeMapText(safeGetTypeLabel(business.business_type));
         var address = business.city ? (business.state ? business.city + ', ' + business.state : business.city) : '';
         var phone = business.phone || business.whatsapp || '';
         var businessPath = business.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio';
         var imageTag = coverImage
-            ? '<div class="map-popup-image"><img src="' + escapeMapAttribute(coverImage) + '" alt="' + title + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>'
+            ? '<div class="map-popup-image' + (isLogo ? ' map-popup-logo' : '') + '"><img src="' + escapeMapAttribute(coverImage) + '" alt="' + title + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>'
             : '';
         var details = (address ? '<div class="map-popup-detail"><i class="fas fa-map-marker-alt"></i>' + escapeMapText(address) + '</div>' : '')
             + (phone ? '<div class="map-popup-detail"><i class="fas fa-phone"></i>' + escapeMapText(phone) + '</div>' : '');
