@@ -7798,6 +7798,7 @@ a.btn-icon {
 /* Search Layout */
 .search-layout {
     display: flex;
+    flex-direction: column;
     gap: var(--space-lg);
     align-items: flex-start;
 }
@@ -7808,10 +7809,9 @@ a.btn-icon {
 }
 
 .search-map {
-    width: 400px;
-    flex-shrink: 0;
-    position: sticky;
-    top: calc(var(--navbar-height) + var(--space-md));
+    width: 100%;
+    position: static;
+    order: 2;
 }
 
 .search-map-header {
@@ -7848,6 +7848,7 @@ a.btn-icon {
 }
 
 #searchMiniMap {
+    width: 100%;
     aspect-ratio: 4 / 3;
     border-radius: 0 0 var(--radius-md) var(--radius-md);
     overflow: hidden;

@@ -264,6 +264,22 @@
         }
     }
 
+    function createMiniMarker(business) {
+        fixItemCoords(business);
+        if (!business._lat || !business._lng || typeof L === 'undefined') return null;
+
+        var marker = L.circleMarker([business._lat, business._lng], {
+            radius: 6,
+            color: '#ffffff',
+            weight: 2,
+            fillColor: getMarkerColor(business.business_type),
+            fillOpacity: 0.95,
+        });
+
+        marker.bindPopup('<strong>' + (business.title || 'Negocio') + '</strong>');
+        return marker;
+    }
+
     function getMarkerColor(businessType) {
         var colors = {
             'negocio': '#1a73e8',
@@ -738,7 +754,7 @@
             var validItems = businesses.filter(function (p) { return fixCoord(p.lat) && fixCoord(p.lng); });
 
             validItems.forEach(function (business) {
-                var marker = createMarker(business);
+                var marker = createMiniMarker(business);
                 if (marker) window._miniMarkerLayer.addLayer(marker);
             });
 
