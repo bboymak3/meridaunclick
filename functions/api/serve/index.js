@@ -42,6 +42,11 @@ export async function onRequestGet(context) {
       });
     }
 
+    // Reuse the edge-cached response before reading the object from R2.
+    const cache = caches.default;
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) return cachedResponse;
+
     // Fetch the object from R2
     const object = await env.R2.get(key);
 
@@ -62,7 +67,7 @@ export async function onRequestGet(context) {
       'Last-Modified': object.uploaded.toUTCString(),
     };
 
-    return new Response(object.body, {
+    const response = new Response(object.body, {
       status: 200,
       headers: {
         ...corsHeaders,
@@ -70,6 +75,9 @@ export async function onRequestGet(context) {
         ...cacheHeaders,
       },
     });
+
+    context.waitUntil(cache.put(request, response.clone()));
+    return response;
   } catch (error) {
     console.error('Serve image error:', error);
     return new Response('Error serving image', {
