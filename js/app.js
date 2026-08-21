@@ -973,8 +973,32 @@ async function loadMarketplaceBanner() {
     } catch(e) {}
 }
 
+// Keep the agency links consistent across every static page that loads this module.
+function addAgencyFooterLinks() {
+    document.querySelectorAll('.footer-bottom').forEach((footerBottom) => {
+        const links = [
+            ['https://maps.app.goo.gl/Jz2QTADrNNneQtGd9', 'Página web desarrollada por Grupo 360 Soluciones'],
+            ['http://coporo.pages.dev/', 'Página web'],
+        ];
+
+        links.forEach(([href, label]) => {
+            if (footerBottom.querySelector(`a[href="${href}"]`)) return;
+            const paragraph = document.createElement('p');
+            const link = document.createElement('a');
+            link.href = href;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = label;
+            paragraph.appendChild(link);
+            footerBottom.appendChild(paragraph);
+        });
+    });
+}
+
 // ─── Initialization ────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    addAgencyFooterLinks();
+
     // Update navigation bar
     updateNav();
 

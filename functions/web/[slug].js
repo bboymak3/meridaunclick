@@ -983,6 +983,10 @@ ${(business.lat || business.latitude || business.address) ? `
         ${socialUrls.facebook ? `<a href="${escapeHtml(socialUrls.facebook)}" target="_blank" rel="noopener"><i class="fab fa-facebook"></i> Facebook</a>` : ''}
     </div>
     <div class="lp-footer-copy">&copy; ${new Date().getFullYear()} ${escapeHtml(title)}. Todos los derechos reservados.</div>
+    <div class="lp-footer-links">
+        <a href="https://maps.app.goo.gl/Jz2QTADrNNneQtGd9" target="_blank" rel="noopener noreferrer">Página web desarrollada por Grupo 360 Soluciones</a>
+        <a href="http://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Página web</a>
+    </div>
 </footer>
 
 <!-- MOBILE CTA BAR -->
