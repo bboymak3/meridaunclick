@@ -7810,6 +7810,8 @@ a.btn-icon {
 
 .search-map {
     width: 100%;
+    max-width: 760px;
+    align-self: center;
     position: static;
     order: 2;
 }
@@ -7852,6 +7854,36 @@ a.btn-icon {
     aspect-ratio: 4 / 3;
     border-radius: 0 0 var(--radius-md) var(--radius-md);
     overflow: hidden;
+}
+
+.mini-map-marker {
+    background: none !important;
+    border: none !important;
+}
+
+.mini-map-pin {
+    width: 32px;
+    height: 32px;
+    border-radius: 50% 50% 50% 4px;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.mini-map-pin span {
+    transform: rotate(45deg);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .search-map {
+        max-width: 100%;
+    }
 }
 
 /* No Results */

@@ -268,16 +268,51 @@
         fixItemCoords(business);
         if (!business._lat || !business._lng || typeof L === 'undefined') return null;
 
-        var marker = L.circleMarker([business._lat, business._lng], {
-            radius: 6,
-            color: '#ffffff',
-            weight: 2,
-            fillColor: getMarkerColor(business.business_type),
-            fillOpacity: 0.95,
+        var coverImage = business.logo || business.cover_image || '';
+        var title = escapeMapText(business.title || 'Negocio');
+        var typeLabel = escapeMapText(safeGetTypeLabel(business.business_type));
+        var address = business.city ? (business.state ? business.city + ', ' + business.state : business.city) : '';
+        var phone = business.phone || business.whatsapp || '';
+        var businessPath = business.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio';
+        var imageTag = coverImage
+            ? '<div class="map-popup-image"><img src="' + escapeMapAttribute(coverImage) + '" alt="' + title + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>'
+            : '';
+        var details = (address ? '<div class="map-popup-detail"><i class="fas fa-map-marker-alt"></i>' + escapeMapText(address) + '</div>' : '')
+            + (phone ? '<div class="map-popup-detail"><i class="fas fa-phone"></i>' + escapeMapText(phone) + '</div>' : '');
+
+        var marker = L.marker([business._lat, business._lng], {
+            icon: L.divIcon({
+                className: 'mini-map-marker',
+                html: '<div class="mini-map-pin" style="background-color:' + getMarkerColor(business.business_type) + ';"><span><i class="fas fa-store"></i></span></div>',
+                iconSize: [32, 38],
+                iconAnchor: [16, 38],
+                popupAnchor: [0, -38],
+            }),
         });
 
-        marker.bindPopup('<strong>' + (business.title || 'Negocio') + '</strong>');
+        marker.bindPopup('<div class="map-popup">'
+            + imageTag
+            + '<div class="map-popup-content">'
+            + '<h4 class="map-popup-title">' + title + '</h4>'
+            + '<div class="map-popup-badges"><span class="map-popup-badge">' + typeLabel + '</span></div>'
+            + details
+            + '<a href="' + businessPath + '/' + encodeURIComponent(business.slug || business.id) + '" class="map-popup-link">Ver ficha <i class="fas fa-arrow-right"></i></a>'
+            + '</div></div>', {
+                maxWidth: 300,
+                minWidth: 240,
+                closeButton: true,
+            });
         return marker;
+    }
+
+    function escapeMapText(value) {
+        return String(value || '').replace(/[&<>"']/g, function (character) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+        });
+    }
+
+    function escapeMapAttribute(value) {
+        return escapeMapText(value).replace(/`/g, '&#96;');
     }
 
     function getMarkerColor(businessType) {
