@@ -148,6 +148,11 @@ ${job.description ? `<div class="ej-body"><div class="ej-section"><h3><i class="
 ${(whatsappLink||job.contact_email||job.contact_phone) ? `<div class="ej-cta">${whatsappLink ? `<a href="${whatsappLink}" target="_blank" class="ej-btn ej-bw"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}${job.contact_email ? `<a href="mailto:${esc(job.contact_email)}" class="ej-btn ej-be"><i class="fas fa-envelope"></i> Email</a>` : ''}${job.contact_phone ? `<a href="tel:${esc(job.contact_phone)}" class="ej-btn ej-bp"><i class="fas fa-phone"></i> Llamar</a>` : ''}</div>` : ''}
 </div></div>
 <div class="ej-lb" id="ejLb"><button class="ej-lb-x" onclick="closeEjLb()">&times;</button><button class="ej-lb-n ej-lb-p" onclick="event.stopPropagation();navEjLb(-1)"><i class="fas fa-chevron-left"></i></button><button class="ej-lb-n ej-lb-nx" onclick="event.stopPropagation();navEjLb(1)"><i class="fas fa-chevron-right"></i></button><div class="ej-lb-c" id="ejLbC"></div></div>
+<footer class="footer"><div class="container"><div class="footer-bottom">
+<p>&copy; ${new Date().getFullYear()} HolaX. Todos los derechos reservados.</p>
+<p><a href="https://maps.app.goo.gl/Jz2QTADrNNneQtGd9" target="_blank" rel="noopener noreferrer">Página web desarrollada por Grupo 360 Soluciones</a></p>
+<p><a href="http://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Diseño de páginas webs - SEO Local -</a></p>
+</div></div></footer>
 <script src="/js/app.js"></script>
 <script>
 const _ei=${JSON.stringify(jobImages)};
