@@ -296,7 +296,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <footer class="cat-footer">
         <p>&copy; ${new Date().getFullYear()} <a href="/">HolaX</a> — Directorio de Negocios en Venezuela</p>
       <p><a href="https://maps.app.goo.gl/Jz2QTADrNNneQtGd9" target="_blank" rel="noopener noreferrer">Página web desarrollada por Grupo 360 Soluciones</a></p>
-      <p><a href="http://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Página web</a></p>
+      <p><a href="http://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Diseño de páginas webs - SEO Local -</a></p>
     </footer>
 </body>
 </html>`;

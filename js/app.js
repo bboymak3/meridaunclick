@@ -978,7 +978,7 @@ function addAgencyFooterLinks() {
     document.querySelectorAll('.footer-bottom').forEach((footerBottom) => {
         const links = [
             ['https://maps.app.goo.gl/Jz2QTADrNNneQtGd9', 'Página web desarrollada por Grupo 360 Soluciones'],
-            ['http://coporo.pages.dev/', 'Página web'],
+            ['http://coporo.pages.dev/', 'Diseño de páginas webs - SEO Local -'],
         ];
 
         links.forEach(([href, label]) => {

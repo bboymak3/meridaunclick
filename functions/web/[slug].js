@@ -985,7 +985,7 @@ ${(business.lat || business.latitude || business.address) ? `
     <div class="lp-footer-copy">&copy; ${new Date().getFullYear()} ${escapeHtml(title)}. Todos los derechos reservados.</div>
     <div class="lp-footer-links">
         <a href="https://maps.app.goo.gl/Jz2QTADrNNneQtGd9" target="_blank" rel="noopener noreferrer">Página web desarrollada por Grupo 360 Soluciones</a>
-        <a href="http://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Página web</a>
+        <a href="http://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Diseño de páginas webs - SEO Local -</a>
     </div>
 </footer>
 
