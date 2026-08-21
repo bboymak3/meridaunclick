@@ -976,7 +976,7 @@ ${(business.lat || business.latitude || business.address) ? `
 
 <!-- FOOTER -->
 <footer class="lp-footer">
-    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="${baseUrl}" target="_blank">HolaX</a></p>
+    <p>La pagina web de <span class="lp-footer-brand">${escapeHtml(title)}</span> esta disponible gracias a <a href="https://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Grupo 360</a></p>
     <div class="lp-footer-links">
         <a href="${baseUrl}/${bizTipo}/${bizCat}/${business.slug}" target="_blank">Ver en HolaX</a>
         ${socialUrls.instagram ? `<a href="${escapeHtml(socialUrls.instagram)}" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a>` : ''}
