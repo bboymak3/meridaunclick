@@ -153,7 +153,31 @@
     <!-- Toast -->
     <div id="toastContainer" style="position:fixed;bottom:20px;right:20px;z-index:99999;"></div>
 
-    <script src="js/app.js"></script>
+    
+<script>
+// FIX: limpiar titulo y normalizar website
+function cleanTitle(title) {
+    if (!title) return '';
+    return String(title).trim()
+        .replace(/[\u0000-\u001F\u007F]/g, '')
+        .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+        .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+        .replace(/\\/g, '')
+        .replace(/[<>]/g, '')
+        .replace(/\s+/g, ' ')
+        .substring(0, 150);
+}
+function normalizeWebsite(url) {
+    if (!url) return '';
+    url = String(url).trim();
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    if (url.startsWith('//')) return 'https:' + url;
+    return 'https://' + url;
+}
+</script>
+
+<script src="js/app.js"></script>
     <script>
     (function() {
         'use strict';
@@ -343,8 +367,8 @@
                     '<div class="eb-field"><label>Teléfono</label><input type="tel" class="eb-input" id="ebPhone" value="' + escH(b.phone||'') + '"></div>' +
                     '<div class="eb-field"><label>WhatsApp</label><input type="tel" class="eb-input" id="ebWhatsapp" value="' + escH(b.whatsapp||'') + '"></div>' +
                     '<div class="eb-field"><label>Email</label><input type="email" class="eb-input" id="ebEmail" value="' + escH(b.email_contact||'') + '"></div>' +
-                    '<div class="eb-field"><label>Sitio Web</label><input type="url" class="eb-input" id="ebWebsite" value="' + escH(b.website||'') + '"></div>' +
-                    '<div class="eb-field"><label>URL Perfil de Google</label><input type="url" class="eb-input" id="ebGoogleMapsUrl" value="' + escH(b.google_maps_url||'') + '" placeholder="https://maps.google.com/?cid=... o https://g.co/kgs/..."></div>' +
+                    '<div class="eb-field"><label>Sitio Web</label><input type="text" class="eb-input" id="ebWebsite" value="' + escH(b.website||'') + '"></div>' +
+                    '<div class="eb-field"><label>URL Perfil de Google</label><input type="text" class="eb-input" id="ebGoogleMapsUrl" value="' + escH(b.google_maps_url||'') + '" placeholder="https://maps.google.com/?cid=... o https://g.co/kgs/..."></div>' +
                     '<div class="eb-field"><label>Instagram</label><input type="text" class="eb-input" id="ebInstagram" value="' + escH(b.instagram||'') + '" placeholder="@usuario"></div>' +
                     '<div class="eb-field"><label>Facebook</label><input type="text" class="eb-input" id="ebFacebook" value="' + escH(b.facebook||'') + '"></div>' +
                     '<div class="eb-field"><label>TikTok</label><input type="text" class="eb-input" id="ebTiktok" value="' + escH(b.tiktok||'') + '"></div>' +
@@ -562,14 +586,14 @@
                 });
 
                 var payload = {
-                    title: document.getElementById('ebTitle').value,
+                    title: cleanTitle(document.getElementById('ebTitle').value),
                     description: document.getElementById('ebDesc').value,
                     business_type: document.getElementById('ebType').value,
                     category_id: parseInt(document.getElementById('ebCategory').value) || null,
                     phone: document.getElementById('ebPhone').value,
                     whatsapp: document.getElementById('ebWhatsapp').value,
                     email_contact: document.getElementById('ebEmail').value,
-                    website: document.getElementById('ebWebsite').value,
+                    website: normalizeWebsite(document.getElementById('ebWebsite').value),
                     google_maps_url: document.getElementById('ebGoogleMapsUrl').value,
                     instagram: document.getElementById('ebInstagram').value,
                     facebook: document.getElementById('ebFacebook').value,

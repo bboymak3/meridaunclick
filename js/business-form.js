@@ -4,6 +4,43 @@
  */
 
 (function () {
+// FIX: limpiar titulo de caracteres problematicos antes de enviar.
+// Conserva acentos y ñ (UTF-8 valido), pero elimina caracteres que pueden
+// romper JSON, SQL o el renderizado HTML (comillas, backslashes, <, >).
+function cleanTitle(title) {
+    if (!title) return '';
+    return String(title)
+        .trim()
+        // Eliminar caracteres de control
+        .replace(/[\u0000-\u001F\u007F]/g, '')
+        // Reemplazar comillas tipograficas por versiones ASCII
+        .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+        .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+        // Eliminar backslashes (pueden romper JSON)
+        .replace(/\\/g, '')
+        // Eliminar < > (previene XSS en caso de fallo del escape)
+        .replace(/[<>]/g, '')
+        // Reemplazar multiples espacios por uno solo
+        .replace(/\s+/g, ' ')
+        // Limitar a 150 caracteres
+        .substring(0, 150);
+}
+
+// FIX: normalizar website URL antes de enviar.
+// Si no tiene protocolo, agregar https://
+// Acepta cualquier dominio (incluido subdominios como negocio33.hxx.com)
+function normalizeWebsite(url) {
+    if (!url) return '';
+    url = String(url).trim();
+    if (!url) return '';
+    // Si ya tiene protocolo, dejar asi
+    if (/^https?:\/\//i.test(url)) return url;
+    // Si empieza con //, agregar https:
+    if (url.startsWith('//')) return 'https:' + url;
+    // Si no tiene protocolo, agregar https://
+    return 'https://' + url;
+}
+
     'use strict';
 
     // ─── Configuration ──────────────────────────────────────────
@@ -754,14 +791,14 @@
             return el ? parseFloat(el.value) : null;
         };
 
-        const title = getValue('propTitle');
+        const title = cleanTitle(getValue('propTitle'));
         const description = getValue('propDescription');
         const categoria = getValue('propCategoria');
         const tipoNegocio = getValue('propTipoNegocio');
         const phone = getValue('propPhone');
         const whatsapp = getValue('propWhatsapp');
         const emailContact = getValue('propEmail');
-        const website = getValue('propWebsite');
+        const website = normalizeWebsite(getValue('propWebsite'));
         const instagram = getValue('propInstagram');
         const facebook = getValue('propFacebook');
         const twitter = getValue('propTwitter');

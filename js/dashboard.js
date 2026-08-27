@@ -1,3 +1,27 @@
+
+// FIX: limpiar titulo de caracteres problematicos antes de enviar.
+function cleanTitle(title) {
+    if (!title) return '';
+    return String(title)
+        .trim()
+        .replace(/[\u0000-\u001F\u007F]/g, '')
+        .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+        .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+        .replace(/\\/g, '')
+        .replace(/[<>]/g, '')
+        .replace(/\s+/g, ' ')
+        .substring(0, 150);
+}
+
+// FIX: normalizar website URL antes de enviar.
+function normalizeWebsite(url) {
+    if (!url) return '';
+    url = String(url).trim();
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    if (url.startsWith('//')) return 'https:' + url;
+    return 'https://' + url;
+}
 /**
  * Un Click - Dashboard Module
  * Handles user dashboard and admin panel functionality
@@ -3033,14 +3057,14 @@ window.closeEditBusinessModal = function() {
             document.querySelectorAll('#editBizFeatures .eb-feature.checked').forEach(f => features.push(f.dataset.feature));
 
             const payload = {
-                title: document.getElementById('editBizTitle').value,
+                title: cleanTitle(document.getElementById('editBizTitle').value),
                 description: document.getElementById('editBizDesc').value,
                 category_id: document.getElementById('editBizCat').value,
                 business_type: document.getElementById('editBizType').value,
                 phone: document.getElementById('editBizPhone').value,
                 whatsapp: document.getElementById('editBizWhatsapp').value,
                 email_contact: document.getElementById('editBizEmail').value,
-                website: document.getElementById('editBizWebsite').value,
+                website: normalizeWebsite(document.getElementById('editBizWebsite').value),
                 instagram: document.getElementById('editBizInstagram').value,
                 facebook: document.getElementById('editBizFacebook').value,
                 twitter: document.getElementById('editBizTwitter').value,
