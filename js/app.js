@@ -1176,8 +1176,10 @@ async function loadFeaturedProperties() {
         if (businesses.length === 0) {
             // No featured businesses in this state — load any approved businesses from the state
             // Exclude medical category (they have their own dedicated section)
+            // FIX: pedir mas negocios al API (limit=24) porque muchos pueden ser medicos
+            // y ser filtrados, dejando menos de 8 para mostrar.
             const selectedState = getSelectedState();
-            let endpoint = '/businesses?status=approved&limit=12';
+            let endpoint = '/businesses?status=approved&limit=24';
             if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
             const data = await api.get(endpoint);
             const allBiz = data.businesses || [];
@@ -1240,14 +1242,14 @@ async function loadFeaturedMedical() {
         // Fallback: fetch featured medical businesses from API
         if (businesses.length === 0) {
             const selectedState = getSelectedState();
-            let endpoint = '/businesses?status=approved&categoria=medicina-servicio-medico&limit=8&featured=1';
+            let endpoint = '/businesses?status=approved&categoria=medicina-servicio-medico&limit=12&featured=1';
             if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
             let data = await api.get(endpoint);
             businesses = data.businesses || [];
 
             // If no featured medical, try without featured flag but include related medical categories
             if (businesses.length === 0) {
-                let endpoint2 = '/businesses?status=approved&limit=8';
+                let endpoint2 = '/businesses?status=approved&limit=24';
                 if (selectedState) endpoint2 += `&state=${encodeURIComponent(selectedState)}`;
                 data = await api.get(endpoint2);
                 const allBiz = data.businesses || [];
