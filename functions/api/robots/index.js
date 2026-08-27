@@ -1,29 +1,126 @@
 // functions/api/robots/index.js
-// GET: Return robots.txt (no auth required)
-// Fallback: static robots.txt at root should also exist via _redirects
+// GET: robots.txt dinamico (no auth required)
+// Permite crawlers de IA generativa (GPTBot, ClaudeBot, PerplexityBot, etc.)
+// para que Gemini, ChatGPT, Claude, Copilot, etc. puedan indexar el directorio
+// comercial de Barinas y Venezuela.
 
 export async function onRequestGet() {
-  const robotsTxt = `# HolaX - Directorio Nacional de Negocios de Venezuela
-# https://holax.com
+  const robotsTxt = `# HolaX - Directorio Comercial Nacional de Negocios de Venezuela
+# https://holax.com.ve
+# Directorio comercial de Barinas y Venezuela: negocios, servicios medicos,
+# marketplace, inmuebles, empleos, eventos, cupones y reservas.
 
+# === User-agents de IA generativa: permitidos para indexacion ===
+# Google Gemini / Bard / SGE
+User-agent: Google-Extended
+Allow: /
+
+# OpenAI / ChatGPT / GPTBot
+User-agent: GPTBot
+Allow: /
+
+# Perplexity AI
+User-agent: PerplexityBot
+Allow: /
+
+# Claude / Anthropic
+User-agent: ClaudeBot
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+
+# Meta / Llama
+User-agent: Meta-ExternalAgent
+Allow: /
+
+# Microsoft / Copilot / Bing Chat
+User-agent: Bingbot
+Allow: /
+
+# Apple Intelligence / Applebot
+User-agent: Applebot
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+
+# Cohere
+User-agent: cohere-ai
+Allow: /
+
+# Bytespider (TikTok / ByteDance)
+User-agent: Bytespider
+Allow: /
+
+# Diffbot
+User-agent: Diffbot
+Allow: /
+
+# Amazon / Rufus / Alexa
+User-agent: Amazonbot
+Allow: /
+
+# Omgili / You.com
+User-agent: Omgilibot
+Allow: /
+User-agent: YouBot
+Allow: /
+
+# === Resto de crawlers tradicionales ===
 User-agent: *
 Allow: /
 
-# Bloquear páginas privadas y de administración
+# Paginas publicas indexables
+Allow: /$
+Allow: /search.html
+Allow: /registrar-negocio.html
+Allow: /map.html
+Allow: /marketplace.html
+Allow: /empleo.html
+Allow: /properties.html
+Allow: /entretenimiento.html
+Allow: /reservas.html
+Allow: /cupones.html
+Allow: /eventos.html
+Allow: /planes.html
+Allow: /quienes-somos.html
+Allow: /contacto.html
+Allow: /estado/
+Allow: /categoria/
+Allow: /negocio/
+Allow: /web/
+Allow: /producto/
+Allow: /servicio/
+Allow: /sitemap.xml
+
+# Bloquear paginas privadas y administracion
 Disallow: /admin.html
+Disallow: /admin-edit-business.html
+Disallow: /admin-vendedores.html
+Disallow: /admin-chat.html
+Disallow: /debug-vendedores.html
 Disallow: /dashboard.html
+Disallow: /login.html
+Disallow: /perfil.html
+Disallow: /new-business.html
+Disallow: /new-property.html
+Disallow: /seller.html
 Disallow: /api/
 Disallow: /functions/
 
-# Bloquear parámetros de búsqueda (evitar contenido duplicado)
+# Bloquear parametros de busqueda y filtros (evitar contenido duplicado)
 Disallow: /*?q=
 Disallow: /*?state=
 Disallow: /*?category=
 Disallow: /*?page=
 Disallow: /*?sort=
+Disallow: /*?tipo_negocio=
+Disallow: /*?especialidad=
+Disallow: /*?ciudad=
+Disallow: /*?redirect=
+Disallow: /*?utm_
 
-# Sitemap
-Sitemap: /sitemap.xml`;
+# Sitemap XML dinamico
+Sitemap: https://holax.com.ve/sitemap.xml`;
 
   return new Response(robotsTxt, {
     status: 200,

@@ -1,31 +1,34 @@
 // functions/api/sitemap/index.js
-// GET: Generate dynamic XML sitemap for SEO (no auth required)
+// GET: Generate dynamic XML sitemap for SEO + IA (no auth required)
+// Cubre: paginas estaticas, negocios, productos, categorias, estados, /web/:slug
 
 export async function onRequestGet(context) {
   try {
     const { env } = context;
     const baseUrl = 'https://holax.com.ve';
+    const today = new Date().toISOString().substring(0, 10);
 
     // All public-facing pages (ordered by priority)
     const staticPages = [
-      { loc: '/', priority: '1.0', changefreq: 'daily' },
-      { loc: '/search.html', priority: '0.9', changefreq: 'daily' },
-      { loc: '/registrar-negocio.html', priority: '0.9', changefreq: 'monthly' },
-      { loc: '/marketplace.html', priority: '0.8', changefreq: 'daily' },
-      { loc: '/map.html', priority: '0.8', changefreq: 'weekly' },
-      { loc: '/empleo.html', priority: '0.7', changefreq: 'daily' },
-      { loc: '/new-business.html', priority: '0.7', changefreq: 'monthly' },
-      { loc: '/entretenimiento.html', priority: '0.7', changefreq: 'weekly' },
-      { loc: '/reservas.html', priority: '0.7', changefreq: 'weekly' },
-      { loc: '/cupones.html', priority: '0.7', changefreq: 'weekly' },
-      { loc: '/emergencia.html', priority: '0.6', changefreq: 'monthly' },
-      { loc: '/eventos.html', priority: '0.6', changefreq: 'weekly' },
-      { loc: '/planes.html', priority: '0.6', changefreq: 'monthly' },
-      { loc: '/quienes-somos.html', priority: '0.5', changefreq: 'monthly' },
-      { loc: '/contacto.html', priority: '0.5', changefreq: 'monthly' },
-      { loc: '/privacidad.html', priority: '0.4', changefreq: 'yearly' },
-      { loc: '/eliminacion-datos.html', priority: '0.3', changefreq: 'yearly' },
-      { loc: '/login.html', priority: '0.3', changefreq: 'monthly' },
+      { loc: '/', priority: '1.0', changefreq: 'daily', lastmod: today },
+      { loc: '/search.html', priority: '0.9', changefreq: 'daily', lastmod: today },
+      { loc: '/registrar-negocio.html', priority: '0.9', changefreq: 'monthly', lastmod: today },
+      { loc: '/marketplace.html', priority: '0.8', changefreq: 'daily', lastmod: today },
+      { loc: '/map.html', priority: '0.8', changefreq: 'weekly', lastmod: today },
+      { loc: '/empleo.html', priority: '0.7', changefreq: 'daily', lastmod: today },
+      { loc: '/properties.html', priority: '0.7', changefreq: 'daily', lastmod: today },
+      { loc: '/entretenimiento.html', priority: '0.7', changefreq: 'weekly', lastmod: today },
+      { loc: '/reservas.html', priority: '0.7', changefreq: 'weekly', lastmod: today },
+      { loc: '/cupones.html', priority: '0.7', changefreq: 'weekly', lastmod: today },
+      { loc: '/emergencia.html', priority: '0.6', changefreq: 'monthly', lastmod: today },
+      { loc: '/eventos.html', priority: '0.6', changefreq: 'weekly', lastmod: today },
+      { loc: '/planes.html', priority: '0.6', changefreq: 'monthly', lastmod: today },
+      { loc: '/quienes-somos.html', priority: '0.5', changefreq: 'monthly', lastmod: today },
+      { loc: '/mision-vision.html', priority: '0.5', changefreq: 'monthly', lastmod: today },
+      { loc: '/clientes-satisfechos.html', priority: '0.5', changefreq: 'monthly', lastmod: today },
+      { loc: '/contacto.html', priority: '0.5', changefreq: 'monthly', lastmod: today },
+      { loc: '/privacidad.html', priority: '0.4', changefreq: 'yearly', lastmod: today },
+      { loc: '/eliminacion-datos.html', priority: '0.3', changefreq: 'yearly', lastmod: today },
     ];
 
     let dynamicUrls = '';
@@ -35,11 +38,11 @@ export async function onRequestGet(context) {
       let businesses;
       try {
         businesses = await env.DB.prepare(
-          "SELECT b.slug, b.business_type, b.updated_at, c.slug as category_slug, tn.slug as tipo_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
+          "SELECT b.id, b.slug, b.business_type, b.updated_at, c.slug as category_slug, tn.slug as tipo_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id LEFT JOIN tipos_negocio tn ON c.tipo_negocio_id = tn.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
         ).all();
       } catch (joinErr) {
         businesses = await env.DB.prepare(
-          "SELECT b.slug, b.business_type, b.updated_at, c.slug as category_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
+          "SELECT b.id, b.slug, b.business_type, b.updated_at, c.slug as category_slug FROM businesses b LEFT JOIN categories c ON b.category_id = c.id WHERE b.status = 'approved' AND b.slug IS NOT NULL AND b.slug != '' ORDER BY b.updated_at DESC"
         ).all();
       }
 
@@ -49,11 +52,26 @@ export async function onRequestGet(context) {
       }
 
       for (const biz of businesses.results) {
-        const lastmod = biz.updated_at ? biz.updated_at.substring(0, 10) : '';
+        const lastmod = biz.updated_at ? biz.updated_at.substring(0, 10) : today;
         const tipo = biz.tipo_slug || slugify(biz.business_type || 'negocio');
         const cat = biz.category_slug || 'otro';
+        // URL canonica SEO: /tipo/categoria/slug
         dynamicUrls += `  <url>
     <loc>${baseUrl}/${tipo}/${cat}/${biz.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <priority>0.8</priority>
+    <changefreq>weekly</changefreq>
+  </url>\n`;
+        // URL legacy /negocio/:slug (redirige 301 a la canonica)
+        dynamicUrls += `  <url>
+    <loc>${baseUrl}/negocio/${biz.slug}</loc>
+    <lastmod>${lastmod}</lastmod>
+    <priority>0.6</priority>
+    <changefreq>monthly</changefreq>
+  </url>\n`;
+        // URL /web/:slug (landing page auto-generada, rica para IA)
+        dynamicUrls += `  <url>
+    <loc>${baseUrl}/web/${biz.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <priority>0.8</priority>
     <changefreq>weekly</changefreq>
@@ -85,7 +103,7 @@ export async function onRequestGet(context) {
       ).all();
 
       for (const prod of products.results) {
-        const lastmod = prod.updated_at ? prod.updated_at.substring(0, 10) : '';
+        const lastmod = prod.updated_at ? prod.updated_at.substring(0, 10) : today;
         const tipo = slugify(prod.category || 'general');
         dynamicUrls += `  <url>
     <loc>${baseUrl}/producto/${tipo}/${prod.slug}</loc>
@@ -109,7 +127,7 @@ export async function onRequestGet(context) {
       ).all();
 
       for (const cat of categories.results) {
-        const lastmod = cat.last_updated ? cat.last_updated.substring(0, 10) : '';
+        const lastmod = cat.last_updated ? cat.last_updated.substring(0, 10) : today;
         dynamicUrls += `  <url>
     <loc>${baseUrl}/categoria/${cat.slug}</loc>
     <lastmod>${lastmod}</lastmod>
@@ -121,7 +139,7 @@ export async function onRequestGet(context) {
       // Categories may not exist
     }
 
-    // Fetch all states with businesses
+    // Fetch all states with businesses (24 estados de Venezuela)
     try {
       const states = await env.DB.prepare(
         `SELECT LOWER(REPLACE(REPLACE(
@@ -162,7 +180,7 @@ export async function onRequestGet(context) {
 
       for (const st of states.results) {
         if (!st.state_slug) continue;
-        const lastmod = st.last_updated ? st.last_updated.substring(0, 10) : '';
+        const lastmod = st.last_updated ? st.last_updated.substring(0, 10) : today;
         dynamicUrls += `  <url>
     <loc>${baseUrl}/estado/${st.state_slug}</loc>
     <lastmod>${lastmod}</lastmod>
@@ -174,11 +192,12 @@ export async function onRequestGet(context) {
       // States may not exist
     }
 
-    // Build static page URLs
+    // Build static page URLs (with lastmod)
     let staticUrls = '';
     for (const page of staticPages) {
       staticUrls += `  <url>
     <loc>${baseUrl}${page.loc}</loc>
+    <lastmod>${page.lastmod}</lastmod>
     <priority>${page.priority}</priority>
     <changefreq>${page.changefreq}</changefreq>
   </url>\n`;
@@ -203,3 +222,4 @@ ${staticUrls}${dynamicUrls}</urlset>`;
     });
   }
 }
+

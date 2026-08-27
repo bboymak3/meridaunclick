@@ -20,10 +20,18 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta charset="UTF-8">
     <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="HolaX - El directorio más completo de negocios, propiedades y empleos en Venezuela. Encuentra comercios, inmuebles, ofertas de trabajo, profesionales y servicios en todo el país. Registro gratis.">
-    <meta name="keywords" content="directorio de negocios, Venezuela, comercios, restaurantes, farmacias, tiendas, profesionales, servicios, Mérida, registro gratis">
-    <title>HolaX - Directorio de Negocios en Venezuela</title>
-    <link rel="stylesheet" href="css/styles.css?v=16">
+    <meta name="description" content="HolaX es el directorio comercial mas completo de Barinas y Venezuela. Encuentra negocios, restaurantes, farmacias, tiendas, profesionales, servicios medicos, inmuebles, empleos y marketplace. Cubre los 24 estados: Distrito Capital, Amazonas, Anzoategui, Apure, Aragua, Barinas, Bolivar, Carabobo, Cojedes, Delta Amacuro, Falcon, Guarico, Lara, Merida, Miranda, Monagas, Nueva Esparta, Portuguesa, Sucre, Tachira, Trujillo, Vargas, Yaracuy y Zulia. Registro gratis con georreferenciacion, WhatsApp y SEO local.">
+    <meta name="keywords" content="directorio de negocios Barinas, directorio comercial Venezuela, comercios Barinas, negocios Venezuela, restaurantes Barinas, farmacias Venezuela, tiendas online Venezuela, servicios medicos Barinas, profesionales Venezuela, registro negocio gratis, SEO local Venezuela, Google Maps negocio, marketplace Venezuela, inmuebles Venezuela, empleos Venezuela, 24 estados Venezuela">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+    <meta name="author" content="HolaX">
+    <meta name="language" content="Spanish">
+    <meta name="geo.region" content="VE">
+    <meta name="geo.placename" content="Venezuela">
+    <meta name="geo.position" content="8.6;-66.0">
+    <meta name="ICBM" content="8.6, -66.0">
+    <title>HolaX - Directorio Comercial de Negocios en Barinas y Venezuela | 24 Estados</title>
+    <link rel="canonical" href="https://holax.com.ve/">
+    <link rel="stylesheet" href="css/styles.css?v=17">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -31,8 +39,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#006EE3">
     <meta name="google-site-verification" content="Upqdebr5WMAfea6ZMYcsZVTXR2Wo9N5cJZG0B6pk7I4" />
-    <meta property="og:title" content="HolaX - Directorio de Negocios en Venezuela">
-    <meta property="og:description" content="HolaX es el directorio de negocios y comercios más completo de Venezuela. Encuentra restaurantes, farmacias, tiendas, profesionales, servicios de salud y más en todo el país. Registro gratis.">
+    <meta property="og:title" content="HolaX - Directorio Comercial de Negocios en Barinas y Venezuela">
+    <meta property="og:description" content="Directorio comercial nacional de Venezuela con 24 estados cubiertos. Negocios, servicios medicos, marketplace, inmuebles, empleos, eventos, cupones y reservas. Registro gratis con georreferenciacion y WhatsApp directo.">
     <meta property="og:site_name" content="HolaX">
     <meta property="og:locale" content="es_VE">
     <meta property="og:type" content="website">
@@ -40,42 +48,116 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:url" content="https://holax.com.ve/">
-    <meta name="twitter:title" content="HolaX - Directorio de Negocios en Venezuela">
-    <meta name="twitter:description" content="HolaX es el directorio de negocios y comercios más completo de Venezuela. Encuentra restaurantes, farmacias, tiendas, profesionales y más.">
+    <meta name="twitter:title" content="HolaX - Directorio Comercial de Barinas y Venezuela">
+    <meta name="twitter:description" content="Directorio comercial de Venezuela con 24 estados. Negocios, servicios medicos, marketplace, inmuebles, empleos, eventos y reservas. Registro gratis.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://holax.com.ve/images/Holax.png">
-    <!-- JSON-LD: Organization -->
-    <script type="application/ld+json">{
-        "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": "HolaX",
-        "alternateName": "HolaX - Directorio de Negocios de Venezuela",
-        "url": "https://holax.com.ve",
-        "logo": "https://holax.com.ve/images/Holax.png",
-        "description": "El directorio nacional de negocios, productos, inmuebles y empleos más completo de Venezuela.",
-        "address": {
+    <!-- JSON-LD: @graph unificado para IA generativa (Gemini, ChatGPT, Claude, Copilot) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://holax.com.ve/#organization",
+          "name": "HolaX",
+          "alternateName": "HolaX - Directorio Comercial de Negocios de Venezuela",
+          "url": "https://holax.com.ve",
+          "logo": "https://holax.com.ve/images/Holax.png",
+          "description": "Directorio comercial nacional de Venezuela. Cubre los 24 estados con negocios, servicios medicos, marketplace, inmuebles, empleos, eventos, cupones y reservas.",
+          "address": {
             "@type": "PostalAddress",
-            "addressCountry": "VE"
-        },
-        "contactPoint": {
+            "addressCountry": "VE",
+            "addressRegion": "Venezuela"
+          },
+          "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer service",
+            "telephone": "+58-414-5362715",
             "availableLanguage": ["Spanish"]
+          },
+          "sameAs": []
         },
-        "sameAs": []
-    }</script>
-    <!-- JSON-LD: WebSite con SearchAction -->
-    <script type="application/ld+json">{
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "HolaX",
-        "url": "https://holax.com.ve",
-        "potentialAction": {
+        {
+          "@type": "WebSite",
+          "@id": "https://holax.com.ve/#website",
+          "url": "https://holax.com.ve",
+          "name": "HolaX",
+          "description": "Directorio comercial de negocios en Barinas y los 24 estados de Venezuela.",
+          "publisher": { "@id": "https://holax.com.ve/#organization" },
+          "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://holax.com.ve/search.html?q={search_term_string}",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "https://holax.com.ve/search.html?q={search_term_string}"
+            },
             "query-input": "required name=search_term_string"
+          },
+          "inLanguage": "es-VE"
+        },
+        {
+          "@type": "Service",
+          "@id": "https://holax.com.ve/#service",
+          "name": "Directorio Comercial de Negocios de Venezuela",
+          "serviceType": "Directorio comercial y registro de negocios",
+          "provider": { "@id": "https://holax.com.ve/#organization" },
+          "areaServed": {
+            "@type": "Country",
+            "name": "Venezuela",
+            "description": "24 estados: Distrito Capital, Amazonas, Anzoategui, Apure, Aragua, Barinas, Bolivar, Carabobo, Cojedes, Delta Amacuro, Falcon, Guarico, Lara, Merida, Miranda, Monagas, Nueva Esparta, Portuguesa, Sucre, Tachira, Trujillo, Vargas, Yaracuy y Zulia."
+          },
+          "description": "HolaX es el directorio comercial mas completo de Barinas y Venezuela. Permite registrar negocios gratis con georreferenciacion en Google Maps, ficha SEO optimizada, integracion con WhatsApp y datos estructurados Schema.org. Cubre restaurantes, farmacias, tiendas, profesionales, servicios medicos, inmuebles, empleos, marketplace, eventos, cupones y reservas en los 24 estados del pais."
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://holax.com.ve/#faqpage",
+          "url": "https://holax.com.ve/",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Que es HolaX?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "HolaX es el directorio comercial nacional de negocios de Venezuela. Permite a comercios, profesionales y servicios registrarse gratis con ficha SEO, georreferenciacion en Google Maps, integracion con WhatsApp y datos estructurados Schema.org. Cubre los 24 estados del pais, con cobertura especial en Barinas."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Que tipos de negocios puedo encontrar en HolaX?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "HolaX cubre 10 tipos de negocios: Salud y Bienestar (farmacias, clinicas, medicos), Comida y Bebidas (restaurantes, cafeterias, bares), Belleza y Cuidado Personal (barberias, salones), Automotriz (talleres, repuestos, lavados), Hogar y Construccion (ferreterias, mueblerias), Servicios Profesionales (inmobiliarias, abogados, publicidad, camaras de seguridad), Tiendas y Comercio (ropas, tecnologia, celulares), Educacion (academias, colegios), Turismo y Hospedaje (hoteles, agencias), y Servicios Varios (encomiendas, domicilios)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Como registro mi negocio gratis en HolaX?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Para registrar tu negocio gratis en HolaX (holax.com.ve), crea una cuenta gratuita, completa los datos NAP de tu negocio (nombre, direccion, telefono, estado) y publica. Tu negocio aparecera georreferenciado en el mapa interactivo, indexado en Google con datos estructurados Schema.org, y visible en busquedas locales por estado. Todo en menos de 5 minutos, sin costos ni comisiones."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Que estados de Venezuela cubre HolaX?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "HolaX cubre los 24 estados de Venezuela: Distrito Capital (Caracas), Amazonas, Anzoategui, Apure, Aragua, Barinas, Bolivar, Carabobo, Cojedes, Delta Amacuro, Falcon, Guarico, Lara, Merida, Miranda, Monagas, Nueva Esparta, Portuguesa, Sucre, Tachira, Trujillo, Vargas, Yaracuy y Zulia. Cada estado tiene su propia pagina SEO optimizada para busquedas locales."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "HolaX tiene cobertura especial en Barinas?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Si. HolaX tiene cobertura especial en el estado Barinas, con negocios destacados en Barinas capital, Obispos, Bolivar, Pedraza, Rojas, Sosa, Andres Eloy Blanco, Cruz Paredes, Antonio Nicolas Briceño y Ezequiel Zamora. Barinas es uno de los estados con mayor numero de comercios registrados en el directorio."
+              }
+            }
+          ]
         }
-    }</script>
+      ]
+    }
+    </script>
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
