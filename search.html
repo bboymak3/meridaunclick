@@ -113,6 +113,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- Search Page -->
     <main class="search-page">
         <div class="container">
+            <!-- FIX: Search Banner (configurable desde panel admin) -->
+            <section class="search-banner-section" id="searchBannerSection" style="display:none;">
+                <a href="#" id="searchBannerLink">
+                    <img id="searchBannerImg" src="" alt="Banner" style="width:100%;max-height:280px;object-fit:cover;border-radius:14px;display:block;">
+                </a>
+            </section>
+
             <!-- Search Filters Bar -->
             <section class="search-filters-bar" id="searchFiltersBar">
                 <div class="search-filters-row">
@@ -327,8 +334,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         </div>
     </footer>
 
-    <!-- Leaflet JS -->
+    <!-- Leaflet JS + MarkerCluster Plugin (FIX: clustering para 20+ marcadores mobile) -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <!-- Toast Notification -->
     <div class="toast-container" id="toastContainer"></div>

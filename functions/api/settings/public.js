@@ -44,6 +44,7 @@ const PUBLIC_KEYS = [
   'featured_jobs_enabled',
   // FIX: banner de la página de búsqueda
   'search_banner_url',
+  'search_banner_link',
 ];
 
 export async function onRequestGet(context) {
@@ -108,7 +109,7 @@ export async function onRequestGet(context) {
       weather_enabled: '1',
       chat_enabled: '1',
       chat_mode: 'all',
-      site_name: 'En Santiago',
+      site_name: 'HolaX',
       site_description: 'Directorio de negocios en Santiago de Chile',
       hero_banner_url: '',
       hero_logo_url: '',
@@ -130,6 +131,7 @@ export async function onRequestGet(context) {
       featured_products_enabled: '1',
       featured_jobs_enabled: '1',
       search_banner_url: '',
+      search_banner_link: '',
     };
 
     const response = {};

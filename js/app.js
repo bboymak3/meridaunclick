@@ -729,6 +729,14 @@ function createBusinessCard(business) {
     const statusBadge = business.status && business.status !== 'approved' ? `<span class="card-badge badge-${business.status}">${getStatusLabel(business.status)}</span>` : '';
     const especialidadBadge = business.especialidad ? `<span class="card-badge badge-especialidad"><i class="fas fa-stethoscope"></i> ${business.especialidad}</span>` : '';
 
+    // FIX: Badges delivery (azul) + servicio a domicilio (naranja) en cards de listado
+    const deliveryBadge = business.has_delivery
+        ? '<span class="card-badge badge-delivery" title="Delivery"><i class="fas fa-motorcycle"></i></span>'
+        : '';
+    const homeServiceBadge = business.has_delivery
+        ? '<span class="card-badge badge-servicio-domicilio" title="Servicio a Domicilio"><i class="fas fa-home"></i></span>'
+        : '';
+
     const bizUrl = getBusinessUrl(business);
     const isMedical = business.category_slug === 'medicina-servicio-medico';
     return `
@@ -737,7 +745,7 @@ function createBusinessCard(business) {
                 <div class="business-card-image">
                     <img src="${imgSrc}" alt="${business.title || 'Sin título'}" loading="lazy" onerror="this.src='${placeholderImg}'">
                     <div class="business-card-badges">
-                        ${especialidadBadge}${featuredBadge}${statusBadge}
+                        ${especialidadBadge}${featuredBadge}${statusBadge}${deliveryBadge}${homeServiceBadge}
                     </div>
                 </div>
                 <div class="business-card-body">
@@ -1184,8 +1192,8 @@ async function loadFeaturedProperties() {
         }
 
         if (emptyState) emptyState.style.display = 'none';
-        // When a state is selected, show up to 12; otherwise show 3 featured
-        const maxShow = getSelectedState() ? 12 : 4;
+        // When a state is selected, show up to 12; otherwise show 8 featured
+        const maxShow = getSelectedState() ? 12 : 8;
         businesses = businesses.slice(0, maxShow);
         grid.innerHTML = businesses.map(p => createBusinessCard(p)).join('');
         // Update section title to reflect state filter
@@ -1232,14 +1240,14 @@ async function loadFeaturedMedical() {
         // Fallback: fetch featured medical businesses from API
         if (businesses.length === 0) {
             const selectedState = getSelectedState();
-            let endpoint = '/businesses?status=approved&categoria=medicina-servicio-medico&limit=4&featured=1';
+            let endpoint = '/businesses?status=approved&categoria=medicina-servicio-medico&limit=8&featured=1';
             if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
             let data = await api.get(endpoint);
             businesses = data.businesses || [];
 
             // If no featured medical, try without featured flag but include related medical categories
             if (businesses.length === 0) {
-                let endpoint2 = '/businesses?status=approved&limit=4';
+                let endpoint2 = '/businesses?status=approved&limit=8';
                 if (selectedState) endpoint2 += `&state=${encodeURIComponent(selectedState)}`;
                 data = await api.get(endpoint2);
                 const allBiz = data.businesses || [];
@@ -1255,7 +1263,7 @@ async function loadFeaturedMedical() {
         }
 
         if (emptyState) emptyState.style.display = 'none';
-        businesses = businesses.slice(0, 4);
+        businesses = businesses.slice(0, 8);
         grid.innerHTML = businesses.map(b => createBusinessCard(b)).join('');
     } catch (error) {
         if (loading) loading.remove();
@@ -1296,7 +1304,7 @@ async function loadFeaturedPropertiesSection() {
         // Fallback: try direct API for approved properties
         if (properties.length === 0) {
             const selectedState = getSelectedState();
-            let endpoint = '/properties?status=approved&limit=4';
+            let endpoint = '/properties?status=approved&limit=8';
             if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
             const data = await api.get(endpoint);
             properties = data.properties || [];
@@ -1310,7 +1318,7 @@ async function loadFeaturedPropertiesSection() {
         }
 
         if (emptyState) emptyState.style.display = 'none';
-        properties = properties.slice(0, 4);
+        properties = properties.slice(0, 8);
         grid.innerHTML = properties.map(p => createPropertyCard(p)).join('');
     } catch (error) {
         if (loading) loading.remove();
@@ -1716,7 +1724,7 @@ async function loadFeaturedProducts() {
         }
 
         if (emptyState) emptyState.classList.add('hidden');
-        products = products.slice(0, 4);
+        products = products.slice(0, 8);
         grid.innerHTML = products.map(p => {
             // Handle image: could be JSON array or plain URL
             let img = p.image || '';
@@ -1784,7 +1792,7 @@ async function loadFeaturedJobs() {
         }
 
         // Limit to 4
-        jobs = jobs.slice(0, 4);
+        jobs = jobs.slice(0, 8);
 
         if (loading) loading.remove();
 
@@ -1943,3 +1951,29 @@ async function loadFeaturedJobs() {
     }
 })();
 
+
+// ─── Search Banner (configurable desde panel admin) ────────────
+(function loadSearchBanner() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+    function init() {
+        const section = document.getElementById('searchBannerSection');
+        if (!section) return;
+        fetch('/api/settings/public')
+            .then(r => r.json())
+            .then(s => {
+                const url = s.search_banner_url;
+                if (!url) return;
+                const img = document.getElementById('searchBannerImg');
+                const link = document.getElementById('searchBannerLink');
+                if (img) img.src = url;
+                if (link && s.search_banner_link) link.href = s.search_banner_link;
+                else if (link) link.removeAttribute('href');
+                section.style.display = 'block';
+            })
+            .catch(() => {});
+    }
+})();

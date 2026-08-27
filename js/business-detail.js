@@ -1,5 +1,5 @@
 /**
- * En Santiago - Business Detail Page Loader
+ * HolaX - Business Detail Page Loader
  * Loads business data from API and populates business.html
  */
 
@@ -42,7 +42,7 @@
             contentEl.classList.remove('hidden');
 
             // Update page title
-            document.title = `${business.title || 'Negocio'} - En Santiago`;
+            document.title = `${business.title || 'Negocio'} - HolaX`;
 
             // Load similar businesses
             loadSimilarBusinesses(business);
@@ -121,7 +121,7 @@ function populateBusinessDetail(b) {
             // Update breadcrumb
             const breadcrumbTitle = document.getElementById('breadcrumbTitle');
             if (breadcrumbTitle) breadcrumbTitle.textContent = b.title || 'Negocio';
-            document.title = (b.title || 'Negocio') + ' - En Santiago';
+            document.title = (b.title || 'Negocio') + ' - HolaX';
             return; // Skip default rendering
         }
     }
@@ -253,7 +253,7 @@ function populateBusinessDetail(b) {
         if (isOwnerPremium) {
             titleEl.innerHTML += ' <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;font-size:0.7rem;font-weight:800;padding:3px 10px;border-radius:10px;vertical-align:middle;margin-left:8px;letter-spacing:0.3px;text-transform:uppercase;"><i class="fas fa-crown" style="font-size:0.65rem;"></i> Premium</span>';
         } else {
-            titleEl.innerHTML += ' <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;vertical-align:middle;margin-left:8px;"><i class="fas fa-check-circle" style="font-size:0.65rem;"></i> En Santiago</span>';
+            titleEl.innerHTML += ' <span style="display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;vertical-align:middle;margin-left:8px;"><i class="fas fa-check-circle" style="font-size:0.65rem;"></i> HolaX</span>';
         }
     }
 
@@ -473,7 +473,7 @@ function populateBusinessDetail(b) {
         const waNumber = b.whatsapp || b.phone || b.owner_whatsapp || '';
         if (waNumber && isOwnerPremium) {
             const cleanNumber = waNumber.replace(/[^0-9+]/g, '');
-            const msg = encodeURIComponent(`Hola, vi tu negocio "${b.title}" en En Santiago y me interesa saber más.`);
+            const msg = encodeURIComponent(`Hola, vi tu negocio "${b.title}" en HolaX y me interesa saber más.`);
             mainWhatsApp.href = `https://wa.me/${cleanNumber}?text=${msg}`;
             mainWhatsApp.style.display = '';
             // Track WhatsApp click
@@ -517,7 +517,7 @@ function populateBusinessDetail(b) {
     if (openChatBtn) {
         openChatBtn.onclick = () => {
             if (typeof UnClickChat !== 'undefined' && UnClickChat.openChatWith) {
-                UnClickChat.openChatWith(b.id, `Hola, vi tu negocio "${b.title}" en En Santiago`);
+                UnClickChat.openChatWith(b.id, `Hola, vi tu negocio "${b.title}" en HolaX`);
             } else {
                 showToast('Chat no disponible', 'warning');
             }
@@ -577,7 +577,7 @@ function populateBusinessDetail(b) {
 
     // ─── SEO Meta Description ─────────────────────────────────
     const metaDesc = document.querySelector('meta[name="description"]');
-    if (metaDesc) metaDesc.content = `${b.title || 'Negocio'} - ${b.category_name || ''} en ${b.city || 'Santiago'}, ${b.state || 'Santiago de Chile'}. ${b.description ? b.description.substring(0, 150) : 'Visita En Santiago para más información.'}`;
+    if (metaDesc) metaDesc.content = `${b.title || 'Negocio'} - ${b.category_name || ''} en ${b.city || 'Santiago'}, ${b.state || 'Venezuela'}. ${b.description ? b.description.substring(0, 150) : 'Visita HolaX para más información.'}`;
 
     // ─── Load Business Products, Jobs, Services ─────────────
     loadBusinessProducts(b.id);
@@ -859,7 +859,7 @@ async function loadBusinessJobs(businessId) {
                 <div class="job-item-icon"><i class="fas fa-briefcase"></i></div>
                 <div class="job-item-info">
                     <div class="job-item-title">${escapeHtml(j.title)}</div>
-                    <div class="job-item-meta">${escapeHtml(j.job_type || 'Tiempo completo')} · ${escapeHtml(j.city || j.state || 'Santiago de Chile')}</div>
+                    <div class="job-item-meta">${escapeHtml(j.job_type || 'Tiempo completo')} · ${escapeHtml(j.city || j.state || 'Venezuela')}</div>
                 </div>
             </a>
         `).join('');

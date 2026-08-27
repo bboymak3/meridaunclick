@@ -68,7 +68,7 @@ const DEFAULT_SETTINGS = {
   chat_mode: 'all', // 'all' | 'premium_only' | 'none'
   registrations_enabled: '1',
   maintenance_mode: '0',
-  site_name: 'En Santiago Santiago',
+  site_name: 'HolaX',
   site_description: 'Directorio de negocios y servicios en Santiago, Santiago de Chile',
   contact_email: '',
   whatsapp_number: '',
@@ -100,6 +100,7 @@ const DEFAULT_SETTINGS = {
   hero_banner_url: '',
   // FIX: Banner de la página de búsqueda
   search_banner_url: '',
+  search_banner_link: '',
   // Hero logo (overlays on banner)
   hero_logo_url: '',
   // Marketplace banner
@@ -111,7 +112,7 @@ const DEFAULT_SETTINGS = {
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
 // Also allow hero_logo_url even if it was added after initial seed
-const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url', 'ensantiago_logo_url', 'empleo_banner_url'];
+const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url', 'ensantiago_logo_url', 'empleo_banner_url', 'search_banner_url', 'search_banner_link'];
 // Deduplicate
 const ALLOWED_KEYS_SET = [...new Set(ALLOWED_KEYS)];
 

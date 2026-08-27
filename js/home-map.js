@@ -30,6 +30,7 @@
                 doubleClickZoom: true,
                 boxZoom: true,
                 keyboard: false,
+                preferCanvas: true,  // FIX: Canvas renderer para mejor performance mobile
             });
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -37,7 +38,20 @@
                 maxZoom: 19,
             }).addTo(map);
 
-            markerLayer = L.layerGroup().addTo(map);
+            // FIX: Usar markerClusterGroup si está disponible el plugin.
+            // Esto agrupa marcadores cercanos en burbujas y mejora la performance
+            // con 20+ marcadores en mobile.
+            if (typeof L.markerClusterGroup === 'function') {
+                markerLayer = L.markerClusterGroup({
+                    maxClusterRadius: 50,
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: false,
+                    zoomToBoundsOnClick: true,
+                    chunkedLoading: true,
+                }).addTo(map);
+            } else {
+                markerLayer = L.layerGroup().addTo(map);
+            }
 
             // Setup toggle buttons
             setupToggleButtons();
