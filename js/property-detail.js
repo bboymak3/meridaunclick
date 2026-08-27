@@ -122,7 +122,7 @@ function createPropertyCardDetail(property) {
 
     return `
         <article class="property-card" data-property-id="${property.id}">
-            <a href="property-detail.html?id=${property.id}" class="property-card-link">
+            <a href="/property-detail.html?id=${property.id}" class="property-card-link">
                 <div class="property-card-image">
                     <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(property.title || 'Propiedad')}" loading="lazy" onerror="this.src='${placeholderImg}'">
                     <div class="property-card-badges">

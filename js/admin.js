@@ -2393,7 +2393,7 @@ if (!window._renderVideoList) {
         const imgHTML = coverImg
             ? `<img src="${coverImg}" alt="" class="admin-thumb" onerror="this.style.display='none'">`
             : '<div class="admin-thumb-placeholder"><i class="fas fa-image"></i></div>';
-        const titleLink = `<a href="property-detail.html?id=${p.id}" target="_blank" title="${escHtml(p.title)}">${escHtml(truncateText(p.title, 35))}</a>`;
+        const titleLink = `<a href="/property-detail.html?id=${p.id}" target="_blank" title="${escHtml(p.title)}">${escHtml(truncateText(p.title, 35))}</a>`;
         const featuredIcon = p.featured
             ? '<i class="fas fa-star text-warning"></i>'
             : '<i class="far fa-star text-muted"></i>';

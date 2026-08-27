@@ -475,7 +475,7 @@ window.closeEditBusinessModal = function() {
                                 <div class="empty-state">
                                     <i class="fas fa-inbox"></i>
                                     <p>No tienes negocios aun.</p>
-                                    <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
+                                    <a href="/new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
                                 </div>
                             </td>
                         </tr>
@@ -548,7 +548,7 @@ window.closeEditBusinessModal = function() {
                                 <div class="empty-state">
                                     <i class="fas fa-inbox"></i>
                                     <p>${filter ? 'No hay negocios con ese filtro.' : 'No tienes negocios.'}</p>
-                                    <a href="new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
+                                    <a href="/new-business.html" class="btn btn-primary btn-sm">Registrar Negocio</a>
                                 </div>
                             </td>
                         </tr>
@@ -657,7 +657,7 @@ window.closeEditBusinessModal = function() {
                     <div class="empty-state">
                         <i class="fas fa-heart"></i>
                         <p>No tienes negocios favoritos.</p>
-                        <a href="search.html" class="btn btn-primary btn-sm">Explorar Negocios</a>
+                        <a href="/search.html" class="btn btn-primary btn-sm">Explorar Negocios</a>
                     </div>
                 `;
             } else {
@@ -3180,7 +3180,7 @@ window.closeEditBusinessModal = function() {
                     <div class="empty-state" style="grid-column:1/-1;">
                         <i class="fas fa-home"></i>
                         <p>${statusFilter ? 'No hay inmuebles con ese filtro.' : 'No tienes inmuebles publicados.'}</p>
-                        <a href="new-property.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Publicar Inmueble</a>
+                        <a href="/new-property.html" class="btn btn-primary btn-sm"><i class="fas fa-plus"></i> Publicar Inmueble</a>
                     </div>
                 `;
                 return;
@@ -3215,8 +3215,8 @@ window.closeEditBusinessModal = function() {
                             <p style="font-size:0.9rem;font-weight:700;color:#006EE3;margin:4px 0;">${price}</p>
                             <p style="font-size:0.72rem;color:#94a3b8;margin-bottom:8px;"><i class="fas fa-eye"></i> ${p.views || 0} vistas</p>
                             <div style="margin-top:auto;display:flex;gap:6px;flex-wrap:wrap;">
-                                <a href="property-detail.html?id=${p.id}" class="btn btn-sm btn-secondary" title="Ver"><i class="fas fa-eye"></i> Ver</a>
-                                <a href="new-property.html?id=${p.id}" class="btn btn-sm btn-secondary" title="Editar"><i class="fas fa-edit"></i> Editar</a>
+                                <a href="/property-detail.html?id=${p.id}" class="btn btn-sm btn-secondary" title="Ver"><i class="fas fa-eye"></i> Ver</a>
+                                <a href="/new-property.html?id=${p.id}" class="btn btn-sm btn-secondary" title="Editar"><i class="fas fa-edit"></i> Editar</a>
                                 <button class="btn btn-sm btn-danger" onclick="deleteMyInmueble(${p.id})" title="Eliminar"><i class="fas fa-trash"></i></button>
                             </div>
                         </div>
@@ -3322,7 +3322,7 @@ window.closeEditBusinessModal = function() {
                     <button class="btn" id="btnUpgradePremium" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#333;font-weight:700;font-size:0.85rem;padding:8px 18px;border-radius:8px;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
                         <i class="fas fa-crown"></i> Solicitar Premium
                     </button>
-                    <a href="planes.html" class="btn" style="background:#f1f5f9;color:#475569;font-weight:600;font-size:0.85rem;padding:8px 18px;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+                    <a href="/planes.html" class="btn" style="background:#f1f5f9;color:#475569;font-weight:600;font-size:0.85rem;padding:8px 18px;border-radius:8px;border:1px solid #e2e8f0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
                         <i class="fas fa-star"></i> Ver Ventajas Premium
                     </a>`;
                 // Re-bind the premium button

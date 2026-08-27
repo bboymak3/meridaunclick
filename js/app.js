@@ -454,7 +454,7 @@ function updateNav() {
                 adminLinkItem.id = 'navAdminItem';
                 const linkLabel = user.role === 'agent' ? 'Panel Agente' : 'Admin';
                 const linkIcon = user.role === 'agent' ? 'fa-store' : 'fa-shield-alt';
-                adminLinkItem.innerHTML = `<a href="admin.html" class="nav-link nav-admin-link"><i class="fas ${linkIcon}"></i> ${linkLabel}</a>`;
+                adminLinkItem.innerHTML = `<a href="/admin.html" class="nav-link nav-admin-link"><i class="fas ${linkIcon}"></i> ${linkLabel}</a>`;
                 // Insert before the user item
                 navUserItem.parentNode.insertBefore(adminLinkItem, navUserItem);
             } else {
@@ -473,7 +473,7 @@ function updateNav() {
         if (adminLinkItem) adminLinkItem.remove();
 
         // Make "Publicar" link require login
-        const publishLinks = document.querySelectorAll('a[href="new-business.html"]');
+        const publishLinks = document.querySelectorAll('a[href="/new-business.html"]');
         publishLinks.forEach(link => {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1356,7 +1356,7 @@ function createPropertyCard(p) {
     if (p.area) statsHtml += `<span><i class="fas fa-ruler-combined"></i> ${p.area}${p.area_unit === 'ha' ? ' ha' : ' m²'}</span>`;
 
     return `
-    <a href="property-detail.html?id=${p.id}" class="business-card">
+    <a href="/property-detail.html?id=${p.id}" class="business-card">
         ${featuredBadge}
         <div class="business-card-img">
             ${img ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(p.title)}" loading="lazy" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 300%22><rect fill=%22%23f0f0f0%22 width=%22400%22 height=%22300%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23ccc%22 font-size=%2240%22>🏠</text></svg>'">` : '<div class="card-img-placeholder"><i class="fas fa-home"></i></div>'}
@@ -1811,7 +1811,7 @@ async function loadFeaturedJobs() {
             const bizLogo = j.business_logo || '';
 
             return `
-            <a href="empleo.html" class="business-card">
+            <a href="/empleo.html" class="business-card">
                 ${featuredBadge}
                 <div class="business-card-img">
                     ${bizLogo ? `<img src="${escapeHtml(bizLogo)}" alt="${escapeHtml(j.company_name || '')}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">` : ''}

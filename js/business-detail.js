@@ -855,7 +855,7 @@ async function loadBusinessJobs(businessId) {
         if (viewAll) { viewAll.style.display = ''; viewAll.href = `empleo.html?business_id=${businessId}`; }
 
         list.innerHTML = jobs.map(j => `
-            <a href="empleo.html" class="job-item" style="text-decoration:none;color:inherit;">
+            <a href="/empleo.html" class="job-item" style="text-decoration:none;color:inherit;">
                 <div class="job-item-icon"><i class="fas fa-briefcase"></i></div>
                 <div class="job-item-info">
                     <div class="job-item-title">${escapeHtml(j.title)}</div>
