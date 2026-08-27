@@ -601,6 +601,148 @@ git push origin main
 
 ## Registro de Actualizaciones
 
+### 2026-08-28 — Index con 8 fichas, planes $30/6m, landing GEO/AEO, badges, mapa 3:4, boton Crear Negocio
+
+**Resumen de la sesion:** Se aplicaron mas de 20 mejoras y fixes al repositorio `meridaunclick` adaptando bugs de `en-santiago` sin cambiar el branding HolaX/AunClick. Todos los cambios estan en produccion (`holax.com.ve`).
+
+#### Cambios principales
+
+**1. Index: maximo de fichas subido de 4 a 8 por seccion**
+
+- `js/app.js` — Cambio de `slice(0, 4)` y `limit=4` a `slice(0, 8)` y `limit=8/12/24` en:
+  - `loadFeaturedProperties()` — Negocios destacados (maxShow siempre 8)
+  - `loadFeaturedMedical()` — Servicios medicos
+  - `loadFeaturedPropertiesSection()` — Inmuebles
+  - `loadFeaturedProducts()` — Productos del marketplace
+  - `loadFeaturedJobs()` — Empleos
+- **Bug raiz resuelto:** La tabla `featured_items` tenia solo 4 items con `item_type=business`, y la funcion hacia return sin complementar. Fix: si `businesses.length < 8`, complementar con API (limit=24, excluyendo categoria medica, merge sin duplicados por id).
+
+**2. Planes: Premium $30 cada 6 meses (antes $10/mes)**
+
+- `planes.html` — Plan Premium ahora muestra `$30 / 6 meses` en lugar de `$10/mes`. Plan Basico sigue gratis.
+- `dashboard.html` — Display de pago movil actualizado con numero oficial `0414-5362715` (antes `0414-000-0000`).
+
+**3. Categorias nuevas: Camaras de Seguridad + Bufete de Abogados**
+
+- `scripts/add-categories.sql` — Migracion SQL idempotente (`INSERT OR IGNORE`) que agrega:
+  - **Camaras de Seguridad** (tipo: servicios-varios, icon `fa-video`, color `#1e88e5`, sort_order 85)
+  - **Bufete de Abogados** (tipo: servicios-profesionales, icon `fa-gavel`, color `#5d4037`, sort_order 51)
+- Aplicar via D1: `wrangler d1 execute generico_db --remote --file=scripts/add-categories.sql`
+
+**4. Badges delivery (azul) + servicio a domicilio (naranja)**
+
+- `js/app.js` — `createBusinessCard()` ahora genera 2 badges extras cuando `business.has_delivery`:
+  - `badge-delivery` (azul, icon `fa-motorcycle`)
+  - `badge-servicio-domicilio` (naranja, icon `fa-home`)
+- `css/styles.css` — Estilos gradient para ambos badges.
+- `functions/_lib/render-business.js` — Ya existian los `feature-chip-delivery` y `feature-chip-servicio-domicilio` en la ficha de detalle.
+
+**5. Mapa del index 3:4 + fichas siempre desplegadas**
+
+- `js/home-map.js` — Desactivado `L.markerClusterGroup`, ahora usa `L.layerGroup()` directo. Todas las fichas aparecen visibles desde el inicio sin tener que hacer zoom para abrirlas. `preferCanvas: true` ya estaba activo.
+- `index.html`, `search.html`, `map.html` — Cargado plugin `leaflet.markercluster@1.5.3` para `js/map.js` (mantenido, solo se desactivo en home-map.js).
+- `css/styles.css` — `.idx-map-wrapper` aspect-ratio: `1300/644` -> `3/4` (mobile y desktop). `.home-map-wrapper`: `4/3` -> `3/4`.
+
+**6. Banner configurable para search.html**
+
+- `functions/api/settings/index.js` — Agregados `search_banner_url` y `search_banner_link` a `DEFAULT_SETTINGS` y `ALLOWED_KEYS`.
+- `functions/api/settings/public.js` — Expone ambos campos en endpoint publico.
+- `search.html` — Nueva seccion `<section id="searchBannerSection">` que carga el banner desde `/api/settings/public`. Responsive mobile (max-height 180px en pantallas pequenas).
+- `admin.html` — Nueva UI "Portada de Busqueda (Banner)" con upload + campo link opcional.
+- `js/admin.js` — Handlers `handleAdminSearchBannerSelect()` y `removeAdminSearchBanner()`. Override de `loadSettings` para mostrar preview.
+
+**7. Landing `/registrar-negocio.html` (GEO/AEO)**
+
+- Copiada de `en-santiago/registrar-negocio.html` y adaptada a HolaX/Venezuela:
+  - Branding: "En Santiago" -> "HolaX"
+  - URL: `en-santiago.pages.dev` -> `holax.com.ve`
+  - Geo: Santiago de Chile -> Venezuela, `es_CL` -> `es_VE`, `CL-RM` -> `VE`
+  - Coordenadas: `-33.4489;-70.6693` -> `8.6;-66.0` (centro Venezuela)
+  - WhatsApp: `56939026185` -> `584145362715` (CEO HolaX)
+  - 32+ comunas -> 24 estados de Venezuela
+- Contenido: JSON-LD `@graph` (WebPage + Service + Organization), FAQ Schema.org, 3 pasos, hero con CTA, beneficios, SEO local para "registrar negocio Venezuela".
+- `functions/api/sitemap/index.js` — Agregada `/registrar-negocio.html` con prioridad 0.9.
+
+**8. Boton "Crear Negocio" en navbar**
+
+- `index.html` — Movido fuera del menu hamburguesa. Ahora es un `<a class="nav-btn-create">` directo al lado del logo HolaX, agrupado en `<div class="nav-brand-group">`.
+- `css/styles.css` — Estilos `.nav-btn-create` verde con efecto glow animado (`@keyframes navCreateGlow`). Texto "Crear Negocio" SIEMPRE visible (no se oculta en mobile, solo reduce padding/font-size). Nuevo `.nav-brand-group` con `display:flex; gap:12px`.
+
+**9. Rediseño `/web/:slug` con dark theme estilo drmecanicoautomotriz**
+
+- `functions/web/[slug].js` — Copiado de en-santiago (dark theme, IA optimization con caching en `ai_cache`, JSON-LD LocalBusiness, FAQ autogeneradas, seccion "Why Choose Us", galeria con lightbox). Adaptado a HolaX/Venezuela.
+- `functions/_lib/render-business.js` — Reemplazadas todas las referencias "En Santiago" -> "HolaX", `en-santiago.pages.dev` -> `holax.com.ve`, `addressCountry: CL` -> `VE`, `es_CL` -> `es_VE`.
+
+**10. Prefooter con numeros oficiales**
+
+- 7 archivos HTML (index, contacto, quienes-somos, mision-vision, planes, privacidad, clientes-satisfechos) — Reemplazado `+58 414-000-0000` por `+58 414-5362715 / 0416-7775771` (numeros oficiales de contacto).
+
+**11. Links relativos -> absolutos en JS**
+
+- Bug reportado: Estando en `/servicios-profesionales/publicidad/some-biz`, el boton "Panel Admin" iba a `/servicios-profesionales/publicidad/admin.html` (404) en vez de `/admin.html`.
+- Fix: script `scripts/fix-relative-hrefs.py` detecta `href="name.html"` y lo convierte a `href="/name.html"`. 11 reemplazos en 5 archivos (`app.js`, `business-detail.js`, `dashboard.js`, `admin.js`, `property-detail.js`).
+
+**12. Limite destacados subido de 4 a 8**
+
+- `admin.html` — Texto "Selecciona hasta 4" -> "Selecciona hasta 8" en 5 secciones (negocios, servicios medicos, productos, inmuebles, empleos).
+- `js/admin.js` — `checked.length > 4` -> `> 8` y toasts "Maximo 4" -> "Maximo 8" (5 validaciones).
+
+**13. Textarea descripcion ampliado y auto-expandible**
+
+- `dashboard.html`, `admin-edit-business.html`, `js/dashboard.js` — `rows="3"` -> `rows="8"` con `min-height:200px` en 3 textareas de descripcion.
+- `js/app.js` — Funcion global `autoGrowTextarea(el)` que ajusta altura al contenido. Auto-aplicada a todos los `.eb-textarea` al cargar la pagina. Hook en `openEditBusinessModal` y `renderForm` para expandir al abrir.
+
+**14. Fix branding En Santiago -> HolaX**
+
+- Reemplazadas todas las referencias en `functions/_lib/render-business.js`, `functions/[tipo]/[categoria]/[slug].js`, `functions/api/settings/index.js`, `functions/api/settings/public.js`, `js/business-detail.js`, `admin-edit-business.html`.
+
+#### Validaciones realizadas
+
+- Sintaxis JS verificada con `node -c` en todos los archivos modificados.
+- Modulos ES verificados con `node --input-type=module -e "import(...)"` para render-business, web/[slug], settings, sitemap.
+- JSON-LD de `registrar-negocio.html` validado con Python `json.loads()`.
+- Deploy verificado en `holax.com.ve` (200 OK) y `aunclick.pages.dev` (200 OK).
+
+#### Migraciones pendientes (manual)
+
+1. **Crear las categorias nuevas en D1** (no se aplica automaticamente):
+   ```bash
+   wrangler d1 execute generico_db --remote --file=scripts/add-categories.sql
+   ```
+   O via dashboard Cloudflare: D1 -> `generico_db` -> Query -> pegar contenido de `scripts/add-categories.sql` -> Execute.
+
+2. **(Opcional) Si la tabla `tipos_negocio` no existe**, ejecutar primero la migracion:
+   - Visitar una vez `https://holax.com.ve/api/migrate/tipos-negocio` (crea tabla + asigna tipos a categorias existentes).
+
+#### Commits de esta sesion
+
+| Commit | Descripcion |
+|---|---|
+| `5bf2d85` | feat: textarea grande auto-expandible + 8 destacados + boton Crear Negocio al lado del logo |
+| `451d6a6` | fix: subir app.js?v=14 + styles.css?v=15 para forzar recarga del fix de 8 fichas |
+| `3a46f98` | feat: boton Crear Negocio + landing registrar-negocio.html + fix 8 fichas destacadas |
+| `a55c1e1` | fix: subir versiones JS para romper cache (app.js v13, dashboard.js v13, etc) |
+| `f7537b2` | fix: links relativos a absolutos en JS para que funcionen desde cualquier subpath |
+| `b657bc0` | fix: mapa index 3:4 + fichas siempre desplegadas (sin clustering) |
+| `4ebf3a6` | fix: forzar 8 fichas en todas las secciones del index (negocios, productos, empleos) |
+| `04c6edd` | fix: subiendo limit a 24 en fallback para mostrar 8 fichas (no 4) en index |
+| `5cc6c71` | feat: index 8 fichas, planes $30/6m, badges, mapa cluster, search banner, dark theme /web/:slug |
+| `e557b3e` | fix: aplicar 15 bugs de en-santiago a meridaunclick (sin cambiar nombres) |
+| `293fd8e` | fix: Token invalido al subir fotos — unificar busquedas de token |
+
+#### Versiones de cache (romper cache en Cloudflare Pages)
+
+| Archivo | Version actual |
+|---|---|
+| `css/styles.css` | `?v=16` |
+| `js/app.js` | `?v=15` |
+| `js/dashboard.js` | `?v=15` |
+| `js/admin.js` | `?v=9` |
+| `js/business-detail.js` | `?v=8` |
+| `js/property-detail.js` | `?v=2` |
+
+---
+
 ### 2026-07-29 — Destacados siempre primero en todos los listados
 
 **Cambio principal:**
