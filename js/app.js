@@ -485,6 +485,28 @@ function updateNav() {
 }
 
 // ─── UI Helpers ────────────────────────────────────────────────
+
+// FIX: Auto-grow para textareas de descripcion.
+// Al escribir, el textarea crece en altura para mostrar todo el contenido.
+// Uso: <textarea oninput="autoGrowTextarea(this)">
+function autoGrowTextarea(el) {
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = Math.max(200, el.scrollHeight + 8) + 'px';
+}
+
+// Aplicar autoGrow a todos los textareas con clase .eb-textarea al cargar
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('textarea.eb-textarea, textarea#editBizDesc, textarea#ebDesc, textarea#aebDesc').forEach(t => {
+        if (!t.hasAttribute('data-autogrow')) {
+            t.setAttribute('data-autogrow', '1');
+            t.addEventListener('input', () => autoGrowTextarea(t));
+            // Auto-grow inicial si ya tiene contenido
+            setTimeout(() => autoGrowTextarea(t), 100);
+        }
+    });
+});
+
 function showToast(message, type = 'info') {
     let container = document.getElementById('toastContainer');
     if (!container) {

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>Editar Negocio - Admin HolaX</title>
-    <link rel="stylesheet" href="css/styles.css?v=4">
+    <link rel="stylesheet" href="css/styles.css?v=16">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         /* Page layout */
@@ -322,7 +322,7 @@
                 '<h4 class="eb-section-title"><i class="fas fa-info-circle"></i> Información del Negocio</h4>' +
                 '<div class="eb-grid">' +
                     '<div class="eb-field"><label>Nombre del Negocio *</label><input type="text" class="eb-input" id="ebTitle" value="' + escH(b.title||'') + '" maxlength="150"></div>' +
-                    '<div class="eb-field"><label>Descripción</label><textarea class="eb-input" id="ebDesc" rows="3">' + escH(b.description||'') + '</textarea></div>' +
+                    '<div class="eb-field"><label>Descripción</label><textarea class="eb-input" id="ebDesc" rows="8" style="min-height:200px;resize:vertical;font-family:inherit;line-height:1.6;" oninput="autoGrowTextarea(this)">' + escH(b.description||'') + '</textarea></div>' +
                     '<div class="eb-field"><label>Tipo de Negocio</label><select class="eb-input" id="ebType">' +
                         '<option value="negocio"' + (b.business_type==='negocio'?' selected':'') + '>Negocio</option>' +
                         '<option value="tienda"' + (b.business_type==='tienda'?' selected':'') + '>Tienda</option>' +
@@ -538,6 +538,11 @@
                 const biz = await api.get('/businesses/' + id);
                 await loadCategories();
                 renderForm(biz);
+                // FIX: aplicar autoGrow al textarea de descripción después de renderizar el form
+                setTimeout(function() {
+                    var desc = document.getElementById('ebDesc');
+                    if (desc && typeof autoGrowTextarea === 'function') autoGrowTextarea(desc);
+                }, 80);
             } catch(e) {
                 container.innerHTML = '<div class="eb-empty"><i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i><p>Error al cargar: ' + escH(e.message) + '</p></div>';
                 showToast('Error al cargar negocio', 'error');

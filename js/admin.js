@@ -3124,9 +3124,9 @@ if (!window._renderVideoList) {
             checkboxes.forEach(cb => {
                 cb.addEventListener('change', () => {
                     const checked = container.querySelectorAll('.featured-checkbox:checked');
-                    if (checked.length > 4) {
+                    if (checked.length > 8) {
                         cb.checked = false;
-                        showToast('Máximo 4 negocios destacados', 'warning');
+                        showToast('Máximo 8 negocios destacados', 'warning');
                     }
                 });
             });
@@ -3230,9 +3230,9 @@ if (!window._renderVideoList) {
             checkboxes.forEach(cb => {
                 cb.addEventListener('change', () => {
                     const checked = container.querySelectorAll('.featured-medical-checkbox:checked');
-                    if (checked.length > 4) {
+                    if (checked.length > 8) {
                         cb.checked = false;
-                        showToast('Máximo 4 servicios médicos destacados', 'warning');
+                        showToast('Máximo 8 servicios médicos destacados', 'warning');
                     }
                 });
             });
@@ -3593,7 +3593,7 @@ if (!window._renderVideoList) {
             container.querySelectorAll('.featured-product-checkbox').forEach(cb => {
                 cb.addEventListener('change', () => {
                     const checked = container.querySelectorAll('.featured-product-checkbox:checked');
-                    if (checked.length > 4) { cb.checked = false; showToast('Máximo 4 productos destacados', 'warning'); }
+                    if (checked.length > 8) { cb.checked = false; showToast('Máximo 8 productos destacados', 'warning'); }
                 });
             });
         } catch (err) {
@@ -3682,7 +3682,7 @@ if (!window._renderVideoList) {
             container.querySelectorAll('.featured-property-checkbox').forEach(cb => {
                 cb.addEventListener('change', () => {
                     const checked = container.querySelectorAll('.featured-property-checkbox:checked');
-                    if (checked.length > 4) { cb.checked = false; showToast('Máximo 4 inmuebles destacados', 'warning'); }
+                    if (checked.length > 8) { cb.checked = false; showToast('Máximo 8 inmuebles destacados', 'warning'); }
                 });
             });
         } catch (err) {
@@ -3769,7 +3769,7 @@ if (!window._renderVideoList) {
             container.querySelectorAll('.featured-job-checkbox').forEach(cb => {
                 cb.addEventListener('change', () => {
                     const checked = container.querySelectorAll('.featured-job-checkbox:checked');
-                    if (checked.length > 4) { cb.checked = false; showToast('Máximo 4 empleos destacados', 'warning'); }
+                    if (checked.length > 8) { cb.checked = false; showToast('Máximo 8 empleos destacados', 'warning'); }
                 });
             });
         } catch (err) {

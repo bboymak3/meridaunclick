@@ -161,6 +161,16 @@ window.addEditBizVideoUrl = function() {
 };
 
 window.openEditBusinessModal = _openEditBizModal;
+// FIX: aplicar autoGrow al textarea de descripción cuando se abre el modal
+var _origOpenEditBusinessModal = _openEditBizModal;
+_openEditBizModal = async function(id) {
+    await _origOpenEditBusinessModal(id);
+    setTimeout(function() {
+        var desc = document.getElementById('editBizDesc');
+        if (desc && typeof autoGrowTextarea === 'function') autoGrowTextarea(desc);
+    }, 150);
+};
+window.openEditBusinessModal = _openEditBizModal;
 window.closeEditBusinessModal = function() {
     var modal = document.getElementById('editBusinessModal');
     if (modal) modal.classList.add('hidden');
@@ -3917,7 +3927,7 @@ window.closeEditBusinessModal = function() {
             <div class="aeb-grid">
                 <div class="aeb-field"><label>Nombre *</label><input type="text" class="eb-input" id="aebTitle" value="${escH(b.title||'')}" maxlength="150"></div>
                 <div class="aeb-field"><label>Categoria</label><input type="text" class="eb-input" id="aebCategory" value="${escH(b.category_name||b.category||'')}"></div>
-                <div class="aeb-field"><label>Descripcion</label><textarea class="eb-input eb-textarea" id="aebDesc" rows="3">${escH(b.description||'')}</textarea></div>
+                <div class="aeb-field"><label>Descripcion</label><textarea class="eb-input eb-textarea" id="aebDesc" rows="8" style="min-height:200px;resize:vertical;font-family:inherit;line-height:1.6;" oninput="autoGrowTextarea(this)">${escH(b.description||'')}</textarea></div>
                 <div class="aeb-field"><label>Tipo</label><input type="text" class="eb-input" id="aebType" value="${escH(b.business_type||'')}"></div>
             </div>
         </div>
