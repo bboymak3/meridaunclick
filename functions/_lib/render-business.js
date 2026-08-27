@@ -95,15 +95,15 @@ export function renderBusinessPage(env, business, options = {}) {
     reviewCount = 0,
   } = options;
 
-  const baseUrl = 'https://holax.com.ve';
+  const baseUrl = 'https://en-santiago.pages.dev';
   const title = business.title || 'Negocio';
   // Use custom SEO description if provided, otherwise auto-generate
   const description = business.seo_description
     ? business.seo_description.substring(0, 160)
     : business.description
       ? business.description.substring(0, 160)
-      : `Información sobre ${title} en ${business.city || 'Venezuela'}. Dirección, contacto, servicios y más.`;
-  const imageUrl = business.cover_image || `${baseUrl}/images/Holax.png`;
+      : `Información sobre ${title} en ${business.city || 'Santiago de Chile'}. Dirección, contacto, servicios y más.`;
+  const imageUrl = business.cover_image || `${baseUrl}/images/En Santiago.png`;
   const finalCanonical = canonicalUrl || `${baseUrl}${pathPrefix || '/negocio'}/${business.slug}`;
 
   // Breadcrumb helpers
@@ -136,22 +136,22 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="${escapeHtml(description)}">
-    <title>${escapeHtml(title)} - HolaX | Directorio de Negocios en Venezuela</title>
+    <title>${escapeHtml(title)} - En Santiago | Directorio de Negocios en Santiago de Chile</title>
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="${finalCanonical}">
 
     <!-- Open Graph -->
     <meta property="og:type" content="business.business">
-    <meta property="og:title" content="${escapeHtml(title)} - HolaX">
+    <meta property="og:title" content="${escapeHtml(title)} - En Santiago">
     <meta property="og:description" content="${escapeHtml(description)}">
     <meta property="og:image" content="${imageUrl}">
     <meta property="og:url" content="${finalCanonical}">
-    <meta property="og:site_name" content="HolaX">
-    <meta property="og:locale" content="es_VE">
+    <meta property="og:site_name" content="En Santiago">
+    <meta property="og:locale" content="es_CL">
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="${escapeHtml(title)} - HolaX">
+    <meta name="twitter:title" content="${escapeHtml(title)} - En Santiago">
     <meta name="twitter:description" content="${escapeHtml(description)}">
     <meta name="twitter:image" content="${imageUrl}">
 
@@ -159,7 +159,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta property="business:contact_data:street_address" content="${escapeHtml(business.address || '')}">
     <meta property="business:contact_data:locality" content="${escapeHtml(business.city || '')}">
     <meta property="business:contact_data:region" content="${escapeHtml(business.state || '')}">
-    <meta property="business:contact_data:country_name" content="${escapeHtml(business.country || 'Venezuela')}">
+    <meta property="business:contact_data:country_name" content="${escapeHtml(business.country || 'Santiago de Chile')}">
 
     <!-- JSON-LD: Rich Snippets -->
     ${business.custom_jsonld
@@ -185,7 +185,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           "streetAddress": business.address,
           "addressLocality": business.city || undefined,
           "addressRegion": business.state || undefined,
-          "addressCountry": "VE"
+          "addressCountry": "CL"
         };
       }
       if (business.lat || business.latitude) {
@@ -227,14 +227,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     }
     <script type="application/ld+json">${(() => {
       const crumbs = [
-        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },
-        { "@type": "ListItem", "position": 2, "name": sectionBreadcrumbText, "item": "https://holax.com.ve/search.html" }
+        { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://en-santiago.pages.dev/" },
+        { "@type": "ListItem", "position": 2, "name": sectionBreadcrumbText, "item": "https://en-santiago.pages.dev/search.html" }
       ];
       if (categoryBreadcrumb) {
-        crumbs.push({ "@type": "ListItem", "position": 3, "name": categoryBreadcrumb.name, "item": categoryBreadcrumb.url.startsWith('http') ? categoryBreadcrumb.url : "https://holax.com.ve" + categoryBreadcrumb.url });
+        crumbs.push({ "@type": "ListItem", "position": 3, "name": categoryBreadcrumb.name, "item": categoryBreadcrumb.url.startsWith('http') ? categoryBreadcrumb.url : "https://en-santiago.pages.dev" + categoryBreadcrumb.url });
       } else if (business.category_name) {
         const catSlug = (business.category_name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-        crumbs.push({ "@type": "ListItem", "position": 3, "name": business.category_name, "item": "https://holax.com.ve/categoria/" + catSlug });
+        crumbs.push({ "@type": "ListItem", "position": 3, "name": business.category_name, "item": "https://en-santiago.pages.dev/categoria/" + catSlug });
       }
       crumbs.push({ "@type": "ListItem", "position": crumbs.length + 1, "name": title, "item": finalCanonical });
       return JSON.stringify({ "@context": "https://schema.org", "@type": "BreadcrumbList", "itemListElement": crumbs });
@@ -273,15 +273,56 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 .business-detail-page .feature-chip i {
     font-size: 1rem;
 }
+/* FIX: Badge de Delivery con color azul distintivo */
+.business-detail-page .feature-chip-delivery {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    border: 1px solid #1d4ed8;
+    font-weight: 700;
+}
+.business-detail-page .feature-chip-delivery i {
+    color: #fff;
+    font-size: 1.05rem;
+}
+.business-detail-page .feature-chip-delivery:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+/* FIX: Badge de Servicio a Domicilio con color naranja distintivo */
+.business-detail-page .feature-chip-servicio-domicilio {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: #fff;
+    border: 1px solid #c2410c;
+    font-weight: 700;
+}
+.business-detail-page .feature-chip-servicio-domicilio i {
+    color: #fff;
+    font-size: 1.05rem;
+}
+.business-detail-page .feature-chip-servicio-domicilio:hover {
+    background: linear-gradient(135deg, #ea580c, #c2410c);
+}
+/* FIX: Descripción siempre visible completa, sin collapse ni degradado.
+   Único efecto: justificación del texto dentro del box. */
 .business-detail-page .compact-description {
     font-size: 1.05rem;
     line-height: 1.75;
+    text-align: justify;        /* justificación del texto */
+    text-justify: inter-word;
+    hyphens: auto;
+    /* Sin max-height, sin overflow, sin degradado: texto siempre completo */
+}
+.business-detail-page .compact-description p {
+    margin: 0;
 }
 .business-detail-page .compact-description.collapsed {
-    max-height: 104px;
+    /* Mantener por compatibilidad con JS legacy, pero sin efecto visual */
+    max-height: none;
+    overflow: visible;
 }
 .business-detail-page .compact-description.collapsed::after {
-    height: 52px;
+    /* Sin degradado */
+    content: none;
+    display: none;
 }
 .business-detail-page .compact-top-row {
     margin-bottom: 8px;
@@ -296,6 +337,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 }
 .business-detail-page .description-toggle {
     font-size: 1rem;
+    display: none !important;  /* FIX: ocultar botón Leer más, no se usa */
 }
 .business-detail-page .business-section-title {
     font-size: 1.3rem;
@@ -311,6 +353,125 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 .business-detail-page #similarGrid .business-card-fav,
 .business-detail-page #similarGrid .btn-share-wa-card {
     display: none !important;
+}
+/* FIX: Negocios Similares rediseñado como carrusel horizontal scrollable.
+   Tarjetas fijas con logo, nombre, categoría y tipo — todo centrado. */
+.business-detail-page #similarGrid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 8px 4px 16px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+.business-detail-page #similarGrid::-webkit-scrollbar {
+    height: 6px;
+}
+.business-detail-page #similarGrid::-webkit-scrollbar-track {
+    background: transparent;
+}
+.business-detail-page #similarGrid::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+.business-detail-page .similar-biz-card {
+    flex-shrink: 0;
+    width: 180px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    scroll-snap-align: start;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 12px 12px;
+    text-align: center;
+}
+.business-detail-page .similar-biz-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    border-color: #006EE3;
+}
+.business-detail-page .similar-biz-logo {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f1f5f9;
+    margin-bottom: 10px;
+    border: 3px solid #f1f5f9;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    flex-shrink: 0;
+}
+.business-detail-page .similar-biz-card:hover .similar-biz-logo {
+    border-color: #006EE3;
+}
+.business-detail-page .similar-biz-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.business-detail-page .similar-biz-info {
+    width: 100%;
+    text-align: center;
+}
+.business-detail-page .similar-biz-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 6px;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.business-detail-page .similar-biz-cat {
+    font-size: 0.72rem;
+    color: #006EE3;
+    font-weight: 600;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.business-detail-page .similar-biz-cat i {
+    font-size: 0.65rem;
+}
+.business-detail-page .similar-biz-type {
+    font-size: 0.7rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+.business-detail-page .similar-biz-type i {
+    font-size: 0.62rem;
+}
+@media (max-width: 640px) {
+    .business-detail-page .similar-biz-card {
+        width: 145px;
+        padding: 12px 10px 10px;
+    }
+    .business-detail-page .similar-biz-logo {
+        width: 68px;
+        height: 68px;
+    }
+    .business-detail-page .similar-biz-name {
+        font-size: 0.78rem;
+    }
 }
 .business-detail-page .business-grid {
     display: grid;
@@ -460,6 +621,251 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     max-height: 300px;
 }
 
+/* FIX: Galería con foto principal grande + carrusel de miniaturas + grid expandible */
+.business-detail-page .business-gallery {
+    margin: 16px 0;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 0;
+}
+
+/* 1. Foto principal GRANDE */
+.business-detail-page .gallery-main-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #0f172a;
+    overflow: hidden;
+    cursor: zoom-in;
+}
+.business-detail-page .gallery-main-wrap .gallery-main-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+.business-detail-page .gallery-main-wrap:hover .gallery-main-img {
+    transform: scale(1.02);
+}
+.business-detail-page .gallery-zoom-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    backdrop-filter: blur(4px);
+}
+.business-detail-page .gallery-zoom-btn:hover {
+    background: rgba(0,0,0,0.8);
+}
+.business-detail-page .gallery-counter-badge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+}
+
+/* 2. Carrusel de miniaturas (scroll-x, swipe con dedo) */
+.business-detail-page .gallery-thumbs {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+    background: #f8fafc;
+}
+.business-detail-page .gallery-thumbs::-webkit-scrollbar {
+    height: 6px;
+}
+.business-detail-page .gallery-thumbs::-webkit-scrollbar-track {
+    background: transparent;
+}
+.business-detail-page .gallery-thumbs::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+.business-detail-page .gallery-thumb {
+    flex-shrink: 0;
+    width: 97px;   /* FIX: +35% (antes 72px) */
+    height: 73px;  /* FIX: +35% (antes 54px) */
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    border: 2px solid transparent;
+    scroll-snap-align: start;
+    transition: border-color 0.2s, transform 0.2s;
+    background: #e2e8f0;
+}
+.business-detail-page .gallery-thumb:hover {
+    transform: translateY(-2px);
+}
+.business-detail-page .gallery-thumb.active {
+    border-color: #006EE3;
+}
+.business-detail-page .gallery-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 3. Botón "Ver todas las fotos" */
+.business-detail-page .gallery-actions {
+    padding: 0 12px 12px;
+    background: #f8fafc;
+}
+.business-detail-page .gallery-view-all-btn {
+    width: 100%;
+    background: #006EE3;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s;
+}
+.business-detail-page .gallery-view-all-btn:hover {
+    background: #0056b3;
+}
+.business-detail-page .gallery-view-all-btn.expanded {
+    background: #64748b;
+}
+
+/* 4. Grid con TODAS las fotos (se despliega inline) */
+.business-detail-page .gallery-all-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    padding: 12px;
+    background: #f8fafc;
+}
+.business-detail-page .gallery-all-grid img {
+    width: 100%;
+    aspect-ratio: 1/1;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: zoom-in;
+    transition: transform 0.2s;
+}
+.business-detail-page .gallery-all-grid img:hover {
+    transform: scale(1.03);
+}
+@media (max-width: 640px) {
+    .business-detail-page .gallery-all-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .business-detail-page .gallery-thumb {
+        width: 86px;   /* FIX: +35% (antes 64px) */
+        height: 65px;  /* FIX: +35% (antes 48px) */
+    }
+}
+
+/* Lightbox fullscreen con X para cerrar + botones prev/next que navegan */
+.business-detail-page .lightbox {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+.business-detail-page .lightbox.hidden {
+    display: none;
+}
+.business-detail-page .lightbox-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.business-detail-page .lightbox-close:hover {
+    background: rgba(255,255,255,0.2);
+}
+.business-detail-page .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+.business-detail-page .lightbox-nav:hover {
+    background: rgba(255,255,255,0.2);
+}
+.business-detail-page .lightbox-prev {
+    left: 16px;
+}
+.business-detail-page .lightbox-next {
+    right: 16px;
+}
+.business-detail-page .lightbox-img {
+    max-width: 95vw;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 8px;
+}
+.business-detail-page .lightbox-counter {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 0.9rem;
+    background: rgba(0,0,0,0.5);
+    padding: 6px 16px;
+    border-radius: 20px;
+}
+
 @media (max-width: 640px) {
     .business-detail-page .business-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -554,22 +960,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="/index.html" class="nav-logo">
-                <img src="/images/favicon.jpeg" alt="HolaX" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
-                <span class="brand-name"><span id="brandCity"></span> HolaX</span>
+                <img src="/images/favicon.jpeg" alt="En Santiago" style="height:32px;width:auto;border-radius:6px;margin-right:4px;">
+                <span class="brand-name"><span id="brandCity"></span> En Santiago</span>
             </a>
             <div class="location-selector" id="locationSelector">
                 <button class="location-btn" id="locationBtn" aria-label="Seleccionar ubicación">
                     <i class="fas fa-map-marker-alt"></i>
-                    <span class="location-label" id="locationLabel">Todo Venezuela</span>
+                    <span class="location-label" id="locationLabel">Todo Santiago de Chile</span>
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div class="location-dropdown hidden" id="locationDropdown">
                     <div class="location-search">
-                        <input type="text" id="locationSearchInput" placeholder="Buscar estado..." autocomplete="off">
+                        <input type="text" id="locationSearchInput" placeholder="Buscar comuna..." autocomplete="off">
                     </div>
                     <div class="location-option" data-state="" data-city="">
                         <i class="fas fa-globe-americas"></i>
-                        <span>Todo Venezuela</span>
+                        <span>Todo Santiago de Chile</span>
                     </div>
                     <div class="location-divider"></div>
                     <div class="location-list" id="locationList"></div>
@@ -648,7 +1054,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <i class="fas fa-map-marker-alt"></i> <span>${escapeHtml(business.city || '')}${business.state ? ', ' + escapeHtml(business.state) : ''}</span>
                     </div>
                     <div class="feature-chips">
-                        <div class="feature-chip" id="statStateCityWrap" title="Estado / Ciudad"><i class="fas fa-map-marker-alt"></i> <span id="statStateCity">${escapeHtml((business.city || '') + (business.state ? ', ' + business.state : ''))}</span></div>
+                        <div class="feature-chip" id="statStateCityWrap" title="Comuna / Ciudad"><i class="fas fa-map-marker-alt"></i> <span id="statStateCity">${escapeHtml((business.city || '') + (business.state ? ', ' + business.state : ''))}</span></div>
                         <div class="feature-chip" id="statCategoriaWrap" title="Categoría"><i class="fas fa-tag"></i> <span id="statCategoria">${escapeHtml(business.category_name || '--')}</span></div>
                         ${reviewCount > 0 ? `<div class="feature-chip" style="background:linear-gradient(135deg,#fff8e1,#fff3cd);color:#f57f17;border:1px solid #ffd54f;" title="Calificación"><i class="fas fa-star" style="color:#ffc107;"></i> <span>${Math.round(avgRating * 10) / 10} (${reviewCount} reseña${reviewCount !== 1 ? 's' : ''})</span></div>` : ''}
                         ${business.especialidad ? `<div class="feature-chip" style="background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;" title="Especialidad"><i class="fas fa-stethoscope"></i> <span>${escapeHtml(business.especialidad)}</span></div>` : ''}
@@ -658,25 +1064,44 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         <div class="feature-chip" id="statFeatureParking" style="display:none;" title="Estacionamiento"><i class="fas fa-parking"></i> <span>Estacionamiento</span></div>
                         <div class="feature-chip" id="statFeatureWifi" style="display:none;" title="WiFi"><i class="fas fa-wifi"></i> <span>WiFi</span></div>
                         <div class="feature-chip" id="statFeatureCards" style="display:none;" title="Acepta tarjetas"><i class="fas fa-credit-card"></i> <span>Tarjetas</span></div>
-                        <div class="feature-chip" id="statFeatureDelivery" style="display:none;" title="Delivery"><i class="fas fa-motorcycle"></i> <span>Delivery</span></div>
+                        <div class="feature-chip feature-chip-delivery" id="statFeatureDelivery" style="display:none;" title="Delivery / Servicio a Domicilio"><i class="fas fa-motorcycle"></i> <span>Delivery</span></div>
+                        <div class="feature-chip feature-chip-servicio-domicilio" id="statFeatureServicioDomicilio" style="display:none;" title="Servicio a Domicilio"><i class="fas fa-home"></i> <span>Servicio a Domicilio</span></div>
                         <div class="feature-chip" id="statFeatureOutdoor" style="display:none;" title="Área al aire libre"><i class="fas fa-umbrella-beach"></i> <span>Exterior</span></div>
                     </div>
-                    <div class="compact-description collapsed" id="propDescription">
-                        <p>${escapeHtml(business.description || 'Sin descripción disponible.')}</p>
-                    </div>
+                    <!-- FIX: La descripción se movió ABAJO del botón "Sitio Web"
+                         para que el flujo sea: badges → título → ubicación → chips →
+                         [sección contactar] → [sección redes y web con botón Sitio Web] →
+                         DESCRIPCIÓN completa justificada → galería → ... -->
                     <button class="description-toggle" id="descriptionToggle" style="display:none;">Leer más <i class="fas fa-chevron-down"></i></button>
                 </div>
 
                 <div class="business-gallery" id="businessGallery">
-                    <div class="gallery-main">
-                        <img id="mainImage" src="" alt="" class="gallery-main-img" style="cursor:zoom-in;" onclick="document.getElementById('lightbox').classList.remove('hidden')">
-                        <button class="gallery-nav gallery-prev" id="galleryPrev" aria-label="Anterior"><i class="fas fa-chevron-left"></i></button>
-                        <button class="gallery-nav gallery-next" id="galleryNext" aria-label="Siguiente"><i class="fas fa-chevron-right"></i></button>
-                        <div class="gallery-counter"><span id="galleryCurrent">1</span> / <span id="galleryTotal">1</span></div>
-                        <button class="gallery-fullscreen" id="galleryFullscreen" aria-label="Pantalla completa"><i class="fas fa-expand"></i></button>
-                        <div class="gallery-badges" id="galleryBadges"></div>
+                    <!-- FIX: Galería con 3 niveles:
+                         1. Foto principal GRANDE arriba (click → lightbox)
+                         2. Carrusel de miniaturas abajo con TODAS las fotos (scroll-x, swipe con dedo)
+                         3. Botón "Ver todas las fotos" → despliega grid con todas las fotos inline
+                    -->
+                    <div class="gallery-main-wrap" id="galleryMainWrap">
+                        <img id="mainImage" src="" alt="" class="gallery-main-img">
+                        <button class="gallery-zoom-btn" id="galleryZoomBtn" title="Ver en grande">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <div class="gallery-counter-badge">
+                            <span id="galleryCurrent">1</span> / <span id="galleryTotal">1</span>
+                        </div>
                     </div>
-                    <div class="gallery-thumbnails" id="galleryThumbnails"></div>
+                    <div class="gallery-thumbs" id="galleryThumbs">
+                        <!-- Miniaturas generadas por JS, desplazables con scroll-x -->
+                    </div>
+                    <div class="gallery-actions">
+                        <button class="gallery-view-all-btn" id="galleryViewAllBtn" style="display:none;">
+                            <i class="fas fa-images"></i> Ver todas las fotos
+                        </button>
+                    </div>
+                    <div class="gallery-all-grid" id="galleryAllGrid" style="display:none;">
+                        <!-- Grid con TODAS las fotos, se despliega al hacer click en "Ver todas" -->
+                    </div>
+                    <div class="gallery-badges" id="galleryBadges"></div>
                 </div>
 
                 <div class="business-section hidden" id="featuresSection">
@@ -695,6 +1120,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="contact-actions" id="contactActions">
                         <a href="#" class="btn btn-whatsapp btn-full btn-lg" id="mainWhatsApp" style="display:none;" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Contactar por WhatsApp</a>
                         <a href="#" class="btn btn-full btn-lg" id="emailContactBtn" style="display:none;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;font-weight:600;border-radius:12px;text-align:center;text-decoration:none;padding:14px 24px;font-size:1rem;"><i class="fas fa-envelope"></i> Contactar por Email</a>
+                        ${business.google_maps_url ? `<a href="${business.google_maps_url}" target="_blank" rel="noopener" class="btn btn-full btn-lg" style="display:block;margin-top:8px;background:linear-gradient(135deg,#4285F4,#34A853,#FBBC04,#EA4335);color:#fff;font-weight:700;border-radius:12px;text-align:center;text-decoration:none;padding:14px 24px;font-size:1rem;"><i class="fab fa-google"></i> Ver Perfil de Google</a>` : ''}
                         <button class="btn btn-primary btn-full btn-lg" id="openChatBtn" style="margin-top:8px;"><i class="fas fa-comment-dots"></i> Enviar Mensaje</button>
                         <button class="btn btn-full btn-lg" id="shareWhatsAppBtn" style="display:none;margin-top:8px;background:#fff;color:#111;border:2px solid #111;font-weight:600;border-radius:12px;text-align:center;padding:14px 24px;font-size:1rem;cursor:pointer;"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Compartir por WhatsApp</button>
                     </div>
@@ -714,6 +1140,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     ${youtube ? `<a href="${escapeHtml(youtube)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;padding:16px 30px;border-radius:18px;background:#ff0000;color:#fff;text-decoration:none;font-size:1.35rem;font-weight:700;"><i class="fab fa-youtube" style="font-size:1.5rem;"></i> YouTube</a>` : ''}
                   </div>
                 </div>`; })()}
+
+                ${(() => {
+                    // FIX: La descripción del negocio va AQUÍ, justo DESPUÉS del botón
+                    // "Sitio Web" (sección Redes Sociales y Web). Antes estaba dentro del
+                    // .compact-info-card, arriba de la galería. Ahora queda abajo del
+                    // botón de página web, con texto JUSTIFICADO.
+                    const desc = business.description || '';
+                    if (!desc || !desc.trim()) return '';
+                    return `
+                <div class="business-section business-description-section" style="padding:20px 24px;">
+                  <div style="font-size:1.1rem;font-weight:700;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-align-left" style="color:#006EE3;"></i> Sobre el Negocio
+                  </div>
+                  <div class="compact-description" id="propDescription" style="text-align:justify;">
+                    <p>${escapeHtml(desc)}</p>
+                  </div>
+                </div>`;
+                })()}
 
                 ${(() => {
                     const raw = business.video_url;
@@ -742,22 +1186,22 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="products-grid" id="businessProductsGrid"></div>
                 </section>
 
-                <section class="business-section" id="jobsSection" style="display:none;">
-                    <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-                        <h2 class="business-section-title"><i class="fas fa-briefcase" style="color:#1a73e8;"></i> Empleo</h2>
-                        <a href="/empleo.html" class="section-link" id="viewAllJobs" style="display:none;">Ver más <i class="fas fa-arrow-right"></i></a>
-                    </div>
-                    <div class="jobs-list" id="businessJobsList"></div>
-                    <div id="businessJobsEmpty" style="display:none;text-align:center;padding:24px 16px;">
-                        <a href="/empleo.html" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:8px;padding:10px 24px;font-size:0.92rem;border-radius:10px;text-decoration:none;width:100%;max-width:400px;justify-content:center;"><i class="fas fa-briefcase"></i> Ir a ofertas de empleo</a>
-                    </div>
-                </section>
-
                 <section class="business-section" id="servicesSection" style="display:none;">
                     <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
                         <h2 class="business-section-title"><i class="fas fa-concierge-bell" style="color:#f59e0b;"></i> Servicios</h2>
                     </div>
                     <div class="services-list" id="businessServicesList"></div>
+                </section>
+
+                <section class="business-section" id="jobsSection" style="display:none;">
+                    <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                        <h2 class="business-section-title" style="font-size:1.1rem;margin:0;"><i class="fas fa-briefcase" style="color:#1a73e8;"></i> Empleo</h2>
+                        <a href="/empleo.html" class="section-link" id="viewAllJobs" style="display:none;">Ver más <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                    <div class="jobs-list" id="businessJobsList"></div>
+                    <div id="businessJobsEmpty" style="display:none;text-align:center;padding:12px 16px;">
+                        <a href="/empleo.html" class="btn btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-size:0.82rem;border-radius:8px;text-decoration:none;width:auto;max-width:240px;justify-content:center;margin:0 auto;"><i class="fas fa-briefcase"></i> Ir a ofertas de empleo</a>
+                    </div>
                 </section>
             </div>
 
@@ -791,7 +1235,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <footer class="footer">
         <div class="container">
             <div class="footer-bottom">
-                <p>&copy; ${new Date().getFullYear()} HolaX. Todos los derechos reservados.</p>
+                <p>&copy; ${new Date().getFullYear()} En Santiago. Todos los derechos reservados.</p>
                 <p><a href="https://maps.app.goo.gl/Jz2QTADrNNneQtGd9" target="_blank" rel="noopener noreferrer">Página web desarrollada por Grupo 360 Soluciones</a></p>
                 <p><a href="http://coporo.pages.dev/" target="_blank" rel="noopener noreferrer">Diseño de páginas webs - SEO Local -</a></p>
             </div>

@@ -53,13 +53,23 @@ const DEFAULT_SETTINGS = {
   marketplace_enabled: '1',
   businesses_enabled: '1',
   jobs_enabled: '1',
+  // FIX: Módulos adicionales del sitio que faltaban en allowed_keys
+  medical_enabled: '1',
+  properties_enabled: '1',
+  weather_enabled: '1',
+  // FIX: Toggles específicos para secciones destacadas del home
+  featured_businesses_enabled: '1',
+  featured_medical_enabled: '1',
+  featured_properties_enabled: '1',
+  featured_products_enabled: '1',
+  featured_jobs_enabled: '1',
   // Chat configuration
   chat_enabled: '1',
   chat_mode: 'all', // 'all' | 'premium_only' | 'none'
   registrations_enabled: '1',
   maintenance_mode: '0',
-  site_name: 'AuNclick Mérida',
-  site_description: 'Directorio de negocios y servicios en Mérida, Venezuela',
+  site_name: 'En Santiago Santiago',
+  site_description: 'Directorio de negocios y servicios en Santiago, Santiago de Chile',
   contact_email: '',
   whatsapp_number: '',
   max_businesses_per_user: '10',
@@ -88,6 +98,8 @@ const DEFAULT_SETTINGS = {
   points_per_booking: '15',
   // Hero banner
   hero_banner_url: '',
+  // FIX: Banner de la página de búsqueda
+  search_banner_url: '',
   // Hero logo (overlays on banner)
   hero_logo_url: '',
   // Marketplace banner
@@ -99,7 +111,7 @@ const DEFAULT_SETTINGS = {
 
 // ─── Allowed setting keys (whitelist) ───────────────────────────
 // Also allow hero_logo_url even if it was added after initial seed
-const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url', 'holax_logo_url', 'empleo_banner_url'];
+const ALLOWED_KEYS = [...Object.keys(DEFAULT_SETTINGS), 'hero_logo_url', 'marketplace_banner_url', 'popup_enabled', 'popup_image_url', 'popup_link_url', 'ensantiago_logo_url', 'empleo_banner_url'];
 // Deduplicate
 const ALLOWED_KEYS_SET = [...new Set(ALLOWED_KEYS)];
 
@@ -264,16 +276,16 @@ export async function onRequestPut(context) {
       }
     }
 
-    // If holax_logo_url was updated, bulk-update all HOLAX jobs
-    let holaxJobsUpdated = 0;
-    if (updates.holax_logo_url !== undefined && updates.holax_logo_url) {
+    // If ensantiago_logo_url was updated, bulk-update all HOLAX jobs
+    let ensantiagoJobsUpdated = 0;
+    if (updates.ensantiago_logo_url !== undefined && updates.ensantiago_logo_url) {
       try {
         // Ensure business_logo column exists
         try { await env.DB.prepare(`ALTER TABLE job_listings ADD COLUMN business_logo TEXT`).run(); } catch(e) {}
         const upd = await env.DB.prepare(
           `UPDATE job_listings SET business_logo = ? WHERE company_name = 'HOLAX'`
-        ).bind(updates.holax_logo_url).run();
-        holaxJobsUpdated = upd.meta.changes || 0;
+        ).bind(updates.ensantiago_logo_url).run();
+        ensantiagoJobsUpdated = upd.meta.changes || 0;
       } catch (e) {
         console.error('Error updating HOLAX jobs logo:', e);
       }
@@ -283,9 +295,9 @@ export async function onRequestPut(context) {
       message: 'Configuraciones actualizadas exitosamente',
       updated: results,
     };
-    if (holaxJobsUpdated > 0) {
-      response.holax_jobs_updated = holaxJobsUpdated;
-      response.message += ` (${holaxJobsUpdated} empleo(s) HOLAX actualizado(s) con el nuevo logo)`;
+    if (ensantiagoJobsUpdated > 0) {
+      response.ensantiago_jobs_updated = ensantiagoJobsUpdated;
+      response.message += ` (${ensantiagoJobsUpdated} empleo(s) HOLAX actualizado(s) con el nuevo logo)`;
     }
 
     if (rejected.length > 0) {

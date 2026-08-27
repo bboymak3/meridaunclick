@@ -467,7 +467,7 @@ window.closeEditBusinessModal = function() {
 
             // Recent businesses table (last 5)
             if (recentPropsBody) {
-                const recent = userProperties.slice(0, 5);
+                const recent = userProperties;
                 if (recent.length === 0) {
                     recentPropsBody.innerHTML = `
                         <tr class="empty-row">

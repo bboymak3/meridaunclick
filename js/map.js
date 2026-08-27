@@ -8,7 +8,7 @@
     'use strict';
 
     // ─── Configuration ──────────────────────────────────────────
-    const VENEZUELA_CENTER = [8.6233, -66.5897];
+    const CLNEZUELA_CENTER = [-33.45233, -66.5897];
     const DEFAULT_ZOOM = 6;
 
     // ─── State ──────────────────────────────────────────────────
@@ -32,7 +32,7 @@
 
     // Filter elements
     const mapTipo = document.getElementById('mapTipo');
-    const mapEstado = document.getElementById('mapEstado');
+    const mapComuna = document.getElementById('mapComuna');
     const mapCiudad = document.getElementById('mapCiudad');
     const mapSearchBtn = document.getElementById('mapSearchBtn');
     const mapResetBtn = document.getElementById('mapResetBtn');
@@ -61,13 +61,16 @@
         if (!mapContainer || typeof L === 'undefined') return;
 
         try {
+            // FIX: Canvas renderer para mejor performance con muchos marcadores.
+            // Canvas es más rápido que SVG (default) cuando hay 50+ elementos.
             map = L.map('map', {
-                center: VENEZUELA_CENTER,
+                center: CLNEZUELA_CENTER,
                 zoom: DEFAULT_ZOOM,
                 zoomControl: false,
                 scrollWheelZoom: true,
                 tap: true,
                 closePopupOnClick: true,
+                preferCanvas: true,  // FIX: Canvas renderer
             });
 
             // OpenStreetMap tiles (free)
@@ -78,6 +81,24 @@
 
             // Remove the small attribution icon in the corner
             map.attributionControl.remove();
+
+            // FIX: Usar markerClusterGroup si está disponible el plugin.
+            // Esto agrupa marcadores cercanos en burbujas, reduciendo de
+            // 100+ elementos DOM a ~10-20 visibles. Performance masiva.
+            if (typeof L.markerClusterGroup === 'function') {
+                markerLayer = L.markerClusterGroup({
+                    maxClusterRadius: 50,
+                    spiderfyOnMaxZoom: true,
+                    showCoverageOnHover: false,
+                    zoomToBoundsOnClick: true,
+                    chunkedLoading: true,  // FIX: carga en chunks para no bloquear UI
+                    chunkProgress: null,
+                });
+            } else {
+                // Fallback: layerGroup estándar si no hay plugin
+                markerLayer = L.layerGroup();
+            }
+            markerLayer.addTo(map);
 
             // ─── Custom map controls ─────────────────────────────
             var Lc = L.control;
@@ -153,7 +174,7 @@
     }
 
     // ─── Fix Corrupted Coordinates ───────────────────────────
-    // DB values like lng=-7021260663068742 missing decimal → -70.21260663068742
+    // DB values like lng=-7021260663068742 missing decimal → -70.671260663068742
     function fixCoord(val) {
         if (val === null || val === undefined || val === '') return null;
         var n = parseFloat(val);
@@ -162,7 +183,7 @@
             // Likely missing decimal point — insert after first 2-3 digits
             var s = String(Math.abs(n));
             var sign = n < 0 ? '-' : '';
-            // Try inserting at position 2 (e.g. -7021... → -70.21...)
+            // Try inserting at position 2 (e.g. -7021... → -70.671...)
             if (s.length > 3) {
                 var fixed = sign + s.substring(0, 2) + '.' + s.substring(2);
                 var fn = parseFloat(fixed);
@@ -192,8 +213,11 @@
 
         try {
             var coverImage = '';
+            // FIX: Priorizar cover_image → logo → primera imagen disponible
             if (business.cover_image && typeof business.cover_image === 'string') {
                 coverImage = business.cover_image;
+            } else if (business.logo && typeof business.logo === 'string') {
+                coverImage = business.logo;
             } else if (business.images && Array.isArray(business.images) && business.images.length > 0 && business.images[0].url) {
                 coverImage = business.images[0].url;
             }
@@ -218,32 +242,40 @@
 
             var marker = L.marker([business._lat, business._lng], { icon: icon });
 
-            // Build popup content
-            var imgTag = coverImage
-                ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display=\'none\'"></div>'
-                : '';
+            // FIX: Lazy popup — solo crea el HTML del popup al hacer click,
+            // no al crear el marcador. Con 100+ marcadores, esto ahorra
+            // crear 100+ estructuras DOM de popup que quizás nunca se ven.
+            var popupHTML = null;  // se genera on-demand
+            function getPopupHTML() {
+                if (popupHTML) return popupHTML;
 
-            var address = business.city ? (business.state ? business.city + ', ' + business.state : business.city) : '';
+                var imgTag = coverImage
+                    ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>'
+                    : '';
 
-            var popupHTML = '<div class="map-popup">'
-                + imgTag
-                + '<div class="map-popup-content">'
-                + '<h4 class="map-popup-title">' + title + '</h4>'
-                + '<div class="map-popup-badges">'
-                + '<span class="map-popup-badge">' + typeLabel + '</span>'
-                + '</div>'
-                + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
-                + '<a href="' + (business.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + (business.slug || business.id) + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
-                + '</div>'
-                + '</div>';
+                var address = business.city ? (business.state ? business.city + ', ' + business.state : business.city) : '';
 
-            // Safety check: popupHTML must be a non-empty string
-            if (typeof popupHTML !== 'string' || popupHTML.length === 0) {
-                popupHTML = '<div class="map-popup"><div class="map-popup-content"><h4>' + title + '</h4><p>Negocio</p></div></div>';
+                popupHTML = '<div class="map-popup">'
+                    + imgTag
+                    + '<div class="map-popup-content">'
+                    + '<h4 class="map-popup-title">' + title + '</h4>'
+                    + '<div class="map-popup-badges">'
+                    + '<span class="map-popup-badge">' + typeLabel + '</span>'
+                    + '</div>'
+                    + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
+                    + '<a href="' + (business.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + (business.slug || business.id) + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
+                    + '</div>'
+                    + '</div>';
+
+                // Safety check
+                if (typeof popupHTML !== 'string' || popupHTML.length === 0) {
+                    popupHTML = '<div class="map-popup"><div class="map-popup-content"><h4>' + title + '</h4><p>Negocio</p></div></div>';
+                }
+                return popupHTML;
             }
 
-            // Bind popup to marker
-            marker.bindPopup(popupHTML, {
+            // FIX: Bind popup con función lazy (se crea solo al click)
+            marker.bindPopup(getPopupHTML, {
                 maxWidth: 300,
                 minWidth: 260,
                 closeButton: true,
@@ -488,7 +520,7 @@
         properties.forEach(function (p) {
             var coverImage = p.cover_image || '';
             var opLabel = (p.operation_type || '').replace('_', ' ');
-            var price = p.price ? '$' + Number(p.price).toLocaleString('es-VE') : '';
+            var price = p.price ? '$' + Number(p.price).toLocaleString('es-CL') : '';
             var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
             fixItemCoords(p);
             html += '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p._lat || '') + '" data-lng="' + (p._lng || '') + '">'
@@ -584,7 +616,7 @@
         if (mapResetBtn) {
             mapResetBtn.addEventListener('click', resetFilters);
         }
-        [mapCiudad, mapEstado].forEach(function (input) {
+        [mapCiudad, mapComuna].forEach(function (input) {
             if (input) {
                 input.addEventListener('keydown', function (e) {
                     if (e.key === 'Enter') {
@@ -604,14 +636,14 @@
     function getFilterValues() {
         return {
             categoria: mapTipo ? mapTipo.value : '',
-            state: mapEstado ? mapEstado.value : '',
+            state: mapComuna ? mapComuna.value : '',
             city: mapCiudad ? (mapCiudad.value || '').trim() : '',
         };
     }
 
     function resetFilters() {
         if (mapTipo) mapTipo.value = '';
-        if (mapEstado) mapEstado.value = '';
+        if (mapComuna) mapComuna.value = '';
         if (mapCiudad) mapCiudad.value = '';
         // Reload based on current type
         if (currentMapType === 'properties') {
@@ -624,6 +656,12 @@
     }
 
     // ─── Render Sidebar Business List ───────────────────────────
+    // FIX: Paginación del sidebar para performance con 100+ negocios.
+    // Solo renderiza 20 cards iniciales, carga más al hacer scroll.
+    var sidebarPageSize = 20;
+    var sidebarCurrentPage = 0;
+    var sidebarAllBusinesses = [];
+
     function renderBusinessList(businesses) {
         if (!mapBusinessList) return;
 
@@ -632,14 +670,39 @@
             return;
         }
 
-        mapBusinessList.innerHTML = businesses.map(function (p) {
+        // Guardar todas para paginación
+        sidebarAllBusinesses = businesses;
+        sidebarCurrentPage = 0;
+
+        // Renderizar primera página
+        renderBusinessListPage();
+
+        // FIX: Scroll infinito — cargar más cards al llegar al final
+        mapBusinessList.onscroll = function() {
+            if (mapBusinessList.scrollTop + mapBusinessList.clientHeight >= mapBusinessList.scrollHeight - 100) {
+                sidebarCurrentPage++;
+                renderBusinessListPage(true);
+            }
+        };
+    }
+
+    function renderBusinessListPage(append) {
+        if (!mapBusinessList || sidebarAllBusinesses.length === 0) return;
+
+        var start = sidebarCurrentPage * sidebarPageSize;
+        var end = start + sidebarPageSize;
+        var pageBusinesses = sidebarAllBusinesses.slice(start, end);
+
+        if (pageBusinesses.length === 0) return;
+
+        var html = pageBusinesses.map(function (p) {
             var coverImage = p.cover_image || (p.images && p.images[0] && p.images[0].url) || '';
             var typeLabel = safeGetTypeLabel(p.business_type);
             var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
 
             fixItemCoords(p);
             return '<div class="map-business-card" data-business-id="' + p.id + '" data-lat="' + (p._lat || '') + '" data-lng="' + (p._lng || '') + '">'
-                + '<img src="' + coverImage + '" alt="' + (p.title || 'Negocio') + '" onerror="this.style.display=\'none\'">'
+                + '<img src="' + coverImage + '" alt="' + (p.title || 'Negocio') + '" loading="lazy" onerror="this.style.display=\'none\'">'
                 + '<div class="card-info">'
                 + '<div class="card-title" title="' + (p.title || '') + '">' + (p.title || 'Sin título') + '</div>'
                 + '<div class="card-location">' + address + '</div>'
@@ -650,27 +713,37 @@
                 + '</div>';
         }).join('');
 
-        // Click on sidebar card -> fly to marker & open popup
-        mapBusinessList.querySelectorAll('.map-business-card').forEach(function (card) {
-            card.addEventListener('click', function () {
-                var id = parseInt(card.dataset.businessId);
-                var lat = parseFloat(card.dataset.lat);
-                var lng = parseFloat(card.dataset.lng);
+        if (append) {
+            mapBusinessList.insertAdjacentHTML('beforeend', html);
+        } else {
+            mapBusinessList.innerHTML = html;
+        }
 
-                highlightCard(id);
+        // Bind click events solo a las cards nuevas
+        var allCards = mapBusinessList.querySelectorAll('.map-business-card');
+        var startIndex = append ? (allCards.length - pageBusinesses.length) : 0;
+        for (var i = startIndex; i < allCards.length; i++) {
+            (function(card) {
+                card.addEventListener('click', function () {
+                    var id = parseInt(card.dataset.businessId);
+                    var lat = parseFloat(card.dataset.lat);
+                    var lng = parseFloat(card.dataset.lng);
 
-                if (!isNaN(lat) && !isNaN(lng) && map) {
-                    flyToBusiness(id);
-                } else {
-                    var biz = allBusinesses.find(function(b) { return b.id === id; });
-                    if (currentMapType === 'properties') {
-                        window.location.href = '/property-detail.html?id=' + id;
+                    highlightCard(id);
+
+                    if (!isNaN(lat) && !isNaN(lng) && map) {
+                        flyToBusiness(id);
                     } else {
-                        window.location.href = (biz && biz.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + (biz && biz.slug ? biz.slug : id);
+                        var biz = allBusinesses.find(function(b) { return b.id === id; });
+                        if (currentMapType === 'properties') {
+                            window.location.href = '/property-detail.html?id=' + id;
+                        } else {
+                            window.location.href = (biz && biz.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + (biz && biz.slug ? biz.slug : id);
+                        }
                     }
-                }
-            });
-        });
+                });
+            })(allCards[i]);
+        }
     }
 
     // ─── Highlight Card & Open Popup ────────────────────────────
@@ -752,7 +825,7 @@
 
         try {
             window._miniMap = L.map('searchMiniMap', {
-                center: VENEZUELA_CENTER,
+                center: CLNEZUELA_CENTER,
                 zoom: DEFAULT_ZOOM,
                 zoomControl: false,
                 scrollWheelZoom: true,
@@ -779,7 +852,7 @@
 
         var params = getSearchParams();
         var endpoint = '/businesses?status=approved&limit=50';
-        if (params.estado) endpoint += '&state=' + encodeURIComponent(params.estado);
+        if (params.comuna) endpoint += '&state=' + encodeURIComponent(params.comuna);
         if (params.categoria) endpoint += '&categoria=' + encodeURIComponent(params.categoria);
         if (params.city) endpoint += '&city=' + encodeURIComponent(params.city);
         if (params.search) endpoint += '&search=' + encodeURIComponent(params.search);
@@ -857,7 +930,7 @@
 
         var coverImage = property.cover_image || '';
         var title = property.title || 'Propiedad';
-        var price = property.price ? '$' + Number(property.price).toLocaleString('es-VE') : '';
+        var price = property.price ? '$' + Number(property.price).toLocaleString('es-CL') : '';
         var opLabel = (property.operation_type || '').replace('_', ' ');
 
         var icon = L.divIcon({
@@ -922,7 +995,7 @@
         mapBusinessList.innerHTML = properties.map(function (p) {
             var coverImage = p.cover_image || '';
             var opLabel = (p.operation_type || '').replace('_', ' ');
-            var price = p.price ? '$' + Number(p.price).toLocaleString('es-VE') : '';
+            var price = p.price ? '$' + Number(p.price).toLocaleString('es-CL') : '';
             var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '--';
 
             fixItemCoords(p);
