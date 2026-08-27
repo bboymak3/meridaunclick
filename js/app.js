@@ -1194,8 +1194,8 @@ async function loadFeaturedProperties() {
         }
 
         if (emptyState) emptyState.style.display = 'none';
-        // When a state is selected, show up to 12; otherwise show 8 featured
-        const maxShow = getSelectedState() ? 12 : 8;
+        // FIX: Mostrar siempre 8 fichas (no depende de estado seleccionado)
+        const maxShow = 8;
         businesses = businesses.slice(0, maxShow);
         grid.innerHTML = businesses.map(p => createBusinessCard(p)).join('');
         // Update section title to reflect state filter
@@ -1712,7 +1712,7 @@ async function loadFeaturedProducts() {
         // Fallback: try direct API with featured=1 flag
         if (products.length === 0) {
             const selectedState = getSelectedState();
-            let endpoint = '/marketplace?status=approved&limit=4&featured=1&sort=newest';
+            let endpoint = '/marketplace?status=approved&limit=12&featured=1&sort=newest';
             if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
             const data = await api.get(endpoint);
             products = data.products || [];
@@ -1789,7 +1789,7 @@ async function loadFeaturedJobs() {
 
         // Fallback: try direct API with featured=1 flag
         if (jobs.length === 0) {
-            const data = await api.get('/jobs?status=approved&limit=4&featured=1&sort=newest');
+            const data = await api.get('/jobs?status=approved&limit=12&featured=1&sort=newest');
             jobs = data.jobs || [];
         }
 
