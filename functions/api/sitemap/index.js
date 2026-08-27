@@ -10,6 +10,7 @@ export async function onRequestGet(context) {
     const staticPages = [
       { loc: '/', priority: '1.0', changefreq: 'daily' },
       { loc: '/search.html', priority: '0.9', changefreq: 'daily' },
+      { loc: '/registrar-negocio.html', priority: '0.9', changefreq: 'monthly' },
       { loc: '/marketplace.html', priority: '0.8', changefreq: 'daily' },
       { loc: '/map.html', priority: '0.8', changefreq: 'weekly' },
       { loc: '/empleo.html', priority: '0.7', changefreq: 'daily' },
@@ -19,6 +20,9 @@ export async function onRequestGet(context) {
       { loc: '/cupones.html', priority: '0.7', changefreq: 'weekly' },
       { loc: '/emergencia.html', priority: '0.6', changefreq: 'monthly' },
       { loc: '/eventos.html', priority: '0.6', changefreq: 'weekly' },
+      { loc: '/planes.html', priority: '0.6', changefreq: 'monthly' },
+      { loc: '/quienes-somos.html', priority: '0.5', changefreq: 'monthly' },
+      { loc: '/contacto.html', priority: '0.5', changefreq: 'monthly' },
       { loc: '/privacidad.html', priority: '0.4', changefreq: 'yearly' },
       { loc: '/eliminacion-datos.html', priority: '0.3', changefreq: 'yearly' },
       { loc: '/login.html', priority: '0.3', changefreq: 'monthly' },

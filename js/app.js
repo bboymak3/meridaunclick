@@ -1172,18 +1172,19 @@ async function loadFeaturedProperties() {
             // If featured-items fails, try direct API with featured flag
         }
 
-        // Fallback: try direct API with featured=1 flag
-        if (businesses.length === 0) {
-            // No featured businesses in this state — load any approved businesses from the state
-            // Exclude medical category (they have their own dedicated section)
-            // FIX: pedir mas negocios al API (limit=24) porque muchos pueden ser medicos
-            // y ser filtrados, dejando menos de 8 para mostrar.
+        // FIX: Si featured_items trajo menos de 8, complementar con el API.
+        // Excluimos categoria medica (tiene su propia seccion).
+        if (businesses.length < 8) {
             const selectedState = getSelectedState();
             let endpoint = '/businesses?status=approved&limit=24';
             if (selectedState) endpoint += `&state=${encodeURIComponent(selectedState)}`;
             const data = await api.get(endpoint);
             const allBiz = data.businesses || [];
-            businesses = allBiz.filter(b => b.category_slug !== 'medicina-servicio-medico');
+            const nonMedical = allBiz.filter(b => b.category_slug !== 'medicina-servicio-medico');
+            // Merge sin duplicar los que ya tenemos (por id)
+            const existingIds = new Set(businesses.map(b => b.id));
+            const extras = nonMedical.filter(b => !existingIds.has(b.id));
+            businesses = [...businesses, ...extras];
         }
 
         if (loading) loading.remove();
