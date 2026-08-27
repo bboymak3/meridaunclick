@@ -1106,7 +1106,7 @@
         videoFileInput.addEventListener('change', function() {
             var files = this.files;
             if (!files || !files.length) return;
-            var token = localStorage.getItem('meridaunclick_token') || localStorage.getItem('token');
+            var token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
             var infoDiv = document.getElementById('bizFormVideoFileInfo');
 
             Array.from(files).forEach(function(file) {
@@ -1198,7 +1198,7 @@
 
             try {
                 var headers = { 'Content-Type': 'application/json' };
-                var token = localStorage.getItem('aunclick_token');
+                var token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('aunclick_token'));
                 if (token) headers['Authorization'] = 'Bearer ' + token;
 
                 var resp = await fetch('/api/category-suggestions', {

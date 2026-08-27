@@ -25,7 +25,7 @@ function _openEditBizModal(id) {
     document.querySelectorAll('#editBizFeatures .eb-feature').forEach(function(f) { f.classList.remove('checked'); });
     window._editBizVideos = [];
 
-    var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+    var token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
     fetch('/api/businesses/' + id, {
         headers: { 'Authorization': 'Bearer ' + token }
     })
@@ -1541,7 +1541,7 @@ window.closeEditBusinessModal = function() {
                     const fd = new FormData();
                     fd.append('file', file);
                     fd.append('product_type', 'job');
-                    const token = localStorage.getItem('meridaunclick_token') || localStorage.getItem('authToken');
+                    const token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
                     fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd })
                     .then(r => r.json())
                     .then(data => {
@@ -2823,7 +2823,7 @@ window.closeEditBusinessModal = function() {
     window.handleEditBizVideoFile = function(input) {
         var files = input.files;
         if (!files || !files.length) return;
-        var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        var token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
 
         Array.from(files).forEach(function(file) {
             if (!file.type.startsWith('video/')) {
@@ -2892,7 +2892,7 @@ window.closeEditBusinessModal = function() {
     async function loadEditBizGallery(businessId) {
         const galleryEl = document.getElementById('ebBizGallery');
         if (!galleryEl || !businessId) return;
-        const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        const token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
         try {
             const res = await fetch('/api/businesses/' + businessId, { headers: { 'Authorization': 'Bearer ' + token } });
             const biz = await res.json();
@@ -2927,7 +2927,7 @@ window.closeEditBusinessModal = function() {
         var bizId = idEl.value;
         var statusEl = document.getElementById('ebBizGalleryStatus');
         if (statusEl) statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Subiendo...';
-        var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        var token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
         try {
             var fd = new FormData();
             fd.append('file', file);
@@ -2945,7 +2945,7 @@ window.closeEditBusinessModal = function() {
     }
 
     async function deleteEditBizImage(bizId, imgId) {
-        var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        var token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
         try {
             await fetch('/api/images/' + bizId + '?image_id=' + imgId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
             showToast('Imagen eliminada', 'success');
@@ -2954,7 +2954,7 @@ window.closeEditBusinessModal = function() {
     }
 
     async function setEditBizCover(bizId, imgId) {
-        var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+        var token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
         try {
             await fetch('/api/images/' + bizId + '?image_id=' + imgId, { method: 'PUT', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ is_cover: 1 }) });
             showToast('Portada actualizada', 'success');
@@ -2988,7 +2988,7 @@ window.closeEditBusinessModal = function() {
                 var url = galleryURL.value.trim();
                 var idEl = document.getElementById('editBizId');
                 if (!url || !idEl || !idEl.value) return;
-                var token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+                var token = (typeof getToken === 'function') ? getToken() : (localStorage.getItem('meridaunclick_token') || localStorage.getItem('auth_token') || localStorage.getItem('token'));
                 this.disabled = true; this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                 try {
                     await fetch('/api/images/' + idEl.value, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify({ url: url, is_cover: 0 }) });
