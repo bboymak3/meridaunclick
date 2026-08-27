@@ -38,20 +38,11 @@
                 maxZoom: 19,
             }).addTo(map);
 
-            // FIX: Usar markerClusterGroup si está disponible el plugin.
-            // Esto agrupa marcadores cercanos en burbujas y mejora la performance
-            // con 20+ marcadores en mobile.
-            if (typeof L.markerClusterGroup === 'function') {
-                markerLayer = L.markerClusterGroup({
-                    maxClusterRadius: 50,
-                    spiderfyOnMaxZoom: true,
-                    showCoverageOnHover: false,
-                    zoomToBoundsOnClick: true,
-                    chunkedLoading: true,
-                }).addTo(map);
-            } else {
-                markerLayer = L.layerGroup().addTo(map);
-            }
+            // FIX: Desactivar clustering — todas las fichas visibles desde el inicio.
+            // El usuario reportó que tener que hacer zoom para ver las fichas no se
+            // entiende bien. Con ~20-30 marcadores, no necesitamos clustering.
+            // preferCanvas ya nos da performance suficiente en mobile.
+            markerLayer = L.layerGroup().addTo(map);
 
             // Setup toggle buttons
             setupToggleButtons();
