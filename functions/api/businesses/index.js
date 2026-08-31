@@ -372,6 +372,16 @@ export async function onRequestPost(context) {
       slug = await ensureUniqueSlug(env.DB, slug, 0);
     }
 
+    // FIX: Asegurar que las columnas web_url, web_page_mode y google_maps_url existan
+    // antes de hacer el INSERT. Si no existen, crearlas automáticamente.
+    try {
+      await env.DB.prepare('SELECT web_url FROM businesses LIMIT 1').first();
+    } catch (e) {
+      try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN web_url TEXT').run(); } catch(e2) {}
+      try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN web_page_mode TEXT DEFAULT \'auto\'').run(); } catch(e2) {}
+      try { await env.DB.prepare('ALTER TABLE businesses ADD COLUMN google_maps_url TEXT').run(); } catch(e2) {}
+    }
+
     const result = await env.DB.prepare(`
       INSERT INTO businesses (
         user_id, title, slug, description, category_id, business_type,
