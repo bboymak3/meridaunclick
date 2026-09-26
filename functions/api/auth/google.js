@@ -112,8 +112,8 @@ export async function onRequestPost(context) {
         });
       }
 
-      // Verify audience if GOOGLE_CLIENT_ID is configured
-      if (env.GOOGLE_CLIENT_ID && googleUser.aud !== env.GOOGLE_CLIENT_ID) {
+      // Verify audience: the token must be issued for this app's client ID
+      if (!env.GOOGLE_CLIENT_ID || googleUser.aud !== env.GOOGLE_CLIENT_ID) {
         console.error('[Google Auth] Audience mismatch:', googleUser.aud, '!=', env.GOOGLE_CLIENT_ID);
         return new Response(JSON.stringify({ error: 'Token de Google no corresponde a esta aplicacion.' }), {
           status: 401,

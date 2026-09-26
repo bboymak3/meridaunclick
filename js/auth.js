@@ -423,9 +423,18 @@
         var googleSection = document.getElementById('googleSignInBtn');
         if (!googleSection) return;
 
+        // Hide the Google option (and its divider) when it can't be used,
+        // instead of leaving "Cargando Google..." on screen forever.
+        function hideGoogleSignIn(reason) {
+            googleSection.style.display = 'none';
+            var divider = document.querySelector('.lx-divider');
+            if (divider) divider.style.display = 'none';
+            if (reason) console.warn('[Google Sign-In]', reason);
+        }
+
         // Wait for the Google GIS script to load
         var attempts = 0;
-        var maxAttempts = 50; // 5 seconds
+        var maxAttempts = 80; // 8 seconds
 
         function tryInit() {
             attempts++;
@@ -434,9 +443,7 @@
             } else if (attempts < maxAttempts) {
                 setTimeout(tryInit, 100);
             } else {
-                // Google script didn't load — disable button
-                googleSection.disabled = true;
-                googleSection.title = 'No se pudo cargar Google Sign-In. Recarga la pagina.';
+                hideGoogleSignIn('No se pudo cargar el script de Google.');
             }
         }
 
@@ -448,8 +455,7 @@
                 .then(function (r) { return r.json(); })
                 .then(function (config) {
                     if (!config.client_id) {
-                        googleSection.disabled = true;
-                        googleSection.title = 'Google Sign-In no configurado.';
+                        hideGoogleSignIn('GOOGLE_CLIENT_ID no configurado en Cloudflare.');
                         return;
                     }
 
@@ -477,8 +483,7 @@
                     }
                 })
                 .catch(function (err) {
-                    console.warn('Google config error:', err);
-                    googleSection.disabled = true;
+                    hideGoogleSignIn('Error al cargar la configuracion: ' + (err && err.message));
                 });
         }
 
