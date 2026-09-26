@@ -130,7 +130,7 @@
       : `
         <div class="review-login-prompt">
           <i class="fas fa-user-lock"></i>
-          <p><a href="login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}">Inicia sesión</a> para escribir una reseña</p>
+          <p><a href="/login.html?redirect=${encodeURIComponent(window.location.pathname + window.location.search)}">Inicia sesión</a> para escribir una reseña</p>
         </div>
       `;
 

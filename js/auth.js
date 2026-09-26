@@ -181,8 +181,7 @@
             // Redirect after short delay
             setTimeout(() => {
                 const urlParams = new URLSearchParams(window.location.search);
-                const redirect = urlParams.get('redirect') || 'dashboard.html';
-                window.location.href = redirect;
+                window.location.href = getSafeRedirect(urlParams.get('redirect'));
             }, 1000);
         } catch (error) {
             showMessage(loginMessage, error.message, 'error');
@@ -283,7 +282,7 @@
 
             // Redirect after short delay
             setTimeout(() => {
-                window.location.href = '/dashboard.html';
+                window.location.href = getSafeRedirect(new URLSearchParams(window.location.search).get('redirect'));
             }, 1000);
         } catch (error) {
             showMessage(registerMessage, 'Error de conexión. Verifica tu internet e intenta de nuevo.', 'error');
@@ -512,8 +511,7 @@
             showMessage(loginMessage, 'Inicio de sesion con Google exitoso! Redirigiendo...', 'success');
 
             setTimeout(function () {
-                var redirect = urlParams.get('redirect') || 'dashboard.html';
-                window.location.href = redirect;
+                window.location.href = getSafeRedirect(urlParams.get('redirect'));
             }, 1000);
         } catch (error) {
             showMessage(loginMessage, 'Error de conexion con Google. Intenta de nuevo.', 'error');
@@ -528,3 +526,12 @@
 
 })();
 
+
+// Only allow redirects to internal absolute paths (e.g. /tipo/categoria/slug).
+// Relative values like "dashboard.html" are made absolute; external URLs are ignored.
+function getSafeRedirect(redirect) {
+    if (!redirect) return '/dashboard.html';
+    if (redirect.charAt(0) !== '/') redirect = '/' + redirect;
+    if (redirect.startsWith('//') || redirect.startsWith('/\\')) return '/dashboard.html';
+    return redirect;
+}
