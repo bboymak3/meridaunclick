@@ -819,7 +819,7 @@ async function loadBusinessProducts(businessId) {
                     const parsed = JSON.parse(p.image);
                     if (Array.isArray(parsed) && parsed.length > 0) imgSrc = parsed[0];
                 } catch(e) {}
-                if (!imgSrc && p.image.startsWith('http')) imgSrc = p.image;
+                if (!imgSrc && !p.image.trim().startsWith('[')) imgSrc = p.image;
             }
             if (!imgSrc) imgSrc = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="200" height="160" fill="%23f1f5f9"><rect width="200" height="160"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%23999" font-size="14" font-family="sans-serif">Sin imagen</text></svg>');
             const productSlug = p.slug || p.id;
