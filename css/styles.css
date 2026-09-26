@@ -1727,8 +1727,7 @@ body.search-modal-open .cb-chat-btn {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(15, 23, 42, 0.72);
     transition: opacity 0.4s;
 }
 
@@ -12064,4 +12063,50 @@ a.btn-icon {
         width: 26px;
         height: 26px;
     }
+}
+
+/* ─── Home map: lighter markers + touch lock (mobile performance) ─── */
+.home-marker-lite .marker-pin {
+    box-shadow: none;
+    transition: none;
+}
+.home-marker-lite .marker-pin:hover {
+    transform: rotate(-45deg);
+    box-shadow: none;
+}
+.home-marker-lite .marker-price {
+    text-shadow: none;
+}
+.idx-map-wrapper {
+    display: flex;
+    flex-direction: column;
+}
+.idx-map-wrapper > .home-map {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+}
+.home-map-lock {
+    position: absolute;
+    inset: 0;
+    z-index: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.home-map-lock span {
+    background: rgba(15, 23, 42, 0.82);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 9px 16px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }

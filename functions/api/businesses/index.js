@@ -141,6 +141,32 @@ export async function onRequestGet(context) {
     else if (sort === 'oldest') orderBy = 'p.featured DESC, p.created_at ASC';
     else orderBy = "p.featured DESC, (SELECT CASE WHEN u.plan_type = 'premium' THEN 0 ELSE 1 END FROM users u WHERE u.id = p.user_id), CASE WHEN p.expires_at IS NOT NULL AND p.expires_at <= datetime('now') THEN 1 ELSE 0 END, p.created_at DESC";
 
+    // Lightweight mode for maps (?fields=map): only the columns a marker/popup
+    // needs, only rows with coordinates. Avoids sending descriptions, custom
+    // HTML, owner data, etc. for every business on the homepage map.
+    if (params.get('fields') === 'map') {
+      try {
+        const mapQuery = `
+          SELECT
+            p.id, p.title, p.slug, p.lat, p.lng, p.city, p.state, p.business_type,
+            c.slug as category_slug,
+            (SELECT url FROM images WHERE business_id = p.id ORDER BY is_cover DESC, order_index ASC LIMIT 1) as cover_image
+          FROM businesses p
+          LEFT JOIN categories c ON p.category_id = c.id
+          WHERE ${whereClause} AND p.lat IS NOT NULL AND p.lat != '' AND p.lng IS NOT NULL AND p.lng != ''
+          ORDER BY p.featured DESC, p.created_at DESC
+          LIMIT ? OFFSET ?
+        `;
+        const mapResult = await env.DB.prepare(mapQuery).bind(...bindings, limit, offset).all();
+        return new Response(JSON.stringify({ businesses: mapResult.results || [] }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=300' },
+        });
+      } catch (mapErr) {
+        console.error('Businesses map query error, falling back to full query:', mapErr);
+      }
+    }
+
     // Count total matching businesses
     const countQuery = `SELECT COUNT(*) as total FROM businesses p WHERE ${whereClause}`;
     const countResult = await env.DB.prepare(countQuery).bind(...bindings).first();

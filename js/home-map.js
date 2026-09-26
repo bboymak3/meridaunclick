@@ -2,71 +2,106 @@
  * Un Click - Home Page Mini Map
  * Shows a compact map with business AND property markers on the homepage
  * Supports filtering by type: businesses, properties, or both
+ *
+ * Performance (mobile):
+ * - The map is only created when its section is about to scroll into view.
+ * - On touch devices the map starts "locked" so it doesn't trap page scroll;
+ *   tapping "Toca para explorar" unlocks drag/zoom, and it locks again when
+ *   the map leaves the screen.
+ * - Businesses are fetched with ?fields=map (only marker columns).
+ * - Icons are created once and reused; popups are built only when opened.
  */
 
 (function () {
     'use strict';
 
     var VENEZUELA_CENTER = [8.6233, -66.5897];
+    var IS_TOUCH = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window);
     var map = null;
     var markerLayer = null;
     var currentView = 'both'; // 'businesses', 'properties', 'both'
     var allBusinesses = [];
     var allProperties = [];
+    var iconCache = {};
+    var interactive = !IS_TOUCH;
+    var lockOverlay = null;
+
+    function esc(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
 
     function initHomeMap() {
         var mapEl = document.getElementById('homeMap');
-        if (!mapEl || typeof L === 'undefined') return;
+        if (!mapEl || typeof L === 'undefined' || map) return;
 
         try {
             map = L.map('homeMap', {
                 center: VENEZUELA_CENTER,
                 zoom: 6,
                 zoomControl: true,
-                scrollWheelZoom: true,
-                dragging: true,
-                tap: true,
-                touchZoom: true,
-                doubleClickZoom: true,
-                boxZoom: true,
+                scrollWheelZoom: false, // no atrapar el scroll de la pagina
+                dragging: interactive,
+                touchZoom: interactive,
+                doubleClickZoom: interactive,
+                tap: false,
+                boxZoom: false,
                 keyboard: false,
-                preferCanvas: true,  // FIX: Canvas renderer para mejor performance mobile
+                preferCanvas: true,
             });
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap contributors',
                 maxZoom: 19,
+                updateWhenIdle: true,
+                updateWhenZooming: false,
+                keepBuffer: IS_TOUCH ? 1 : 2,
             }).addTo(map);
 
-            // FIX: Desactivar clustering — todas las fichas visibles desde el inicio.
-            // El usuario reportó que tener que hacer zoom para ver las fichas no se
-            // entiende bien. Con ~20-30 marcadores, no necesitamos clustering.
-            // preferCanvas ya nos da performance suficiente en mobile.
+            // Sin clustering: todas las fichas visibles desde el inicio.
             markerLayer = L.layerGroup().addTo(map);
 
-            // Setup toggle buttons
-            setupToggleButtons();
+            if (IS_TOUCH) setupTouchLock(mapEl);
 
-            // Load both businesses and properties
+            setupToggleButtons();
             loadAllData();
 
-            // Fix size after render
             setTimeout(function () { map.invalidateSize(); }, 300);
-
-            // Also invalidate when map section becomes visible (IntersectionObserver)
-            var mapSection = document.getElementById('homeMapSection');
-            if (mapSection && 'IntersectionObserver' in window) {
-                var observer = new IntersectionObserver(function (entries) {
-                    entries.forEach(function (entry) {
-                        if (entry.isIntersecting) {
-                            setTimeout(function () { map.invalidateSize(); }, 100);
-                        }
-                    });
-                }, { threshold: 0.1 });
-                observer.observe(mapSection);
-            }
         } catch (error) {
             console.error('Error loading home map:', error);
+        }
+    }
+
+    // ─── Touch lock: avoid trapping page scroll on mobile ─────
+    function setInteractive(on) {
+        if (!map || interactive === on) return;
+        interactive = on;
+        var handlers = [map.dragging, map.touchZoom, map.doubleClickZoom];
+        handlers.forEach(function (h) {
+            if (h) { if (on) h.enable(); else h.disable(); }
+        });
+        if (lockOverlay) lockOverlay.style.display = on ? 'none' : 'flex';
+    }
+
+    function setupTouchLock(mapEl) {
+        lockOverlay = document.createElement('button');
+        lockOverlay.type = 'button';
+        lockOverlay.className = 'home-map-lock';
+        lockOverlay.innerHTML = '<span><i class="fas fa-hand-pointer"></i> Toca para explorar el mapa</span>';
+        lockOverlay.addEventListener('click', function () { setInteractive(true); });
+        mapEl.appendChild(lockOverlay);
+        L.DomEvent.disableClickPropagation(lockOverlay);
+
+        if ('IntersectionObserver' in window) {
+            new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) setInteractive(false);
+                });
+            }, { threshold: 0 }).observe(mapEl);
         }
     }
 
@@ -76,23 +111,17 @@
         var btnPropiedades = document.getElementById('homeMapTogglePropiedades');
 
         function updateButtons(active) {
+            if (active === currentView) return;
             currentView = active;
             if (btnNegocios) {
                 btnNegocios.className = active === 'businesses' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
-                btnNegocios.style.flex = '1';
-                btnNegocios.style.fontSize = '0.85rem';
             }
             if (btnAmbos) {
                 btnAmbos.className = active === 'both' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
-                btnAmbos.style.flex = '1';
-                btnAmbos.style.fontSize = '0.85rem';
                 btnAmbos.style.background = active === 'both' ? 'linear-gradient(135deg,#1a73e8,#006EE3)' : '';
-                if (active === 'both') btnAmbos.style.background = 'linear-gradient(135deg,#1a73e8,#006EE3)';
             }
             if (btnPropiedades) {
                 btnPropiedades.className = active === 'properties' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
-                btnPropiedades.style.flex = '1';
-                btnPropiedades.style.fontSize = '0.85rem';
             }
             renderMarkers();
         }
@@ -105,7 +134,7 @@
     function loadAllData() {
         if (!map || !markerLayer) return;
 
-        var bizPromise = api.get('/businesses?status=approved&limit=100')
+        var bizPromise = api.get('/businesses?status=approved&limit=100&fields=map')
             .then(function (data) {
                 allBusinesses = data.businesses || [];
             })
@@ -124,7 +153,6 @@
         Promise.all([bizPromise, propPromise]).then(function () {
             renderMarkers();
 
-            // Hide overlay if markers exist
             var overlay = document.getElementById('homeMapOverlay');
             var totalCount = allBusinesses.length + allProperties.length;
             if (overlay && totalCount > 0) {
@@ -134,6 +162,9 @@
     }
 
     function createBusinessIcon(businessType) {
+        var key = 'biz:' + (businessType ? businessType.toLowerCase() : '');
+        if (iconCache[key]) return iconCache[key];
+
         var colors = {
             'negocio': '#1a73e8',
             'profesional': '#28a745',
@@ -154,29 +185,30 @@
         };
         var label = icons[businessType && businessType.toLowerCase()] || '\u{1F4CC}';
 
-        return L.divIcon({
-            className: 'custom-map-marker',
+        iconCache[key] = L.divIcon({
+            className: 'custom-map-marker home-marker-lite',
             html: '<div class="marker-pin" style="background-color:' + color + ';">'
                 + '<span class="marker-price">' + label + '</span>'
-                + '</div>'
-                + '<div class="marker-shadow"></div>',
-            iconSize: [40, 52],
-            iconAnchor: [20, 52],
-            popupAnchor: [0, -56],
+                + '</div>',
+            iconSize: [40, 44],
+            iconAnchor: [20, 44],
+            popupAnchor: [0, -48],
         });
+        return iconCache[key];
     }
 
     function createPropertyIcon() {
-        return L.divIcon({
-            className: 'custom-map-marker',
+        if (iconCache.property) return iconCache.property;
+        iconCache.property = L.divIcon({
+            className: 'custom-map-marker home-marker-lite',
             html: '<div class="marker-pin" style="background-color:#006EE3;">'
                 + '<span class="marker-price" style="font-size:10px;"><i class="fas fa-home"></i></span>'
-                + '</div>'
-                + '<div class="marker-shadow"></div>',
-            iconSize: [40, 52],
-            iconAnchor: [20, 52],
-            popupAnchor: [0, -56],
+                + '</div>',
+            iconSize: [40, 44],
+            iconAnchor: [20, 44],
+            popupAnchor: [0, -48],
         });
+        return iconCache.property;
     }
 
     // ─── Fix Corrupted Coordinates ───────────────────────────
@@ -202,101 +234,111 @@
         return n;
     }
 
+    function popupImage(url, title) {
+        return url
+            ? '<div class="map-popup-image"><img src="' + esc(url) + '" alt="' + esc(title) + '" loading="lazy" onerror="this.parentElement.style.display=\'none\'"></div>'
+            : '';
+    }
+
+    function businessPopup(p) {
+        var title = p.title || 'Sin titulo';
+        var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '';
+        var href = (p.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + encodeURIComponent(p.slug || p.id);
+        return '<div class="map-popup">'
+            + popupImage(p.cover_image || (p.images && p.images[0] && p.images[0].url), title)
+            + '<div class="map-popup-content">'
+            + '<h4 class="map-popup-title">' + esc(title) + '</h4>'
+            + '<div class="map-popup-badges">'
+            + '<span class="map-popup-badge">' + esc(p.business_type || 'Negocio') + '</span>'
+            + '</div>'
+            + (address ? '<div class="map-popup-location">' + esc(address) + '</div>' : '')
+            + '<a href="' + href + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
+            + '</div>'
+            + '</div>';
+    }
+
+    function propertyPopup(p) {
+        var title = p.title || 'Propiedad';
+        var price = p.price ? '$' + Number(p.price).toLocaleString('es-VE') : '';
+        var opLabel = (p.operation_type || '').replace('_', ' ');
+        var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '';
+        return '<div class="map-popup">'
+            + popupImage(p.cover_image, title)
+            + '<div class="map-popup-content">'
+            + '<h4 class="map-popup-title">' + esc(title) + '</h4>'
+            + '<div class="map-popup-badges">'
+            + '<span class="map-popup-badge">' + esc(opLabel) + '</span>'
+            + (price ? '<span class="map-popup-badge" style="background:#006EE3;">' + esc(price) + '</span>' : '')
+            + '</div>'
+            + (address ? '<div class="map-popup-location">' + esc(address) + '</div>' : '')
+            + '<a href="/property-detail.html?id=' + encodeURIComponent(p.id) + '" class="map-popup-link">Ver más <i class="fas fa-arrow-right"></i></a>'
+            + '</div>'
+            + '</div>';
+    }
+
+    function addMarker(lat, lng, icon, item, buildPopup, markers) {
+        var marker = L.marker([lat, lng], { icon: icon, keyboard: false });
+        // Popup HTML is built only when the user opens it
+        marker.bindPopup(function () { return buildPopup(item); }, { maxWidth: 300, minWidth: 260, closeButton: true });
+        markers.push(marker);
+    }
+
     function renderMarkers() {
         if (!markerLayer) return;
 
-        markerLayer.clearLayers();
-
         var bounds = [];
+        var markers = [];
 
-        // Add business markers
         if (currentView === 'businesses' || currentView === 'both') {
             allBusinesses.forEach(function (p) {
                 var lat = fixCoord(p.lat);
                 var lng = fixCoord(p.lng);
                 if (!lat || !lng) return;
                 bounds.push([lat, lng]);
-
-                var icon = createBusinessIcon(p.business_type);
-                var coverImage = p.cover_image || (p.images && p.images[0] && p.images[0].url) || '';
-                var title = p.title || 'Sin titulo';
-                var typeLabel = p.business_type || 'Negocio';
-
-                var imgTag = coverImage
-                    ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display=\'none\'"></div>'
-                    : '';
-
-                var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '';
-
-                var popupHTML = '<div class="map-popup">'
-                    + imgTag
-                    + '<div class="map-popup-content">'
-                    + '<h4 class="map-popup-title">' + title + '</h4>'
-                    + '<div class="map-popup-badges">'
-                    + '<span class="map-popup-badge">' + typeLabel + '</span>'
-                    + '</div>'
-                    + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
-                    + '<a href="' + (p.category_slug === 'medicina-servicio-medico' ? '/medicina-servicio-medico' : '/negocio') + '/' + (p.slug || p.id) + '" class="map-popup-link">Ver m\u00e1s <i class="fas fa-arrow-right"></i></a>'
-                    + '</div>'
-                    + '</div>';
-
-                var marker = L.marker([lat, lng], { icon: icon });
-                marker.bindPopup(popupHTML, { maxWidth: 300, minWidth: 260, closeButton: true });
-                markerLayer.addLayer(marker);
+                addMarker(lat, lng, createBusinessIcon(p.business_type), p, businessPopup, markers);
             });
         }
 
-        // Add property markers
         if (currentView === 'properties' || currentView === 'both') {
             allProperties.forEach(function (p) {
                 var lat = fixCoord(p.lat);
                 var lng = fixCoord(p.lng);
                 if (!lat || !lng) return;
                 bounds.push([lat, lng]);
-
-                var icon = createPropertyIcon();
-                var coverImage = p.cover_image || '';
-                var title = p.title || 'Propiedad';
-                var price = p.price ? '$' + Number(p.price).toLocaleString('es-VE') : '';
-                var opLabel = (p.operation_type || '').replace('_', ' ');
-
-                var imgTag = coverImage
-                    ? '<div class="map-popup-image"><img src="' + coverImage + '" alt="' + title + '" onerror="this.parentElement.style.display=\'none\'"></div>'
-                    : '';
-
-                var address = p.city ? (p.state ? p.city + ', ' + p.state : p.city) : '';
-
-                var popupHTML = '<div class="map-popup">'
-                    + imgTag
-                    + '<div class="map-popup-content">'
-                    + '<h4 class="map-popup-title">' + title + '</h4>'
-                    + '<div class="map-popup-badges">'
-                    + '<span class="map-popup-badge">' + opLabel + '</span>'
-                    + (price ? '<span class="map-popup-badge" style="background:#006EE3;">' + price + '</span>' : '')
-                    + '</div>'
-                    + (address ? '<div class="map-popup-location">' + address + '</div>' : '')
-                    + '<a href="/property-detail.html?id=' + p.id + '" class="map-popup-link">Ver m\u00e1s <i class="fas fa-arrow-right"></i></a>'
-                    + '</div>'
-                    + '</div>';
-
-                var marker = L.marker([lat, lng], { icon: icon });
-                marker.bindPopup(popupHTML, { maxWidth: 300, minWidth: 260, closeButton: true });
-                markerLayer.addLayer(marker);
+                addMarker(lat, lng, createPropertyIcon(), p, propertyPopup, markers);
             });
         }
 
-        // Fit bounds
+        // Swap all markers in one go
+        markerLayer.clearLayers();
+        markers.forEach(function (m) { markerLayer.addLayer(m); });
+
         if (bounds.length > 0) {
-            var latLngBounds = L.latLngBounds(bounds);
-            map.fitBounds(latLngBounds, { padding: [30, 30], maxZoom: 14 });
+            map.fitBounds(L.latLngBounds(bounds), { padding: [30, 30], maxZoom: 14, animate: false });
         }
     }
 
-    // Initialize when DOM is ready
+    // ─── Lazy init: create the map only when its section is near the viewport ─
+    function scheduleInit() {
+        var section = document.getElementById('homeMapSection') || document.getElementById('homeMap');
+        if (!section) return;
+        if (!('IntersectionObserver' in window)) {
+            initHomeMap();
+            return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+            if (entries.some(function (e) { return e.isIntersecting; })) {
+                io.disconnect();
+                initHomeMap();
+            }
+        }, { rootMargin: '300px 0px' });
+        io.observe(section);
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initHomeMap);
+        document.addEventListener('DOMContentLoaded', scheduleInit);
     } else {
-        initHomeMap();
+        scheduleInit();
     }
 
 })();
