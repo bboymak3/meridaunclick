@@ -302,8 +302,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .pd-card { background:#fff; border-radius:20px; border:1px solid #e5e7eb; overflow:hidden; box-shadow:0 3px 12px rgba(0,0,0,0.06); }
 
         /* Image */
-        .pd-img { position:relative; width:100%; height:320px; background:#EFF6FF; overflow:hidden; }
-        .pd-img img { width:100%; height:100%; object-fit:cover; display:block; }
+        .pd-img { position:relative; width:100%; aspect-ratio:4/3; background:#f8fafc; overflow:hidden; }
+        .pd-img img { width:100%; height:100%; object-fit:contain; display:block; }
         .pd-img-ph { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#006EE3; font-size:3rem; opacity:0.25; }
 
         /* Category badge */
@@ -354,7 +354,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         .rp-card { background:#fff; border-radius:15px; border:1px solid #e5e7eb; overflow:hidden; text-decoration:none; color:inherit; transition:all .25s; }
         .rp-card:hover { border-color:#006EE3; box-shadow:0 5px 15px rgba(0,110,227,.1); transform:translateY(-3px); }
         .rp-card-img { position:relative; width:100%; padding-top:75%; background:#EFF6FF; overflow:hidden; }
-        .rp-card-img img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; }
+        .rp-card-img img { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; }
         .rp-card-ph { position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:#006EE3; font-size:1.65rem; opacity:0.25; }
         .rp-badge { position:absolute; top:8px; left:8px; width:30px; height:30px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:#fff; }
         .rp-card-body { padding:12px 14px 14px; }
@@ -409,7 +409,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             .pd-comments { padding:16px 18px 20px; }
             .pd-title { font-size:1.5rem; }
             .pd-price { font-size:1.55rem; }
-            .pd-img { height:270px; }
             .rp-grid { grid-template-columns:repeat(3,1fr); gap:11px; }
             .rp-card-body { padding:10px 12px 12px; }
             .rp-card-name { font-size:0.9rem; }

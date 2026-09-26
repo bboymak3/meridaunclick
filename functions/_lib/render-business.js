@@ -577,9 +577,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     border-color: #006EE3;
 }
 .product-card img {
+    display: block;
     width: 100%;
-    height: 120px;
-    object-fit: cover;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    background: #f8fafc;
 }
 .product-card-body {
     padding: 8px 10px 10px;
@@ -880,9 +883,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     .products-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 8px;
-    }
-    .product-card img {
-        height: 100px;
     }
 }
 .jobs-list .job-item {
@@ -1244,7 +1244,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </footer>
     <script src="/js/app.js?v=7"></script>
     <script>window.__BUSINESS_ID = ${business.id}; window.__BUSINESS_SLUG = '${escapeJs(business.slug)}';</script>
-    <script src="/js/business-detail.js?v=10"></script>
+    <script src="/js/business-detail.js?v=11"></script>
     <script src="/js/chat.js?v=4"></script>
     <script src="/js/review-widget.js?v=4"></script>
     <script src="/js/ai-chatbot.js?v=3"></script>
