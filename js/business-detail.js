@@ -549,6 +549,25 @@ function populateBusinessDetail(b) {
         }
     }
 
+    // ─── Copy Profile Link Button ─────────────────────────────
+    const copyLinkBtn = document.getElementById('copyLinkBtn');
+    if (copyLinkBtn) {
+        copyLinkBtn.onclick = () => {
+            const url = 'https://holax.com.ve' + getBusinessUrl(b);
+            trackEvent(b.id, 'share');
+            copyTextToClipboard(url).then(() => {
+                showToast('Enlace copiado. ¡Ya puedes pegarlo en tus redes!', 'success');
+                const label = copyLinkBtn.querySelector('span');
+                if (label) {
+                    label.textContent = '¡Enlace copiado!';
+                    setTimeout(() => { label.textContent = 'Copiar enlace del perfil'; }, 2500);
+                }
+            }).catch(() => {
+                window.prompt('Copia el enlace del perfil:', url);
+            });
+        };
+    }
+
     // ─── Favorite Button ──────────────────────────────────────
     const btnFavorite = document.getElementById('btnFavorite');
     if (btnFavorite) {
@@ -852,7 +871,7 @@ async function loadBusinessJobs(businessId) {
         if (list) list.style.display = '';
         if (emptyDiv) emptyDiv.style.display = 'none';
         if (sectionHeader) sectionHeader.style.display = '';
-        if (viewAll) { viewAll.style.display = ''; viewAll.href = `empleo.html?business_id=${businessId}`; }
+        if (viewAll) { viewAll.style.display = ''; viewAll.href = `/empleo.html?business_id=${businessId}`; }
 
         list.innerHTML = jobs.map(j => `
             <a href="/empleo.html" class="job-item" style="text-decoration:none;color:inherit;">
@@ -1012,3 +1031,26 @@ function trackEvent(businessId, eventType) {
 
 
 
+
+// Copy text to clipboard (with fallback for browsers without Clipboard API)
+function copyTextToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text);
+    }
+    return new Promise((resolve, reject) => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy') ? resolve() : reject(new Error('copy failed'));
+        } catch (e) {
+            reject(e);
+        } finally {
+            document.body.removeChild(ta);
+        }
+    });
+}

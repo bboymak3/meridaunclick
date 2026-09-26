@@ -1123,6 +1123,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                         ${business.google_maps_url ? `<a href="${business.google_maps_url}" target="_blank" rel="noopener" class="btn btn-full btn-lg" style="display:block;margin-top:8px;background:linear-gradient(135deg,#4285F4,#34A853,#FBBC04,#EA4335);color:#fff;font-weight:700;border-radius:12px;text-align:center;text-decoration:none;padding:14px 24px;font-size:1rem;"><i class="fab fa-google"></i> Ver Perfil de Google</a>` : ''}
                         <button class="btn btn-primary btn-full btn-lg" id="openChatBtn" style="margin-top:8px;"><i class="fas fa-comment-dots"></i> Enviar Mensaje</button>
                         <button class="btn btn-full btn-lg" id="shareWhatsAppBtn" style="display:none;margin-top:8px;background:#fff;color:#111;border:2px solid #111;font-weight:600;border-radius:12px;text-align:center;padding:14px 24px;font-size:1rem;cursor:pointer;"><i class="fab fa-whatsapp" style="color:#25d366;"></i> Compartir por WhatsApp</button>
+                        <button class="btn btn-full btn-lg" id="copyLinkBtn" type="button" style="margin-top:8px;background:#fff;color:#111;border:2px solid #111;font-weight:600;border-radius:12px;text-align:center;padding:14px 24px;font-size:1rem;cursor:pointer;"><i class="fas fa-link" style="color:#006EE3;"></i> <span>Copiar enlace del perfil</span></button>
                     </div>
                 </div>
 
@@ -1243,9 +1244,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </footer>
     <script src="/js/app.js?v=7"></script>
     <script>window.__BUSINESS_ID = ${business.id}; window.__BUSINESS_SLUG = '${escapeJs(business.slug)}';</script>
-    <script src="/js/business-detail.js?v=9"></script>
-    <script src="/js/chat.js?v=3"></script>
-    <script src="/js/review-widget.js?v=3"></script>
+    <script src="/js/business-detail.js?v=10"></script>
+    <script src="/js/chat.js?v=4"></script>
+    <script src="/js/review-widget.js?v=4"></script>
     <script src="/js/ai-chatbot.js?v=3"></script>
     <script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${business.id},event_type:'view',source:'ficha'})}).catch(function(){})},0);</script>
 </body>
