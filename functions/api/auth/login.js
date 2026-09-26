@@ -58,7 +58,7 @@ export async function onRequestPost(context) {
       });
     }
 
-    const { email, password } = body;
+    const { email, password, remember } = body;
 
     // Validation
     if (!email || !password) {
@@ -113,7 +113,7 @@ export async function onRequestPost(context) {
     // Create JWT token — incluir plan_type para que el backend lo tenga sin
     // hacer query adicional cada vez (optimización + evitar races)
     const token = await createJWT(
-      { id: user.id, name: user.name, email: user.email, role: user.role, plan_type: effectivePlanType, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 86400 * 7 },
+      { id: user.id, name: user.name, email: user.email, role: user.role, plan_type: effectivePlanType, iat: Math.floor(Date.now() / 1000), exp: Math.floor(Date.now() / 1000) + 86400 * (remember ? 30 : 7) },
       jwtSecret
     );
 

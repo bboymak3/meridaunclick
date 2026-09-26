@@ -17,6 +17,9 @@
     const registerMessage = document.getElementById('registerMessage');
     const strengthBar = document.getElementById('strengthBar');
     const strengthText = document.getElementById('strengthText');
+    const authTitle = document.getElementById('authTitle');
+    const authSubtitle = document.getElementById('authSubtitle');
+    const regAsAgent = document.getElementById('regAsAgent');
 
     // ─── Check Auth and Redirect ────────────────────────────────
     function checkAuthAndRedirect() {
@@ -29,17 +32,18 @@
 
     // ─── Tab Switching ──────────────────────────────────────────
     function switchTab(tab) {
-        if (tab === 'login') {
-            tabLogin.classList.add('active');
-            tabRegister.classList.remove('active');
-            loginForm.classList.remove('hidden');
-            registerForm.classList.add('hidden');
-        } else {
-            tabRegister.classList.add('active');
-            tabLogin.classList.remove('active');
-            registerForm.classList.remove('hidden');
-            loginForm.classList.add('hidden');
-        }
+        const isLogin = tab === 'login';
+        tabLogin.classList.toggle('active', isLogin);
+        tabRegister.classList.toggle('active', !isLogin);
+        tabLogin.setAttribute('aria-selected', String(isLogin));
+        tabRegister.setAttribute('aria-selected', String(!isLogin));
+        loginForm.classList.toggle('hidden', !isLogin);
+        registerForm.classList.toggle('hidden', isLogin);
+        if (authTitle) authTitle.textContent = isLogin ? 'Bienvenido de nuevo' : 'Crea tu cuenta gratis';
+        if (authSubtitle) authSubtitle.textContent = isLogin
+            ? 'Inicia sesión para continuar en HolaX.'
+            : 'Publica tu negocio, deja reseñas y guarda tus favoritos.';
+        clearAllErrors();
         // Clear messages
         if (loginMessage) {
             loginMessage.style.display = 'none';
@@ -57,6 +61,12 @@
     if (tabRegister) {
         tabRegister.addEventListener('click', () => switchTab('register'));
     }
+    document.querySelectorAll('[data-switch]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            switchTab(link.getAttribute('data-switch'));
+        });
+    });
 
     // ─── Validation Helpers ─────────────────────────────────────
     function showFieldError(elementId, message) {
@@ -139,6 +149,7 @@
 
         const email = document.getElementById('loginEmail')?.value?.trim();
         const password = document.getElementById('loginPassword')?.value;
+        const remember = !!document.getElementById('rememberMe')?.checked;
 
         // Validate
         let hasError = false;
@@ -168,7 +179,7 @@
         }
 
         try {
-            const data = await api.post('/auth/login', { email, password });
+            const data = await api.post('/auth/login', { email, password, remember });
 
             // Store token and user data
             setToken(data.token);
@@ -188,7 +199,7 @@
         } finally {
             if (loginBtn) {
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar Sesión';
+                loginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Iniciar sesión';
             }
         }
     }
@@ -202,7 +213,6 @@
         const email = document.getElementById('regEmail')?.value?.trim();
         const phone = document.getElementById('regPhone')?.value?.trim();
         const password = document.getElementById('regPassword')?.value;
-        const confirmPassword = document.getElementById('regConfirmPassword')?.value;
         const acceptTerms = document.getElementById('acceptTerms')?.checked;
 
         // Validate
@@ -232,14 +242,6 @@
             hasError = true;
         }
 
-        if (!confirmPassword) {
-            showFieldError('regConfirmError', 'Debes confirmar la contraseña');
-            hasError = true;
-        } else if (password !== confirmPassword) {
-            showFieldError('regConfirmError', 'Las contraseñas no coinciden');
-            hasError = true;
-        }
-
         if (!acceptTerms) {
             showFieldError('regTermsError', 'Debes aceptar los términos y condiciones');
             hasError = true;
@@ -257,7 +259,7 @@
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone: phone || null, password, role: window._registerAsAgent ? 'agent' : undefined }),
+                body: JSON.stringify({ name, email, phone: phone || null, password, role: isAgentSignup() ? 'agent' : undefined }),
             });
 
             const data = await response.json();
@@ -289,7 +291,7 @@
         } finally {
             if (registerBtn) {
                 registerBtn.disabled = false;
-                registerBtn.innerHTML = '<i class="fas fa-user-plus"></i> Crear Cuenta';
+                updateRegisterButton();
             }
         }
     }
@@ -321,18 +323,6 @@
     }
 
     // ─── Real-time Validation Feedback ──────────────────────────
-    const regConfirmPassword = document.getElementById('regConfirmPassword');
-    if (regConfirmPassword) {
-        regConfirmPassword.addEventListener('input', () => {
-            const password = document.getElementById('regPassword')?.value;
-            if (regConfirmPassword.value && regConfirmPassword.value !== password) {
-                showFieldError('regConfirmError', 'Las contraseñas no coinciden');
-            } else {
-                clearFieldError('regConfirmError');
-            }
-        });
-    }
-
     const regEmailInput = document.getElementById('regEmail');
     if (regEmailInput) {
         regEmailInput.addEventListener('blur', () => {
@@ -344,27 +334,20 @@
         });
     }
 
-    // ─── Register as Agent Tab ─────────────────────────────────
-    const tabRegisterAgent = document.getElementById('tabRegisterAgent');
-    if (tabRegisterAgent) {
-        tabRegisterAgent.addEventListener('click', () => {
-            // Set a flag so handleRegister sends role=agent
-            window._registerAsAgent = true;
-            switchTab('register');
-            // Change register button text
-            const regBtn = document.getElementById('registerBtn');
-            if (regBtn) regBtn.innerHTML = '<i class="fas fa-store"></i> Crear Cuenta de Agente';
-        });
+    // ─── Register as Agent (checkbox) ───────────────────────────
+    function isAgentSignup() {
+        return !!(regAsAgent && regAsAgent.checked);
     }
 
-    // Override switchTab for normal register to clear agent flag
-    const tabRegNormal = document.getElementById('tabRegister');
-    if (tabRegNormal) {
-        tabRegNormal.addEventListener('click', () => {
-            window._registerAsAgent = false;
-            const regBtn = document.getElementById('registerBtn');
-            if (regBtn) regBtn.innerHTML = '<i class="fas fa-user-plus"></i> Crear Cuenta';
-        });
+    function updateRegisterButton() {
+        if (!registerBtn) return;
+        registerBtn.innerHTML = isAgentSignup()
+            ? '<i class="fas fa-briefcase"></i> Crear cuenta de agente'
+            : '<i class="fas fa-user-plus"></i> Crear cuenta';
+    }
+
+    if (regAsAgent) {
+        regAsAgent.addEventListener('change', updateRegisterButton);
     }
 
     const loginEmailInput = document.getElementById('loginEmail');
@@ -398,9 +381,40 @@
 
     // ─── Check for redirect parameter ───────────────────────────
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('register') === 'true') {
+    if (urlParams.get('register') === 'true' || urlParams.get('agent') === '1') {
         switchTab('register');
     }
+    if (urlParams.get('agent') === '1' && regAsAgent) {
+        regAsAgent.checked = true;
+        updateRegisterButton();
+    }
+
+    // ─── Context message (e.g. coming from a business page) ─────
+    function showAuthContext() {
+        const box = document.getElementById('authContext');
+        const text = document.getElementById('authContextText');
+        const redirect = urlParams.get('redirect');
+        if (!box || !text || !redirect) return;
+
+        const path = redirect.split('?')[0];
+        const segments = path.split('/').filter(Boolean);
+        let message = 'Inicia sesión o crea tu cuenta para continuar.';
+
+        if (segments.length === 3 && !segments[2].endsWith('.html')) {
+            const name = decodeURIComponent(segments[2])
+                .replace(/-/g, ' ')
+                .replace(/\b\w/g, c => c.toUpperCase());
+            message = 'Inicia sesión para dejar tu reseña o escribirle a ' + name + '.';
+        } else if (segments[0] === 'producto') {
+            message = 'Inicia sesión para comentar o contactar sobre este producto.';
+        } else if (path === '/new-business.html') {
+            message = 'Inicia sesión o crea tu cuenta para publicar tu negocio gratis.';
+        }
+
+        text.textContent = message;
+        box.hidden = false;
+    }
+    showAuthContext();
 
     // ─── Google Sign-In ─────────────────────────────────────────
     var _googleInitialized = false;
@@ -455,7 +469,7 @@
                         window.google.accounts.id.renderButton(section, {
                             theme: 'outline',
                             size: 'large',
-                            width: section.offsetWidth || 340,
+                            width: Math.min(section.offsetWidth || 340, 400),
                             text: 'signin_with',
                             shape: 'rectangular',
                             logo_alignment: 'left',
