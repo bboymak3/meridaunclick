@@ -1,5 +1,26 @@
 // functions/_lib/render-business.js
 // Shared business page renderer — used by /negocio/[slug] and other section routes
+import { DAYS, parseSchedule, scheduleToText, openingHoursSpecification, parseFaqs } from '../../js/horario.js';
+import { matchEspecialidades } from '../../js/especialidades.js';
+
+// Catalog specialty → schema.org MedicalSpecialty
+const SCHEMA_SPECIALTY = {
+  'medicina-general': 'PrimaryCare', 'medicina-interna': 'PrimaryCare', 'cardiologia': 'Cardiovascular',
+  'pediatria': 'Pediatric', 'ginecologia-obstetricia': ['Gynecologic', 'Obstetric'], 'dermatologia': 'Dermatology',
+  'traumatologia': 'Musculoskeletal', 'odontologia': 'Dentistry', 'oftalmologia': 'Optometric',
+  'otorrinolaringologia': 'Otolaryngologic', 'neurologia': 'Neurologic', 'neurocirugia': ['Neurologic', 'Surgical'],
+  'psiquiatria': 'Psychiatric', 'nutricion': 'DietNutrition', 'endocrinologia': 'Endocrine',
+  'gastroenterologia': 'Gastroenterologic', 'urologia': 'Urologic', 'nefrologia': 'Renal', 'neumonologia': 'Pulmonary',
+  'oncologia': 'Oncologic', 'reumatologia': 'Rheumatologic', 'hematologia': 'Hematologic', 'infectologia': 'Infectious',
+  'geriatria': 'Geriatric', 'cirugia-general': 'Surgical', 'cirugia-plastica': 'PlasticSurgery',
+  'medicina-estetica': 'PlasticSurgery', 'anestesiologia': 'Anesthesia', 'fisioterapia': 'Physiotherapy',
+  'radiologia': 'Radiography', 'laboratorio-clinico': 'LaboratoryScience',
+};
+
+function jsonForScript(obj) {
+  return JSON.stringify(obj).replace(/</g, '\\u003c');
+}
+
 
 /**
  * Escape a string for safe HTML attribute / text interpolation.
@@ -163,19 +184,28 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 
     <!-- JSON-LD: Rich Snippets -->
     ${business.custom_jsonld
-      ? '<script type="application/ld+json">' + business.custom_jsonld + '</script>'
-      : '<script type="application/ld+json">' + JSON.stringify((() => {
+      ? '<script type="application/ld+json">' + String(business.custom_jsonld).replace(/<\/(script)/gi, '<\\/$1') + '</script>'
+      : '<script type="application/ld+json">' + jsonForScript((() => {
       const isMedical = business.category_name && (business.category_name.toLowerCase().includes('médic') || business.category_name.toLowerCase().includes('medic'));
+      const isPerson = business.business_type === 'profesional' || /^(dr|dra)\.?\s/i.test(title);
       const ld = {
         "@context": "https://schema.org",
-        "@type": isMedical ? "MedicalBusiness" : "LocalBusiness",
+        "@type": isMedical ? (isPerson ? "Physician" : "MedicalClinic") : "LocalBusiness",
         "name": title,
         "url": finalCanonical,
         "image": imageUrl,
         "description": description
       };
       if (business.category_name) ld.category = business.category_name;
-      if (business.especialidad) ld.medicalSpecialty = business.especialidad;
+      if (business.especialidad) {
+        const specs = [];
+        for (const e of matchEspecialidades(business.especialidad)) {
+          const v = SCHEMA_SPECIALTY[e.slug];
+          if (v) (Array.isArray(v) ? v : [v]).forEach(x => { const u = 'https://schema.org/' + x; if (!specs.includes(u)) specs.push(u); });
+        }
+        ld.medicalSpecialty = specs.length ? (specs.length === 1 ? specs[0] : specs) : business.especialidad;
+        if (isMedical) ld.knowsAbout = business.especialidad;
+      }
       const phoneClean = (business.phone || '').replace(/[^0-9]/g, '');
       const waClean = (business.whatsapp || business.phone || '').replace(/[^0-9]/g, '');
       if (waClean) ld.telephone = '+' + waClean;
@@ -204,7 +234,9 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       if (business.youtube) sameAs.push(normalizeSocialUrl(business.youtube, 'youtube'));
       if (business.website) sameAs.push(business.website);
       if (sameAs.length) ld.sameAs = sameAs;
-      if (business.schedule) ld.openingHours = business.schedule;
+      const hoursSpec = openingHoursSpecification(parseSchedule(business.schedule_json));
+      if (hoursSpec.length) ld.openingHoursSpecification = hoursSpec;
+      else if (business.schedule) ld.openingHours = business.schedule;
       // AggregateRating + Reviews for rich snippets
       if (reviewCount > 0) {
         ld.aggregateRating = {
@@ -225,6 +257,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       return ld;
     })()) + '</script>'
     }
+    ${(() => {
+      const faqs = parseFaqs(business.faqs);
+      if (!faqs.length) return '';
+      return '<script type="application/ld+json">' + jsonForScript({
+        "@context": "https://schema.org", "@type": "FAQPage",
+        "mainEntity": faqs.map(f => ({ "@type": "Question", "name": f.q, "acceptedAnswer": { "@type": "Answer", "text": f.a } }))
+      }) + '</script>';
+    })()}
     <script type="application/ld+json">${(() => {
       const crumbs = [
         { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://holax.com.ve/" },
@@ -949,6 +989,23 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 .section-link:hover {
     text-decoration: underline;
 }
+
+/* Horario estructurado + FAQ del negocio (js/horario.js) */
+.business-detail-page .hx-hours-head, .hx-hours-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.hx-open-badge { font-size:0.8rem; font-weight:700; padding:5px 12px; border-radius:999px; }
+.hx-open-badge.is-open { background:#dcfce7; color:#166534; }
+.hx-open-badge.is-closed { background:#fee2e2; color:#991b1b; }
+.hx-hours { width:100%; border-collapse:collapse; margin-top:10px; font-size:0.92rem; }
+.hx-hours th { text-align:left; font-weight:600; color:#334155; padding:7px 8px; width:40%; }
+.hx-hours td { padding:7px 8px; color:#0f172a; }
+.hx-hours tr { border-bottom:1px solid #f1f5f9; }
+.hx-hours tr.is-today { background:#eff6ff; }
+.hx-hours tr.is-today th { color:#006EE3; }
+.hx-closed { color:#94a3b8; }
+.hx-hours-note { margin:10px 0 0; font-size:0.85rem; color:#475569; }
+.hx-faq-item { border:1px solid #e5e7eb; border-radius:12px; padding:12px 14px; margin-top:8px; background:#fff; }
+.hx-faq-item summary { cursor:pointer; font-weight:700; color:#0f172a; }
+.hx-faq-item p { margin:8px 0 0; color:#475569; line-height:1.55; }
 </style>
 </head>
 <body>
@@ -1161,6 +1218,34 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 })()}
 
                 ${(() => {
+                    const sched = parseSchedule(business.schedule_json);
+                    if (!sched) return '';
+                    const rows = DAYS.map(d => {
+                      const r = sched.days[d.key];
+                      return '<tr data-hx-day="' + d.js + '"><th>' + d.label + '</th><td>' + (r ? r.map(x => x[0] + ' – ' + x[1]).join('<br>') : '<span class="hx-closed">Cerrado</span>') + '</td></tr>';
+                    }).join('');
+                    return `
+                <div class="business-section hx-hours-section" id="horarioSection">
+                  <div class="hx-hours-head">
+                    <h2 class="business-section-title"><i class="fas fa-clock" style="color:#006EE3;"></i> Horario de atención</h2>
+                    <span class="hx-open-badge" data-hx-schedule="${escapeHtml(JSON.stringify(sched))}" hidden></span>
+                  </div>
+                  <table class="hx-hours">${rows}</table>
+                  ${sched.note ? `<p class="hx-hours-note"><i class="fas fa-circle-info"></i> ${escapeHtml(sched.note)}</p>` : ''}
+                </div>`;
+                })()}
+
+                ${(() => {
+                    const faqs = parseFaqs(business.faqs);
+                    if (!faqs.length) return '';
+                    return `
+                <div class="business-section hx-faq-section" id="faqSection">
+                  <h2 class="business-section-title"><i class="fas fa-circle-question" style="color:#006EE3;"></i> Preguntas frecuentes</h2>
+                  ${faqs.map(f => `<details class="hx-faq-item"><summary>${escapeHtml(f.q)}</summary><p>${escapeHtml(f.a)}</p></details>`).join('')}
+                </div>`;
+                })()}
+
+                ${(() => {
                     const raw = business.video_url;
                     if (!raw) return '';
                     let urls = [];
@@ -1247,6 +1332,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="/js/business-detail.js?v=11"></script>
     <script src="/js/chat.js?v=4"></script>
     <script src="/js/review-widget.js?v=4"></script>
+    <script type="module" src="/js/horario.js?v=1"></script>
     <script src="/js/ai-chatbot.js?v=3"></script>
     <script>setTimeout(function(){fetch('/api/business-stats/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({business_id:${business.id},event_type:'view',source:'ficha'})}).catch(function(){})},0);</script>
 </body>

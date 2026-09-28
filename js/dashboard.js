@@ -81,6 +81,7 @@ function _openEditBizModal(id) {
             el('editBizLat', biz.lat || biz.latitude);
             el('editBizLng', biz.lng || biz.longitude);
             el('editBizSchedule', biz.schedule);
+            if (window.hxFillBizExtras) window.hxFillBizExtras(biz);
 
             // Logo
             if (biz.logo) {
@@ -2445,7 +2446,7 @@ window.closeEditBusinessModal = function() {
             }
 
             // If a specific business was passed, use it; otherwise aggregate all
-            let allStats = { total_views: 0, total_whatsapp_clicks: 0, total_website_clicks: 0, total_phone_clicks: 0, total_shares: 0 };
+            let allStats = { total_views: 0, total_whatsapp_clicks: 0, total_website_clicks: 0, total_phone_clicks: 0, total_shares: 0, prev_views: 0, prev_contacts: 0 };
             let rows = [];
             let allDailyViews = [];
             let allDailyWa = [];
@@ -2460,6 +2461,8 @@ window.closeEditBusinessModal = function() {
                     allStats.total_website_clicks += stats.total_website_clicks || 0;
                     allStats.total_phone_clicks += stats.total_phone_clicks || 0;
                     allStats.total_shares += stats.total_shares || 0;
+                    allStats.prev_views += stats.prev_views || 0;
+                    allStats.prev_contacts += stats.prev_contacts || 0;
 
                     // Merge daily data
                     if (stats.daily_views) {
@@ -2510,6 +2513,7 @@ window.closeEditBusinessModal = function() {
             if (elPhone) elPhone.textContent = allStats.total_phone_clicks.toLocaleString();
             if (elWeb) elWeb.textContent = allStats.total_website_clicks.toLocaleString();
             if (elShares) elShares.textContent = allStats.total_shares.toLocaleString();
+            renderStatsSummary(allStats, currentStatsPeriod);
 
             // Update table
             const body = document.getElementById('statsPerBusinessBody');
@@ -2786,6 +2790,7 @@ window.closeEditBusinessModal = function() {
         el('editBizLng', biz.lng || biz.longitude);
         el('editBizSchedule', biz.schedule);
         el('editBizEspecialidad', biz.especialidad);
+        if (window.hxFillBizExtras) window.hxFillBizExtras(biz);
 
         // Show/hide especialidad field
         const espWrap = document.getElementById('editBizEspecialidadWrap');
@@ -3082,6 +3087,14 @@ window.closeEditBusinessModal = function() {
                 banner: currentForm.querySelector('.edit-biz-banner-url')?.value || null,
                 especialidad: document.getElementById('editBizEspecialidad')?.value || null,
             };
+            // Structured schedule + FAQs (js/horario.js format)
+            if (window.hxReadBizExtras) {
+                const extras = window.hxReadBizExtras();
+                payload.schedule_json = extras.schedule_json;
+                payload.faqs = extras.faqs;
+                // With a per-day schedule, let the server regenerate the text version
+                if (extras.schedule_json) payload.schedule = '';
+            }
 
             // Upload new logo if selected
             const logoSection = currentForm.querySelector('.eb-logo-section');
@@ -4623,3 +4636,155 @@ window.closeEditBusinessModal = function() {
     }, 20000);
 
 })();
+
+
+// ─── Horario por día + preguntas frecuentes (modal "Editar negocio") ────────
+(function () {
+    'use strict';
+    var DAYS = [['mo', 'Lunes'], ['tu', 'Martes'], ['we', 'Miércoles'], ['th', 'Jueves'], ['fr', 'Viernes'], ['sa', 'Sábado'], ['su', 'Domingo']];
+    var MEDICAL_FAQ_HINTS = ['¿Atiende niños?', '¿Necesito cita previa?', '¿Acepta seguros?', '¿Cuánto cuesta la consulta?'];
+
+    function esc(v) {
+        return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function parse(v, fallback) {
+        if (!v) return fallback;
+        if (typeof v === 'object') return v;
+        try { return JSON.parse(v); } catch (e) { return fallback; }
+    }
+
+    function renderHours(sched) {
+        var box = document.getElementById('editBizHours');
+        if (!box) return;
+        var days = (sched && sched.days) || {};
+        box.innerHTML = DAYS.map(function (d) {
+            var r = days[d[0]] || [];
+            var on = r.length > 0;
+            var r1 = r[0] || ['08:00', '12:00'];
+            var r2 = r[1] || null;
+            return '<div class="hx-day' + (on ? ' is-on' : '') + '" data-day="' + d[0] + '">'
+                + '<label class="hx-day-name"><input type="checkbox" class="hx-day-on"' + (on ? ' checked' : '') + '> ' + d[1] + '</label>'
+                + '<div class="hx-day-ranges">'
+                + '<span class="hx-range"><input type="time" class="hx-t1a" value="' + r1[0] + '"> – <input type="time" class="hx-t1b" value="' + r1[1] + '"></span>'
+                + '<span class="hx-range hx-range2"' + (r2 ? '' : ' hidden') + '><input type="time" class="hx-t2a" value="' + (r2 ? r2[0] : '14:00') + '"> – <input type="time" class="hx-t2b" value="' + (r2 ? r2[1] : '18:00') + '"></span>'
+                + '<button type="button" class="hx-add2">' + (r2 ? 'Quitar turno' : '+ Turno') + '</button>'
+                + '</div></div>';
+        }).join('')
+            + '<div class="hx-hours-tools"><button type="button" class="hx-copy-week">Copiar el lunes a lunes–viernes</button>'
+            + '<input type="text" class="eb-input hx-note" maxlength="200" placeholder="Nota: ej. Previa cita, por orden de llegada" value="' + esc(sched && sched.note) + '"></div>';
+    }
+
+    function readHours() {
+        var box = document.getElementById('editBizHours');
+        if (!box) return null;
+        var days = {};
+        var any = false;
+        box.querySelectorAll('.hx-day').forEach(function (row) {
+            if (!row.querySelector('.hx-day-on').checked) return;
+            var ranges = [[row.querySelector('.hx-t1a').value, row.querySelector('.hx-t1b').value]];
+            if (!row.querySelector('.hx-range2').hidden) ranges.push([row.querySelector('.hx-t2a').value, row.querySelector('.hx-t2b').value]);
+            ranges = ranges.filter(function (x) { return x[0] && x[1] && x[0] < x[1]; });
+            if (ranges.length) { days[row.getAttribute('data-day')] = ranges; any = true; }
+        });
+        var noteEl = box.querySelector('.hx-note');
+        var note = noteEl ? noteEl.value.trim() : '';
+        if (!any) return null;
+        return { days: days, note: note };
+    }
+
+    function faqRow(f, placeholder) {
+        return '<div class="hx-faq-row">'
+            + '<input type="text" class="eb-input hx-faq-q" maxlength="200" placeholder="' + esc(placeholder || 'Pregunta') + '" value="' + esc(f.q) + '">'
+            + '<textarea class="eb-input eb-textarea hx-faq-a" rows="2" maxlength="1000" placeholder="Respuesta">' + esc(f.a) + '</textarea>'
+            + '<button type="button" class="hx-faq-del" aria-label="Eliminar pregunta"><i class="fas fa-trash"></i></button>'
+            + '</div>';
+    }
+
+    function renderFaqs(faqs, isMedical) {
+        var box = document.getElementById('editBizFaqs');
+        if (!box) return;
+        var list = Array.isArray(faqs) ? faqs : [];
+        if (!list.length) list = [{ q: '', a: '' }];
+        box.innerHTML = list.map(function (f, i) { return faqRow(f, isMedical ? MEDICAL_FAQ_HINTS[i % MEDICAL_FAQ_HINTS.length] : 'Pregunta'); }).join('');
+        box.setAttribute('data-medical', isMedical ? '1' : '');
+    }
+
+    function readFaqs() {
+        var out = [];
+        document.querySelectorAll('#editBizFaqs .hx-faq-row').forEach(function (row) {
+            var q = row.querySelector('.hx-faq-q').value.trim();
+            var a = row.querySelector('.hx-faq-a').value.trim();
+            if (q && a) out.push({ q: q, a: a });
+        });
+        return out.slice(0, 8);
+    }
+
+    window.hxFillBizExtras = function (biz) {
+        var isMedical = (biz.category_slug || biz.category || '') === 'medicina-servicio-medico' || !!biz.especialidad;
+        renderHours(parse(biz.schedule_json, null));
+        renderFaqs(parse(biz.faqs, []), isMedical);
+    };
+
+    window.hxReadBizExtras = function () {
+        return { schedule_json: readHours(), faqs: readFaqs() };
+    };
+
+    document.addEventListener('click', function (e) {
+        var t = e.target;
+        if (t.classList.contains('hx-add2')) {
+            var r2 = t.parentNode.querySelector('.hx-range2');
+            r2.hidden = !r2.hidden;
+            t.textContent = r2.hidden ? '+ Turno' : 'Quitar turno';
+        } else if (t.classList.contains('hx-copy-week')) {
+            var rows = document.querySelectorAll('#editBizHours .hx-day');
+            var mon = rows[0];
+            for (var i = 1; i < 5; i++) {
+                var row = rows[i];
+                row.querySelector('.hx-day-on').checked = mon.querySelector('.hx-day-on').checked;
+                ['.hx-t1a', '.hx-t1b', '.hx-t2a', '.hx-t2b'].forEach(function (c) { row.querySelector(c).value = mon.querySelector(c).value; });
+                row.querySelector('.hx-range2').hidden = mon.querySelector('.hx-range2').hidden;
+                row.querySelector('.hx-add2').textContent = row.querySelector('.hx-range2').hidden ? '+ Turno' : 'Quitar turno';
+                row.classList.toggle('is-on', row.querySelector('.hx-day-on').checked);
+            }
+        } else if (t.closest && t.closest('.hx-faq-del')) {
+            t.closest('.hx-faq-row').remove();
+        } else if (t.id === 'editBizFaqAdd' || (t.closest && t.closest('#editBizFaqAdd'))) {
+            var box = document.getElementById('editBizFaqs');
+            if (box && box.querySelectorAll('.hx-faq-row').length < 8) {
+                var n = box.querySelectorAll('.hx-faq-row').length;
+                box.insertAdjacentHTML('beforeend', faqRow({ q: '', a: '' }, box.getAttribute('data-medical') ? MEDICAL_FAQ_HINTS[n % MEDICAL_FAQ_HINTS.length] : 'Pregunta'));
+            }
+        }
+    });
+    document.addEventListener('change', function (e) {
+        if (e.target.classList.contains('hx-day-on')) {
+            e.target.closest('.hx-day').classList.toggle('is-on', e.target.checked);
+        }
+    });
+
+    // Make sure the editor exists even for businesses opened without data
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { renderHours(null); renderFaqs([], false); });
+    else { renderHours(null); renderFaqs([], false); }
+})();
+
+
+// ─── Resumen en lenguaje natural de las estadísticas del período ───
+function renderStatsSummary(st, period) {
+    var el = document.getElementById('statsSummary');
+    if (!el) return;
+    var label = period === '7d' ? 'Esta semana' : period === '90d' ? 'En los últimos 3 meses' : 'Este mes';
+    var prevLabel = period === '7d' ? 'a la semana anterior' : period === '90d' ? 'a los 3 meses anteriores' : 'al mes anterior';
+    var views = st.total_views || 0;
+    var contacts = (st.total_whatsapp_clicks || 0) + (st.total_phone_clicks || 0);
+    function trend(cur, prev) {
+        if (!prev) return cur ? '<span class="hx-trend-up">nuevo</span>' : '—';
+        var pct = Math.round(((cur - prev) / prev) * 100);
+        return '<span class="' + (pct >= 0 ? 'hx-trend-up' : 'hx-trend-down') + '">' + (pct >= 0 ? '+' : '') + pct + '%</span>';
+    }
+    var rate = views ? Math.round((contacts / views) * 100) : 0;
+    el.innerHTML = '<p>' + label + ', <strong>' + views.toLocaleString() + (views === 1 ? ' persona vio' : ' personas vieron') + '</strong> tu ficha y <strong>'
+        + contacts.toLocaleString() + '</strong> ' + (contacts === 1 ? 'te contactó' : 'te contactaron') + ' por WhatsApp o llamada.</p>'
+        + '<small>Vistas ' + trend(views, st.prev_views) + ' · Contactos ' + trend(contacts, st.prev_contacts) + ' frente ' + prevLabel
+        + (views ? ' · ' + rate + '% de quienes vieron tu ficha te escribieron o llamaron' : '') + '</small>';
+    el.hidden = false;
+}
