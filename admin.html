@@ -787,14 +787,14 @@
                         <!-- Stats Cards -->
                         <div id="academyStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;"></div>
 
-                        <!-- YouTube channel -->
+                        <!-- YouTube channels (profesores) -->
                         <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:20px;">
-                            <div style="font-weight:600;font-size:0.85rem;margin-bottom:6px;color:#dc2626;"><i class="fab fa-youtube"></i> Canal de YouTube de la Academia</div>
-                            <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Se muestra en la academia con botones para visitar y suscribirse al canal.</p>
-                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:end;">
-                                <input type="url" id="academyChannelUrl" placeholder="https://www.youtube.com/@tucanal" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
-                                <input type="text" id="academyChannelName" placeholder="Nombre del canal (opcional)" maxlength="100" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
-                                <button class="btn btn-primary" id="academySaveChannelBtn" style="background:#dc2626;"><i class="fas fa-save"></i> Guardar canal</button>
+                            <div style="font-weight:600;font-size:0.85rem;margin-bottom:6px;color:#dc2626;"><i class="fab fa-youtube"></i> Canales de YouTube de la Academia</div>
+                            <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Un canal por profesor (máximo 4). Se muestran en la academia con botones para visitar y suscribirse.</p>
+                            <div id="academyChannelsList" style="display:grid;gap:8px;"></div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                                <button class="btn btn-secondary" id="academyAddChannelBtn" type="button"><i class="fas fa-plus"></i> Agregar canal</button>
+                                <button class="btn btn-primary" id="academySaveChannelBtn" type="button" style="background:#dc2626;"><i class="fas fa-save"></i> Guardar canales</button>
                             </div>
                         </div>
 
@@ -947,6 +947,51 @@
                                     <button class="btn btn-primary btn-sm" id="academySaveInlineQBtn" style="background:#7c3aed;"><i class="fas fa-save"></i> Guardar</button>
                                     <button class="btn btn-secondary btn-sm" id="academyCancelInlineQBtn"><i class="fas fa-times"></i> Cancelar</button>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Partners Digitales -->
+                    <div class="admin-card" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                            <div>
+                                <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-certificate" style="color:#d97706;"></i> Partners Digitales <span id="academyPartnersCount" style="font-size:0.8rem;color:#6b7280;font-weight:600;"></span></h3>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Agentes certificados: ver su certificado, quitar la certificación o eliminar su cuenta de Partner.</p>
+                            </div>
+                            <button class="btn btn-secondary" id="academyPartnersRefreshBtn" title="Refrescar"><i class="fas fa-sync-alt"></i></button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" style="width:100%;font-size:0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Partner</th>
+                                        <th>Nivel / XP</th>
+                                        <th>Clases</th>
+                                        <th>Certificado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="academyPartnersTableBody">
+                                    <tr><td colspan="5" style="text-align:center;padding:30px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Certificate preview modal -->
+                    <div id="academyCertModal" class="hidden" style="position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px;">
+                        <div style="background:#fff;border-radius:14px;width:100%;max-width:880px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);">
+                            <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #e5e7eb;">
+                                <h3 id="academyCertModalTitle" style="margin:0;font-size:1rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><i class="fas fa-certificate" style="color:#d97706;"></i> Certificado</h3>
+                                <button class="btn btn-secondary btn-sm" id="academyCertModalClose"><i class="fas fa-times"></i> Cerrar</button>
+                            </div>
+                            <div style="padding:16px;overflow:auto;background:#f1f0f7;flex:1;">
+                                <div id="academyCertPreview" style="background:#fff;border-radius:8px;box-shadow:0 4px 16px rgba(15,23,42,.12);min-height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+                                <p id="academyCertModalNote" style="font-size:0.78rem;color:#6b7280;text-align:center;margin:10px 0 0;"></p>
+                            </div>
+                            <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 16px;border-top:1px solid #e5e7eb;">
+                                <a class="btn btn-secondary btn-sm" id="academyCertModalProfile" href="#" target="_blank"><i class="fas fa-external-link-alt"></i> Ver perfil</a>
+                                <button class="btn btn-primary btn-sm" id="academyCertModalDownload" style="background:#d97706;"><i class="fas fa-download"></i> Descargar PDF</button>
                             </div>
                         </div>
                     </div>
@@ -2878,7 +2923,8 @@
     </div>
 
     <script src="js/app.js"></script>
-    <script src="js/admin.js?v=9"></script>
+    <script src="js/academy-certificate.js"></script>
+    <script src="js/admin.js?v=10"></script>
     <style>
     /* Editar Negocios styles */
     .aeb-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px;}
