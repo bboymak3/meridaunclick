@@ -90,6 +90,7 @@ Disallow: /admin.html
 Disallow: /admin-edit-business.html
 Disallow: /admin-vendedores.html
 Disallow: /admin-chat.html
+Disallow: /admin-wiki.html
 Disallow: /debug-vendedores.html
 Disallow: /dashboard.html
 Disallow: /login.html

@@ -4,7 +4,8 @@
 // economia, que visitar, medicos por especialidad y negocios del estado.
 
 import { ESTADOS, EMERGENCIAS_NACIONALES, ORGANISMOS, findEstado, formatNumber } from '../_lib/estados-data.js';
-import { BASE_URL, esc, renderPage, htmlResponse, notFound, businessCard, businessPath } from '../_lib/page-shell.js';
+import { BASE_URL, esc, renderPage, htmlResponse, notFound, businessCard, businessPath, legalCta } from '../_lib/page-shell.js';
+import { loadOverride, mergeEstado, mergeGlobal, legalWhatsappUrl, GLOBAL_SLUG } from '../_lib/wiki-store.js';
 import { matchEspecialidades } from '../../js/especialidades.js';
 
 const EMERGENCY_LABELS = {
@@ -23,13 +24,18 @@ async function safeAll(env, sql, bindings) {
 
 export async function onRequestGet(context) {
   const { env, params } = context;
-  const estado = findEstado(decodeURIComponent(params.slug || ''));
-  if (!estado) return notFound('El estado que buscas no está disponible.');
+  const found = findEstado(decodeURIComponent(params.slug || ''));
+  if (!found) return notFound('El estado que buscas no está disponible.');
 
   // Canonical slug (e.g. /estado/Mérida or /estado/la-guaira → /estado/merida, /estado/vargas)
-  if (params.slug !== estado.slug) {
-    return new Response('', { status: 301, headers: { Location: '/estado/' + estado.slug } });
+  if (params.slug !== found.slug) {
+    return new Response('', { status: 301, headers: { Location: '/estado/' + found.slug } });
   }
+
+  // Default data + edits made in the admin panel (Wiki)
+  const [stateOverride, globalOverride] = await Promise.all([loadOverride(env, found.slug), loadOverride(env, GLOBAL_SLUG)]);
+  const estado = mergeEstado(found, stateOverride);
+  const g = mergeGlobal(globalOverride);
 
   const canonical = `${BASE_URL}/estado/${estado.slug}`;
   const names = estado.dbNames;
@@ -116,6 +122,7 @@ export async function onRequestGet(context) {
     .map(e => `<a href="/estado/${e.slug}" class="hx-chip">${esc(e.name)}</a>`).join('');
 
   const body = `
+    ${estado.banner_url ? `<figure class="hx-banner"><img src="${esc(estado.banner_url)}" alt="${esc(estado.name)}, Venezuela" loading="eager"></figure>` : ''}
     <section class="hx-hero">
       <p class="hx-kicker"><i class="fas fa-map-location-dot"></i> Wiki de Venezuela · Región ${esc(estado.region)}</p>
       <h1>${esc(estado.name)}, Venezuela</h1>
@@ -160,7 +167,13 @@ export async function onRequestGet(context) {
             <span>${esc(n.name)}</span>
           </a>`).join('')}
       </div>
-      ${localEmergencies ? `<h3>Servicios locales</h3>${localEmergencies}` : `<p class="hx-note">Aún no tenemos teléfonos locales (policía municipal, bomberos, hospitales) cargados para ${esc(estado.name)}. ¿Conoces alguno? <a href="/contacto.html">Escríbenos</a> y lo agregamos.</p>`}
+      ${estado.emergencias_extra.length ? `<h3>Números del estado</h3>
+        <div class="hx-em-group">${estado.emergencias_extra.map(x => `
+          <div class="hx-em-item">
+            <div><strong>${esc(x.name)}</strong>${x.detail ? `<small>${esc(x.detail)}</small>` : ''}</div>
+            ${x.phone ? `<a class="hx-tel" href="tel:${esc(x.phone.replace(/[^0-9+]/g, ''))}"><i class="fas fa-phone"></i> ${esc(x.phone)}</a>` : ''}
+          </div>`).join('')}</div>` : ''}
+      ${localEmergencies ? `<h3>Servicios locales</h3>${localEmergencies}` : estado.emergencias_extra.length ? '' : `<p class="hx-note">Aún no tenemos teléfonos locales (policía municipal, bomberos, hospitales) cargados para ${esc(estado.name)}. ¿Conoces alguno? <a href="/contacto.html">Escríbenos</a> y lo agregamos.</p>`}
       <p><a href="/emergencia.html?state=${encodeURIComponent(searchState)}" class="hx-link">Ver directorio de emergencias <i class="fas fa-arrow-right"></i></a></p>
     </section>
 
@@ -175,6 +188,34 @@ export async function onRequestGet(context) {
           </a>`).join('')}
       </div>
     </section>
+
+    ${legalCta(g, legalWhatsappUrl(g), estado.name)}
+
+    <section class="hx-section" id="envios">
+      <h2><i class="fas fa-truck-fast"></i> Envíos y encomiendas en ${esc(estado.name)}</h2>
+      <div class="hx-orgs">
+        <a class="hx-org" href="tel:${esc(g.mrw_phone.replace(/[^0-9]/g, ''))}">
+          <i class="fas fa-box"></i>
+          <div><strong>MRW – ${esc(g.mrw_phone)}</strong><span>Atención al cliente y rastreo de envíos.</span></div>
+        </a>
+        <a class="hx-org" href="tel:${esc(g.zoom_phone.replace(/[^0-9]/g, ''))}">
+          <i class="fas fa-truck"></i>
+          <div><strong>ZOOM – ${esc(g.zoom_phone_display || g.zoom_phone)}</strong><span>Atención al cliente${g.zoom_whatsapp ? ' · WhatsApp ' + esc(g.zoom_whatsapp) : ''}.</span></div>
+        </a>
+      </div>
+      ${estado.envios.length ? `<h3>Oficinas en ${esc(estado.name)}</h3>
+        <div class="hx-em-group">${estado.envios.map(x => `
+          <div class="hx-em-item">
+            <div><strong>${esc(x.name)}</strong>${x.detail ? `<small>${esc(x.detail)}</small>` : ''}</div>
+            ${x.phone ? `<a class="hx-tel" href="tel:${esc(x.phone.replace(/[^0-9+]/g, ''))}"><i class="fas fa-phone"></i> ${esc(x.phone)}</a>` : ''}
+          </div>`).join('')}</div>` : ''}
+      <p class="hx-note">Busca la oficina más cercana en los localizadores oficiales: <a href="${esc(g.mrw_url)}" target="_blank" rel="noopener nofollow">MRW</a> · <a href="${esc(g.zoom_url)}" target="_blank" rel="noopener nofollow">ZOOM</a>.</p>
+    </section>
+
+    ${estado.datos_utiles ? `<section class="hx-section" id="datos-utiles">
+      <h2><i class="fas fa-lightbulb"></i> Datos útiles</h2>
+      ${estado.datos_utiles.split(/\n{2,}/).map(par => `<p>${esc(par).replace(/\n/g, '<br>')}</p>`).join('')}
+    </section>` : ''}
 
     <section class="hx-section" id="municipios">
       <h2><i class="fas fa-map"></i> Municipios de ${esc(estado.name)} (${nMun})</h2>

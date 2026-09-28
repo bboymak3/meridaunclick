@@ -1,15 +1,19 @@
 // functions/estados/index.js
 // GET /estados — Wiki de Venezuela: indice de los 24 estados / entidades.
 
-import { ESTADOS, formatNumber } from '../_lib/estados-data.js';
-import { BASE_URL, esc, renderPage, htmlResponse } from '../_lib/page-shell.js';
+import { ESTADOS as DEFAULT_ESTADOS, formatNumber } from '../_lib/estados-data.js';
+import { BASE_URL, esc, renderPage, htmlResponse, legalCta } from '../_lib/page-shell.js';
+import { loadAllOverrides, mergeEstado, mergeGlobal, legalWhatsappUrl, GLOBAL_SLUG } from '../_lib/wiki-store.js';
 
 function shortText(text, max) {
   if (text.length <= max) return text;
   return text.slice(0, max).replace(/\s+\S*$/, '') + '…';
 }
 
-export async function onRequestGet() {
+export async function onRequestGet({ env }) {
+  const overrides = await loadAllOverrides(env);
+  const ESTADOS = DEFAULT_ESTADOS.map(e => mergeEstado(e, overrides[e.slug]));
+  const g = mergeGlobal(overrides[GLOBAL_SLUG]);
   const canonical = `${BASE_URL}/estados`;
   const totalPop = ESTADOS.reduce((s, e) => s + e.population, 0);
   const totalMun = ESTADOS.reduce((s, e) => s + e.municipios.length, 0);
@@ -50,6 +54,8 @@ export async function onRequestGet() {
     <section class="hx-section">
       <div class="hx-state-grid">${cards}</div>
     </section>
+
+    ${legalCta(g, legalWhatsappUrl(g), 'Venezuela')}
 
     <section class="hx-section">
       <h2><i class="fas fa-table"></i> Tabla comparativa</h2>

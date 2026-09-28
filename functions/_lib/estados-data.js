@@ -19,7 +19,7 @@ export const ESTADOS = [
     resena: 'Amazonas es el segundo estado más extenso de Venezuela y el menos poblado. Ocupa buena parte de la selva amazónica venezolana y es hogar de numerosos pueblos indígenas, como los yanomami, piaroa y ye\'kuana. Su territorio incluye tepuyes, ríos caudalosos y áreas protegidas de enorme biodiversidad.',
     clima: 'Tropical lluvioso de selva, cálido y húmedo todo el año, con temperaturas entre 24 °C y 32 °C y lluvias abundantes, sobre todo de abril a octubre.',
     economia: ['Turismo de naturaleza y aventura', 'Pesca artesanal', 'Agricultura de subsistencia (yuca, plátano, frutas amazónicas)', 'Artesanía indígena', 'Comercio y administración pública'],
-    atractivos: ['Cerro Autana', 'Raudales de Atures', 'Parque Nacional Parima-Tapirapecó', 'Tobogán de la Selva', 'Río Orinoco'],
+    atractivos: ['Cerro Autana', 'Raudales de Atures', 'Parque Nacional Parima-Tapirapecó', 'Tobogán de la Selva', 'Río Orinoco', 'Piedra Pintada', 'Museo Etnológico de Amazonas', 'Mercado indígena de Puerto Ayacucho', 'Río Sipapo'],
     municipios: ['Alto Orinoco', 'Atabapo', 'Atures', 'Autana', 'Manapiare', 'Maroa', 'Río Negro'],
   },
   {
@@ -30,7 +30,7 @@ export const ESTADOS = [
     resena: 'Anzoátegui se ubica en el oriente del país y combina costas del mar Caribe con extensas mesetas y llanos. Es uno de los principales polos petroleros de Venezuela gracias a la Faja del Orinoco y al complejo de Jose. Su conurbación Barcelona–Puerto La Cruz–Lechería es un importante centro comercial y turístico.',
     clima: 'Cálido tropical; seco y soleado en la costa, con temperaturas de 26 °C a 33 °C, y lluvias concentradas entre mayo y octubre en el interior.',
     economia: ['Petróleo y gas (Faja del Orinoco, complejo petroquímico de Jose)', 'Turismo de playa', 'Pesca', 'Ganadería y agricultura (maíz, sorgo)', 'Comercio y servicios portuarios'],
-    atractivos: ['Parque Nacional Mochima', 'Playa Colorada', 'Lechería y El Morro', 'Casco histórico de Barcelona', 'Isla de Plata'],
+    atractivos: ['Parque Nacional Mochima', 'Playa Colorada', 'Lechería y El Morro', 'Casco histórico de Barcelona', 'Isla de Plata', 'Paseo Colón de Puerto La Cruz', 'Islas Chimanas', 'Playa Arapito', 'Laguna de Unare', 'Casa Fuerte de Barcelona'],
     municipios: ['Anaco', 'Aragua', 'Diego Bautista Urbaneja', 'Fernando de Peñalver', 'Francisco del Carmen Carvajal', 'Francisco de Miranda', 'General Sir Arthur McGregor', 'Guanta', 'Independencia', 'José Gregorio Monagas', 'Juan Antonio Sotillo', 'Juan Manuel Cajigal', 'Libertad', 'Manuel Ezequiel Bruzual', 'Pedro María Freites', 'Píritu', 'San José de Guanipa', 'San Juan de Capistrano', 'Santa Ana', 'Simón Bolívar', 'Simón Rodríguez'],
   },
   {
@@ -41,7 +41,7 @@ export const ESTADOS = [
     resena: 'Apure es el corazón de los llanos venezolanos, una inmensa planicie surcada por los ríos Apure, Arauca y Meta. Es tierra de tradición ganadera y cuna del joropo y la música llanera. Sus sabanas inundables albergan chigüires, caimanes del Orinoco y cientos de especies de aves.',
     clima: 'Tropical de sabana, muy cálido (27 °C a 35 °C), con una marcada temporada de lluvias (mayo–octubre) que inunda las sabanas y una estación seca (noviembre–abril).',
     economia: ['Ganadería bovina', 'Agricultura (arroz, maíz, plátano)', 'Pesca de río', 'Turismo de llano y hatos', 'Comercio fronterizo con Colombia'],
-    atractivos: ['Parque Nacional Santos Luzardo', 'Parque Nacional Cinaruco-Capanaparo', 'Hatos llaneros', 'Río Apure', 'Médanos de Apure'],
+    atractivos: ['Parque Nacional Santos Luzardo', 'Parque Nacional Cinaruco-Capanaparo', 'Hatos llaneros', 'Río Apure', 'Médanos de Apure', 'Puente María Nieves', 'Galeras del Cinaruco', 'Elorza y sus fiestas patronales'],
     municipios: ['Achaguas', 'Biruaca', 'Muñoz', 'Páez', 'Pedro Camejo', 'Rómulo Gallegos', 'San Fernando'],
   },
   {
@@ -52,7 +52,7 @@ export const ESTADOS = [
     resena: 'Aragua está en el centro-norte del país, entre la cordillera de la Costa y el lago de Valencia. Su capital, Maracay, es conocida como la "Ciudad Jardín" y es un importante centro industrial y militar. El estado alberga el Parque Nacional Henri Pittier, el más antiguo de Venezuela, con playas como Choroní y Cata.',
     clima: 'Tropical templado por la altitud en los valles (24 °C a 30 °C) y más fresco en la montaña; lluvias de mayo a noviembre.',
     economia: ['Industria manufacturera (alimentos, textiles, química)', 'Agricultura (caña de azúcar, cacao, hortalizas)', 'Turismo de playa y montaña', 'Comercio y servicios', 'Aviación y actividad militar'],
-    atractivos: ['Parque Nacional Henri Pittier', 'Choroní y Puerto Colombia', 'Bahía de Cata', 'Colonia Tovar', 'Museo Aeronáutico de Maracay'],
+    atractivos: ['Parque Nacional Henri Pittier', 'Choroní y Puerto Colombia', 'Bahía de Cata', 'Colonia Tovar', 'Museo Aeronáutico de Maracay', 'Parque Aragua', 'Playa Grande de Choroní', 'Ocumare de la Costa y playa La Ciénaga', 'Hacienda Santa Teresa (El Consejo)', 'Lago de Valencia'],
     municipios: ['Bolívar', 'Camatagua', 'Francisco Linares Alcántara', 'Girardot', 'José Ángel Lamas', 'José Félix Ribas', 'José Rafael Revenga', 'Libertador', 'Mario Briceño Iragorry', 'Ocumare de la Costa de Oro', 'San Casimiro', 'San Sebastián', 'Santiago Mariño', 'Santos Michelena', 'Sucre', 'Tovar', 'Urdaneta', 'Zamora'],
   },
   {
@@ -63,7 +63,7 @@ export const ESTADOS = [
     resena: 'Barinas une el piedemonte andino con los llanos occidentales, lo que le da paisajes que van de ríos de montaña a extensas sabanas. Es uno de los grandes productores agropecuarios del país. Su capital es una ciudad en crecimiento y puerta de entrada a destinos de aventura como Barinitas y el río Acequias.',
     clima: 'Tropical cálido (26 °C a 34 °C) en el llano y más templado en el piedemonte; lluvias intensas de abril a noviembre.',
     economia: ['Ganadería bovina y lechera', 'Agricultura (maíz, arroz, plátano, caña)', 'Petróleo y gas', 'Agroindustria', 'Turismo de aventura (rafting, parapente)'],
-    atractivos: ['Barinitas y el piedemonte andino', 'Río Acequias y río Canaguá', 'Parque Nacional Aguaro-Guariquito (cercano)', 'Casco histórico de Barinas', 'Parque Los Mangos'],
+    atractivos: ['Barinitas y el piedemonte andino', 'Río Acequias y río Canaguá', 'Parque Nacional Aguaro-Guariquito (cercano)', 'Casco histórico de Barinas', 'Parque Los Mangos', 'Palacio del Marqués del Pumar', 'Altamira de Cáceres (pueblo colonial)', 'Parque Universitario de la UNELLEZ'],
     municipios: ['Alberto Arvelo Torrealba', 'Andrés Eloy Blanco', 'Antonio José de Sucre', 'Arismendi', 'Barinas', 'Bolívar', 'Cruz Paredes', 'Ezequiel Zamora', 'Obispos', 'Pedraza', 'Rojas', 'Sosa'],
   },
   {
@@ -74,7 +74,7 @@ export const ESTADOS = [
     resena: 'Bolívar es el estado más extenso de Venezuela. En su territorio se encuentran el Parque Nacional Canaima, el Salto Ángel —la caída de agua más alta del mundo— y la Gran Sabana con sus tepuyes. Ciudad Guayana (Puerto Ordaz y San Félix) es el principal polo industrial del país, con la siderúrgica y las hidroeléctricas del río Caroní.',
     clima: 'Tropical cálido y húmedo en las zonas bajas (25 °C a 33 °C) y fresco en la Gran Sabana (15 °C a 25 °C); lluvias de mayo a octubre.',
     economia: ['Minería (hierro, bauxita, oro)', 'Industria siderúrgica y del aluminio', 'Generación hidroeléctrica (Guri, Caruachi, Macagua)', 'Turismo (Canaima, Gran Sabana)', 'Comercio y servicios'],
-    atractivos: ['Salto Ángel (Kerepakupai Merú)', 'Parque Nacional Canaima', 'Gran Sabana y Roraima', 'Casco histórico de Ciudad Bolívar', 'Parque Cachamay en Puerto Ordaz'],
+    atractivos: ['Salto Ángel (Kerepakupai Merú)', 'Parque Nacional Canaima', 'Gran Sabana y Roraima', 'Casco histórico de Ciudad Bolívar', 'Parque Cachamay en Puerto Ordaz', 'Puente Angostura', 'Paseo Orinoco', 'Represa del Guri', 'Quebrada de Jaspe', 'Salto Kamá', 'Parque La Llovizna'],
     municipios: ['Angostura', 'Caroní', 'Cedeño', 'El Callao', 'Gran Sabana', 'Heres', 'Padre Pedro Chien', 'Piar', 'Roscio', 'Sifontes', 'Sucre'],
   },
   {
@@ -85,7 +85,7 @@ export const ESTADOS = [
     resena: 'Carabobo es uno de los estados más industrializados y densamente poblados de Venezuela. En su territorio se libró la Batalla de Carabobo (1821), decisiva para la independencia. Valencia es la tercera ciudad del país y Puerto Cabello, el principal puerto comercial de Venezuela.',
     clima: 'Tropical cálido (24 °C a 32 °C), con lluvias de mayo a noviembre y temporada seca el resto del año.',
     economia: ['Industria manufacturera (automotriz, alimentos, química)', 'Actividad portuaria (Puerto Cabello)', 'Petroquímica (Morón) y refinación (El Palito)', 'Comercio y servicios', 'Agricultura (cítricos, hortalizas)'],
-    atractivos: ['Campo de Carabobo', 'Puerto Cabello y su casco colonial', 'Parque Nacional San Esteban', 'Playas de Morrocoy (cercanas)', 'Catedral y Plaza Bolívar de Valencia'],
+    atractivos: ['Campo de Carabobo', 'Puerto Cabello y su casco colonial', 'Parque Nacional San Esteban', 'Playas de Morrocoy (cercanas)', 'Catedral y Plaza Bolívar de Valencia', 'Parque Fernando Peñalver', 'Acuario de Valencia', 'Playas de Patanemo', 'Casa de Páez', 'Teatro Municipal de Valencia', 'Fortín Solano'],
     municipios: ['Bejuma', 'Carlos Arvelo', 'Diego Ibarra', 'Guacara', 'Juan José Mora', 'Libertador', 'Los Guayos', 'Miranda', 'Montalbán', 'Naguanagua', 'Puerto Cabello', 'San Diego', 'San Joaquín', 'Valencia'],
   },
   {
@@ -96,7 +96,7 @@ export const ESTADOS = [
     resena: 'Cojedes es un estado de transición entre la región central y los llanos. Su paisaje de sabanas, ríos y morichales lo convierte en zona ganadera y agrícola. Es tierra de tradición llanera y guarda episodios importantes de la historia republicana, como la Batalla de Taguanes.',
     clima: 'Tropical de sabana, cálido (26 °C a 34 °C), con lluvias de mayo a octubre.',
     economia: ['Ganadería bovina', 'Agricultura (arroz, maíz, sorgo)', 'Agroindustria', 'Explotación forestal', 'Comercio'],
-    atractivos: ['Hato Piñero', 'Parque Nacional Tirgua', 'Casco histórico de San Carlos', 'Río Cojedes', 'Tinaquillo'],
+    atractivos: ['Hato Piñero', 'Parque Nacional Tirgua', 'Casco histórico de San Carlos', 'Río Cojedes', 'Tinaquillo', 'Casa de La Blanquera (San Carlos)', 'Río Tirgua'],
     municipios: ['Anzoátegui', 'Ezequiel Zamora', 'Girardot', 'Lima Blanco', 'Pao de San Juan Bautista', 'Ricaurte', 'Rómulo Gallegos', 'Tinaco', 'Tinaquillo'],
   },
   {
@@ -107,7 +107,7 @@ export const ESTADOS = [
     resena: 'Delta Amacuro abarca el delta del río Orinoco, un laberinto de caños, islas y manglares que desemboca en el océano Atlántico. Es territorio ancestral del pueblo warao, cuyas viviendas palafíticas son emblema del estado. Su biodiversidad y paisajes fluviales lo hacen un destino único de ecoturismo.',
     clima: 'Tropical húmedo, cálido todo el año (25 °C a 32 °C) y con lluvias abundantes, sobre todo de mayo a noviembre.',
     economia: ['Pesca', 'Agricultura (arroz, ocumo, plátano)', 'Petróleo (zona de Pedernales)', 'Ecoturismo fluvial', 'Artesanía warao (moriche)'],
-    atractivos: ['Delta del Orinoco', 'Caños y comunidades warao', 'Tucupita y su paseo Manamo', 'Parque Nacional Mariusa', 'Pedernales'],
+    atractivos: ['Delta del Orinoco', 'Caños y comunidades warao', 'Tucupita y su paseo Manamo', 'Parque Nacional Mariusa', 'Pedernales', 'Río Manamo', 'Catedral de la Divina Pastora de Tucupita'],
     municipios: ['Antonio Díaz', 'Casacoima', 'Pedernales', 'Tucupita'],
   },
   {
@@ -118,7 +118,7 @@ export const ESTADOS = [
     resena: 'El Distrito Capital comprende el municipio Libertador de Caracas, sede de los poderes públicos nacionales. Caracas, fundada en 1567, es el principal centro político, financiero y cultural del país. La ciudad se extiende en un valle a los pies del Waraira Repano (El Ávila), su gran pulmón vegetal.',
     clima: 'Tropical de altura, templado y agradable (18 °C a 28 °C) por estar a unos 900 m sobre el nivel del mar; lluvias de mayo a noviembre.',
     economia: ['Administración pública nacional', 'Comercio y servicios', 'Banca y finanzas', 'Industria cultural y medios', 'Turismo urbano'],
-    atractivos: ['Parque Nacional Waraira Repano (El Ávila)', 'Casco histórico y Plaza Bolívar', 'Panteón Nacional', 'Museo de Arte Contemporáneo y Parque Central', 'Teleférico Warairarepano'],
+    atractivos: ['Parque Nacional Waraira Repano (El Ávila)', 'Casco histórico y Plaza Bolívar', 'Panteón Nacional', 'Museo de Arte Contemporáneo y Parque Central', 'Teleférico Warairarepano', 'Casa Natal del Libertador', 'Ciudad Universitaria de Caracas (UNESCO)', 'Jardín Botánico de Caracas', 'Parque Los Caobos', 'Teatro Teresa Carreño'],
     municipios: ['Libertador'],
   },
   {
@@ -129,7 +129,7 @@ export const ESTADOS = [
     resena: 'Falcón ocupa el extremo noroccidental del país y tiene la costa más extensa de Venezuela. Su capital, Coro, fue la primera capital de Venezuela y su casco colonial es Patrimonio de la Humanidad de la UNESCO. El estado combina médanos, la península de Paraguaná, la sierra de San Luis y los cayos de Morrocoy.',
     clima: 'Semiárido y cálido en la costa y Paraguaná (27 °C a 34 °C), con pocas lluvias; más fresco y húmedo en la sierra de San Luis.',
     economia: ['Refinación de petróleo (Complejo Refinador Paraguaná)', 'Turismo de playa', 'Pesca', 'Ganadería caprina', 'Comercio (zona libre de Paraguaná)'],
-    atractivos: ['Coro y La Vela (Patrimonio UNESCO)', 'Parque Nacional Médanos de Coro', 'Parque Nacional Morrocoy', 'Península de Paraguaná', 'Sierra de San Luis'],
+    atractivos: ['Coro y La Vela (Patrimonio UNESCO)', 'Parque Nacional Médanos de Coro', 'Parque Nacional Morrocoy', 'Península de Paraguaná', 'Sierra de San Luis', 'Cayo Sombrero', 'Tucacas y Chichiriviche', 'Adícora', 'Cerro Santa Ana', 'Cabo San Román'],
     municipios: ['Acosta', 'Bolívar', 'Buchivacoa', 'Cacique Manaure', 'Carirubana', 'Colina', 'Dabajuro', 'Democracia', 'Falcón', 'Federación', 'Jacura', 'Los Taques', 'Mauroa', 'Miranda', 'Monseñor Iturriza', 'Palmasola', 'Petit', 'Píritu', 'San Francisco', 'Silva', 'Sucre', 'Tocópero', 'Unión', 'Urumaco', 'Zamora'],
   },
   {
@@ -140,7 +140,7 @@ export const ESTADOS = [
     resena: 'Guárico, en el centro del país, es la puerta de entrada a los llanos venezolanos. Su capital, San Juan de los Morros, es famosa por sus aguas termales y por los Morros que la rodean. Es uno de los estados con mayor producción de arroz y ganado de Venezuela.',
     clima: 'Tropical de sabana, cálido (26 °C a 35 °C), con lluvias de mayo a octubre y una estación seca muy marcada.',
     economia: ['Agricultura (arroz, maíz, sorgo)', 'Ganadería bovina', 'Petróleo y gas', 'Pesca en embalses', 'Turismo termal'],
-    atractivos: ['Los Morros de San Juan', 'Aguas termales de San Juan de los Morros', 'Parque Nacional Aguaro-Guariquito', 'Embalse de Guárico (Calabozo)', 'Ortiz, pueblo de Doña Bárbara'],
+    atractivos: ['Los Morros de San Juan', 'Aguas termales de San Juan de los Morros', 'Parque Nacional Aguaro-Guariquito', 'Embalse de Guárico (Calabozo)', 'Ortiz, pueblo de Doña Bárbara', 'Calabozo y su casco histórico', 'Monumento Natural Morros de Macaira'],
     municipios: ['Camaguán', 'Chaguaramas', 'El Socorro', 'Francisco de Miranda', 'José Félix Ribas', 'José Tadeo Monagas', 'Juan Germán Roscio', 'Julián Mellado', 'Las Mercedes', 'Leonardo Infante', 'Ortiz', 'Pedro Zaraza', 'San Gerónimo de Guayabal', 'San José de Guaribe', 'Santa María de Ipire'],
   },
   {
@@ -151,7 +151,7 @@ export const ESTADOS = [
     resena: 'Lara es conocido como el "estado musical" de Venezuela por su tradición de tamunangue, golpe larense y grandes intérpretes. Barquisimeto, su capital, es la cuarta ciudad del país y un gran centro comercial. Destacan la devoción a la Divina Pastora y su artesanía, además de sus viñedos en Carora.',
     clima: 'Semiárido y cálido en el centro y norte (24 °C a 32 °C); más fresco y lluvioso hacia el sur montañoso (Sanare, El Tocuyo).',
     economia: ['Agricultura (caña de azúcar, cebolla, tomate, uva)', 'Agroindustria (vinos de Carora, azúcar)', 'Comercio y servicios', 'Industria manufacturera', 'Artesanía'],
-    atractivos: ['Barquisimeto y la procesión de la Divina Pastora', 'Carora y sus viñedos', 'Parque Nacional Yacambú', 'Parque Nacional Dinira', 'Quíbor y Sanare'],
+    atractivos: ['Barquisimeto y la procesión de la Divina Pastora', 'Carora y sus viñedos', 'Parque Nacional Yacambú', 'Parque Nacional Dinira', 'Quíbor y Sanare', 'Parque Nacional Cerro Saroche', 'Parque Zoológico Bararida', 'Obelisco y Catedral de Barquisimeto', 'El Tocuyo'],
     municipios: ['Andrés Eloy Blanco', 'Crespo', 'Iribarren', 'Jiménez', 'Morán', 'Palavecino', 'Simón Planas', 'Torres', 'Urdaneta'],
   },
   {
@@ -162,7 +162,7 @@ export const ESTADOS = [
     resena: 'Mérida es el estado andino por excelencia, con los picos más altos de Venezuela, como el Pico Bolívar (4.978 m). Su capital es una ciudad universitaria, sede de la Universidad de Los Andes, y un destino turístico todo el año. El estado combina páramos, lagunas glaciares, pueblos coloniales y el teleférico más alto y largo del mundo, Mukumbarí.',
     clima: 'De montaña: templado en la ciudad de Mérida (15 °C a 26 °C) y frío en los páramos (puede bajar de 0 °C); lluvias de abril a noviembre.',
     economia: ['Turismo de montaña', 'Agricultura (papa, hortalizas, café, fresas)', 'Educación universitaria (ULA)', 'Ganadería lechera y quesos andinos', 'Comercio y servicios'],
-    atractivos: ['Teleférico Mukumbarí', 'Parque Nacional Sierra Nevada', 'Laguna de Mucubají', 'Los Aleros y Jají', 'Heladería Coromoto y centro de Mérida'],
+    atractivos: ['Teleférico Mukumbarí', 'Parque Nacional Sierra Nevada', 'Laguna de Mucubají', 'Los Aleros y Jají', 'Heladería Coromoto y centro de Mérida', 'Pico Bolívar', 'Laguna Negra', 'Mucuchíes y Apartaderos', 'Jardín Botánico de Mérida', 'Venezuela de Antier', 'Los Nevados'],
     municipios: ['Alberto Adriani', 'Andrés Bello', 'Antonio Pinto Salinas', 'Aricagua', 'Arzobispo Chacón', 'Campo Elías', 'Caracciolo Parra Olmedo', 'Cardenal Quintero', 'Guaraque', 'Julio César Salas', 'Justo Briceño', 'Libertador', 'Miranda', 'Obispo Ramos de Lora', 'Padre Noguera', 'Pueblo Llano', 'Rangel', 'Rivas Dávila', 'Santos Marquina', 'Sucre', 'Tovar', 'Tulio Febres Cordero', 'Zea'],
   },
   {
@@ -173,7 +173,7 @@ export const ESTADOS = [
     resena: 'Miranda rodea a Caracas y es el segundo estado más poblado de Venezuela. Incluye buena parte del área metropolitana (Chacao, Baruta, Sucre, El Hatillo), los Valles del Tuy, Barlovento y los Altos Mirandinos. Barlovento es famoso por su cacao y sus tambores afrovenezolanos, y la costa ofrece playas como Higuerote.',
     clima: 'Variado: templado en los Altos Mirandinos (16 °C a 26 °C) y cálido y húmedo en Barlovento y la costa (25 °C a 32 °C); lluvias de mayo a diciembre.',
     economia: ['Comercio y servicios', 'Industria manufacturera', 'Agricultura (cacao de Barlovento, frutas)', 'Turismo de playa (Higuerote, Río Chico)', 'Construcción'],
-    atractivos: ['Higuerote y Parque Nacional Laguna de Tacarigua', 'Barlovento y sus tambores', 'El Hatillo', 'Altos Mirandinos y San Antonio de los Altos', 'Parque Nacional Guatopo'],
+    atractivos: ['Higuerote y Parque Nacional Laguna de Tacarigua', 'Barlovento y sus tambores', 'El Hatillo', 'Altos Mirandinos y San Antonio de los Altos', 'Parque Nacional Guatopo', 'Parque Generalísimo Francisco de Miranda (Parque del Este)', 'Río Chico y Paparo', 'Curiepe y los tambores de San Juan'],
     municipios: ['Acevedo', 'Andrés Bello', 'Baruta', 'Brión', 'Buroz', 'Carrizal', 'Chacao', 'Cristóbal Rojas', 'El Hatillo', 'Guaicaipuro', 'Independencia', 'Lander', 'Los Salias', 'Páez', 'Paz Castillo', 'Pedro Gual', 'Plaza', 'Simón Bolívar', 'Sucre', 'Urdaneta', 'Zamora'],
   },
   {
@@ -184,7 +184,7 @@ export const ESTADOS = [
     resena: 'Monagas, en el oriente venezolano, es uno de los grandes productores de petróleo del país, con yacimientos como El Furrial y Punta de Mata. Su territorio va de las montañas de Caripe a los llanos y morichales del sur. La Cueva del Guácharo, primer monumento natural de Venezuela, es su atractivo más conocido.',
     clima: 'Cálido tropical en la llanura (26 °C a 33 °C) y fresco en la serranía de Caripe (18 °C a 26 °C); lluvias de mayo a noviembre.',
     economia: ['Petróleo y gas', 'Agricultura (yuca, maíz, frutas, café en Caripe)', 'Ganadería', 'Comercio y servicios', 'Turismo de naturaleza'],
-    atractivos: ['Cueva del Guácharo (Caripe)', 'Valle de Caripe', 'Morichales del sur de Monagas', 'Parque La Guaricha en Maturín', 'Río Guarapiche'],
+    atractivos: ['Cueva del Guácharo (Caripe)', 'Valle de Caripe', 'Morichales del sur de Monagas', 'Parque La Guaricha en Maturín', 'Río Guarapiche', 'Catedral de Nuestra Señora del Carmen (Maturín)', 'Río Morichal Largo'],
     municipios: ['Acosta', 'Aguasay', 'Bolívar', 'Caripe', 'Cedeño', 'Ezequiel Zamora', 'Libertador', 'Maturín', 'Piar', 'Punceres', 'Santa Bárbara', 'Sotillo', 'Uracoa'],
   },
   {
@@ -195,7 +195,7 @@ export const ESTADOS = [
     resena: 'Nueva Esparta es el único estado insular de Venezuela y está formado por las islas de Margarita, Coche y Cubagua. Conocida como la "Perla del Caribe", Margarita es uno de los principales destinos turísticos del país por sus playas, su puerto libre y sus castillos coloniales. Su capital, La Asunción, conserva un valioso patrimonio histórico.',
     clima: 'Tropical seco y soleado (26 °C a 32 °C), con brisas constantes y pocas lluvias, concentradas entre octubre y enero.',
     economia: ['Turismo de playa', 'Comercio (puerto libre)', 'Pesca', 'Artesanía (hamacas, cestería)', 'Servicios'],
-    atractivos: ['Playa El Agua y Playa Parguito', 'Parque Nacional Laguna de La Restinga', 'Castillo de Santa Rosa y La Asunción', 'Juan Griego y su atardecer', 'Isla de Coche'],
+    atractivos: ['Playa El Agua y Playa Parguito', 'Parque Nacional Laguna de La Restinga', 'Castillo de Santa Rosa y La Asunción', 'Juan Griego y su atardecer', 'Isla de Coche', 'Playa Manzanillo', 'Pampatar y Castillo San Carlos Borromeo', 'Basílica de la Virgen del Valle', 'Isla de Cubagua (Nueva Cádiz)', 'Playa Caribe', 'Cerro El Copey'],
     municipios: ['Antolín del Campo', 'Arismendi', 'Díaz', 'García', 'Gómez', 'Maneiro', 'Marcano', 'Mariño', 'Península de Macanao', 'Tubores', 'Villalba'],
   },
   {
@@ -206,7 +206,7 @@ export const ESTADOS = [
     resena: 'Portuguesa es conocido como el "granero de Venezuela" por su gran producción de arroz, maíz y otros cereales. Guanare, su capital, es la capital espiritual del país gracias al Santuario Nacional de la Virgen de Coromoto, patrona de Venezuela. El estado une el piedemonte andino con fértiles llanos.',
     clima: 'Tropical cálido (26 °C a 34 °C), con lluvias de abril a noviembre.',
     economia: ['Agricultura (arroz, maíz, sorgo, caña de azúcar)', 'Agroindustria', 'Ganadería', 'Comercio', 'Turismo religioso'],
-    atractivos: ['Santuario Nacional de la Virgen de Coromoto', 'Casco histórico de Guanare', 'Araure y Acarigua', 'Parque Nacional Guaramacal (cercano)', 'Ríos del piedemonte'],
+    atractivos: ['Santuario Nacional de la Virgen de Coromoto', 'Casco histórico de Guanare', 'Araure y Acarigua', 'Parque Nacional Guaramacal (cercano)', 'Ríos del piedemonte', 'Represa Las Majaguas', 'Catedral de Guanare'],
     municipios: ['Agua Blanca', 'Araure', 'Esteller', 'Guanare', 'Guanarito', 'Monseñor José Vicente de Unda', 'Ospino', 'Páez', 'Papelón', 'San Genaro de Boconoíto', 'San Rafael de Onoto', 'Santa Rosalía', 'Sucre', 'Turén'],
   },
   {
@@ -217,7 +217,7 @@ export const ESTADOS = [
     resena: 'Sucre se ubica en el nororiente y su capital, Cumaná, es considerada la primera ciudad fundada por europeos en tierra firme sudamericana. El estado es cuna del Mariscal Antonio José de Sucre y del poeta Andrés Eloy Blanco. Sus costas en la península de Paria y Araya ofrecen playas vírgenes y una fuerte tradición pesquera y cacaotera.',
     clima: 'Cálido tropical (26 °C a 33 °C); seco en Araya y la costa oeste, y húmedo y lluvioso en la península de Paria.',
     economia: ['Pesca e industria atunera y sardinera', 'Cacao (Paria)', 'Turismo de playa', 'Salinas de Araya', 'Agricultura (coco, frutas)'],
-    atractivos: ['Península de Paria y Playa Medina', 'Castillo de Araya y sus salinas', 'Mochima (compartido con Anzoátegui)', 'Casco histórico de Cumaná', 'Parque Nacional Turuépano'],
+    atractivos: ['Península de Paria y Playa Medina', 'Castillo de Araya y sus salinas', 'Mochima (compartido con Anzoátegui)', 'Casco histórico de Cumaná', 'Parque Nacional Turuépano', 'Playa Pui Puy', 'Carúpano y su Carnaval', 'Río Caribe', 'Castillo San Antonio de la Eminencia'],
     municipios: ['Andrés Eloy Blanco', 'Andrés Mata', 'Arismendi', 'Benítez', 'Bermúdez', 'Bolívar', 'Cajigal', 'Cruz Salmerón Acosta', 'Libertador', 'Mariño', 'Mejía', 'Montes', 'Ribero', 'Sucre', 'Valdez'],
   },
   {
@@ -228,7 +228,7 @@ export const ESTADOS = [
     resena: 'Táchira es un estado andino y fronterizo con Colombia, con intensa actividad comercial a través de San Antonio y Ureña. San Cristóbal, la "Ciudad de la Cordialidad", es famosa por su Feria Internacional de San Sebastián. El estado tiene gran tradición agrícola, cafetalera y deportiva.',
     clima: 'De montaña: templado en San Cristóbal (18 °C a 28 °C), frío en los páramos y cálido en las tierras bajas; lluvias de abril a noviembre.',
     economia: ['Comercio fronterizo', 'Agricultura (café, hortalizas, caña)', 'Ganadería y lácteos', 'Industria manufacturera', 'Turismo de montaña'],
-    atractivos: ['Feria Internacional de San Sebastián', 'Páramo El Zumbador', 'Parque Nacional El Tamá', 'Capacho y Peribeca', 'San Pedro del Río (pueblo colonial)'],
+    atractivos: ['Feria Internacional de San Sebastián', 'Páramo El Zumbador', 'Parque Nacional El Tamá', 'Capacho y Peribeca', 'San Pedro del Río (pueblo colonial)', 'La Grita y el Santo Cristo', 'Parque Nacional Chorro El Indio'],
     municipios: ['Andrés Bello', 'Antonio Rómulo Costa', 'Ayacucho', 'Bolívar', 'Cárdenas', 'Córdoba', 'Fernández Feo', 'Francisco de Miranda', 'García de Hevia', 'Guásimos', 'Independencia', 'Jáuregui', 'José María Vargas', 'Junín', 'Libertad', 'Libertador', 'Lobatera', 'Michelena', 'Panamericano', 'Pedro María Ureña', 'Rafael Urdaneta', 'Samuel Darío Maldonado', 'San Cristóbal', 'San Judas Tadeo', 'Seboruco', 'Simón Rodríguez', 'Sucre', 'Torbes', 'Uribante'],
   },
   {
@@ -239,7 +239,7 @@ export const ESTADOS = [
     resena: 'Trujillo es el estado andino más septentrional y combina montañas, valles cafetaleros y costas sobre el lago de Maracaibo. En su capital se firmó el Decreto de Guerra a Muerte (1813) y allí se levanta el Monumento a la Virgen de la Paz, uno de los más altos del continente. Valera es su principal ciudad comercial.',
     clima: 'Templado de montaña en Trujillo, Boconó y Valera (18 °C a 28 °C) y cálido en la zona del lago; lluvias de abril a noviembre.',
     economia: ['Agricultura (café, caña de azúcar, hortalizas)', 'Comercio (Valera)', 'Ganadería', 'Turismo religioso y de montaña', 'Agroindustria'],
-    atractivos: ['Monumento a la Virgen de la Paz', 'Boconó, "Jardín de Venezuela"', 'Parque Nacional Guaramacal', 'Isnotú y el santuario del Dr. José Gregorio Hernández', 'Casco histórico de Trujillo'],
+    atractivos: ['Monumento a la Virgen de la Paz', 'Boconó, "Jardín de Venezuela"', 'Parque Nacional Guaramacal', 'Isnotú y el santuario del Dr. José Gregorio Hernández', 'Casco histórico de Trujillo', 'Jajó', 'Niquitao', 'La Puerta'],
     municipios: ['Andrés Bello', 'Boconó', 'Bolívar', 'Candelaria', 'Carache', 'Escuque', 'José Felipe Márquez Cañizales', 'Juan Vicente Campo Elías', 'La Ceiba', 'Miranda', 'Monte Carmelo', 'Motatán', 'Pampán', 'Pampanito', 'Rafael Rangel', 'San Rafael de Carvajal', 'Sucre', 'Trujillo', 'Urdaneta', 'Valera'],
   },
   {
@@ -250,7 +250,7 @@ export const ESTADOS = [
     resena: 'La Guaira (antes estado Vargas) es la franja costera al norte de Caracas, entre el mar Caribe y el Waraira Repano. Allí se encuentran el Aeropuerto Internacional Simón Bolívar de Maiquetía y el puerto de La Guaira, principales puertas de entrada al país. Sus pueblos costeros, como Macuto, Naiguatá y Los Caracas, son destinos de playa cercanos a la capital.',
     clima: 'Cálido y seco (26 °C a 33 °C), con brisa marina y lluvias escasas, más frecuentes entre noviembre y enero.',
     economia: ['Actividad portuaria y aeroportuaria', 'Turismo de playa', 'Pesca artesanal', 'Comercio y servicios', 'Administración pública'],
-    atractivos: ['Casco colonial de La Guaira', 'Macuto y su malecón', 'Playas de Naiguatá y Los Caracas', 'Parque Nacional Waraira Repano (vertiente norte)', 'Colonia Tovar (acceso por la costa)'],
+    atractivos: ['Casco colonial de La Guaira', 'Macuto y su malecón', 'Playas de Naiguatá y Los Caracas', 'Parque Nacional Waraira Repano (vertiente norte)', 'Colonia Tovar (acceso por la costa)', 'Galipán', 'Camurí Grande', 'Chichiriviche de la Costa', 'Puerto Cruz'],
     municipios: ['Vargas'],
   },
   {
@@ -261,7 +261,7 @@ export const ESTADOS = [
     resena: 'Yaracuy es un estado de valles fértiles y montañas en el centro-occidente del país. Es conocido por la montaña de Sorte, centro del culto a María Lionza, y por su producción de caña de azúcar y cítricos. San Felipe, su capital, conserva el parque arqueológico San Felipe El Fuerte.',
     clima: 'Tropical cálido y húmedo en los valles (24 °C a 32 °C), más fresco en las montañas; lluvias de mayo a noviembre.',
     economia: ['Agricultura (caña de azúcar, naranja, maíz)', 'Agroindustria (centrales azucareros)', 'Ganadería', 'Comercio', 'Turismo religioso y de naturaleza'],
-    atractivos: ['Montaña de Sorte', 'Parque San Felipe El Fuerte', 'Parque Nacional Yurubí', 'Chivacoa', 'Nirgua'],
+    atractivos: ['Montaña de Sorte', 'Parque San Felipe El Fuerte', 'Parque Nacional Yurubí', 'Chivacoa', 'Nirgua', 'Aroa y el Parque Minas de Bolívar'],
     municipios: ['Arístides Bastidas', 'Bolívar', 'Bruzual', 'Cocorote', 'Independencia', 'José Antonio Páez', 'La Trinidad', 'Manuel Monge', 'Nirgua', 'Peña', 'San Felipe', 'Sucre', 'Urachiche', 'Veroes'],
   },
   {
@@ -272,7 +272,7 @@ export const ESTADOS = [
     resena: 'Zulia es el estado más poblado de Venezuela y rodea el lago de Maracaibo, el más grande de Sudamérica. Históricamente ha sido el gran centro petrolero del país. Maracaibo, la "Tierra del Sol Amada", es famosa por la gaita zuliana, la Basílica de la Chinita y el puente General Rafael Urdaneta; al sur del lago ocurre el Relámpago del Catatumbo.',
     clima: 'Muy cálido y húmedo (28 °C a 35 °C) en Maracaibo; semiárido en la Guajira y lluvioso al sur del lago.',
     economia: ['Petróleo y gas (lago de Maracaibo, costa oriental)', 'Ganadería y producción láctea (sur del lago)', 'Agricultura (plátano, frutas)', 'Petroquímica (El Tablazo)', 'Comercio y servicios'],
-    atractivos: ['Basílica de Nuestra Señora de Chiquinquirá', 'Puente General Rafael Urdaneta', 'Relámpago del Catatumbo', 'Casco histórico y calle Carabobo de Maracaibo', 'Sierra de Perijá'],
+    atractivos: ['Basílica de Nuestra Señora de Chiquinquirá', 'Puente General Rafael Urdaneta', 'Relámpago del Catatumbo', 'Casco histórico y calle Carabobo de Maracaibo', 'Sierra de Perijá', 'Vereda del Lago', 'Isla de San Carlos y su castillo', 'Santa Rosa de Agua (palafitos)', 'Laguna de Sinamaica', 'Teatro Baralt'],
     municipios: ['Almirante Padilla', 'Baralt', 'Cabimas', 'Catatumbo', 'Colón', 'Francisco Javier Pulgar', 'Guajira', 'Jesús Enrique Lossada', 'Jesús María Semprún', 'La Cañada de Urdaneta', 'Lagunillas', 'Machiques de Perijá', 'Mara', 'Maracaibo', 'Miranda', 'Rosario de Perijá', 'San Francisco', 'Santa Rita', 'Simón Bolívar', 'Sucre', 'Valmore Rodríguez'],
   },
 ];
@@ -324,3 +324,29 @@ export function findEstado(value) {
 export function formatNumber(n) {
   return Number(n || 0).toLocaleString('es-VE');
 }
+
+// Configuracion global de la wiki (editable desde el panel admin → Wiki).
+export const WIKI_GLOBAL_DEFAULTS = {
+  // Bloque de asesoria legal en todas las paginas de la wiki
+  legal_enabled: true,
+  legal_title: 'Asesoría legal',
+  legal_firm: 'Abogados Valencia',
+  legal_text: '¿Necesitas un abogado? Consulta por WhatsApp sobre trámites, documentos, contratos, herencias, divorcios y asuntos laborales o mercantiles.',
+  legal_phone: '584245112587',
+  legal_message: 'Te escribo por asesoría jurídica desde el directorio comercial g33 a este número +58 424-5112587',
+  legal_button: 'Consultar por WhatsApp',
+  // Empresas de envios (lineas nacionales)
+  mrw_phone: '0800-30-40-000',
+  mrw_url: 'https://mrwve.com',
+  zoom_phone: '0501-9666-000',
+  zoom_phone_display: '0501-ZOOM-000',
+  zoom_whatsapp: '04148889666',
+  zoom_url: 'https://zoom.red',
+};
+
+// Campos de un estado que el panel admin puede sobrescribir.
+export const WIKI_STATE_FIELDS = [
+  'resena', 'capital', 'area', 'population', 'region', 'gentilicio', 'clima',
+  'economia', 'atractivos', 'municipios',
+  'banner_url', 'emergencias_extra', 'envios', 'datos_utiles',
+];

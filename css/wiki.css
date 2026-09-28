@@ -164,3 +164,17 @@ a.hx-esp-card:hover { border-color: var(--hx-blue); background: #eff6ff; }
     .hx-section { padding: 16px; }
     .hx-hero { padding: 22px 16px; border-radius: 16px; }
 }
+
+/* Banner del estado (panel admin → Wiki) */
+.hx-banner { margin: 0 0 14px; border-radius: 18px; overflow: hidden; background: #e2e8f0; }
+.hx-banner img { display: block; width: 100%; max-height: 360px; object-fit: cover; }
+
+/* Asesoria legal */
+.hx-legal { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; background: linear-gradient(135deg, #0f172a, #1e3a5f); color: #fff; border: 0; }
+.hx-legal-icon { width: 54px; height: 54px; border-radius: 14px; background: rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #fbbf24; flex-shrink: 0; }
+.hx-legal-body { flex: 1 1 260px; min-width: 0; }
+.hx-legal-body h2 { font-size: 1.15rem; margin: 0 0 4px; color: #fff; }
+.hx-legal-body p { margin: 0; color: rgba(255,255,255,.88); font-size: .93rem; }
+.hx-legal-btn { display: inline-flex; align-items: center; gap: 8px; background: #25d366; color: #fff !important; font-weight: 800; padding: 12px 18px; border-radius: 12px; text-decoration: none; white-space: nowrap; }
+.hx-legal-btn:hover { background: #1ebe5b; }
+@media (max-width: 640px) { .hx-legal-btn { width: 100%; justify-content: center; } }

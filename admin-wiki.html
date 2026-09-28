@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Panel Wiki - HolaX Admin</title>
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root { --blue: #006EE3; --text: #0f172a; --muted: #64748b; --border: #e2e8f0; --bg: #f5f7fb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); }
+        header { background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+        .top { max-width: 1200px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .top h1 { font-size: 1.15rem; margin: 0; flex: 1; }
+        .top a { color: var(--blue); text-decoration: none; font-weight: 600; font-size: .9rem; }
+        .wrap { max-width: 1200px; margin: 0 auto; padding: 16px; display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
+        @media (max-width: 860px) { .wrap { grid-template-columns: 1fr; } }
+        .side { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 8px; align-self: start; position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
+        @media (max-width: 860px) { .side { position: static; max-height: none; } .side .list { display: none; } }
+        .side select { display: none; width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border); font: inherit; }
+        @media (max-width: 860px) { .side select { display: block; } }
+        .item { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; padding: 9px 12px; border: 0; background: none; border-radius: 10px; font: inherit; cursor: pointer; color: var(--text); }
+        .item:hover { background: var(--bg); }
+        .item.active { background: #eff6ff; color: var(--blue); font-weight: 700; }
+        .item .dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+        .panel { background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+        .panel h2 { margin: 0 0 4px; font-size: 1.3rem; }
+        .panel .hint { color: var(--muted); font-size: .88rem; margin: 0 0 16px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+        .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+        .field label { font-weight: 700; font-size: .88rem; }
+        .field small { color: var(--muted); font-size: .78rem; }
+        input[type=text], input[type=number], textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 10px; font: inherit; font-size: .95rem; }
+        textarea { min-height: 90px; resize: vertical; }
+        textarea.tall { min-height: 170px; }
+        input:focus, textarea:focus { outline: none; border-color: var(--blue); }
+        fieldset { border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin: 0 0 16px; }
+        legend { font-weight: 800; padding: 0 6px; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; position: sticky; bottom: 0; background: #fff; padding: 12px 0 0; border-top: 1px solid var(--border); }
+        .btn { border: 0; border-radius: 10px; padding: 11px 18px; font: inherit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+        .btn-primary { background: var(--blue); color: #fff; }
+        .btn-light { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+        .btn-danger { background: #fee2e2; color: #b91c1c; }
+        .btn:disabled { opacity: .6; cursor: progress; }
+        .msg { padding: 10px 14px; border-radius: 10px; margin-bottom: 12px; display: none; }
+        .msg.ok { display: block; background: #dcfce7; color: #166534; }
+        .msg.err { display: block; background: #fee2e2; color: #991b1b; }
+        .banner-prev { max-width: 100%; max-height: 140px; border-radius: 10px; margin-top: 6px; display: none; }
+        .check { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+        .gate { max-width: 480px; margin: 60px auto; text-align: center; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 28px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="top">
+            <h1><i class="fas fa-book-open" style="color:var(--blue)"></i> Panel Wiki de estados</h1>
+            <a href="/estados" target="_blank"><i class="fas fa-up-right-from-square"></i> Ver wiki</a>
+            <a href="/admin.html"><i class="fas fa-arrow-left"></i> Volver al panel</a>
+        </div>
+    </header>
+
+    <div id="gate" class="gate" style="display:none;">
+        <h2>Acceso restringido</h2>
+        <p id="gateMsg">Inicia sesión con una cuenta de administrador.</p>
+        <a class="btn btn-primary" href="/login.html?redirect=%2Fadmin-wiki.html">Iniciar sesión</a>
+    </div>
+
+    <div class="wrap" id="app" style="display:none;">
+        <aside class="side">
+            <select id="stateSelect" aria-label="Elegir estado"></select>
+            <div class="list" id="stateList"></div>
+        </aside>
+
+        <main class="panel">
+            <div class="msg" id="msg"></div>
+
+            <!-- Configuracion global -->
+            <form id="globalForm" style="display:none;">
+                <h2>Configuración general</h2>
+                <p class="hint">Se aplica a todas las páginas de la wiki (/estados y cada /estado/…).</p>
+                <fieldset>
+                    <legend>Asesoría legal (enlace a WhatsApp)</legend>
+                    <label class="check"><input type="checkbox" name="legal_enabled"> Mostrar el bloque de asesoría legal</label>
+                    <div class="grid" style="margin-top:12px;">
+                        <div class="field"><label>Título</label><input type="text" name="legal_title"></div>
+                        <div class="field"><label>Bufete / nombre</label><input type="text" name="legal_firm"></div>
+                        <div class="field"><label>WhatsApp (con código de país)</label><input type="text" name="legal_phone"><small>Ej: 584245112587</small></div>
+                    </div>
+                    <div class="field"><label>Texto</label><textarea name="legal_text"></textarea></div>
+                    <div class="field"><label>Mensaje que se envía por WhatsApp</label><textarea name="legal_message"></textarea></div>
+                    <div class="field"><label>Texto del botón</label><input type="text" name="legal_button"></div>
+                </fieldset>
+                <fieldset>
+                    <legend>Envíos (líneas nacionales)</legend>
+                    <div class="grid">
+                        <div class="field"><label>MRW teléfono</label><input type="text" name="mrw_phone"></div>
+                        <div class="field"><label>MRW web</label><input type="text" name="mrw_url"></div>
+                        <div class="field"></div>
+                        <div class="field"><label>ZOOM teléfono</label><input type="text" name="zoom_phone"></div>
+                        <div class="field"><label>ZOOM teléfono (como se muestra)</label><input type="text" name="zoom_phone_display"></div>
+                        <div class="field"><label>ZOOM WhatsApp</label><input type="text" name="zoom_whatsapp"></div>
+                        <div class="field"><label>ZOOM web</label><input type="text" name="zoom_url"></div>
+                    </div>
+                </fieldset>
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar</button>
+                    <button type="button" class="btn btn-danger" data-reset><i class="fas fa-rotate-left"></i> Restablecer valores por defecto</button>
+                </div>
+            </form>
+
+            <!-- Estado -->
+            <form id="stateForm" style="display:none;">
+                <h2 id="stateTitle">Estado</h2>
+                <p class="hint">Los cambios se ven en la wiki en unos minutos. <a id="stateLink" href="#" target="_blank">Ver página</a></p>
+
+                <fieldset>
+                    <legend>Datos generales</legend>
+                    <div class="grid">
+                        <div class="field"><label>Capital</label><input type="text" name="capital"></div>
+                        <div class="field"><label>Superficie (km²)</label><input type="number" name="area" min="0"></div>
+                        <div class="field"><label>Población</label><input type="number" name="population" min="0"></div>
+                        <div class="field"><label>Región</label><input type="text" name="region"></div>
+                        <div class="field"><label>Gentilicio</label><input type="text" name="gentilicio"></div>
+                    </div>
+                    <div class="field"><label>Reseña</label><textarea name="resena" class="tall"></textarea></div>
+                    <div class="field"><label>Clima</label><textarea name="clima"></textarea></div>
+                    <div class="field">
+                        <label>Banner / foto del estado (URL)</label>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <input type="text" name="banner_url" placeholder="https://… o /api/serve?key=…" style="flex:1;min-width:200px;">
+                            <label class="btn btn-light" style="margin:0;"><i class="fas fa-upload"></i> Subir imagen<input type="file" accept="image/*" id="bannerFile" hidden></label>
+                        </div>
+                        <img class="banner-prev" id="bannerPrev" alt="">
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Listas (una por línea)</legend>
+                    <div class="field"><label>Economía y rubros</label><textarea name="economia" class="tall"></textarea></div>
+                    <div class="field"><label>Qué visitar (lugares turísticos)</label><textarea name="atractivos" class="tall"></textarea></div>
+                    <div class="field"><label>Municipios</label><textarea name="municipios" class="tall"></textarea></div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Teléfonos del estado</legend>
+                    <div class="field">
+                        <label>Emergencias y servicios (Nombre | Teléfono | Detalle)</label>
+                        <textarea name="emergencias_extra" class="tall" placeholder="Policía Municipal Libertador | 0274-0000000 | Mérida&#10;Bomberos de Mérida | 0274-0000000 | 24 horas&#10;SAREN Registro Principal | 0274-0000000 | Av. …&#10;INTT Mérida | 0274-0000000 | …"></textarea>
+                        <small>Policía municipal/estadal, bomberos, Protección Civil, SAREN, Registro Civil, INTT, hospitales…</small>
+                    </div>
+                    <div class="field">
+                        <label>Oficinas MRW / ZOOM (Nombre | Teléfono | Dirección)</label>
+                        <textarea name="envios" class="tall" placeholder="MRW Mérida Centro | 0274-0000000 | Av. …&#10;ZOOM Mérida | 0274-0000000 | C.C. …"></textarea>
+                    </div>
+                </fieldset>
+
+                <fieldset>
+                    <legend>Datos útiles (texto libre)</legend>
+                    <div class="field"><textarea name="datos_utiles" class="tall" placeholder="Recomendaciones, transporte, fechas de ferias, gastronomía…"></textarea><small>Deja una línea en blanco para separar párrafos.</small></div>
+                </fieldset>
+
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Guardar cambios</button>
+                    <button type="button" class="btn btn-danger" data-reset><i class="fas fa-rotate-left"></i> Restablecer datos por defecto</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+        var TOKEN = localStorage.getItem('meridaunclick_token') || '';
+        var data = null;
+        var current = '_global';
+
+        var LIST_FIELDS = ['economia', 'atractivos', 'municipios'];
+        var PAIR_FIELDS = ['emergencias_extra', 'envios'];
+        var STATE_FIELDS = ['capital', 'area', 'population', 'region', 'gentilicio', 'resena', 'clima', 'banner_url',
+            'economia', 'atractivos', 'municipios', 'emergencias_extra', 'envios', 'datos_utiles'];
+
+        function $(id) { return document.getElementById(id); }
+        function msg(text, ok) {
+            var el = $('msg');
+            el.textContent = text;
+            el.className = 'msg ' + (ok ? 'ok' : 'err');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        function clearMsg() { $('msg').className = 'msg'; }
+
+        function api(method, url, body) {
+            return fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + TOKEN },
+                body: body ? JSON.stringify(body) : undefined
+            }).then(function (r) {
+                return r.json().catch(function () { return {}; }).then(function (j) {
+                    if (!r.ok) { var e = new Error(j.error || ('Error ' + r.status)); e.status = r.status; throw e; }
+                    return j;
+                });
+            });
+        }
+
+        function effective(entry, field) {
+            var o = entry.override || {};
+            var v = o[field];
+            var has = v !== undefined && v !== null && !(typeof v === 'string' && v.trim() === '') && !(Array.isArray(v) && v.length === 0);
+            return has ? v : entry.defaults[field];
+        }
+
+        function toText(field, v) {
+            if (v === undefined || v === null) return '';
+            if (PAIR_FIELDS.indexOf(field) >= 0) {
+                return (v || []).map(function (x) { return [x.name, x.phone, x.detail].filter(function (p, i) { return i < 2 || p; }).join(' | '); }).join('\n');
+            }
+            if (LIST_FIELDS.indexOf(field) >= 0) return (v || []).join('\n');
+            return String(v);
+        }
+
+        function renderList() {
+            var items = [{ slug: '_global', name: '⚙️ Configuración general', edited: data.global.override && Object.keys(data.global.override).length > 1 }]
+                .concat(data.estados.map(function (e) {
+                    return { slug: e.defaults.slug, name: e.defaults.name, edited: e.override && Object.keys(e.override).length > 1 };
+                }));
+            $('stateList').innerHTML = items.map(function (it) {
+                return '<button type="button" class="item' + (it.slug === current ? ' active' : '') + '" data-slug="' + it.slug + '">'
+                    + '<span>' + it.name + '</span>' + (it.edited ? '<span class="dot" title="Editado"></span>' : '') + '</button>';
+            }).join('');
+            $('stateSelect').innerHTML = items.map(function (it) {
+                return '<option value="' + it.slug + '"' + (it.slug === current ? ' selected' : '') + '>' + it.name + (it.edited ? ' •' : '') + '</option>';
+            }).join('');
+        }
+
+        function show(slug) {
+            current = slug;
+            clearMsg();
+            renderList();
+            var gForm = $('globalForm'), sForm = $('stateForm');
+            if (slug === '_global') {
+                sForm.style.display = 'none';
+                gForm.style.display = '';
+                var d = data.global.defaults, o = data.global.override || {};
+                Object.keys(d).forEach(function (k) {
+                    var el = gForm.elements[k];
+                    if (!el) return;
+                    var v = (k in o) ? o[k] : d[k];
+                    if (el.type === 'checkbox') el.checked = !!v; else el.value = v || '';
+                });
+                return;
+            }
+            gForm.style.display = 'none';
+            sForm.style.display = '';
+            var entry = data.estados.find(function (e) { return e.defaults.slug === slug; });
+            $('stateTitle').textContent = entry.defaults.name;
+            $('stateLink').href = '/estado/' + slug;
+            STATE_FIELDS.forEach(function (f) {
+                var el = sForm.elements[f];
+                if (el) el.value = toText(f, effective(entry, f));
+            });
+            updateBannerPreview();
+        }
+
+        function updateBannerPreview() {
+            var url = $('stateForm').elements.banner_url.value.trim();
+            var img = $('bannerPrev');
+            if (url) { img.src = url; img.style.display = 'block'; } else { img.style.display = 'none'; }
+        }
+
+        function save(ev) {
+            ev.preventDefault();
+            var form = ev.target;
+            var body = {};
+            if (current === '_global') {
+                Object.keys(data.global.defaults).forEach(function (k) {
+                    var el = form.elements[k];
+                    if (el) body[k] = el.type === 'checkbox' ? el.checked : el.value;
+                });
+            } else {
+                STATE_FIELDS.forEach(function (f) { body[f] = form.elements[f].value; });
+            }
+            var btn = form.querySelector('button[type=submit]');
+            btn.disabled = true;
+            api('PUT', '/api/wiki/' + encodeURIComponent(current), body).then(function (res) {
+                if (current === '_global') data.global.override = res.data;
+                else data.estados.find(function (e) { return e.defaults.slug === current; }).override = res.data;
+                show(current);
+                msg('Cambios guardados. Se verán en la wiki en unos minutos.', true);
+            }).catch(function (e) { msg(e.message, false); }).finally(function () { btn.disabled = false; });
+        }
+
+        function reset() {
+            if (!confirm('¿Borrar las ediciones y volver a los datos por defecto?')) return;
+            api('DELETE', '/api/wiki/' + encodeURIComponent(current)).then(function () {
+                if (current === '_global') data.global.override = {};
+                else data.estados.find(function (e) { return e.defaults.slug === current; }).override = {};
+                show(current);
+                msg('Datos restablecidos.', true);
+            }).catch(function (e) { msg(e.message, false); });
+        }
+
+        function uploadBanner(file) {
+            var fd = new FormData();
+            fd.append('file', file);
+            fd.append('product_type', 'banner');
+            msg('Subiendo imagen…', true);
+            fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + TOKEN }, body: fd })
+                .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || 'Error al subir'); return j; }); })
+                .then(function (j) {
+                    $('stateForm').elements.banner_url.value = j.url;
+                    updateBannerPreview();
+                    msg('Imagen subida. Pulsa "Guardar cambios" para aplicarla.', true);
+                })
+                .catch(function (e) { msg(e.message, false); });
+        }
+
+        $('stateList').addEventListener('click', function (e) {
+            var b = e.target.closest('.item');
+            if (b) show(b.getAttribute('data-slug'));
+        });
+        $('stateSelect').addEventListener('change', function (e) { show(e.target.value); });
+        $('globalForm').addEventListener('submit', save);
+        $('stateForm').addEventListener('submit', save);
+        document.querySelectorAll('[data-reset]').forEach(function (b) { b.addEventListener('click', reset); });
+        $('stateForm').elements.banner_url.addEventListener('input', updateBannerPreview);
+        $('bannerFile').addEventListener('change', function (e) { if (e.target.files[0]) uploadBanner(e.target.files[0]); });
+
+        if (!TOKEN) { $('gate').style.display = ''; return; }
+        api('GET', '/api/wiki').then(function (res) {
+            data = res;
+            $('app').style.display = '';
+            show('_global');
+        }).catch(function (e) {
+            $('gate').style.display = '';
+            $('gateMsg').textContent = e.status === 403 ? 'Tu cuenta no tiene permisos de administrador.' : (e.message || 'Inicia sesión con una cuenta de administrador.');
+        });
+    })();
+    </script>
+</body>
+</html>

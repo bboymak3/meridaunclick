@@ -98,7 +98,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="twitter:image" content="${BASE_URL}/images/Holax.png">
     ${[...breadcrumbLd, ...(p.jsonLd || [])].map(jsonLdTag).join('\n    ')}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="/css/wiki.css?v=1">
+    <link rel="stylesheet" href="/css/wiki.css?v=2">
     ${p.extraHead || ''}
 </head>
 <body class="hx-page">
@@ -144,4 +144,23 @@ export function notFound(message) {
     robots: 'noindex, follow',
     body: `<section class="hx-hero"><h1>Página no encontrada</h1><p>${esc(message)}</p><p><a class="hx-btn" href="/">Ir al inicio</a></p></section>`,
   }), null, 404);
+}
+
+/**
+ * "Asesoria legal" block shown on every wiki page (config from the admin
+ * panel, see wiki-store.js → mergeGlobal).
+ */
+export function legalCta(g, whatsappUrl, place) {
+  if (!g || !g.legal_enabled) return '';
+  return `
+    <section class="hx-section hx-legal" id="asesoria-legal">
+      <div class="hx-legal-icon"><i class="fas fa-scale-balanced"></i></div>
+      <div class="hx-legal-body">
+        <h2>${esc(g.legal_title)}${place ? ' en ' + esc(place) : ''}</h2>
+        <p><strong>${esc(g.legal_firm)}</strong> — ${esc(g.legal_text)}</p>
+      </div>
+      <a class="hx-legal-btn" href="${esc(whatsappUrl)}" target="_blank" rel="noopener">
+        <i class="fab fa-whatsapp"></i> ${esc(g.legal_button)}
+      </a>
+    </section>`;
 }
