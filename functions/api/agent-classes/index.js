@@ -39,7 +39,11 @@ export async function onRequestGet(context) {
     if (auth.error) return auth.error;
 
     var env = context.env;
-    var isAdmin = auth.user.role === 'admin';
+    // Vista de administracion solo si el admin la pide (?view=admin, desde
+    // /academia-admin). En la academia el admin ve lo mismo que un agente:
+    // su propio progreso, video visto y clases bloqueadas.
+    var wantsAdmin = new URL(context.request.url).searchParams.get('view') === 'admin';
+    var isAdmin = auth.user.role === 'admin' && wantsAdmin;
 
     await ensureTables(env.DB);
 
