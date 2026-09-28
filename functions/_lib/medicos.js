@@ -182,3 +182,19 @@ export async function renderEspecialidad(env, espSlug, estadoSlug) {
     breadcrumb: crumbs,
   }), canonical);
 }
+
+/**
+ * Specialties that have approved doctors, optionally in one state.
+ * @returns {{estado: object|null, total: number, especialidades: Array<{slug,name,desc,count}>}}
+ */
+export async function especialidadesConMedicos(env, estadoValue) {
+  const estado = estadoValue ? findEstado(estadoValue) : null;
+  const all = await fetchMedicos(env);
+  const list = estado ? all.filter(m => m.estado && m.estado.slug === estado.slug) : all;
+  const counts = countBy(list, m => m.esps.map(e => e.slug));
+  const especialidades = ESPECIALIDADES
+    .filter(e => counts.get(e.slug))
+    .map(e => ({ slug: e.slug, name: e.name, desc: e.desc || '', count: counts.get(e.slug) }))
+    .sort((a, b) => b.count - a.count);
+  return { estado, total: list.length, especialidades };
+}

@@ -37,7 +37,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://holax.com.ve/images/Holax.png">
     <link rel="canonical" href="https://holax.com.ve/search">
-    <link rel="stylesheet" href="css/styles.css?v=20">
+    <link rel="stylesheet" href="css/styles.css?v=21">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Leaflet for mini map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -119,10 +119,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 <h1 class="search-landing-h1" id="searchH1">Directorio de negocios en Venezuela</h1>
                 <h2 class="search-landing-h2" id="searchH2">Busca negocios, profesionales y servicios cerca de ti</h2>
                 <p class="search-landing-intro" id="searchIntro">Explora el directorio comercial de HolaX en Venezuela: restaurantes, farmacias, tiendas, profesionales, servicios médicos y mucho más. Filtra por estado, categoría o ciudad, mira cada negocio en el mapa y contáctalo directo por WhatsApp.</p>
+                <p class="search-landing-trust" id="searchTrust" hidden></p>
                 <button type="button" class="search-filters-toggle" id="searchFiltersToggle" aria-expanded="false" aria-controls="searchFiltersBar">
                     <i class="fas fa-search"></i> <span>Buscar y filtrar</span> <i class="fas fa-chevron-down search-filters-chevron"></i>
                 </button>
             </header>
+
+            <!-- Landing medica: especialidades con medicos reales (functions/search.js + js/search-seo.js) -->
+            <section class="med-block" id="searchMedSpecialties" hidden></section>
 
             <!-- FIX: Search Banner (configurable desde panel admin) -->
             <section class="search-banner-section" id="searchBannerSection" style="display:none;">
@@ -334,6 +338,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                 </div>
             </div>
 
+            <!-- Landing medica: que incluye cada ficha + llamado para profesionales -->
+            <section class="med-block" id="searchMedInfo" hidden></section>
+
             <!-- Preguntas frecuentes (SEO) -->
             <section class="search-faq" id="searchFaq" hidden></section>
         </div>
@@ -358,7 +365,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="toast-container" id="toastContainer"></div>
 
     <script type="module" src="/js/especialidades.js?v=1"></script>
-    <script type="module" src="js/search-seo.js?v=1"></script>
+    <script type="module" src="js/search-seo.js?v=2"></script>
     <script src="js/app.js?v=18"></script>
     <script src="js/dynamic-categories.js?v=1"></script>
     <script src="js/map.js?v=2"></script>

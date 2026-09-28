@@ -7,7 +7,8 @@
 // content without running JavaScript. The browser then keeps it updated when
 // filters change (js/search-seo.js is shared by both sides).
 
-import { buildSearchSeo, renderFaqHtml } from '../js/search-seo.js';
+import { buildSearchSeo, renderFaqHtml, renderMedicalBlocks } from '../js/search-seo.js';
+import { especialidadesConMedicos, MEDICAL_CATEGORY } from './_lib/medicos.js';
 
 async function fetchListing(env, category, estado, ciudad) {
   const conditions = ["b.status = 'approved'", 'b.category_id = ?'];
@@ -90,6 +91,13 @@ export async function onRequestGet(context) {
       refined,
     });
 
+    // Medical landing: specialties with real doctors in this state + profile info + CTA
+    let medical = null;
+    if (category.slug === MEDICAL_CATEGORY) {
+      const esp = await especialidadesConMedicos(env, estado);
+      medical = renderMedicalBlocks(seo, esp.especialidades, esp.estado && esp.estado.slug);
+    }
+
     // Prevent "</script>" inside data from closing the JSON-LD block
     const jsonLd = seo.jsonLd.replace(/</g, '\\u003c');
 
@@ -116,6 +124,28 @@ export async function onRequestGet(context) {
       .on('#searchH1', setContent(seo.h1))
       .on('#searchH2', setContent(seo.h2))
       .on('#searchIntro', setContent(seo.intro))
+      .on('#searchTrust', {
+        element(el) {
+          el.setInnerContent(seo.trust || '');
+          if (seo.trust) el.removeAttribute('hidden');
+        },
+      })
+      .on('#searchMedSpecialties', {
+        element(el) {
+          if (medical && medical.specialtiesHtml) {
+            el.setInnerContent(medical.specialtiesHtml, { html: true });
+            el.removeAttribute('hidden');
+          }
+        },
+      })
+      .on('#searchMedInfo', {
+        element(el) {
+          if (medical) {
+            el.setInnerContent(medical.infoHtml, { html: true });
+            el.removeAttribute('hidden');
+          }
+        },
+      })
       .on('#searchFaq', {
         element(el) {
           el.setInnerContent(renderFaqHtml(seo), { html: true });
