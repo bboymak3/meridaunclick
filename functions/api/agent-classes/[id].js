@@ -4,6 +4,7 @@
 // DELETE: Delete class (admin only)
 
 import { corsHeaders, requireAuth, requireAdmin } from '../../_lib/auth.js';
+import { ensureAcademyVideoSchema, youtubeId, normalizeQuestions, replaceQuestions } from '../../_lib/academy-video.js';
 
 export async function onRequestOptions() {
   return new Response(null, { headers: corsHeaders });
@@ -53,11 +54,30 @@ export async function onRequestPut(context) {
     const body = await context.request.json();
     const { title, description, content, xp_reward, sort_order, is_active, module, module_order } = body;
 
-    const existing = await env.DB.prepare('SELECT id FROM agent_classes WHERE id = ?').bind(classId).first();
+    await ensureAcademyVideoSchema(env.DB);
+    const existing = await env.DB.prepare('SELECT id, video_url FROM agent_classes WHERE id = ?').bind(classId).first();
     if (!existing) {
       return new Response(JSON.stringify({ error: 'Clase no encontrada' }), {
         status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Clase con video de YouTube: URL valida + 5 preguntas
+    const videoUrl = body.video_url !== undefined ? String(body.video_url || '').trim() : (existing.video_url || '');
+    if (videoUrl && !youtubeId(videoUrl)) {
+      return new Response(JSON.stringify({ error: 'La URL del video de YouTube no es valida' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    let questions = null;
+    if (body.questions !== undefined) {
+      const norm = normalizeQuestions(body.questions, !!videoUrl);
+      if (norm.error) {
+        return new Response(JSON.stringify({ error: norm.error }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      questions = norm.questions;
     }
 
     await env.DB.prepare(`
@@ -83,6 +103,11 @@ export async function onRequestPut(context) {
       module_order !== undefined ? module_order : null,
       classId
     ).run();
+
+    if (body.video_url !== undefined) {
+      await env.DB.prepare('UPDATE agent_classes SET video_url = ? WHERE id = ?').bind(videoUrl, classId).run();
+    }
+    if (questions) await replaceQuestions(env.DB, classId, questions);
 
     return new Response(JSON.stringify({ message: 'Clase actualizada exitosamente' }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

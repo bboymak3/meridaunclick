@@ -6278,6 +6278,100 @@ if (!window._renderVideoList) {
         loadAcademyClasses();
         loadAcademyAgents();
         setupAcademyHandlers();
+        loadAcademyChannel();
+    }
+
+    // ── Academia: video de YouTube + 5 preguntas ──
+    var ACADEMY_VIDEO_QUESTIONS = 5;
+
+    function academyYoutubeId(url) {
+        var s = String(url || '').trim();
+        if (!s) return '';
+        if (/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+        var m = s.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtube-nocookie\.com\/embed\/|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+        return m ? m[1] : '';
+    }
+
+    function renderAcademyVideoQuestions(list) {
+        var box = document.getElementById('academyVideoQuestions');
+        if (!box) return;
+        var html = '';
+        for (var i = 0; i < ACADEMY_VIDEO_QUESTIONS; i++) {
+            var q = (list && list[i]) || {};
+            html += '<div class="academy-vq" data-idx="' + i + '" style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px;">';
+            html += '<label style="font-weight:600;font-size:0.8rem;display:block;margin-bottom:4px;">Pregunta ' + (i + 1) + ' *</label>';
+            html += '<input type="text" class="academy-vq-text" value="' + _esc(q.question || '') + '" placeholder="Escribe la pregunta" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;margin-bottom:6px;">';
+            html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:6px;">';
+            ['a', 'b', 'c', 'd'].forEach(function(l) {
+                html += '<label style="display:flex;align-items:center;gap:6px;font-size:0.8rem;">' +
+                    '<input type="radio" name="academyVQCorrect_' + i + '" value="' + l + '"' + (q.correct_answer === l ? ' checked' : '') + ' style="accent-color:#059669;" title="Respuesta correcta">' +
+                    '<strong>' + l.toUpperCase() + '</strong>' +
+                    '<input type="text" class="academy-vq-opt" data-letter="' + l + '" value="' + _esc(q['option_' + l] || '') + '" placeholder="Opción ' + l.toUpperCase() + (l === 'a' || l === 'b' ? ' *' : '') + '" style="flex:1;min-width:0;padding:6px 10px;border:2px solid #e2e8f0;border-radius:6px;font-size:0.82rem;outline:none;">' +
+                    '</label>';
+            });
+            html += '</div></div>';
+        }
+        box.innerHTML = html;
+    }
+
+    function collectAcademyVideoQuestions() {
+        var blocks = document.querySelectorAll('#academyVideoQuestions .academy-vq');
+        var out = [];
+        for (var i = 0; i < blocks.length; i++) {
+            var b = blocks[i];
+            var q = { question: b.querySelector('.academy-vq-text').value.trim(), points: 2 };
+            b.querySelectorAll('.academy-vq-opt').forEach(function(inp) { q['option_' + inp.dataset.letter] = inp.value.trim(); });
+            var checked = b.querySelector('input[type="radio"]:checked');
+            q.correct_answer = checked ? checked.value : '';
+            var n = i + 1;
+            if (!q.question) return { error: 'Escribe el texto de la pregunta ' + n };
+            if (!q.option_a || !q.option_b) return { error: 'La pregunta ' + n + ' necesita al menos las opciones A y B' };
+            if (!q.correct_answer) return { error: 'Marca la respuesta correcta de la pregunta ' + n };
+            if (!q['option_' + q.correct_answer]) return { error: 'La respuesta correcta de la pregunta ' + n + ' está vacía' };
+            out.push(q);
+        }
+        return { questions: out };
+    }
+
+    function updateAcademyVideoUI() {
+        var input = document.getElementById('academyClassVideoUrl');
+        var preview = document.getElementById('academyVideoPreview');
+        var wrap = document.getElementById('academyVideoQuestionsWrap');
+        if (!input || !preview || !wrap) return;
+        var url = input.value.trim();
+        var id = academyYoutubeId(url);
+        if (!url) {
+            preview.innerHTML = '';
+            wrap.classList.add('hidden');
+        } else if (!id) {
+            preview.innerHTML = '<span style="color:#dc2626;"><i class="fas fa-exclamation-circle"></i> URL de YouTube no válida</span>';
+            wrap.classList.add('hidden');
+        } else {
+            preview.innerHTML = '<div style="display:flex;gap:10px;align-items:center;"><img src="https://i.ytimg.com/vi/' + id + '/mqdefault.jpg" alt="" style="width:120px;border-radius:6px;"><span style="color:#059669;"><i class="fas fa-check-circle"></i> Video detectado (' + id + ')</span></div>';
+            wrap.classList.remove('hidden');
+        }
+    }
+
+    async function loadAcademyChannel() {
+        try {
+            var data = await api.get('/academy-config');
+            var cfg = (data && data.config) || {};
+            var u = document.getElementById('academyChannelUrl');
+            var n = document.getElementById('academyChannelName');
+            if (u) u.value = cfg.youtube_channel_url || '';
+            if (n) n.value = cfg.youtube_channel_name || '';
+        } catch(e) { console.log('academy-config', e); }
+    }
+
+    async function saveAcademyChannel() {
+        try {
+            var data = await api.put('/academy-config', {
+                youtube_channel_url: document.getElementById('academyChannelUrl').value.trim(),
+                youtube_channel_name: document.getElementById('academyChannelName').value.trim()
+            });
+            if (data && data.config) document.getElementById('academyChannelUrl').value = data.config.youtube_channel_url || '';
+            showToast('Canal de YouTube guardado', 'success');
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 
     function setupAcademyHandlers() {
@@ -6305,11 +6399,25 @@ if (!window._renderVideoList) {
                 document.getElementById('academyClassActive').checked = true;
                 document.getElementById('academyClassModule').value = 'General';
                 document.getElementById('academyClassModuleOrder').value = '0';
+                document.getElementById('academyClassVideoUrl').value = '';
+                renderAcademyVideoQuestions([]);
+                updateAcademyVideoUI();
                 document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Clase';
                 document.getElementById('academyClassEditor').classList.remove('hidden');
                 window._pendingQuestions = [];
+                window._academyKeepQuestions = false;
                 renderPendingQuestionsPreview();
             });
+        }
+        var videoUrlInput = document.getElementById('academyClassVideoUrl');
+        if (videoUrlInput && !videoUrlInput._bound) {
+            videoUrlInput._bound = true;
+            videoUrlInput.addEventListener('input', updateAcademyVideoUI);
+        }
+        var saveChannelBtn = document.getElementById('academySaveChannelBtn');
+        if (saveChannelBtn && !saveChannelBtn._bound) {
+            saveChannelBtn._bound = true;
+            saveChannelBtn.addEventListener('click', saveAcademyChannel);
         }
         if (saveBtn && !saveBtn._bound) {
             saveBtn._bound = true;
@@ -6423,7 +6531,7 @@ if (!window._renderVideoList) {
                 html += '<tr><td colspan="7" style="background:linear-gradient(90deg,' + mColor + '12,' + mColor + '06);padding:10px 12px;font-weight:700;font-size:0.85rem;color:' + mColor + ';"><i class="fas fa-book"></i> ' + _esc(mod) + ' (' + grouped[mod].length + ' clases)</td></tr>';
                 grouped[mod].forEach(function(c) {
                 html += '<tr>';
-                html += '<td><strong>' + _esc(c.title) + '</strong></td>';
+                html += '<td><strong>' + _esc(c.title) + '</strong>' + (academyYoutubeId(c.video_url) ? ' <i class="fab fa-youtube" style="color:#dc2626;" title="Clase con video de YouTube"></i>' : '') + '</td>';
                 html += '<td><button onclick="loadAcademyQuestions(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2563eb;"><i class="fas fa-question-circle"></i> ' + (c.question_count || 0) + '</button></td>';
                 html += '<td><span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">+' + (c.xp_reward || 0) + ' XP</span></td>';
                 html += '<td>' + (c.completions || 0) + '</td>';
@@ -6456,27 +6564,26 @@ if (!window._renderVideoList) {
             sort_order: parseInt(document.getElementById('academyClassOrder').value) || 0,
             is_active: document.getElementById('academyClassActive').checked,
             module: document.getElementById('academyClassModule').value,
-            module_order: parseInt(document.getElementById('academyClassModuleOrder').value) || 0
+            module_order: parseInt(document.getElementById('academyClassModuleOrder').value) || 0,
+            video_url: document.getElementById('academyClassVideoUrl').value.trim()
         };
+        // Preguntas: las 5 del video, o la lista de preguntas de una clase normal.
+        // El servidor reemplaza las preguntas de la clase por esta lista.
+        if (payload.video_url) {
+            if (!academyYoutubeId(payload.video_url)) { showToast('La URL del video de YouTube no es válida', 'error'); return; }
+            var vq = collectAcademyVideoQuestions();
+            if (vq.error) { showToast(vq.error, 'error'); return; }
+            payload.questions = vq.questions;
+        } else if (!window._academyKeepQuestions || (window._pendingQuestions || []).length) {
+            payload.questions = window._pendingQuestions || [];
+        }
         try {
-            var classId = id || null;
             if (id) {
                 await api.put('/agent-classes/' + id, payload);
-                classId = id;
                 showToast('Clase actualizada', 'success');
             } else {
-                var result = await api.post('/agent-classes', payload);
-                classId = result.class_id;
+                await api.post('/agent-classes', payload);
                 showToast('Clase creada', 'success');
-            }
-            var pending = window._pendingQuestions || [];
-            if (pending.length > 0 && classId) {
-                for (var i = 0; i < pending.length; i++) {
-                    try {
-                        await api.post('/agent-classes/' + classId + '/questions', pending[i]);
-                    } catch(eq) { console.log('Error saving question', eq); }
-                }
-                showToast(pending.length + ' preguntas guardadas', 'success');
             }
             window._pendingQuestions = [];
             document.getElementById('academyClassEditor').classList.add('hidden');
@@ -6500,10 +6607,23 @@ if (!window._renderVideoList) {
             document.getElementById('academyClassActive').checked = cls.is_active === 1;
             document.getElementById('academyClassModule').value = cls.module || 'General';
             document.getElementById('academyClassModuleOrder').value = cls.module_order || 0;
+            document.getElementById('academyClassVideoUrl').value = cls.video_url || '';
+            renderAcademyVideoQuestions([]);
+            updateAcademyVideoUI();
             document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-edit" style="color:#7c3aed;"></i> Editar Clase: ' + _esc(cls.title);
             document.getElementById('academyClassEditor').classList.remove('hidden');
+            window._academyKeepQuestions = false;
             try {
                 var qData = await api.get('/agent-classes/' + classId + '/questions');
+                if (academyYoutubeId(cls.video_url)) {
+                    // Clase con video: las preguntas van en los 5 bloques
+                    renderAcademyVideoQuestions(qData.questions || []);
+                    // Si luego se quita el video, no borrar estas preguntas
+                    window._academyKeepQuestions = true;
+                    window._pendingQuestions = [];
+                    renderPendingQuestionsPreview();
+                    return;
+                }
                 window._pendingQuestions = (qData.questions || []).map(function(q) {
                     return {
                         question: q.question,
@@ -6516,7 +6636,11 @@ if (!window._renderVideoList) {
                         explanation: q.explanation || ''
                     };
                 });
-            } catch(ex) { window._pendingQuestions = []; }
+            } catch(ex) {
+                // No borrar las preguntas existentes si no se pudieron cargar
+                window._pendingQuestions = [];
+                window._academyKeepQuestions = true;
+            }
             renderPendingQuestionsPreview();
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     };
@@ -6770,7 +6894,12 @@ if (!window._renderVideoList) {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
         try {
             var data = await api.post('/agent-classes/generate-questions', { text: text, num_questions: count });
-            if (data.questions && data.questions.length > 0) {
+            var videoField = document.getElementById('academyClassVideoUrl');
+            if (data.questions && data.questions.length > 0 && videoField && academyYoutubeId(videoField.value)) {
+                // Clase con video: llenar los 5 bloques con las preguntas generadas
+                renderAcademyVideoQuestions(data.questions.slice(0, ACADEMY_VIDEO_QUESTIONS));
+                showToast('Preguntas cargadas en los 5 bloques del video. Revísalas antes de guardar.', 'success');
+            } else if (data.questions && data.questions.length > 0) {
                 if (!window._pendingQuestions) window._pendingQuestions = [];
                 data.questions.forEach(function(q) { window._pendingQuestions.push(q); });
                 renderPendingQuestionsPreview();
