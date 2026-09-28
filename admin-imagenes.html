@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Optimizar imágenes - HolaX Admin</title>
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root { --primary: #006ee3; --primary-dark: #0056b3; --ok: #059669; --warn: #d97706; --bad: #dc2626; --bg: #f4f6fb; --card: #fff; --text: #1e293b; --muted: #64748b; --border: #e2e8f0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+        header { background: #fff; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+        .head-inner { max-width: 1100px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .brand { font-weight: 800; color: var(--primary); display: flex; gap: 8px; align-items: center; text-decoration: none; }
+        .spacer { flex: 1; }
+        .link { color: var(--muted); font-size: .88rem; font-weight: 600; text-decoration: none; }
+        main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 48px; }
+        h1 { font-size: 1.4rem; margin-bottom: 4px; }
+        .lead { color: var(--muted); font-size: .92rem; margin-bottom: 18px; max-width: 760px; }
+        .card { background: var(--card); border-radius: 14px; box-shadow: 0 1px 3px rgba(15,23,42,.06), 0 6px 18px rgba(15,23,42,.04); padding: 20px; margin-bottom: 16px; }
+        .card h2 { font-size: 1.05rem; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+        .card h2 i { color: var(--primary); }
+        .card .sub { color: var(--muted); font-size: .86rem; margin-bottom: 14px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0; }
+        .stat { background: var(--bg); border-radius: 10px; padding: 12px; }
+        .stat b { display: block; font-size: 1.25rem; }
+        .stat span { font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; font-weight: 600; }
+        .stat.ok b { color: var(--ok); } .stat.warn b { color: var(--warn); }
+        .btn { display: inline-flex; align-items: center; gap: 8px; border: none; border-radius: 10px; padding: 10px 16px; font-weight: 700; font-size: .9rem; cursor: pointer; font-family: inherit; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+        .btn-ghost { background: #fff; color: var(--text); border: 1.5px solid var(--border); }
+        .btn-ok { background: var(--ok); color: #fff; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .progress { height: 12px; background: var(--bg); border-radius: 99px; overflow: hidden; margin: 12px 0 6px; }
+        .progress div { height: 100%; width: 0; background: linear-gradient(90deg, var(--primary), #22c55e); transition: width .3s; }
+        .progress-text { font-size: .85rem; color: var(--muted); }
+        .log { margin-top: 12px; max-height: 240px; overflow: auto; background: #0f172a; color: #cbd5e1; font-family: ui-monospace, Menlo, monospace; font-size: .75rem; padding: 10px 12px; border-radius: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+        .log .ok { color: #86efac; } .log .skip { color: #94a3b8; } .log .err { color: #fca5a5; }
+        table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+        th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+        th { font-size: .74rem; text-transform: uppercase; color: var(--muted); letter-spacing: .03em; }
+        td.k { font-family: ui-monospace, Menlo, monospace; font-size: .74rem; overflow-wrap: anywhere; max-width: 420px; }
+        .tbl { overflow-x: auto; }
+        .pill { display: inline-block; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; }
+        .pill.ok { background: #d1fae5; color: var(--ok); } .pill.warn { background: #fef3c7; color: var(--warn); } .pill.bad { background: #fee2e2; color: var(--bad); }
+        .notice { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; border-radius: 10px; padding: 10px 12px; font-size: .85rem; margin-bottom: 12px; }
+        .denied { text-align: center; padding: 48px 16px; }
+        [hidden] { display: none !important; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="head-inner">
+            <a class="brand" href="/admin.html"><i class="fas fa-images"></i> Optimizar imágenes</a>
+            <div class="spacer"></div>
+            <a class="link" href="/admin.html"><i class="fas fa-arrow-left"></i> Panel admin</a>
+        </div>
+    </header>
+
+    <main id="main">
+        <h1>Imágenes en R2</h1>
+        <p class="lead">Todas las fotos del sitio (perfiles, negocios, productos, empleos, inmuebles, banners…) se guardan y se sirven desde R2. Las nuevas se optimizan automáticamente al subirlas. Aquí puedes optimizar las que ya existen y migrar a R2 las que están fuera.</p>
+
+        <div class="notice"><i class="fas fa-circle-info"></i> La optimización se hace en este navegador: deja esta pestaña abierta mientras trabaja. Cada original se guarda como copia de seguridad en R2 (<code>_originals/</code>) antes de reemplazarlo; las direcciones de las fotos no cambian.</div>
+
+        <section class="card">
+            <h2><i class="fas fa-magnifying-glass-chart"></i> 1. Analizar y optimizar las fotos existentes</h2>
+            <p class="sub">Reduce la resolución (lado mayor: 800 px avatares y logos, 1920 px banners, 1600 px el resto) y las convierte a WebP.</p>
+            <div class="actions">
+                <button class="btn btn-ghost" id="btnScan"><i class="fas fa-magnifying-glass"></i> Analizar R2</button>
+                <button class="btn btn-primary" id="btnOptimize" disabled><i class="fas fa-wand-magic-sparkles"></i> Optimizar pendientes</button>
+                <button class="btn btn-ghost" id="btnPause" hidden><i class="fas fa-pause"></i> Pausar</button>
+            </div>
+            <div class="stats" id="stats" hidden>
+                <div class="stat"><b id="stTotal">0</b><span>Imágenes</span></div>
+                <div class="stat"><b id="stSize">0</b><span>Peso total</span></div>
+                <div class="stat ok"><b id="stOpt">0</b><span>Optimizadas</span></div>
+                <div class="stat warn"><b id="stPend">0</b><span>Pendientes</span></div>
+                <div class="stat ok"><b id="stSaved">0</b><span>Ahorro logrado</span></div>
+            </div>
+            <div id="progressWrap" hidden>
+                <div class="progress"><div id="progressBar"></div></div>
+                <div class="progress-text" id="progressText"></div>
+            </div>
+            <div class="tbl" id="bigWrap" hidden>
+                <h3 style="font-size:.9rem;margin:14px 0 6px;">Pendientes más pesadas</h3>
+                <table><thead><tr><th>Archivo</th><th>Peso</th><th>Estado</th></tr></thead><tbody id="bigBody"></tbody></table>
+            </div>
+            <div class="log" id="log" hidden></div>
+        </section>
+
+        <section class="card">
+            <h2><i class="fas fa-cloud-arrow-up"></i> 2. Fotos fuera de R2</h2>
+            <p class="sub">Enlaces a otros sitios o imágenes incrustadas en la base de datos. Se descargan, se optimizan, se guardan en R2 y se actualiza su enlace.</p>
+            <div class="actions">
+                <button class="btn btn-ghost" id="btnExtScan"><i class="fas fa-magnifying-glass"></i> Buscar</button>
+                <button class="btn btn-primary" id="btnExtMigrate" disabled><i class="fas fa-cloud-arrow-up"></i> Migrar todas a R2</button>
+                <button class="btn btn-ghost" id="btnFix" hidden><i class="fas fa-link"></i> Corregir enlaces</button>
+            </div>
+            <div class="tbl" id="extWrap" hidden>
+                <table><thead><tr><th>Dónde</th><th>Imagen</th><th>Estado</th></tr></thead><tbody id="extBody"></tbody></table>
+            </div>
+        </section>
+    </main>
+
+    <script src="/js/image-optimize.js?v=1"></script>
+    <script>
+    (function () {
+        'use strict';
+        const $ = (s) => document.querySelector(s);
+        const TOKEN = localStorage.getItem('meridaunclick_token') || '';
+        const auth = { Authorization: 'Bearer ' + TOKEN };
+
+        // ── Acceso: solo administradores ──
+        function payload() {
+            try { const p = JSON.parse(atob(TOKEN.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))); return (p.exp && p.exp < Date.now() / 1000) ? null : p; } catch (e) { return null; }
+        }
+        const pl = payload();
+        let cached = null; try { cached = JSON.parse(localStorage.getItem('meridaunclick_user') || 'null'); } catch (e) {}
+        if (!pl) { location.href = '/login.html?redirect=' + encodeURIComponent('/admin-imagenes.html'); return; }
+        if (((cached && cached.role) || pl.role) !== 'admin') {
+            $('#main').innerHTML = '<div class="card denied"><i class="fas fa-lock" style="font-size:2rem;color:#94a3b8"></i><h2 style="justify-content:center;margin-top:10px">Solo administradores</h2></div>';
+            return;
+        }
+
+        const fmt = (b) => b >= 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(0, Math.round(b / 1024)) + ' KB';
+        const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        function log(msg, cls) {
+            const el = $('#log'); el.hidden = false;
+            const line = document.createElement('div'); if (cls) line.className = cls; line.textContent = msg;
+            el.appendChild(line); el.scrollTop = el.scrollHeight;
+        }
+        async function api(path, opts) {
+            const r = await fetch('/api/admin/images/' + path, Object.assign({}, opts, { headers: Object.assign({}, auth, (opts && opts.headers) || {}) }));
+            if (r.status === 401) { location.href = '/login.html?redirect=' + encodeURIComponent('/admin-imagenes.html'); throw new Error('Sesión expirada'); }
+            const ct = r.headers.get('Content-Type') || '';
+            const data = ct.includes('json') ? await r.json() : null;
+            if (!r.ok) { const e = new Error((data && data.error) || ('Error ' + r.status)); e.status = r.status; throw e; }
+            return data;
+        }
+
+        // Tipo de imagen según la carpeta en R2 -> perfil de tamaño
+        function profileFor(key) {
+            if (/\/avatars\//.test(key)) return 'avatar';
+            if (/\/logos\//.test(key)) return 'logo';
+            if (/\/banners\//.test(key)) return 'banner';
+            if (/\/popup\//.test(key)) return 'popup';
+            if (/\/marketplace\//.test(key)) return 'marketplace';
+            if (/\/properties\//.test(key)) return 'property';
+            if (/\/jobs\//.test(key)) return 'job';
+            return 'business';
+        }
+
+        // ── 1. Analizar R2 ──
+        let items = [];
+        let savedBytes = 0;
+        function renderStats() {
+            const total = items.length;
+            const size = items.reduce((s, i) => s + i.size, 0);
+            const opt = items.filter((i) => i.optimized).length;
+            const pend = items.filter((i) => !i.optimized);
+            $('#stats').hidden = false;
+            $('#stTotal').textContent = total;
+            $('#stSize').textContent = fmt(size);
+            $('#stOpt').textContent = opt;
+            $('#stPend').textContent = pend.length + ' (' + fmt(pend.reduce((s, i) => s + i.size, 0)) + ')';
+            const origSaved = items.reduce((s, i) => s + (i.original_size && i.original_size > i.size ? i.original_size - i.size : 0), 0);
+            $('#stSaved').textContent = fmt(Math.max(origSaved, savedBytes));
+            $('#btnOptimize').disabled = pend.length === 0;
+            const big = pend.slice().sort((a, b) => b.size - a.size).slice(0, 15);
+            $('#bigWrap').hidden = !big.length;
+            $('#bigBody').innerHTML = big.map((i) => '<tr><td class="k">' + esc(i.key) + '</td><td>' + fmt(i.size) + '</td><td><span class="pill warn">Pendiente</span></td></tr>').join('');
+        }
+
+        async function scan() {
+            const btn = $('#btnScan');
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analizando...';
+            items = [];
+            try {
+                let cursor = null;
+                do {
+                    const data = await api('list' + (cursor ? '?cursor=' + encodeURIComponent(cursor) : ''));
+                    items = items.concat(data.items || []);
+                    cursor = data.cursor;
+                } while (cursor);
+                renderStats();
+            } catch (e) { alert('Error al analizar: ' + e.message); }
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-magnifying-glass"></i> Analizar R2';
+        }
+
+        // ── Optimizar pendientes ──
+        let paused = false;
+        async function optimizeOne(item) {
+            if (/\.gif$/i.test(item.key) || item.type === 'image/gif') {
+                await api('replace?mark=1&key=' + encodeURIComponent(item.key), { method: 'POST' });
+                log('= ' + item.key + ' (GIF, se deja igual)', 'skip');
+                return;
+            }
+            const r = await fetch('/api/serve?fresh=1&key=' + encodeURIComponent(item.key));
+            if (!r.ok) throw new Error('No se pudo leer (' + r.status + ')');
+            const blob = await r.blob();
+            const file = new File([blob], item.key.split('/').pop(), { type: blob.type || item.type || 'image/jpeg' });
+            const out = await window.HxImage.optimize(file, profileFor(item.key));
+            if (out === file || out.size >= file.size * 0.95) {
+                await api('replace?mark=1&key=' + encodeURIComponent(item.key), { method: 'POST' });
+                log('= ' + item.key + ' ya estaba bien (' + fmt(file.size) + ')', 'skip');
+                return;
+            }
+            try {
+                const res = await api('replace?key=' + encodeURIComponent(item.key), { method: 'PUT', headers: { 'Content-Type': out.type }, body: out });
+                savedBytes += res.before - res.after;
+                item.original_size = res.before; item.size = res.after;
+                log('✓ ' + item.key + '  ' + fmt(res.before) + ' → ' + fmt(res.after), 'ok');
+            } catch (e) {
+                if (e.status === 409) { await api('replace?mark=1&key=' + encodeURIComponent(item.key), { method: 'POST' }); log('= ' + item.key + ' ya estaba bien', 'skip'); }
+                else throw e;
+            }
+        }
+
+        async function optimizeAll() {
+            const queue = items.filter((i) => !i.optimized);
+            if (!queue.length) return;
+            paused = false;
+            $('#btnOptimize').disabled = true; $('#btnScan').disabled = true;
+            $('#btnPause').hidden = false; $('#btnPause').innerHTML = '<i class="fas fa-pause"></i> Pausar';
+            $('#progressWrap').hidden = false;
+            const total = queue.length; let done = 0, errors = 0;
+            const update = () => {
+                $('#progressBar').style.width = Math.round(done / total * 100) + '%';
+                $('#progressText').textContent = done + ' de ' + total + ' procesadas · ahorro ' + fmt(savedBytes) + (errors ? ' · ' + errors + ' con error' : '') + (paused ? ' · en pausa' : '');
+            };
+            update();
+            window.onbeforeunload = () => 'Se está optimizando';
+            async function worker() {
+                while (queue.length && !paused) {
+                    const item = queue.shift();
+                    try { await optimizeOne(item); item.optimized = true; }
+                    catch (e) { errors++; log('✗ ' + item.key + ': ' + e.message, 'err'); }
+                    done++; update(); renderStats();
+                }
+            }
+            await Promise.all([worker(), worker(), worker()]);
+            window.onbeforeunload = null;
+            $('#btnPause').hidden = true; $('#btnScan').disabled = false;
+            renderStats(); update();
+            log(paused ? 'En pausa. Pulsa "Optimizar pendientes" para continuar.' : 'Listo. ' + done + ' imágenes procesadas, ahorro ' + fmt(savedBytes) + '.', paused ? 'skip' : 'ok');
+        }
+
+        // ── 2. Fotos fuera de R2 ──
+        let ext = { items: [], fixes: [] };
+        function renderExt() {
+            $('#extWrap').hidden = false;
+            const rows = ext.items.map((it, i) =>
+                '<tr><td>' + esc(it.label) + ' #' + esc(it.id) + '</td><td class="k">' + esc(it.preview) + (it.bytes ? ' (' + fmt(it.bytes) + ')' : '') + '</td><td id="ext-st-' + i + '">' +
+                (it.done ? '<span class="pill ok">En R2</span>' : it.error ? '<span class="pill bad">' + esc(it.error) + '</span>' : '<span class="pill warn">' + (it.kind === 'base64' ? 'Incrustada' : 'Externa') + '</span>') + '</td></tr>').join('');
+            const fixRows = ext.fixes.map((f) => '<tr><td>' + esc(f.label) + ' ' + esc(f.id) + '</td><td class="k">' + esc(f.value) + '</td><td><span class="pill ' + (f.done ? 'ok">Corregido' : 'warn">Enlace sin “/”') + '</span></td></tr>').join('');
+            $('#extBody').innerHTML = (rows + fixRows) || '<tr><td colspan="3">Todas las fotos están en R2 ✔</td></tr>';
+            $('#btnExtMigrate').disabled = !ext.items.some((i) => !i.done);
+            $('#btnFix').hidden = !ext.fixes.some((f) => !f.done);
+        }
+        async function extScan() {
+            const btn = $('#btnExtScan');
+            btn.disabled = true;
+            try { ext = await api('external'); renderExt(); }
+            catch (e) { alert('Error: ' + e.message); }
+            btn.disabled = false;
+        }
+        async function extMigrate() {
+            const btn = $('#btnExtMigrate');
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Migrando...';
+            for (const it of ext.items) {
+                if (it.done) continue;
+                try {
+                    let blob;
+                    if (it.kind === 'base64') blob = await (await fetch(it.ref)).blob();
+                    else {
+                        const r = await fetch('/api/admin/images/external?fetch=' + encodeURIComponent(it.ref), { headers: auth });
+                        if (!r.ok) { let m = 'Error ' + r.status; try { m = (await r.json()).error || m; } catch (e) {} throw new Error(m); }
+                        blob = await r.blob();
+                    }
+                    const src = new File([blob], 'imagen', { type: blob.type || 'image/jpeg' });
+                    const profile = /logo/.test(it.col) ? 'logo' : /banner/.test(it.col) ? 'banner' : /avatar|photo/.test(it.col) ? 'avatar' : 'business';
+                    let file = await window.HxImage.optimize(src, profile);
+                    if (!/image\/(webp|jpeg|png|gif)/.test(file.type)) file = new File([blob], 'imagen.jpg', { type: 'image/jpeg' });
+                    const fd = new FormData();
+                    fd.append('table', it.table); fd.append('col', it.col); fd.append('id', it.id); fd.append('old', it.ref);
+                    fd.append('file', file, file.name || 'imagen');
+                    await api('external', { method: 'POST', body: fd });
+                    it.done = true;
+                } catch (e) { it.error = e.message; }
+                renderExt();
+            }
+            btn.innerHTML = '<i class="fas fa-cloud-arrow-up"></i> Migrar todas a R2';
+            renderExt();
+        }
+        async function fixLinks() {
+            try { const r = await api('external?action=normalize', { method: 'POST' }); ext.fixes.forEach((f) => { f.done = true; }); renderExt(); alert(r.fixed + ' enlace(s) corregido(s)'); }
+            catch (e) { alert('Error: ' + e.message); }
+        }
+
+        $('#btnScan').addEventListener('click', scan);
+        $('#btnOptimize').addEventListener('click', optimizeAll);
+        $('#btnPause').addEventListener('click', () => { paused = true; $('#btnPause').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Pausando...'; $('#btnOptimize').disabled = false; });
+        $('#btnExtScan').addEventListener('click', extScan);
+        $('#btnExtMigrate').addEventListener('click', extMigrate);
+        $('#btnFix').addEventListener('click', fixLinks);
+        scan();
+        extScan();
+    })();
+    </script>
+</body>
+</html>

@@ -38,7 +38,8 @@ async function verifyJWT(token, secret) {
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif', 'video/mp4', 'video/webm', 'video/quicktime'];
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'webm', 'mov'];
-const MAX_SIZE = 50 * 1024 * 1024; // 50MB (compression applied client-side)
+const MAX_SIZE = 50 * 1024 * 1024; // 50MB (videos)
+const MAX_IMAGE_SIZE = 15 * 1024 * 1024; // 15MB (imágenes; se optimizan en el navegador)
 // Images are served through our own /api/serve/ endpoint (no public R2 access needed)
 // The key is stored in DB; the serve endpoint reads from R2 binding
 const R2_SERVE_BASE = '/api/serve';
@@ -115,6 +116,15 @@ export async function onRequestPost(context) {
     // Validate content type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return new Response(JSON.stringify({ error: 'Tipo de contenido no soportado' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Imágenes: el navegador ya las optimiza (js/image-optimize.js); tope de 15 MB
+    const isImage = String(file.type || '').startsWith('image/');
+    if (isImage && file.size > MAX_IMAGE_SIZE) {
+      return new Response(JSON.stringify({ error: 'La imagen es demasiado grande (máximo 15 MB). Intenta con una foto más liviana.' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
@@ -201,6 +211,10 @@ export async function onRequestPost(context) {
       httpMetadata: {
         contentType: file.type,
       },
+      // optimized=1: la imagen llegó reducida por js/image-optimize.js
+      customMetadata: isImage ? {
+        optimized: formData.get('optimized') === '1' ? '1' : '0',
+      } : undefined,
     });
 
     // Use our own serve endpoint URL (works without public R2 access)
