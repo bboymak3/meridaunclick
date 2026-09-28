@@ -184,6 +184,10 @@ button:active{transform:scale(.97)}
 /* YouTube channel banner */
 .yt-channel{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#fff,#fef2f2);border:1.5px solid #fecaca}
 .yt-channel-icon{width:52px;height:52px;border-radius:50%;background:#dc2626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.yt-channel-icon.small{width:38px;height:38px;font-size:18px}
+.yt-rows{display:grid;gap:10px;width:100%}
+.yt-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid #fecaca;border-radius:var(--radius-sm);padding:10px 12px}
+.yt-row-name{flex:1;min-width:120px;font-weight:700;font-size:14px;color:var(--gray-900)}
 .yt-channel-text{flex:1;min-width:180px}
 .yt-channel-title{font-size:15px;font-weight:700;color:var(--gray-900)}
 .yt-channel-sub{font-size:13px;color:var(--gray-500)}
@@ -496,27 +500,37 @@ button:active{transform:scale(.97)}
   }
   window.downloadCertificate=downloadCertificate;
 
-  // ── Render: YouTube channel ──
-  function channelUrl(){
-    const u=String(academyConfig.youtube_channel_url||'');
-    return /^https:\/\/(www\.|m\.)?youtube\.com\//.test(u)?u:'';
+  // ── Render: canales de YouTube (uno por profesor) ──
+  function channelList(){
+    const isYt=function(u){ return /^https:\/\/(www\.|m\.)?youtube\.com\//.test(String(u||'')); };
+    let list=Array.isArray(academyConfig.youtube_channels)?academyConfig.youtube_channels:[];
+    if(!list.length&&academyConfig.youtube_channel_url) list=[{url:academyConfig.youtube_channel_url,name:academyConfig.youtube_channel_name}];
+    return list.filter(function(c){ return c&&isYt(c.url); }).slice(0,4);
   }
 
   function renderChannelCard(){
-    const url=channelUrl();
-    if(!url) return '';
-    const name=academyConfig.youtube_channel_name||'nuestro canal de YouTube';
+    const list=channelList();
+    if(!list.length) return '';
+    const many=list.length>1;
+    const rows=list.map(function(c){
+      const name=c.name||'Canal de YouTube';
+      return `
+      <div class="yt-row">
+        <div class="yt-channel-icon small"><i class="fab fa-youtube"></i></div>
+        <div class="yt-row-name">${escapeHTML(name)}</div>
+        <div class="yt-channel-actions">
+          <a class="btn btn-sm btn-yt" href="${escapeAttr(c.url+'?sub_confirmation=1')}" target="_blank" rel="noopener"><i class="fas fa-bell"></i> Suscribirme</a>
+          <a class="btn btn-sm btn-yt-outline" href="${escapeAttr(c.url)}" target="_blank" rel="noopener"><i class="fab fa-youtube"></i> Ver canal</a>
+        </div>
+      </div>`;
+    }).join('');
     return `
     <div class="card yt-channel">
-      <div class="yt-channel-icon"><i class="fab fa-youtube"></i></div>
       <div class="yt-channel-text">
-        <div class="yt-channel-title">Aprende con ${escapeHTML(name)}</div>
-        <div class="yt-channel-sub">Las clases de la academia están en nuestro canal. ¡Suscríbete para no perderte ninguna!</div>
+        <div class="yt-channel-title"><i class="fab fa-youtube" style="color:#dc2626"></i> ${many?'Aprende con nuestros profesores':'Aprende con '+escapeHTML(list[0].name||'nuestro canal de YouTube')}</div>
+        <div class="yt-channel-sub">Las clases de la academia están en ${many?'nuestros canales':'nuestro canal'}. ¡Suscríbete para no perderte ninguna!</div>
       </div>
-      <div class="yt-channel-actions">
-        <a class="btn btn-sm btn-yt" href="${escapeAttr(url+'?sub_confirmation=1')}" target="_blank" rel="noopener"><i class="fas fa-bell"></i> Suscribirme</a>
-        <a class="btn btn-sm btn-yt-outline" href="${escapeAttr(url)}" target="_blank" rel="noopener"><i class="fab fa-youtube"></i> Ver canal</a>
-      </div>
+      <div class="yt-rows">${rows}</div>
     </div>`;
   }
 

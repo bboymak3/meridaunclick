@@ -6279,7 +6279,100 @@ if (!window._renderVideoList) {
         loadAcademyAgents();
         setupAcademyHandlers();
         loadAcademyChannel();
+        loadAcademyPartners();
     }
+
+    // ── Partners Digitales: certificado, quitar certificación, eliminar cuenta ──
+    var _academyPartners = {};
+
+    function partnerIssuedAt(p) {
+        return p.exam_passed_at || p.partner_at || p.graduated_at || '';
+    }
+
+    async function loadAcademyPartners() {
+        var tbody = document.getElementById('academyPartnersTableBody');
+        if (!tbody) return;
+        try {
+            var data = await api.get('/partners');
+            var list = data.partners || [];
+            _academyPartners = {};
+            var countEl = document.getElementById('academyPartnersCount');
+            if (countEl) countEl.textContent = '(' + list.length + ')';
+            if (!list.length) {
+                tbody.innerHTML = '<tr><td colspan="5"><div style="text-align:center;color:#94a3b8;padding:16px;"><i class="fas fa-certificate"></i> Aún no hay Partners certificados</div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = list.map(function(p) {
+                _academyPartners[p.id] = p;
+                var info = window.AcademyCertificate ? window.AcademyCertificate.info({ name: p.name, userId: p.id, issuedAt: partnerIssuedAt(p) }) : null;
+                var avatar = p.avatar
+                    ? '<img src="' + _esc(p.avatar) + '" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">'
+                    : '<div style="width:32px;height:32px;border-radius:50%;background:#d97706;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.8rem;">' + _esc((p.name || '?').charAt(0).toUpperCase()) + '</div>';
+                var btn = 'border-radius:6px;padding:4px 9px;cursor:pointer;font-size:0.75rem;background:none;';
+                return '<tr>' +
+                    '<td><div style="display:flex;align-items:center;gap:8px;">' + avatar + '<div><strong>' + _esc(p.name) + '</strong>' +
+                        (p.graduated ? '<div style="font-size:0.7rem;color:#d97706;"><i class="fas fa-graduation-cap"></i> Graduado por admin</div>' : '<div style="font-size:0.7rem;color:#059669;"><i class="fas fa-check-circle"></i> Examen aprobado</div>') +
+                    '</div></div></td>' +
+                    '<td>Nivel ' + (p.level || 1) + (p.level_name ? ' · ' + _esc(p.level_name) : '') + '<div style="font-size:0.72rem;color:#6b7280;">' + (p.xp || 0) + ' XP</div></td>' +
+                    '<td>' + (p.classes_completed || 0) + '</td>' +
+                    '<td>' + (info ? '<strong style="font-size:0.78rem;">' + _esc(info.code) + '</strong><div style="font-size:0.72rem;color:#6b7280;">' + _esc(info.dateText) + '</div>' : '-') + '</td>' +
+                    '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">' +
+                        '<button onclick="academyShowCertificate(' + p.id + ')" style="' + btn + 'border:1px solid #fde68a;color:#b45309;" title="Ver certificado"><i class="fas fa-certificate"></i> Certificado</button>' +
+                        '<a href="/perfil.html?id=' + p.id + '" target="_blank" style="' + btn + 'border:1px solid #bfdbfe;color:#2563eb;text-decoration:none;" title="Ver perfil"><i class="fas fa-external-link-alt"></i> Perfil</a>' +
+                        '<button onclick="academyRevokePartner(' + p.id + ')" style="' + btn + 'border:1px solid #fdba74;color:#c2410c;" title="Quitar certificación"><i class="fas fa-user-minus"></i> Quitar</button>' +
+                        '<button onclick="academyDeletePartner(' + p.id + ')" style="' + btn + 'border:1px solid #fca5a5;color:#dc2626;" title="Eliminar cuenta de Partner"><i class="fas fa-trash"></i> Eliminar</button>' +
+                    '</div></td>' +
+                '</tr>';
+            }).join('');
+        } catch(e) {
+            tbody.innerHTML = '<tr><td colspan="5"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i> Error al cargar partners</div></td></tr>';
+        }
+    }
+
+    var _academyCertInfo = null;
+    window.academyShowCertificate = async function(userId, fallback) {
+        var p = _academyPartners[userId] || fallback;
+        if (!p || !window.AcademyCertificate) { showToast('No se pudo cargar el certificado', 'error'); return; }
+        _academyCertInfo = window.AcademyCertificate.info({ name: p.name, userId: userId, issuedAt: p.issued_at || partnerIssuedAt(p) });
+        document.getElementById('academyCertModalTitle').innerHTML = '<i class="fas fa-certificate" style="color:#d97706;"></i> Certificado de ' + _esc(p.name);
+        document.getElementById('academyCertModalNote').textContent = 'Código ' + _academyCertInfo.code + ' · Emitido el ' + _academyCertInfo.dateText;
+        document.getElementById('academyCertModalProfile').href = '/perfil.html?id=' + userId;
+        var box = document.getElementById('academyCertPreview');
+        box.innerHTML = '<div style="padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Generando certificado...</div>';
+        document.getElementById('academyCertModal').classList.remove('hidden');
+        try { await window.AcademyCertificate.preview(_academyCertInfo, box); }
+        catch(e) { box.innerHTML = '<div style="padding:40px;color:#dc2626;">' + _esc(e.message || 'Error al generar') + '</div>'; }
+    };
+
+    function closeAcademyCertModal() {
+        document.getElementById('academyCertModal').classList.add('hidden');
+    }
+
+    window.academyRevokePartner = async function(userId) {
+        var p = _academyPartners[userId] || {};
+        if (!confirm('¿Quitar la certificación de Partner a "' + (p.name || userId) + '"?\n\nPerderá el estado de Partner, su certificado, las medallas de certificación y los 150 XP del examen. Conserva sus clases aprobadas.')) return;
+        var reset = confirm('¿Permitir que vuelva a presentar el examen final?\n\nAceptar: se reinician sus intentos (3 nuevos).\nCancelar: conserva los intentos usados.');
+        try {
+            var r = await api.post('/admin/agent-actions', { action: 'revoke_partner', user_id: userId, reset_exam: reset });
+            showToast((r && r.message) || 'Certificación retirada', 'success');
+            loadAcademyPartners();
+            loadAcademyAgents();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
+
+    window.academyDeletePartner = async function(userId) {
+        var p = _academyPartners[userId] || {};
+        var name = p.name || String(userId);
+        if (!confirm('¿Eliminar la cuenta de Partner de "' + name + '"?\n\nSe borran TODOS sus datos de academia: certificado, clases aprobadas, XP, nivel y medallas. Esto no se puede deshacer.\n\nSu cuenta del sitio (negocios, perfil) NO se elimina.')) return;
+        var typed = prompt('Para confirmar escribe ELIMINAR');
+        if (!typed || typed.trim().toUpperCase() !== 'ELIMINAR') { showToast('Cancelado', 'info'); return; }
+        try {
+            var r = await api.post('/admin/agent-actions', { action: 'delete_academy_account', user_id: userId });
+            showToast((r && r.message) || 'Cuenta de Partner eliminada', 'success');
+            loadAcademyPartners();
+            loadAcademyAgents();
+        } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    };
 
     // ── Academia: video de YouTube + 5 preguntas ──
     var ACADEMY_VIDEO_QUESTIONS = 5;
@@ -6352,25 +6445,62 @@ if (!window._renderVideoList) {
         }
     }
 
+    // ── Canales de YouTube (uno por profesor, máximo 4) ──
+    var ACADEMY_MAX_CHANNELS = 4;
+
+    function academyChannelRow(ch) {
+        ch = ch || {};
+        return '<div class="academy-channel-row" style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;gap:8px;align-items:center;">' +
+            '<input type="url" class="academy-channel-url" value="' + _esc(ch.url || '') + '" placeholder="https://www.youtube.com/@canal" style="width:100%;padding:10px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.88rem;outline:none;">' +
+            '<input type="text" class="academy-channel-name" value="' + _esc(ch.name || '') + '" placeholder="Profesor / nombre del canal" maxlength="100" style="width:100%;padding:10px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.88rem;outline:none;">' +
+            '<button type="button" class="academy-channel-remove" title="Quitar canal" style="background:none;border:1px solid #fca5a5;color:#dc2626;border-radius:8px;padding:8px 10px;cursor:pointer;"><i class="fas fa-trash"></i></button>' +
+            '</div>';
+    }
+
+    function renderAcademyChannels(list) {
+        var box = document.getElementById('academyChannelsList');
+        if (!box) return;
+        var rows = (list && list.length) ? list : [{}];
+        box.innerHTML = rows.slice(0, ACADEMY_MAX_CHANNELS).map(academyChannelRow).join('');
+        updateAcademyChannelButtons();
+    }
+
+    function updateAcademyChannelButtons() {
+        var count = document.querySelectorAll('#academyChannelsList .academy-channel-row').length;
+        var addBtn = document.getElementById('academyAddChannelBtn');
+        if (addBtn) addBtn.disabled = count >= ACADEMY_MAX_CHANNELS;
+    }
+
+    function collectAcademyChannels() {
+        var out = [];
+        document.querySelectorAll('#academyChannelsList .academy-channel-row').forEach(function(row) {
+            var url = row.querySelector('.academy-channel-url').value.trim();
+            var name = row.querySelector('.academy-channel-name').value.trim();
+            if (url || name) out.push({ url: url, name: name });
+        });
+        return out;
+    }
+
     async function loadAcademyChannel() {
         try {
             var data = await api.get('/academy-config');
             var cfg = (data && data.config) || {};
-            var u = document.getElementById('academyChannelUrl');
-            var n = document.getElementById('academyChannelName');
-            if (u) u.value = cfg.youtube_channel_url || '';
-            if (n) n.value = cfg.youtube_channel_name || '';
-        } catch(e) { console.log('academy-config', e); }
+            renderAcademyChannels(cfg.youtube_channels || []);
+        } catch(e) {
+            console.log('academy-config', e);
+            renderAcademyChannels([]);
+        }
     }
 
     async function saveAcademyChannel() {
+        var channels = collectAcademyChannels();
+        for (var i = 0; i < channels.length; i++) {
+            if (!channels[i].url) { showToast('Falta la URL del canal ' + (i + 1), 'error'); return; }
+        }
         try {
-            var data = await api.put('/academy-config', {
-                youtube_channel_url: document.getElementById('academyChannelUrl').value.trim(),
-                youtube_channel_name: document.getElementById('academyChannelName').value.trim()
-            });
-            if (data && data.config) document.getElementById('academyChannelUrl').value = data.config.youtube_channel_url || '';
-            showToast('Canal de YouTube guardado', 'success');
+            var data = await api.put('/academy-config', { channels: channels });
+            renderAcademyChannels((data && data.config && data.config.youtube_channels) || []);
+            showToast((data && data.message) || 'Canales guardados', 'success');
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     }
 
@@ -6418,6 +6548,29 @@ if (!window._renderVideoList) {
         if (saveChannelBtn && !saveChannelBtn._bound) {
             saveChannelBtn._bound = true;
             saveChannelBtn.addEventListener('click', saveAcademyChannel);
+        }
+        var addChannelBtn = document.getElementById('academyAddChannelBtn');
+        if (addChannelBtn && !addChannelBtn._bound) {
+            addChannelBtn._bound = true;
+            addChannelBtn.addEventListener('click', function() {
+                var box = document.getElementById('academyChannelsList');
+                if (!box || box.querySelectorAll('.academy-channel-row').length >= ACADEMY_MAX_CHANNELS) return;
+                box.insertAdjacentHTML('beforeend', academyChannelRow({}));
+                updateAcademyChannelButtons();
+                var rows = box.querySelectorAll('.academy-channel-url');
+                rows[rows.length - 1].focus();
+            });
+        }
+        var channelsBox = document.getElementById('academyChannelsList');
+        if (channelsBox && !channelsBox._bound) {
+            channelsBox._bound = true;
+            channelsBox.addEventListener('click', function(e) {
+                var btn = e.target.closest('.academy-channel-remove');
+                if (!btn) return;
+                btn.closest('.academy-channel-row').remove();
+                if (!channelsBox.querySelector('.academy-channel-row')) renderAcademyChannels([]);
+                updateAcademyChannelButtons();
+            });
         }
         if (saveBtn && !saveBtn._bound) {
             saveBtn._bound = true;
@@ -6471,7 +6624,25 @@ if (!window._renderVideoList) {
             refreshBtn.addEventListener('click', function() {
                 loadAcademyClasses();
                 loadAcademyAgents();
+                loadAcademyPartners();
                 showToast('Lista actualizada', 'success');
+            });
+        }
+        var partnersRefresh = document.getElementById('academyPartnersRefreshBtn');
+        if (partnersRefresh && !partnersRefresh._bound) {
+            partnersRefresh._bound = true;
+            partnersRefresh.addEventListener('click', loadAcademyPartners);
+        }
+        var certModal = document.getElementById('academyCertModal');
+        if (certModal && !certModal._bound) {
+            certModal._bound = true;
+            certModal.addEventListener('click', function(e) { if (e.target === certModal) closeAcademyCertModal(); });
+            document.getElementById('academyCertModalClose').addEventListener('click', closeAcademyCertModal);
+            document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && !certModal.classList.contains('hidden')) closeAcademyCertModal(); });
+            document.getElementById('academyCertModalDownload').addEventListener('click', async function() {
+                if (!_academyCertInfo) return;
+                try { await window.AcademyCertificate.download(_academyCertInfo); showToast('Certificado descargado', 'success'); }
+                catch(e) { showToast('Error: ' + e.message, 'error'); }
             });
         }
         var analyticsBtn = document.getElementById('academyAnalyticsBtn');
@@ -6833,6 +7004,11 @@ if (!window._renderVideoList) {
                 html += '</td>';
                 html += '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">';
                 html += '<a href="/perfil.html?id=' + u.id + '" target="_blank" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#2563eb;text-decoration:none;" title="Ver Perfil"><i class="fas fa-external-link-alt"></i></a>';
+                if (p.is_partner) {
+                    window._academyAgentCerts = window._academyAgentCerts || {};
+                    window._academyAgentCerts[u.id] = { name: u.name, issued_at: p.certificate && p.certificate.issued_at };
+                    html += '<button onclick="academyShowCertificate(' + u.id + ', window._academyAgentCerts[' + u.id + '])" style="background:none;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#b45309;" title="Ver certificado"><i class="fas fa-certificate"></i></button>';
+                }
                 if (!grad) {
                     html += '<button onclick="academyGraduateAgent(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#d97706;" title="Graduar"><i class="fas fa-graduation-cap"></i></button>';
                 }
@@ -6923,6 +7099,7 @@ if (!window._renderVideoList) {
             });
             showToast(name + ' graduado exitosamente!', 'success');
             loadAcademyAgents();
+            loadAcademyPartners();
         } catch(e) { showToast('Error: ' + e.message, 'error'); }
     };
 

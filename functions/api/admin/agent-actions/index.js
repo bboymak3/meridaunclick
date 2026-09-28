@@ -1,7 +1,7 @@
 // POST: Admin actions on agents - assign classes, graduate, award badges
 
 import { corsHeaders, requireAdmin } from '../../../_lib/auth.js';
-import { addXp, EXAM_XP } from '../../../_lib/academy-levels.js';
+import { addXp, calcLevel, EXAM_XP } from '../../../_lib/academy-levels.js';
 
 async function ensureTables(db) {
   var tables = [
@@ -116,6 +116,47 @@ export async function onRequestPost(context) {
         badges_awarded: awardedBadges,
         xp_awarded: gradXp,
       }), {
+        status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } else if (action === 'revoke_partner' || action === 'delete_academy_account') {
+      // revoke_partner: quita la certificacion (Partner, examen, graduacion,
+      //   medallas de certificacion y los +150 XP del examen). Conserva clases.
+      // delete_academy_account: borra todos los datos de academia del usuario
+      //   (perfil, progreso y medallas). No toca su cuenta del sitio.
+      const { user_id, reset_exam } = body;
+      if (!user_id) {
+        return new Response(JSON.stringify({ error: 'user_id es requerido' }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      var ap = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(user_id).first();
+      if (!ap) {
+        return new Response(JSON.stringify({ error: 'Este usuario no tiene perfil de academia' }), {
+          status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (action === 'delete_academy_account') {
+        await env.DB.batch([
+          env.DB.prepare('DELETE FROM user_class_progress WHERE user_id = ?').bind(user_id),
+          env.DB.prepare('DELETE FROM user_badges WHERE user_id = ?').bind(user_id),
+          env.DB.prepare('DELETE FROM agent_profiles WHERE user_id = ?').bind(user_id),
+        ]);
+        return new Response(JSON.stringify({ message: 'Cuenta de Partner eliminada: se borraron sus datos de academia' }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      var hadCredit = ap.exam_passed === 1 || ap.graduated === 1;
+      var newXp = Math.max(0, (ap.xp || 0) - (hadCredit ? EXAM_XP : 0));
+      await env.DB.batch([
+        env.DB.prepare(
+          "UPDATE agent_profiles SET is_partner = 0, partner_at = NULL, exam_passed = 0, exam_passed_at = NULL, graduated = 0, graduated_at = NULL, xp = ?, level = ?, exam_attempts = CASE WHEN ? = 1 THEN 0 ELSE exam_attempts END, updated_at = datetime('now') WHERE user_id = ?"
+        ).bind(newXp, calcLevel(newXp), reset_exam ? 1 : 0, user_id),
+        env.DB.prepare("DELETE FROM user_badges WHERE user_id = ? AND badge_type IN ('partner', 'exam_passed', 'graduation')").bind(user_id),
+      ]);
+      return new Response(JSON.stringify({ message: 'Certificacion de Partner retirada', xp_removed: hadCredit ? EXAM_XP : 0, exam_reset: !!reset_exam }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 

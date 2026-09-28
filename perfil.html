@@ -114,13 +114,11 @@
     /* Certificate */
     .cert-card { border: 2px solid #fcd34d; background: linear-gradient(135deg, #fffbeb, #fff 60%); scroll-margin-top: 80px; }
     .cert-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.25rem; align-items: center; }
-    .cert-mini { position: relative; aspect-ratio: 297 / 210; background: #faf8ff; border: 5px solid var(--primary); outline: 1px solid var(--gold); outline-offset: -9px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: .75rem; cursor: pointer; transition: transform .2s, box-shadow .2s; }
-    .cert-mini:hover { transform: translateY(-2px) rotate(-.5deg); box-shadow: 0 10px 24px rgba(124,58,237,.18); }
-    .cert-mini .m1 { font-size: .5rem; font-weight: 800; color: var(--primary); letter-spacing: .08em; }
-    .cert-mini .m2 { font-size: 1rem; font-weight: 900; color: var(--text); letter-spacing: .02em; }
-    .cert-mini .m3 { font-size: .45rem; font-weight: 800; color: #d97706; letter-spacing: .06em; }
-    .cert-mini .m4 { font-size: .72rem; font-weight: 800; margin-top: .4rem; border-bottom: 1px solid var(--primary); padding: 0 .5rem .1rem; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .cert-mini .zoom { position: absolute; right: 8px; bottom: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: .7rem; display: flex; align-items: center; justify-content: center; }
+    /* Miniatura del certificado oficial (misma plantilla que el PDF) */
+    .cert-mini { position: relative; aspect-ratio: 841.92 / 595.2; background: #fff url('/images/certificado-partner-preview.jpg') center / cover no-repeat; border-radius: 8px; box-shadow: 0 4px 14px rgba(15,23,42,.15); cursor: pointer; transition: transform .2s, box-shadow .2s; container-type: inline-size; overflow: hidden; }
+    .cert-mini:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(15,23,42,.2); }
+    .cert-mini .m4 { position: absolute; left: 33.6%; top: 62.5%; transform: translate(-50%, -50%); width: 56%; text-align: center; font-family: 'Times New Roman', Times, serif; font-style: italic; font-weight: 700; color: #0d2e5c; font-size: .8rem; font-size: 4.1cqw; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid #b8871f; padding-bottom: .1em; }
+    .cert-mini .zoom { position: absolute; right: 8px; top: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: .7rem; display: flex; align-items: center; justify-content: center; }
     .verified { display: inline-flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 800; color: var(--success); background: var(--success-light); padding: .25rem .7rem; border-radius: 99px; margin-bottom: .5rem; }
     .cert-title { font-size: 1.25rem; font-weight: 800; margin-bottom: .3rem; }
     .cert-desc { font-size: .9rem; color: var(--muted); margin-bottom: .75rem; }
@@ -291,9 +289,6 @@
       <section class="card cert-card" id="certificado" hidden>
         <div class="cert-layout">
           <div class="cert-mini" id="cert-mini" role="button" tabindex="0" aria-label="Ver certificado">
-            <div class="m1">AUNCLICK ACADEMY</div>
-            <div class="m2">CERTIFICADO</div>
-            <div class="m3">PARTNER DIGITAL CERTIFICADO</div>
             <div class="m4" id="cert-mini-name"></div>
             <div class="zoom"><i class="fas fa-magnifying-glass-plus"></i></div>
           </div>
