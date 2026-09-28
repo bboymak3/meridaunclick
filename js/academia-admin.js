@@ -514,7 +514,7 @@
         var tbody = document.getElementById('academyClassesTableBody');
         if (!tbody) return;
         try {
-            var data = await api.get('/agent-classes');
+            var data = await api.get('/agent-classes?view=admin');
             var classes = data.classes || [];
             var totalQ = classes.reduce(function(s, c) { return s + (c.question_count || 0); }, 0);
             var totalComp = classes.reduce(function(s, c) { return s + (c.completions || 0); }, 0);
