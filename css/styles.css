@@ -12279,3 +12279,73 @@ a.btn-icon {
 .med-cta h2 { color: #fff; font-size: 1.15rem; margin: 0 0 8px; }
 .med-cta p { color: rgba(255,255,255,0.92); margin: 0 auto 14px; max-width: 640px; font-size: 0.93rem; }
 .med-cta-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #006EE3 !important; font-weight: 800; padding: 11px 20px; border-radius: 12px; text-decoration: none; }
+
+/* ─── search.html: banner arriba, barra de resultados compacta bajo las fichas ─── */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+.category-top-banner {
+    max-width: 1064px;
+    margin: 4px auto 16px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #e2e8f0;
+}
+.category-top-banner img { display: block; width: 100%; height: auto; aspect-ratio: 1064 / 405; object-fit: cover; }
+
+.search-info-bottom {
+    margin: 16px 0 12px;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    gap: 8px 12px;
+}
+.search-info-bottom .search-results-info { gap: 6px 10px; font-size: 0.85rem; }
+.search-info-bottom .search-view-controls { gap: 8px; flex-wrap: nowrap; width: auto; }
+.search-info-bottom .sort-select select { font-size: 0.82rem; padding: 5px 8px; border-radius: 8px; }
+.search-info-bottom .view-toggle { border-radius: 8px; }
+.search-info-bottom .view-btn { width: 32px; height: 30px; font-size: 0.85rem; }
+.btn-map-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid #006EE3;
+    background: #fff;
+    color: #006EE3;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.btn-map-mini:hover, .btn-map-mini.active { background: #006EE3; color: #fff; }
+.search-results .search-map { max-width: 100%; margin: 0 0 16px; }
+.search-results .search-map.hidden { display: none; }
+.search-results #searchMiniMap { height: 380px; }
+/* Compact controls on every screen size (override older mobile rules) */
+.search-info-bottom .search-view-controls {
+    flex-direction: row !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    width: auto !important;
+}
+.search-info-bottom .sort-select { flex-direction: row !important; flex: 0 1 auto !important; min-width: 0 !important; gap: 0 !important; }
+.search-info-bottom .view-toggle { width: auto !important; flex: 0 0 auto; justify-content: flex-start; }
+.search-info-bottom .btn-map-mini { width: auto !important; flex: 0 0 auto; }
+@media (max-width: 768px) {
+    .search-info-bottom { flex-direction: column; align-items: flex-start; }
+    .search-info-bottom .search-view-controls { width: 100% !important; justify-content: space-between; gap: 8px; }
+    .search-results #searchMiniMap { height: auto; aspect-ratio: 4 / 3; }
+}
+
+/* Vista lista de resultados (boton lista) */
+#searchResultsGrid.list-view { grid-template-columns: 1fr !important; gap: 10px; }
+#searchResultsGrid.list-view .business-card-link { display: flex; align-items: stretch; }
+#searchResultsGrid.list-view .business-card-image { width: 120px; min-width: 120px; aspect-ratio: 3 / 4; }
+#searchResultsGrid.list-view .business-card-body { flex: 1; min-width: 0; }
+#searchResultsGrid.list-view .business-card-desc { display: block; }
+@media (min-width: 769px) {
+    #searchResultsGrid.list-view .business-card-image { width: 150px; min-width: 150px; }
+}

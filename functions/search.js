@@ -69,7 +69,8 @@ export async function onRequestGet(context) {
   try {
     if (res.status !== 200 || !(res.headers.get('Content-Type') || '').includes('text/html')) return res;
 
-    const category = await env.DB.prepare('SELECT id, name, slug FROM categories WHERE slug = ?')
+    // SELECT * so a missing optional column (banner_url) can't break the page
+    const category = await env.DB.prepare('SELECT * FROM categories WHERE slug = ?')
       .bind(categoria).first();
     if (!category) return res;
 
@@ -119,6 +120,20 @@ export async function onRequestGet(context) {
         element(el) {
           el.append(`<meta name="robots" content="${seo.robots}">`, { html: true });
           el.append(`<script type="application/ld+json" id="searchJsonLd">${jsonLd}</script>`, { html: true });
+        },
+      })
+      .on('#categoryBanner', {
+        element(el) {
+          if (category.banner_url) el.setAttribute('style', 'display:block;');
+        },
+      })
+      .on('#categoryBannerImg', {
+        element(el) {
+          if (category.banner_url) {
+            el.setAttribute('src', category.banner_url);
+            el.setAttribute('alt', category.name || '');
+            el.setAttribute('fetchpriority', 'high');
+          }
         },
       })
       .on('#searchH1', setContent(seo.h1))
