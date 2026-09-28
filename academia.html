@@ -259,6 +259,48 @@ button:active{transform:scale(.97)}
 .btn-cert{background:#d97706;color:#fff}
 .btn-cert:hover{background:#b45309}
 
+/* Profile actions */
+.profile-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.profile-actions .share-btn{margin:0}
+body.modal-open{overflow:hidden}
+
+/* Profile editor (bottom sheet) */
+.pe-backdrop{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.pe-backdrop.open{opacity:1;pointer-events:auto}
+.pe-sheet{background:#fff;width:100%;max-width:560px;max-height:92vh;border-radius:20px 20px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.pe-backdrop.open .pe-sheet{transform:none}
+.pe-handle{width:44px;height:5px;border-radius:99px;background:var(--gray-300);margin:8px auto 0}
+.pe-head{display:flex;align-items:center;gap:10px;padding:10px 18px;border-bottom:1px solid var(--gray-200)}
+.pe-head h2{flex:1;font-size:16px;font-weight:800}
+.pe-head h2 i{color:var(--primary)}
+.pe-close{width:36px;height:36px;border-radius:50%;background:var(--gray-100);color:var(--gray-500);font-size:16px}
+.pe-body{padding:16px 18px;overflow-y:auto;flex:1}
+.pe-photo{text-align:center;margin-bottom:14px}
+.pe-photo-preview{width:120px;height:120px;border-radius:50%;margin:0 auto 10px;border:3px solid var(--primary);background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:44px;overflow:hidden}
+.pe-photo-preview img{width:100%;height:100%;object-fit:cover}
+.pe-photo-actions,.pe-camera-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.pe-camera video{width:100%;max-width:320px;aspect-ratio:1/1;object-fit:cover;border-radius:16px;background:#000;display:block;margin:0 auto 10px}
+.pe-camera video.mirror{transform:scaleX(-1)}
+.pe-remove{background:#fff;color:var(--danger);border:2px solid var(--danger-light)}
+.pe-hint{font-size:12px;color:var(--gray-500);margin-top:8px}
+.pe-field{display:block;margin-bottom:12px}
+.pe-field span{display:flex;justify-content:flex-start;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:5px}
+.pe-field small{font-weight:500;color:var(--gray-400);margin-left:auto}
+.pe-field input,.pe-field textarea{width:100%;padding:11px 12px;border:1.5px solid var(--gray-200);border-radius:var(--radius-sm);font-size:15px;font-family:inherit;color:var(--gray-800);background:#fff;outline:none}
+.pe-field input:focus,.pe-field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light)}
+.pe-field textarea{resize:vertical;min-height:90px}
+.pe-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pe-foot{display:flex;gap:10px;justify-content:flex-end;padding:12px 18px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--gray-200)}
+.pe-foot .btn{flex:1}
+[hidden]{display:none!important}
+@media(min-width:640px){
+  .pe-backdrop{align-items:center;padding:20px}
+  .pe-sheet{border-radius:20px;transform:translateY(30px) scale(.98)}
+  .pe-handle{display:none}
+  .pe-foot .btn{flex:0 0 auto}
+}
+@media(max-width:420px){.pe-row{grid-template-columns:1fr}}
+
 /* File input hidden */
 .hidden-input{display:none}
 
@@ -294,9 +336,9 @@ button:active{transform:scale(.97)}
       <i class="fas fa-user"></i>
     </div>
   </a>
-  <a href="/dashboard.html#profile" class="header-edit-btn" title="Editar mi perfil (nombre, bio, WhatsApp)">
+  <button type="button" class="header-edit-btn" onclick="openProfileEditor()" title="Editar mi perfil de la academia">
     <i class="fas fa-user-pen"></i><span> Editar</span>
-  </a>
+  </button>
   <a id="headerProfileBtn" href="#" class="header-profile-btn" title="Ver mi perfil público">
     <i class="fas fa-id-card"></i> Ver mi Perfil
   </a>
@@ -313,8 +355,58 @@ button:active{transform:scale(.97)}
   </div>
 </main>
 
-<!-- Hidden file input for avatar -->
-<input type="file" class="hidden-input" id="avatarInput" accept="image/*">
+<!-- Editor del perfil de la academia -->
+<div class="pe-backdrop" id="profileEditor" aria-hidden="true">
+  <div class="pe-sheet" role="dialog" aria-modal="true" aria-labelledby="peTitle">
+    <div class="pe-handle"></div>
+    <div class="pe-head">
+      <h2 id="peTitle"><i class="fas fa-user-pen"></i> Editar mi perfil</h2>
+      <button type="button" class="pe-close" onclick="closeProfileEditor()" aria-label="Cerrar"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="pe-body">
+      <!-- Foto -->
+      <div class="pe-photo">
+        <div class="pe-photo-preview" id="pePhotoPreview"></div>
+        <div class="pe-camera" id="peCamera" hidden>
+          <video id="peVideo" autoplay playsinline muted></video>
+          <div class="pe-camera-actions">
+            <button type="button" class="btn btn-sm btn-outline" onclick="peStopCamera()"><i class="fas fa-xmark"></i> Cancelar</button>
+            <button type="button" class="btn btn-sm btn-outline" id="peSwitchCam" onclick="peSwitchCamera()" hidden><i class="fas fa-camera-rotate"></i> Girar</button>
+            <button type="button" class="btn btn-sm btn-primary" onclick="peCapture()"><i class="fas fa-camera"></i> Capturar</button>
+          </div>
+        </div>
+        <div class="pe-photo-actions" id="pePhotoActions">
+          <button type="button" class="btn btn-sm btn-primary" onclick="peTakePhoto()"><i class="fas fa-camera"></i> Tomar foto</button>
+          <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('peFileInput').click()"><i class="fas fa-image"></i> Subir foto</button>
+          <button type="button" class="btn btn-sm pe-remove" id="peRemovePhoto" onclick="peRemovePhoto()"><i class="fas fa-trash"></i> Quitar</button>
+        </div>
+        <p class="pe-hint">La foto se recorta cuadrada y se guarda optimizada.</p>
+      </div>
+      <!-- Datos -->
+      <label class="pe-field"><span>Nombre completo *</span>
+        <input type="text" id="peName" maxlength="80" autocomplete="name" required>
+      </label>
+      <label class="pe-field"><span>Presentación <small id="peBioCount">0/500</small></span>
+        <textarea id="peBio" maxlength="500" rows="4" placeholder="Cuéntale a los clientes quién eres y cómo puedes ayudarles"></textarea>
+      </label>
+      <div class="pe-row">
+        <label class="pe-field"><span><i class="fab fa-whatsapp" style="color:#25d366"></i> WhatsApp</span>
+          <input type="tel" id="peWhatsapp" maxlength="30" placeholder="+58 424 0000000" autocomplete="tel">
+        </label>
+        <label class="pe-field"><span><i class="fas fa-phone"></i> Teléfono</span>
+          <input type="tel" id="pePhone" maxlength="30" placeholder="+58 274 0000000">
+        </label>
+      </div>
+      <p class="pe-hint"><i class="fas fa-globe"></i> Estos datos se muestran en tu perfil público de Partner.</p>
+    </div>
+    <div class="pe-foot">
+      <button type="button" class="btn btn-outline" onclick="closeProfileEditor()">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="peSaveBtn" onclick="saveProfileEditor()"><i class="fas fa-check"></i> Guardar</button>
+    </div>
+  </div>
+</div>
+<input type="file" class="hidden-input" id="peFileInput" accept="image/*">
+<input type="file" class="hidden-input" id="peCaptureInput" accept="image/*" capture="user">
 
 <script src="/js/academy-certificate.js?v=2"></script>
 <script>
@@ -380,27 +472,210 @@ button:active{transform:scale(.97)}
     window.location.href='/login.html';
   });
 
-  // ── Avatar upload ──
-  document.getElementById('avatarInput').addEventListener('change',async function(e){
-    const file=e.target.files[0];
+  // ── Editor del perfil de la academia ──
+  // Foto: tomar con la cámara (getUserMedia; si no está disponible, la cámara
+  // nativa del teléfono) o subir desde la galería. Se recorta cuadrada,
+  // 600x600 JPEG (también convierte fotos HEIC del iPhone).
+  const PE_SIZE=600;
+  let pe={blob:null,previewUrl:null,removed:false,stream:null,facing:'user',saving:false};
+
+  function peEl(id){ return document.getElementById(id); }
+
+  function peRenderPreview(){
+    const box=peEl('pePhotoPreview');
+    const src=pe.previewUrl||(!pe.removed&&userProfile.avatar)||'';
+    box.innerHTML=src?'<img src="'+escapeAttr(src)+'" alt="Tu foto">':'<i class="fas fa-user"></i>';
+    peEl('peRemovePhoto').hidden=!src;
+  }
+
+  function openProfileEditor(){
+    pe.blob=null; pe.removed=false;
+    if(pe.previewUrl){ URL.revokeObjectURL(pe.previewUrl); pe.previewUrl=null; }
+    peEl('peName').value=userProfile.name||'';
+    peEl('peBio').value=userProfile.bio||'';
+    peEl('peWhatsapp').value=userProfile.whatsapp||'';
+    peEl('pePhone').value=userProfile.phone||'';
+    peBioCount();
+    peRenderPreview();
+    const m=peEl('profileEditor');
+    m.classList.add('open'); m.setAttribute('aria-hidden','false');
+    document.body.classList.add('modal-open');
+    setTimeout(function(){ peEl('peName').focus(); },250);
+  }
+  window.openProfileEditor=openProfileEditor;
+
+  function closeProfileEditor(){
+    peStopCamera();
+    const m=peEl('profileEditor');
+    m.classList.remove('open'); m.setAttribute('aria-hidden','true');
+    document.body.classList.remove('modal-open');
+    if(location.hash==='#editar-perfil') history.replaceState(null,'',location.pathname+location.search);
+  }
+  window.closeProfileEditor=closeProfileEditor;
+
+  function peBioCount(){ peEl('peBioCount').textContent=peEl('peBio').value.length+'/500'; }
+  peEl('peBio').addEventListener('input',peBioCount);
+  peEl('profileEditor').addEventListener('click',function(e){ if(e.target===e.currentTarget) closeProfileEditor(); });
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&peEl('profileEditor').classList.contains('open')) closeProfileEditor(); });
+
+  // Recorte cuadrado centrado + redimensión a JPEG
+  function peToSquareJpeg(source,w,h){
+    const side=Math.min(w,h);
+    const c=document.createElement('canvas');
+    c.width=PE_SIZE; c.height=PE_SIZE;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#fff'; ctx.fillRect(0,0,PE_SIZE,PE_SIZE);
+    ctx.drawImage(source,(w-side)/2,(h-side)/2,side,side,0,0,PE_SIZE,PE_SIZE);
+    return new Promise(function(resolve,reject){
+      c.toBlob(function(b){ b?resolve(b):reject(new Error('No se pudo procesar la foto')); },'image/jpeg',0.86);
+    });
+  }
+
+  function peSetBlob(blob){
+    pe.blob=blob; pe.removed=false;
+    if(pe.previewUrl) URL.revokeObjectURL(pe.previewUrl);
+    pe.previewUrl=URL.createObjectURL(blob);
+    peRenderPreview();
+  }
+
+  async function peUseFile(file){
     if(!file) return;
+    if(file.type&&!/^image\//.test(file.type)){ showToast('Elige una imagen','error'); return; }
+    if(file.size>25*1024*1024){ showToast('La imagen es demasiado grande (máx. 25 MB)','error'); return; }
+    const url=URL.createObjectURL(file);
     try{
-      const fd=new FormData();
-      fd.append('file',file);
-      fd.append('product_type','avatar');
-      const r=await fetch(API+'/upload',{method:'POST',headers:{'Authorization':'Bearer '+TOKEN},body:fd});
-      if(r.status===401){ localStorage.removeItem('meridaunclick_token'); localStorage.removeItem('meridaunclick_user'); window.location.href='/login.html?redirect=academia.html'; return; }
-      const upData=await r.json();
-      if(!upData.url) throw new Error('No URL returned');
-      await fetch(API+'/user-profile',{method:'PUT',headers:apiHeaders(),body:JSON.stringify({avatar:upData.url})});
-      userProfile.avatar=upData.url;
-      render();
-      showToast('Avatar actualizado','success');
-    }catch(err){
-      showToast('Error al subir avatar: '+err.message,'error');
+      const img=await new Promise(function(resolve,reject){
+        const i=new Image();
+        i.onload=function(){ resolve(i); };
+        i.onerror=function(){ reject(new Error('No se pudo leer la imagen. Prueba con otra foto (JPG o PNG).')); };
+        i.src=url;
+      });
+      peSetBlob(await peToSquareJpeg(img,img.naturalWidth,img.naturalHeight));
+    }catch(err){ showToast(err.message,'error'); }
+    finally{ URL.revokeObjectURL(url); }
+  }
+  peEl('peFileInput').addEventListener('change',function(e){ peUseFile(e.target.files[0]); e.target.value=''; });
+  peEl('peCaptureInput').addEventListener('change',function(e){ peUseFile(e.target.files[0]); e.target.value=''; });
+
+  // Cámara en vivo
+  async function peStartCamera(){
+    peStopCamera();
+    pe.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:pe.facing,width:{ideal:1280},height:{ideal:1280}},audio:false});
+    const v=peEl('peVideo');
+    v.srcObject=pe.stream;
+    v.classList.toggle('mirror',pe.facing==='user');
+    peEl('peCamera').hidden=false;
+    peEl('pePhotoPreview').hidden=true;
+    peEl('pePhotoActions').hidden=true;
+    try{
+      const devices=await navigator.mediaDevices.enumerateDevices();
+      peEl('peSwitchCam').hidden=devices.filter(function(d){ return d.kind==='videoinput'; }).length<2;
+    }catch(e){ peEl('peSwitchCam').hidden=true; }
+  }
+
+  async function peTakePhoto(){
+    if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){
+      peEl('peCaptureInput').click(); // cámara nativa del teléfono
+      return;
     }
-    e.target.value='';
-  });
+    try{ await peStartCamera(); }
+    catch(err){
+      peStopCamera();
+      if(err&&(err.name==='NotAllowedError'||err.name==='SecurityError')){
+        showToast('Permite el acceso a la cámara en tu navegador, o usa "Subir foto"','error');
+      }
+      peEl('peCaptureInput').click(); // alternativa: cámara nativa
+    }
+  }
+  window.peTakePhoto=peTakePhoto;
+
+  async function peSwitchCamera(){
+    pe.facing=pe.facing==='user'?'environment':'user';
+    try{ await peStartCamera(); }catch(e){ showToast('No se pudo cambiar de cámara','error'); }
+  }
+  window.peSwitchCamera=peSwitchCamera;
+
+  async function peCapture(){
+    const v=peEl('peVideo');
+    if(!v.videoWidth){ showToast('La cámara aún no está lista','error'); return; }
+    try{
+      let source=v;
+      if(pe.facing==='user'){
+        // Guardar la selfie como se ve en la vista previa (espejo)
+        const c=document.createElement('canvas');
+        c.width=v.videoWidth; c.height=v.videoHeight;
+        const ctx=c.getContext('2d');
+        ctx.translate(c.width,0); ctx.scale(-1,1); ctx.drawImage(v,0,0);
+        source=c;
+      }
+      peSetBlob(await peToSquareJpeg(source,v.videoWidth,v.videoHeight));
+    }catch(err){ showToast(err.message,'error'); }
+    peStopCamera();
+  }
+  window.peCapture=peCapture;
+
+  function peStopCamera(){
+    if(pe.stream){ pe.stream.getTracks().forEach(function(t){ t.stop(); }); pe.stream=null; }
+    const v=peEl('peVideo'); if(v) v.srcObject=null;
+    if(peEl('peCamera')) peEl('peCamera').hidden=true;
+    if(peEl('pePhotoPreview')) peEl('pePhotoPreview').hidden=false;
+    if(peEl('pePhotoActions')) peEl('pePhotoActions').hidden=false;
+  }
+  window.peStopCamera=peStopCamera;
+
+  function peRemovePhoto(){
+    pe.blob=null; pe.removed=true;
+    if(pe.previewUrl){ URL.revokeObjectURL(pe.previewUrl); pe.previewUrl=null; }
+    peRenderPreview();
+  }
+  window.peRemovePhoto=peRemovePhoto;
+
+  async function saveProfileEditor(){
+    if(pe.saving) return;
+    const name=peEl('peName').value.trim();
+    if(name.length<2){ showToast('Escribe tu nombre','error'); peEl('peName').focus(); return; }
+    const data={
+      name:name,
+      bio:peEl('peBio').value.trim(),
+      whatsapp:peEl('peWhatsapp').value.trim(),
+      phone:peEl('pePhone').value.trim()
+    };
+    const btn=peEl('peSaveBtn');
+    pe.saving=true; btn.disabled=true; btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    try{
+      if(pe.blob){
+        const fd=new FormData();
+        fd.append('file',pe.blob,'avatar.jpg');
+        fd.append('product_type','avatar');
+        const r=await fetch(API+'/upload',{method:'POST',headers:{'Authorization':'Bearer '+TOKEN},body:fd});
+        if(r.status===401){ localStorage.removeItem('meridaunclick_token'); localStorage.removeItem('meridaunclick_user'); window.location.href='/login.html?redirect=academia.html'; return; }
+        const up=await r.json().catch(function(){ return {}; });
+        if(!r.ok||!up.url) throw new Error(up.error||'No se pudo subir la foto');
+        data.avatar=up.url;
+      }else if(pe.removed){
+        data.avatar='';
+      }
+      const r2=await fetch(API+'/user-profile',{method:'PUT',headers:apiHeaders(),body:JSON.stringify(data)});
+      const res=await r2.json().catch(function(){ return {}; });
+      if(!r2.ok) throw new Error(res.error||'No se pudo guardar');
+      Object.assign(userProfile,res.user||data);
+      if(data.avatar==='') userProfile.avatar=null;
+      // Mantener la sesión en caché al día (nombre y foto del resto del sitio)
+      try{
+        const cached=JSON.parse(localStorage.getItem('meridaunclick_user')||'null');
+        if(cached){ cached.name=userProfile.name; cached.avatar=userProfile.avatar; cached.bio=userProfile.bio; cached.whatsapp=userProfile.whatsapp; cached.phone=userProfile.phone; localStorage.setItem('meridaunclick_user',JSON.stringify(cached)); }
+      }catch(e){}
+      closeProfileEditor();
+      refreshSummary();
+      showToast('Perfil actualizado','success');
+    }catch(err){
+      showToast(err.message||'Error al guardar','error');
+    }finally{
+      pe.saving=false; btn.disabled=false; btn.innerHTML='<i class="fas fa-check"></i> Guardar';
+    }
+  }
+  window.saveProfileEditor=saveProfileEditor;
+  window.addEventListener('pagehide',peStopCamera);
 
   // ── Initialize ──
   async function init(){
@@ -414,7 +689,7 @@ button:active{transform:scale(.97)}
       ]);
       if(!profileData||!progressData||!classesData||!examData){ return; }
 
-      userProfile = profileData.profile || profileData;
+      userProfile = profileData.user || profileData.profile || profileData;
       USER_ID = userProfile.id || USER_ID;
       localStorage.setItem('user_id', USER_ID);
 
@@ -433,6 +708,7 @@ button:active{transform:scale(.97)}
       }catch(e){ academyConfig={}; }
 
       render();
+      if(location.hash==='#editar-perfil') openProfileEditor();
     }catch(err){
       document.getElementById('pageLoader').innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar datos</p><p style="font-size:12px;margin-top:4px;color:var(--gray-400)">'+err.message+'</p></div>';
     }
@@ -546,11 +822,9 @@ button:active{transform:scale(.97)}
     const completedClasses=p.completed_classes? p.completed_classes.filter(function(c){ return c.completed===1; }).length : 0;
     const totalBadges=p.total_badges||0;
     const avatarHTML=userProfile.avatar
-      ? '<img src="'+userProfile.avatar+'" alt="Avatar">'
+      ? '<img src="'+escapeAttr(userProfile.avatar)+'" alt="Mi foto">'
       : '<i class="fas fa-user"></i>';
-    const headerAvatarHTML=userProfile.avatar
-      ? '<img src="'+userProfile.avatar+'" alt="Avatar">'
-      : '<i class="fas fa-user"></i>';
+    const headerAvatarHTML=avatarHTML;
     document.getElementById('headerAvatar').innerHTML=headerAvatarHTML;
 
     let levelLabel='Nivel '+lvl;
@@ -559,11 +833,11 @@ button:active{transform:scale(.97)}
 
     return `
     <div class="card profile-card">
-      <div class="profile-avatar-wrap" onclick="document.getElementById('avatarInput').click()">
+      <div class="profile-avatar-wrap" onclick="openProfileEditor()" title="Cambiar foto">
         <div class="profile-avatar">${avatarHTML}</div>
         <div class="profile-avatar-overlay"><i class="fas fa-camera"></i></div>
       </div>
-      <div class="profile-name">${userProfile.name||'Agente'}</div>
+      <div class="profile-name">${escapeHTML(userProfile.name||'Agente')}</div>
       ${userProfile.bio?'<div class="profile-bio">'+escapeHTML(userProfile.bio)+'</div>':''}
       <span class="level-badge ${levelBadgeClass(lvl)}"><i class="fas fa-star"></i> ${levelLabel}</span>
       <div class="xp-bar-wrap">
@@ -575,9 +849,10 @@ button:active{transform:scale(.97)}
         <div class="stat-item"><div class="stat-value">${totalBadges}</div><div class="stat-label">Medallas</div></div>
         <div class="stat-item"><div class="stat-value">${examStatus.exam_passed?'✓':'—'}</div><div class="stat-label">Examen</div></div>
       </div>
-      <button class="btn btn-sm share-btn" onclick="copyProfileLink()">
-        <i class="fas fa-share-alt"></i> Compartir mi perfil
-      </button>
+      <div class="profile-actions">
+        <button class="btn btn-sm btn-primary" onclick="openProfileEditor()"><i class="fas fa-user-pen"></i> Editar mi perfil</button>
+        <button class="btn btn-sm share-btn" onclick="copyProfileLink()"><i class="fas fa-share-alt"></i> Compartir mi perfil</button>
+      </div>
     </div>`;
   }
 

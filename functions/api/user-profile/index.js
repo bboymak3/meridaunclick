@@ -59,11 +59,38 @@ export async function onRequestPut(context) {
     const updates = [];
     const values = [];
 
-    if (name !== undefined) { updates.push('name = ?'); values.push(name.trim()); }
-    if (phone !== undefined) { updates.push('phone = ?'); values.push(phone); }
-    if (whatsapp !== undefined) { updates.push('whatsapp = ?'); values.push(whatsapp); }
-    if (bio !== undefined) { updates.push('bio = ?'); values.push(bio); }
-    if (avatar !== undefined) { updates.push('avatar = ?'); values.push(avatar); }
+    const bad = (msg) => new Response(JSON.stringify({ error: msg }), {
+      status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+    if (name !== undefined) {
+      const n = String(name || '').trim();
+      if (n.length < 2) return bad('El nombre es obligatorio');
+      if (n.length > 80) return bad('El nombre es demasiado largo (máximo 80 caracteres)');
+      updates.push('name = ?'); values.push(n);
+    }
+    if (phone !== undefined) {
+      const ph = String(phone || '').trim();
+      if (ph.length > 30 || /[^0-9+()\-\s.]/.test(ph)) return bad('Teléfono no válido');
+      updates.push('phone = ?'); values.push(ph);
+    }
+    if (whatsapp !== undefined) {
+      const wa = String(whatsapp || '').trim();
+      if (wa.length > 30 || /[^0-9+()\-\s.]/.test(wa)) return bad('WhatsApp no válido');
+      updates.push('whatsapp = ?'); values.push(wa);
+    }
+    if (bio !== undefined) {
+      const b = String(bio || '').trim();
+      if (b.length > 500) return bad('La presentación es demasiado larga (máximo 500 caracteres)');
+      updates.push('bio = ?'); values.push(b);
+    }
+    if (avatar !== undefined) {
+      const av = String(avatar || '').trim();
+      // Solo URLs propias (subidas con /api/upload) o https
+      if (av && !/^(https:\/\/|\/(?!\/))/i.test(av)) return bad('Foto no válida');
+      if (av.length > 500) return bad('Foto no válida');
+      updates.push('avatar = ?'); values.push(av || null);
+    }
 
     if (updates.length === 0) {
       return new Response(JSON.stringify({ error: 'No hay campos para actualizar' }), {
@@ -76,7 +103,11 @@ export async function onRequestPut(context) {
 
     await env.DB.prepare(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
 
-    return new Response(JSON.stringify({ message: 'Perfil actualizado exitosamente' }), {
+    const updated = await env.DB.prepare(
+      'SELECT id, name, email, phone, whatsapp, avatar, bio, role, created_at FROM users WHERE id = ?'
+    ).bind(userId).first();
+
+    return new Response(JSON.stringify({ message: 'Perfil actualizado exitosamente', user: updated }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
