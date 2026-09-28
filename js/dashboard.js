@@ -315,6 +315,14 @@ window.closeEditBusinessModal = function() {
         // Setup profile form
         setupProfileForm();
 
+        // Enlace directo a "Mi Perfil" (desde la academia o el perfil de Partner)
+        if (/^#(profile|perfil)$/.test(window.location.hash)) {
+            const profileLink = document.querySelector('.sidebar-link[data-section="profile"]');
+            switchSection('profile');
+            sidebarLinks.forEach(l => l.classList.remove('active'));
+            if (profileLink) profileLink.classList.add('active');
+        }
+
         // NOTE: setupPremiumModal() and updatePlanDisplay() are called
         //       after their const declarations (see near line 2160)
 
@@ -350,6 +358,10 @@ window.closeEditBusinessModal = function() {
         var profileLink = document.getElementById('sidebarProfileLink');
         if (profileLink && currentUser.id) {
             profileLink.href = '/perfil.html?id=' + currentUser.id;
+        }
+        var partnerLink = document.getElementById('profilePartnerLink');
+        if (partnerLink && currentUser.id) {
+            partnerLink.href = '/perfil.html?id=' + currentUser.id;
         }
     }
 

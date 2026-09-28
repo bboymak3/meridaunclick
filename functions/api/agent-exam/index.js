@@ -5,6 +5,7 @@
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
 import { getPath } from '../../_lib/academy-path.js';
+import { addXp, EXAM_XP } from '../../_lib/academy-levels.js';
 
 function calcLevel(xp) {
   const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
@@ -60,6 +61,7 @@ export async function onRequestGet(context) {
       requirement_met: path.exam_unlocked,
       path_completed: path.completed,
       path_total: path.total,
+      exam_xp: EXAM_XP,
       exam_passed: profile.exam_passed === 1,
       exam_passed_at: profile.exam_passed_at,
       exam_attempts: profile.exam_attempts || 0,
@@ -182,6 +184,8 @@ export async function onRequestPost(context) {
       WHERE user_id = ?
     `).bind(userId).run();
 
+    var xpEarned = 0;
+    var levelInfo = null;
     if (passed) {
       // BUG #6 FIX: Check for existing badges before inserting (prevent duplicates)
       var existingPassed = await env.DB.prepare("SELECT COUNT(*) as cnt FROM user_badges WHERE user_id = ? AND badge_type = 'exam_passed'").bind(userId).first();
@@ -207,6 +211,11 @@ export async function onRequestPost(context) {
             VALUES (?, 'partner', 'Partner Digital Certificado', 'Eres un Partner Digital certificado de AunClick', 'fas fa-certificate')
           `).bind(userId),
         ]);
+        // +150 XP por aprobar el examen (una sola vez; no si ya lo graduo el admin)
+        if (profile.graduated !== 1) {
+          xpEarned = EXAM_XP;
+          levelInfo = await addXp(env.DB, userId, EXAM_XP);
+        }
       }
     }
 
@@ -221,6 +230,9 @@ export async function onRequestPost(context) {
       max_points: maxPoints,
       exam_attempts: newAttempts,
       attempts_remaining: Math.max(0, 3 - newAttempts),
+      xp_earned: xpEarned,
+      leveled_up: !!(levelInfo && levelInfo.leveledUp),
+      new_level: levelInfo ? levelInfo.newLevel : null,
       message: passed
         ? 'Felicidades! Aprobaste el examen con ' + scorePercent + '% y eres ahora un Partner Digital Certificado!'
         : 'No aprobaste. Obtuviste ' + scorePercent + '% (necesitas 80%). Intentos restantes: ' + Math.max(0, 3 - newAttempts) + '.',

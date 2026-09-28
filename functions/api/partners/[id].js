@@ -3,6 +3,7 @@
 // This is the ACADEMY profile, completely separate from the user dashboard profile
 
 import { corsHeaders } from '../../_lib/auth.js';
+import { calcLevel, levelName, LEVEL_XP } from '../../_lib/academy-levels.js';
 
 async function ensureTables(db) {
   var tables = [
@@ -14,15 +15,6 @@ async function ensureTables(db) {
   for (var i = 0; i < tables.length; i++) {
     try { await db.prepare(tables[i]).run(); } catch(e) {}
   }
-}
-
-function calcLevel(xp) {
-  var LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
-  var level = 1;
-  for (var i = LEVEL_XP.length - 1; i >= 0; i--) {
-    if (xp >= LEVEL_XP[i]) { level = i + 1; break; }
-  }
-  return Math.min(level, 10);
 }
 
 export async function onRequestOptions() {
@@ -97,14 +89,38 @@ export async function onRequestGet(context) {
     var xp = agentProfile ? (agentProfile.xp || 0) : 0;
     var level = calcLevel(xp);
 
+    // Ruta de aprendizaje: clases activas vs aprobadas
+    var pathTotal = 0;
+    try {
+      var pt = await env.DB.prepare('SELECT COUNT(*) AS cnt FROM agent_classes WHERE is_active = 1').first();
+      pathTotal = (pt && pt.cnt) || 0;
+    } catch(e) {}
+
+    // Certificado (Partners): fecha de emision y codigo verificable
+    var isPartner = !!agentProfile && (agentProfile.is_partner === 1 || agentProfile.exam_passed === 1 || agentProfile.graduated === 1);
+    var certificate = null;
+    if (isPartner) {
+      var issuedAt = agentProfile.exam_passed_at || agentProfile.partner_at || agentProfile.graduated_at || null;
+      var year = issuedAt ? String(issuedAt).slice(0, 4) : String(new Date().getUTCFullYear());
+      certificate = {
+        issued_at: issuedAt,
+        code: 'AC-' + year + '-' + String(user.id).padStart(5, '0'),
+      };
+    }
+
     return new Response(JSON.stringify({
       // User basic info (name, avatar, bio)
       user: user,
       // Academy-specific profile data
       agent_profile: agentProfile,
       level: level,
+      level_name: levelName(level),
+      level_xp: LEVEL_XP,
       xp: xp,
-      is_partner: agentProfile ? (agentProfile.is_partner === 1) : false,
+      is_partner: isPartner,
+      certificate: certificate,
+      path_total: pathTotal,
+      exam_attempts: agentProfile ? (agentProfile.exam_attempts || 0) : 0,
       is_graduated: agentProfile ? (agentProfile.graduated === 1) : false,
       // Academy data: badges earned
       badges: badges,

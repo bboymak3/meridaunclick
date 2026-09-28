@@ -200,6 +200,17 @@
       margin-right: 3px;
     }
 
+    .cert-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #b45309;
+      text-decoration: none;
+    }
+    .cert-link:hover { text-decoration: underline; }
     .btn-profile {
       display: inline-flex;
       align-items: center;
@@ -393,7 +404,7 @@
               '<div class="avatar-ring">' + avatarHtml + '</div>' +
               '<div class="name">' + escapeHtml(p.name) + '</div>' +
               '<div class="badges-row">' +
-                '<span class="badge ' + levelClass + '"><i class="fa-solid fa-shield-halved"></i> Nivel ' + (p.level || 1) + '</span>' +
+                '<span class="badge ' + levelClass + '"><i class="fa-solid fa-shield-halved"></i> Nivel ' + (p.level || 1) + (p.level_name ? ' · ' + escapeHtml(p.level_name) : '') + '</span>' +
                 '<span class="badge badge--xp"><i class="fa-solid fa-bolt"></i> ' + (p.xp || 0) + ' XP</span>' +
               '</div>' +
               '<div class="stats">' +
@@ -401,8 +412,11 @@
                 ' &nbsp;|&nbsp; ' +
                 '<i class="fa-solid fa-medal"></i> ' + (p.total_badges || 0) + ' medallas' +
               '</div>' +
-              '<a href="/perfil.html?id=' + p.id + '" class="btn-profile">' +
+              '<a href="/perfil.html?id=' + encodeURIComponent(p.id) + '" class="btn-profile">' +
                 '<i class="fa-solid fa-arrow-right"></i> Ver Perfil' +
+              '</a>' +
+              '<a href="/perfil.html?id=' + encodeURIComponent(p.id) + '#certificado" class="cert-link">' +
+                '<i class="fa-solid fa-certificate"></i> Ver certificado' +
               '</a>' +
             '</div>'
           );

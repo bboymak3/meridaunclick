@@ -43,6 +43,9 @@ button:active{transform:scale(.97)}
 .header-avatar img{width:100%;height:100%;object-fit:cover}
 .header-logout{background:none;color:var(--gray-500);font-size:18px;padding:6px 10px;margin-left:8px;flex-shrink:0}
 .header-profile-btn{background:var(--primary);color:#fff;font-size:12px;font-weight:600;padding:6px 12px;border-radius:var(--radius-sm);display:flex;align-items:center;gap:6px;margin-left:8px;flex-shrink:0;transition:background .2s}
+.header-edit-btn{color:var(--primary);border:1.5px solid var(--primary);font-size:12px;font-weight:600;padding:5px 10px;border-radius:var(--radius-sm);display:flex;align-items:center;gap:6px;margin-left:8px;flex-shrink:0}
+.header-edit-btn:hover{background:var(--primary-light)}
+@media(max-width:420px){.header-edit-btn span{display:none}.header-logo{font-size:15px}}
 .header-profile-btn:hover{background:var(--primary-dark);text-decoration:none;color:#fff}
 
 /* Toast */
@@ -283,6 +286,9 @@ button:active{transform:scale(.97)}
       <i class="fas fa-user"></i>
     </div>
   </a>
+  <a href="/dashboard.html#profile" class="header-edit-btn" title="Editar mi perfil (nombre, bio, WhatsApp)">
+    <i class="fas fa-user-pen"></i><span> Editar</span>
+  </a>
   <a id="headerProfileBtn" href="#" class="header-profile-btn" title="Ver mi perfil público">
     <i class="fas fa-id-card"></i> Ver mi Perfil
   </a>
@@ -302,6 +308,7 @@ button:active{transform:scale(.97)}
 <!-- Hidden file input for avatar -->
 <input type="file" class="hidden-input" id="avatarInput" accept="image/*">
 
+<script src="/js/academy-certificate.js"></script>
 <script>
 (function(){
   'use strict';
@@ -343,7 +350,8 @@ button:active{transform:scale(.97)}
     setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300)},2500);
   }
 
-  function getLevelName(l){return{3:'Aprendiz',5:'Intermedio',7:'Avanzado',10:'Experto'}[l]||''}
+  // Mismos nombres que el perfil público y el servidor (functions/_lib/academy-levels.js)
+  function getLevelName(l){ return l>=10?'Experto':l>=7?'Avanzado':l>=5?'Intermedio':l>=3?'Aprendiz':'Principiante'; }
 
   function levelBadgeClass(l){ return 'level-'+Math.min(l,10) }
 
@@ -459,118 +467,28 @@ button:active{transform:scale(.97)}
         <div class="cert-title">Partner Digital Certificado</div>
         <div class="cert-sub">Descarga tu certificado y compártelo en tus redes.</div>
       </div>
-      <button class="btn btn-sm btn-cert" onclick="downloadCertificate()"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="btn btn-sm btn-outline" href="/perfil.html?id=${encodeURIComponent(USER_ID)}#certificado"><i class="fas fa-eye"></i> Ver en mi perfil</a>
+        <button class="btn btn-sm btn-cert" onclick="downloadCertificate()"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
+      </div>
     </div>`;
-  }
-
-  let jsPdfPromise=null;
-  function loadJsPdf(){
-    if(window.jspdf&&window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
-    if(jsPdfPromise) return jsPdfPromise;
-    jsPdfPromise=new Promise(function(resolve,reject){
-      const s=document.createElement('script');
-      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      s.onload=function(){ window.jspdf&&window.jspdf.jsPDF?resolve(window.jspdf.jsPDF):reject(new Error('No se pudo cargar el generador de PDF')); };
-      s.onerror=function(){ jsPdfPromise=null; reject(new Error('No se pudo cargar el generador de PDF. Revisa tu conexión.')); };
-      document.head.appendChild(s);
-    });
-    return jsPdfPromise;
-  }
-
-  function loadImageData(src){
-    return new Promise(function(resolve){
-      const img=new Image();
-      img.onload=function(){
-        try{
-          const c=document.createElement('canvas');
-          c.width=img.naturalWidth; c.height=img.naturalHeight;
-          c.getContext('2d').drawImage(img,0,0);
-          resolve(c.toDataURL('image/jpeg',0.92));
-        }catch(e){ resolve(null); }
-      };
-      img.onerror=function(){ resolve(null); };
-      img.src=src;
-    });
   }
 
   function certificateInfo(){
     const p=(agentProgress&&agentProgress.profile)||{};
-    const raw=(examStatus&&examStatus.exam_passed_at)||p.exam_passed_at||p.partner_at||p.graduated_at||'';
-    let date=raw?new Date(String(raw).replace(' ','T')+'Z'):new Date();
-    if(isNaN(date.getTime())) date=new Date();
-    const id=String(USER_ID||userProfile.id||'0');
-    return {
-      name:String(userProfile.name||'Agente AunClick').trim(),
-      date:date,
-      dateText:date.toLocaleDateString('es-VE',{day:'numeric',month:'long',year:'numeric'}),
-      code:'AC-'+date.getFullYear()+'-'+id.padStart(5,'0'),
-      verifyUrl:window.location.origin+'/perfil.html?id='+encodeURIComponent(id)
-    };
+    return window.AcademyCertificate.info({
+      name:userProfile.name,
+      userId:USER_ID||userProfile.id,
+      issuedAt:(examStatus&&examStatus.exam_passed_at)||p.exam_passed_at||p.partner_at||p.graduated_at||''
+    });
   }
 
   async function downloadCertificate(){
     if(!isCertified()){ showToast('Aún no tienes el certificado','error'); return; }
+    if(!window.AcademyCertificate){ showToast('No se pudo cargar el certificado. Recarga la página.','error'); return; }
     showToast('Generando tu certificado...');
     try{
-      const [JsPDF,logo]=await Promise.all([loadJsPdf(),loadImageData('/images/favicon.jpeg')]);
-      const info=certificateInfo();
-      const doc=new JsPDF({orientation:'landscape',unit:'mm',format:'a4'});
-      const W=297, H=210, cx=W/2;
-      const PURPLE=[124,58,237], DARK=[31,41,55], GRAY=[107,114,128], GOLD=[217,119,6];
-
-      // Marco
-      doc.setFillColor(250,248,255); doc.rect(0,0,W,H,'F');
-      doc.setDrawColor.apply(doc,PURPLE); doc.setLineWidth(3); doc.rect(8,8,W-16,H-16);
-      doc.setDrawColor.apply(doc,GOLD); doc.setLineWidth(0.6); doc.rect(13,13,W-26,H-26);
-
-      // Encabezado
-      let y=24;
-      if(logo){ try{ doc.addImage(logo,'JPEG',cx-10,y,20,20); y+=26; }catch(e){ y+=4; } } else { y+=4; }
-      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor.apply(doc,PURPLE);
-      doc.text('AUNCLICK ACADEMY',cx,y,{align:'center'});
-      y+=16;
-      doc.setFontSize(36); doc.setTextColor.apply(doc,DARK);
-      doc.text('CERTIFICADO',cx,y,{align:'center'});
-      y+=9;
-      doc.setFontSize(13); doc.setTextColor.apply(doc,GOLD);
-      doc.text('PARTNER DIGITAL CERTIFICADO',cx,y,{align:'center'});
-
-      // Nombre
-      y+=15;
-      doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor.apply(doc,GRAY);
-      doc.text('Se otorga el presente certificado a',cx,y,{align:'center'});
-      y+=15;
-      doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,DARK);
-      let size=30; doc.setFontSize(size);
-      while(doc.getTextWidth(info.name)>220&&size>16){ size-=2; doc.setFontSize(size); }
-      doc.text(info.name,cx,y,{align:'center'});
-      doc.setDrawColor.apply(doc,PURPLE); doc.setLineWidth(0.5); doc.line(cx-75,y+4,cx+75,y+4);
-
-      // Texto
-      y+=14;
-      doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor.apply(doc,GRAY);
-      const body='por haber completado satisfactoriamente la ruta de formación de la Academia de Agentes AunClick y aprobado su evaluación final, acreditándose como Partner Digital Certificado.';
-      doc.text(doc.splitTextToSize(body,200),cx,y,{align:'center'});
-
-      // Pie: fecha, firma, código
-      const fy=H-40;
-      doc.setDrawColor.apply(doc,GRAY); doc.setLineWidth(0.3);
-      doc.line(35,fy,95,fy); doc.line(cx-30,fy,cx+30,fy); doc.line(W-95,fy,W-35,fy);
-      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor.apply(doc,DARK);
-      doc.text(info.dateText,65,fy-3,{align:'center'});
-      doc.text('AunClick Academy',cx,fy-3,{align:'center'});
-      doc.text(info.code,W-65,fy-3,{align:'center'});
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc,GRAY);
-      doc.text('Fecha de emisión',65,fy+5,{align:'center'});
-      doc.text('Dirección académica',cx,fy+5,{align:'center'});
-      doc.text('Código del certificado',W-65,fy+5,{align:'center'});
-
-      doc.setFontSize(8.5);
-      doc.text('Verifica este certificado en: '+info.verifyUrl,cx,H-19,{align:'center'});
-
-      doc.setProperties({title:'Certificado AunClick Academy - '+info.name,subject:'Partner Digital Certificado',author:'AunClick Academy'});
-      const fileName='Certificado-AunClick-'+info.name.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.pdf';
-      doc.save(fileName);
+      await window.AcademyCertificate.download(certificateInfo());
       showToast('Certificado descargado','success');
     }catch(err){
       showToast(err.message||'No se pudo generar el certificado','error');
@@ -1216,6 +1134,7 @@ button:active{transform:scale(.97)}
         <div class="exam-info-item"><div class="exam-info-value">15</div><div class="exam-info-label">Preguntas</div></div>
         <div class="exam-info-item"><div class="exam-info-value">80%</div><div class="exam-info-label">Para aprobar</div></div>
         <div class="exam-info-item"><div class="exam-info-value">${attemptsRemaining}</div><div class="exam-info-label">Intentos restantes</div></div>
+        <div class="exam-info-item"><div class="exam-info-value">+${examStatus.exam_xp||150}</div><div class="exam-info-label">XP al aprobar</div></div>
       </div>
       ${canTake
         ?'<button class="btn btn-primary btn-block" onclick="startExam()"><i class="fas fa-file-alt"></i> Comenzar Examen</button>'
@@ -1373,6 +1292,8 @@ button:active{transform:scale(.97)}
       html+=`<div class="results-score pass">${r.score_percent}%</div>`;
       html+=`<div class="results-message" style="font-size:16px;font-weight:700;color:var(--success)">¡Aprobaste!</div>`;
       html+=`<div class="results-message">Eres ahora un <strong>Partner Digital Certificado</strong></div>`;
+      if(r.xp_earned) html+=`<div class="results-xp"><i class="fas fa-bolt"></i> +${r.xp_earned} XP ganados</div>`;
+      if(r.leveled_up) html+=`<div class="results-levelup"><i class="fas fa-arrow-up"></i> ¡Subiste al nivel ${r.new_level}! · ${getLevelName(r.new_level)}</div>`;
       html+=`<button class="btn btn-cert" style="margin-top:10px" onclick="downloadCertificate()"><i class="fas fa-file-pdf"></i> Descargar certificado (PDF)</button>`;
     }else{
       html+=`<i class="fas fa-times-circle" style="font-size:48px;color:var(--danger)"></i>`;
