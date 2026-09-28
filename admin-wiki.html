@@ -141,6 +141,7 @@
                     <legend>Listas (una por línea)</legend>
                     <div class="field"><label>Economía y rubros</label><textarea name="economia" class="tall"></textarea></div>
                     <div class="field"><label>Qué visitar (lugares turísticos)</label><textarea name="atractivos" class="tall"></textarea></div>
+                    <div class="field"><label>Ferias y fiestas</label><textarea name="ferias" class="tall" placeholder="Feria Internacional del Sol (febrero)"></textarea></div>
                     <div class="field"><label>Municipios</label><textarea name="municipios" class="tall"></textarea></div>
                 </fieldset>
 
@@ -177,10 +178,10 @@
         var data = null;
         var current = '_global';
 
-        var LIST_FIELDS = ['economia', 'atractivos', 'municipios'];
+        var LIST_FIELDS = ['economia', 'atractivos', 'ferias', 'municipios'];
         var PAIR_FIELDS = ['emergencias_extra', 'envios'];
         var STATE_FIELDS = ['capital', 'area', 'population', 'region', 'gentilicio', 'resena', 'clima', 'banner_url',
-            'economia', 'atractivos', 'municipios', 'emergencias_extra', 'envios', 'datos_utiles'];
+            'economia', 'atractivos', 'ferias', 'municipios', 'emergencias_extra', 'envios', 'datos_utiles'];
 
         function $(id) { return document.getElementById(id); }
         function msg(text, ok) {

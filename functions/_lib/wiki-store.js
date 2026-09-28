@@ -85,7 +85,7 @@ export function mergeGlobal(override) {
 }
 
 // ─── Validation of admin input ───
-const LIST_FIELDS = ['economia', 'atractivos', 'municipios'];
+const LIST_FIELDS = ['economia', 'atractivos', 'ferias', 'municipios'];
 const PAIR_FIELDS = ['emergencias_extra', 'envios'];
 
 function toLines(v) {
