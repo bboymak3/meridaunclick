@@ -12193,3 +12193,36 @@ a.btn-icon {
     color: #475569;
     line-height: 1.55;
 }
+
+/* ─── State guide bar (index): enlace a la wiki del estado detectado ─── */
+.state-guide-bar {
+    max-width: 1200px;
+    margin: 12px auto;
+    padding: 0 16px;
+    box-sizing: border-box;
+}
+.state-guide-inner {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px 14px;
+    background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+    border: 1px solid #bfdbfe;
+    border-radius: 16px;
+    padding: 12px 16px;
+}
+.state-guide-inner > i { color: #006EE3; font-size: 1.4rem; }
+.state-guide-text { flex: 1 1 220px; min-width: 0; }
+.state-guide-text strong { display: block; color: #0f172a; }
+.state-guide-text span { font-size: 0.85rem; color: #475569; }
+.state-guide-btn {
+    background: #006EE3;
+    color: #fff !important;
+    font-weight: 700;
+    font-size: 0.88rem;
+    padding: 9px 14px;
+    border-radius: 10px;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.state-guide-link { font-weight: 700; font-size: 0.88rem; color: #006EE3; text-decoration: none; }

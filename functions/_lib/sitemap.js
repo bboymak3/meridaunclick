@@ -9,6 +9,8 @@
 //
 // Only canonical URLs are listed (no /negocio/:slug redirects, no /web/:slug,
 // whose canonical points to the business page).
+import { ESTADOS, findEstado } from './estados-data.js';
+import { fetchMedicos } from './medicos.js';
 
 export const BASE_URL = 'https://holax.com.ve';
 export const MEDICAL_CATEGORY = 'medicina-servicio-medico';
@@ -197,24 +199,25 @@ export async function buildPaginas(env) {
     }
   } catch (e) { /* categories table missing */ }
 
-  // States with approved businesses (deduplicated by slug)
+  // State wiki pages: all 24 entities (+ index), lastmod from their newest business
+  entries.push(urlEntry({ loc: `${BASE_URL}/estados`, priority: '0.8', changefreq: 'monthly' }));
+  const stateLast = new Map();
   try {
     const r = await env.DB.prepare(
       `SELECT TRIM(state) as state, MAX(COALESCE(updated_at, created_at)) as last_updated
        FROM businesses WHERE status = 'approved' AND state IS NOT NULL AND TRIM(state) != ''
        GROUP BY TRIM(state)`
     ).all();
-    const seen = new Map();
     for (const st of r.results || []) {
-      const slug = slugify(st.state);
-      if (!slug) continue;
-      const prev = seen.get(slug);
-      if (!prev || (st.last_updated || '') > (prev || '')) seen.set(slug, st.last_updated);
-    }
-    for (const [slug, last] of seen) {
-      entries.push(urlEntry({ loc: `${BASE_URL}/estado/${slug}`, lastmod: toDate(last), priority: '0.6', changefreq: 'weekly' }));
+      const e = findEstado(st.state);
+      if (!e) continue;
+      const prev = stateLast.get(e.slug) || '';
+      if ((st.last_updated || '') > prev) stateLast.set(e.slug, st.last_updated);
     }
   } catch (e) { /* ignore */ }
+  for (const e of ESTADOS) {
+    entries.push(urlEntry({ loc: `${BASE_URL}/estado/${e.slug}`, lastmod: toDate(stateLast.get(e.slug)), priority: '0.7', changefreq: 'weekly' }));
+  }
 
   // Category + state landings (non-medical; medical ones go in sitemap-medicos)
   for (const cs of await fetchCategoryStates(env)) {
@@ -250,6 +253,21 @@ export async function buildMedicos(env) {
 
   // Medical landing pages: all of Venezuela + one per state
   entries.unshift(urlEntry({ loc: searchLandingUrl(MEDICAL_CATEGORY), lastmod: latest, priority: '0.9', changefreq: 'daily' }));
+
+  // /medicos + specialty pages that have at least one doctor (+ per state)
+  entries.push(urlEntry({ loc: `${BASE_URL}/medicos`, lastmod: latest, priority: '0.9', changefreq: 'daily' }));
+  try {
+    const espSeen = new Set();
+    const espState = new Set();
+    for (const m of await fetchMedicos(env)) {
+      for (const e of m.esps) {
+        espSeen.add(e.slug);
+        if (m.estado) espState.add(e.slug + '/' + m.estado.slug);
+      }
+    }
+    for (const slug of espSeen) entries.push(urlEntry({ loc: `${BASE_URL}/medicos/${slug}`, priority: '0.8', changefreq: 'weekly' }));
+    for (const pair of espState) entries.push(urlEntry({ loc: `${BASE_URL}/medicos/${pair}`, priority: '0.7', changefreq: 'weekly' }));
+  } catch (e) { /* ignore */ }
   for (const cs of await fetchCategoryStates(env)) {
     if (cs.category_slug !== MEDICAL_CATEGORY) continue;
     entries.push(urlEntry({ loc: searchLandingUrl(MEDICAL_CATEGORY, cs.state), lastmod: toDate(cs.last_updated), priority: '0.8', changefreq: 'weekly' }));

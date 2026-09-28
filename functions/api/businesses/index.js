@@ -1,6 +1,7 @@
 // functions/api/businesses/index.js
 // GET: List businesses (with filters)
 // POST: Create business (requires auth)
+import { matchEspecialidades } from '../../../js/especialidades.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -121,8 +122,16 @@ export async function onRequestGet(context) {
       conditions.push('p.featured = 1');
     }
     if (especialidad) {
-      conditions.push('p.especialidad LIKE ?');
-      bindings.push(`%${especialidad}%`);
+      // Match the typed text plus the catalog name/synonyms of the specialty
+      // (e.g. "Cardiología" also finds "cardiologo", "cardio")
+      const terms = new Set([especialidad]);
+      for (const e of matchEspecialidades(especialidad)) {
+        terms.add(e.name);
+        e.match.forEach(m => terms.add(m));
+      }
+      const list = [...terms].slice(0, 12);
+      conditions.push('(' + list.map(() => 'p.especialidad LIKE ?').join(' OR ') + ')');
+      list.forEach(t => bindings.push(`%${t}%`));
     }
     // Expired posts go to the end, not hidden
     // No filter — expired posts are sorted last via ORDER BY
