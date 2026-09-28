@@ -107,6 +107,9 @@ export async function onRequestPut(context) {
     if (body.video_url !== undefined) {
       await env.DB.prepare('UPDATE agent_classes SET video_url = ? WHERE id = ?').bind(videoUrl, classId).run();
     }
+    if (body.teacher !== undefined) {
+      await env.DB.prepare('UPDATE agent_classes SET teacher = ? WHERE id = ?').bind(String(body.teacher || '').trim().slice(0, 100), classId).run();
+    }
     if (questions) await replaceQuestions(env.DB, classId, questions);
 
     return new Response(JSON.stringify({ message: 'Clase actualizada exitosamente' }), {

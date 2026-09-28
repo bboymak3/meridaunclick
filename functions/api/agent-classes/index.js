@@ -52,7 +52,7 @@ export async function onRequestGet(context) {
       query = "SELECT ac.*, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, (SELECT COUNT(*) FROM user_class_progress WHERE class_id = ac.id AND completed = 1) as completions FROM agent_classes ac ORDER BY ac.sort_order ASC, ac.id ASC";
       params = [];
     } else {
-      query = "SELECT ac.id, ac.title, ac.description, ac.content, ac.xp_reward, ac.sort_order, ac.video_url, ac.module, ac.module_order, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, COALESCE((SELECT completed FROM user_class_progress WHERE class_id = ac.id AND user_id = ?), 0) as is_completed, COALESCE((SELECT video_completed FROM user_class_progress WHERE class_id = ac.id AND user_id = ?), 0) as video_watched FROM agent_classes ac WHERE ac.is_active = 1 ORDER BY ac.sort_order ASC, ac.id ASC";
+      query = "SELECT ac.id, ac.title, ac.description, ac.content, ac.xp_reward, ac.sort_order, ac.video_url, ac.teacher, ac.module, ac.module_order, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, COALESCE((SELECT completed FROM user_class_progress WHERE class_id = ac.id AND user_id = ?), 0) as is_completed, COALESCE((SELECT video_completed FROM user_class_progress WHERE class_id = ac.id AND user_id = ?), 0) as video_watched FROM agent_classes ac WHERE ac.is_active = 1 ORDER BY ac.sort_order ASC, ac.id ASC";
       params = [auth.user.id, auth.user.id];
     }
 
@@ -114,9 +114,18 @@ export async function onRequestPost(context) {
 
     await ensureTables(env.DB);
 
+    // Profesor de la clase: el indicado o, si no, el admin que la crea
+    var teacher = String(body.teacher || '').trim().slice(0, 100);
+    if (!teacher) {
+      try {
+        var me = await env.DB.prepare('SELECT name FROM users WHERE id = ?').bind(auth.user.id).first();
+        teacher = (me && me.name) ? String(me.name).slice(0, 100) : '';
+      } catch (e) {}
+    }
+
     // BUG #8 FIX: Use !== undefined instead of || to allow explicit 0 values
     var result = await env.DB.prepare(
-      'INSERT INTO agent_classes (title, description, content, xp_reward, sort_order, is_active, module, module_order, video_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO agent_classes (title, description, content, xp_reward, sort_order, is_active, module, module_order, video_url, teacher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).bind(
       title.trim(),
       description || '',
@@ -126,7 +135,8 @@ export async function onRequestPost(context) {
       is_active !== undefined ? (is_active ? 1 : 0) : 1,
       module || 'General',
       module_order !== undefined ? module_order : 0,
-      video_url
+      video_url,
+      teacher
     ).run();
 
     var classId = result.meta.last_row_id;

@@ -308,7 +308,15 @@
             '</div>';
     }
 
+    function fillTeacherSuggestions(list) {
+        var dl = document.getElementById('academyTeacherList');
+        if (!dl) return;
+        dl.innerHTML = (list || []).filter(function(c) { return c && c.name; })
+            .map(function(c) { return '<option value="' + _esc(c.name) + '"></option>'; }).join('');
+    }
+
     function renderAcademyChannels(list) {
+        fillTeacherSuggestions(list);
         var box = document.getElementById('academyChannelsList');
         if (!box) return;
         var rows = (list && list.length) ? list : [{}];
@@ -381,6 +389,7 @@
                 document.getElementById('academyClassModule').value = 'General';
                 document.getElementById('academyClassModuleOrder').value = '0';
                 document.getElementById('academyClassVideoUrl').value = '';
+                document.getElementById('academyClassTeacher').value = '';
                 renderAcademyVideoQuestions([]);
                 updateAcademyVideoUI();
                 document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-plus-circle" style="color:#7c3aed;"></i> Nueva Clase';
@@ -518,7 +527,7 @@
             var classes = data.classes || [];
             var totalQ = classes.reduce(function(s, c) { return s + (c.question_count || 0); }, 0);
             var totalComp = classes.reduce(function(s, c) { return s + (c.completions || 0); }, 0);
-            var activeC = classes.filter(function(c) { return c.is_active === 1; }).length;
+            var activeC = classes.filter(function(c) { return Number(c.is_active) === 1; }).length;
             var statsEl = document.getElementById('academyStats');
             if (statsEl) {
                 statsEl.innerHTML =
@@ -553,12 +562,13 @@
                 html += '<tr><td colspan="7" style="background:linear-gradient(90deg,' + mColor + '12,' + mColor + '06);padding:10px 12px;font-weight:700;font-size:0.85rem;color:' + mColor + ';"><i class="fas fa-book"></i> ' + _esc(mod) + ' (' + grouped[mod].length + ' clases)</td></tr>';
                 grouped[mod].forEach(function(c) {
                 html += '<tr>';
-                html += '<td><strong>' + _esc(c.title) + '</strong>' + (academyYoutubeId(c.video_url) ? ' <i class="fab fa-youtube" style="color:#dc2626;" title="Clase con video de YouTube"></i>' : '') + '</td>';
+                html += '<td><strong>' + _esc(c.title) + '</strong>' + (academyYoutubeId(c.video_url) ? ' <i class="fab fa-youtube" style="color:#dc2626;" title="Clase con video de YouTube"></i>' : '') +
+                    (c.teacher ? '<div style="font-size:0.72rem;color:#6b7280;"><i class="fas fa-chalkboard-teacher"></i> ' + _esc(c.teacher) + '</div>' : '<div style="font-size:0.72rem;color:#cbd5e1;">Sin profesor</div>') + '</td>';
                 html += '<td><button onclick="loadAcademyQuestions(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2563eb;"><i class="fas fa-question-circle"></i> ' + (c.question_count || 0) + '</button></td>';
-                html += '<td><span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;">+' + (c.xp_reward || 0) + ' XP</span></td>';
+                html += '<td><span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:600;white-space:nowrap;">' + (academyYoutubeId(c.video_url) ? 'hasta +30' : '+' + (c.xp_reward || 0)) + ' XP</span></td>';
                 html += '<td>' + (c.completions || 0) + '</td>';
                 html += '<td>' + c.sort_order + '</td>';
-                html += '<td>' + (c.is_active === 1 ? '<span style="color:#059669;font-size:0.8rem;"><i class="fas fa-check-circle"></i> Activa</span>' : '<span style="color:#dc2626;font-size:0.8rem;"><i class="fas fa-times-circle"></i> Inactiva</span>') + '</td>';
+                html += '<td>' + (Number(c.is_active) === 1 ? '<span style="color:#059669;font-size:0.8rem;"><i class="fas fa-check-circle"></i> Activa</span>' : '<span style="color:#dc2626;font-size:0.8rem;"><i class="fas fa-times-circle"></i> Inactiva</span>') + '</td>';
                 html += '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">' +
                     '<button onclick="academyEditClass(' + c.id + ')" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#374151;" title="Editar"><i class="fas fa-edit"></i></button>' +
                     '<button onclick="loadAcademyQuestions(' + c.id + ',\'' + _esc(c.title).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.75rem;color:#2563eb;" title="Preguntas"><i class="fas fa-list"></i></button>' +
@@ -587,7 +597,8 @@
             is_active: document.getElementById('academyClassActive').checked,
             module: document.getElementById('academyClassModule').value,
             module_order: parseInt(document.getElementById('academyClassModuleOrder').value) || 0,
-            video_url: document.getElementById('academyClassVideoUrl').value.trim()
+            video_url: document.getElementById('academyClassVideoUrl').value.trim(),
+            teacher: document.getElementById('academyClassTeacher').value.trim()
         };
         // Preguntas: las 5 del video, o la lista de preguntas de una clase normal.
         // El servidor reemplaza las preguntas de la clase por esta lista.
@@ -626,10 +637,11 @@
             document.getElementById('academyClassContent').value = cls.content || '';
             document.getElementById('academyClassXP').value = cls.xp_reward || 10;
             document.getElementById('academyClassOrder').value = cls.sort_order || 0;
-            document.getElementById('academyClassActive').checked = cls.is_active === 1;
+            document.getElementById('academyClassActive').checked = Number(cls.is_active) === 1;
             document.getElementById('academyClassModule').value = cls.module || 'General';
             document.getElementById('academyClassModuleOrder').value = cls.module_order || 0;
             document.getElementById('academyClassVideoUrl').value = cls.video_url || '';
+            document.getElementById('academyClassTeacher').value = cls.teacher || '';
             renderAcademyVideoQuestions([]);
             updateAcademyVideoUI();
             document.getElementById('academyEditorTitle').innerHTML = '<i class="fas fa-edit" style="color:#7c3aed;"></i> Editar Clase: ' + _esc(cls.title);
@@ -788,90 +800,66 @@
     async function loadAcademyAgents() {
         var tbody = document.getElementById('academyAgentsTableBody');
         if (!tbody) return;
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:30px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>';
         try {
-            var resp = await fetch(API + '/users?role=agent&limit=200', {
-                headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
-            });
-            var data = await resp.json();
-            var users = data.users || data.results || [];
-            if (!users.length) {
-                tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#94a3b8;padding:16px;">No hay agentes registrados</div></td></tr>';
+            // Una sola consulta con todos los alumnos (agentes y usuarios con perfil de academia)
+            var data = await api.get('/admin/academy-agents');
+            var agents = data.agents || [];
+            var pathTotal = data.path_total || 0;
+            if (!agents.length) {
+                tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#94a3b8;padding:16px;">Aún no hay alumnos en la academia</div></td></tr>';
                 return;
             }
-            var profiles = {};
-            for (var i = 0; i < users.length; i++) {
-                try {
-                    var pResp = await fetch(API + '/partners/' + users[i].id, {
-                        headers: { 'Authorization': 'Bearer ' + getToken(), 'Content-Type': 'application/json' }
-                    });
-                    var pData = await pResp.json();
-                    profiles[users[i].id] = pData;
-                } catch(ex) {}
-            }
+            window._academyAgentCerts = {};
+            window._academyAgentNames = {};
             var html = '';
             var lvlColors = ['#6b7280','#7c3aed','#2563eb','#059669','#d97706','#dc2626','#8b5cf6','#0891b2','#65a30d','#ea580c'];
-            for (var i = 0; i < users.length; i++) {
-                var u = users[i];
-                var p = profiles[u.id] || {};
-                var lvl = p.level || 1;
-                var xp = p.xp || 0;
-                var grad = p.is_graduated || p.graduated || false;
-                var LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
-                var xpPrev = lvl <= 1 ? 0 : LEVEL_XP[lvl - 2];
-                var xpForNext = lvl >= 10 ? LEVEL_XP[9] : LEVEL_XP[lvl - 1];
-                var xpInLevel = xp - xpPrev;
-                var xpNeeded = xpForNext - xpPrev;
-                var pct = lvl >= 10 ? 100 : Math.min(100, Math.max(0, Math.round((xpInLevel / xpNeeded) * 100)));
+            var LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
+            var btn = 'background:none;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;';
+            agents.forEach(function(a) {
+                var lvl = a.level || 1;
+                var xp = a.xp || 0;
+                var cur = LEVEL_XP[lvl - 1] || 0;
+                var next = lvl < 10 ? LEVEL_XP[lvl] : null;
+                var pct = next ? Math.min(100, Math.max(0, Math.round((xp - cur) / (next - cur) * 100))) : 100;
                 var lvlColor = lvlColors[Math.min(lvl - 1, lvlColors.length - 1)];
+                var safeName = _esc(a.name || 'Sin nombre');
+                window._academyAgentNames[a.id] = a.name || '';
                 html += '<tr>';
                 html += '<td><div style="display:flex;align-items:center;gap:8px;">';
-                if (u.avatar) {
-                    html += '<img src="' + _esc(u.avatar) + '" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">';
-                } else {
-                    html += '<div style="width:28px;height:28px;border-radius:50%;background:' + lvlColor + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;">' + _esc(u.name).charAt(0).toUpperCase() + '</div>';
-                }
-                html += '<strong>' + _esc(u.name) + '</strong></div></td>';
-                html += '<td><span style="background:' + lvlColor + '15;color:' + lvlColor + ';border:1px solid ' + lvlColor + '30;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;">Nivel ' + lvl + '</span></td>';
-                html += '<td style="min-width:120px;"><div style="font-size:0.72rem;color:#6b7280;margin-bottom:3px;">' + xp + ' XP</div><div style="background:#e5e7eb;border-radius:6px;height:6px;overflow:hidden;"><div style="background:' + lvlColor + ';height:100%;border-radius:6px;width:' + pct + '%;transition:width 0.3s;"></div></div></td>';
-                html += '<td>' + (p.total_classes_completed || 0) + '</td>';
-                html += '<td>' + (p.total_badges || 0) + '</td>';
+                html += a.avatar
+                    ? '<img src="' + _esc(a.avatar) + '" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">'
+                    : '<div style="width:28px;height:28px;border-radius:50%;background:' + lvlColor + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;">' + safeName.charAt(0).toUpperCase() + '</div>';
+                html += '<div><strong>' + safeName + '</strong>' + (a.role === 'agent' ? '' : '<div style="font-size:0.68rem;color:#94a3b8;">' + _esc(a.role === 'admin' ? 'Administrador' : 'Usuario') + '</div>') + '</div></div></td>';
+                html += '<td><span style="background:' + lvlColor + '15;color:' + lvlColor + ';border:1px solid ' + lvlColor + '30;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;white-space:nowrap;">Nivel ' + lvl + (a.level_name ? ' · ' + _esc(a.level_name) : '') + '</span></td>';
+                html += '<td style="min-width:120px;"><div style="font-size:0.72rem;color:#6b7280;margin-bottom:3px;">' + xp + ' XP</div><div style="background:#e5e7eb;border-radius:6px;height:6px;overflow:hidden;"><div style="background:' + lvlColor + ';height:100%;border-radius:6px;width:' + pct + '%;"></div></div></td>';
+                html += '<td>' + (a.classes_completed || 0) + (pathTotal ? ' / ' + pathTotal : '') + '</td>';
+                html += '<td>' + (a.total_badges || 0) + '</td>';
                 html += '<td>';
-                if (p.exam_passed) {
-                    html += '<span style="color:#059669;font-size:0.8rem;"><i class="fas fa-check-circle"></i> Aprobado</span>';
-                } else if (p.exam_attempts > 0) {
-                    html += '<span style="color:#dc2626;font-size:0.8rem;"><i class="fas fa-times-circle"></i> ' + p.exam_attempts + ' intentos</span>';
-                } else {
-                    html += '<span style="color:#94a3b8;font-size:0.8rem;">-</span>';
-                }
-                html += '</td>';
-                html += '<td>';
-                if (p.is_partner) {
-                    html += '<span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Partner</span>';
-                } else if (grad) {
-                    html += '<span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Graduado</span>';
-                } else {
-                    html += '<span style="color:#94a3b8;font-size:0.8rem;">-</span>';
-                }
+                if (a.exam_passed) html += '<span style="color:#059669;font-size:0.8rem;"><i class="fas fa-check-circle"></i> Aprobado</span>';
+                else if (a.exam_attempts > 0) html += '<span style="color:#dc2626;font-size:0.8rem;"><i class="fas fa-times-circle"></i> ' + a.exam_attempts + '/3 intentos</span>';
+                else html += '<span style="color:#94a3b8;font-size:0.8rem;">-</span>';
+                html += '</td><td>';
+                if (a.is_partner) html += '<span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:0.72rem;font-weight:600;">Partner</span>';
+                else html += '<span style="color:#94a3b8;font-size:0.8rem;">-</span>';
                 html += '</td>';
                 html += '<td><div style="display:flex;gap:4px;flex-wrap:wrap;">';
-                html += '<a href="/perfil.html?id=' + u.id + '" target="_blank" style="background:none;border:1px solid #bfdbfe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#2563eb;text-decoration:none;" title="Ver Perfil"><i class="fas fa-external-link-alt"></i></a>';
-                if (p.is_partner) {
-                    window._academyAgentCerts = window._academyAgentCerts || {};
-                    window._academyAgentCerts[u.id] = { name: u.name, issued_at: p.certificate && p.certificate.issued_at };
-                    html += '<button onclick="academyShowCertificate(' + u.id + ', window._academyAgentCerts[' + u.id + '])" style="background:none;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#b45309;" title="Ver certificado"><i class="fas fa-certificate"></i></button>';
+                html += '<a href="/perfil.html?id=' + a.id + '" target="_blank" style="' + btn + 'border:1px solid #bfdbfe;color:#2563eb;text-decoration:none;" title="Ver perfil"><i class="fas fa-external-link-alt"></i></a>';
+                if (a.is_partner) {
+                    window._academyAgentCerts[a.id] = { name: a.name, issued_at: a.certificate_issued_at };
+                    html += '<button onclick="academyShowCertificate(' + a.id + ', window._academyAgentCerts[' + a.id + '])" style="' + btn + 'border:1px solid #fde68a;color:#b45309;" title="Ver certificado"><i class="fas fa-certificate"></i></button>';
+                } else {
+                    html += '<button onclick="academyGraduateAgent(' + a.id + ', window._academyAgentNames[' + a.id + '])" style="' + btn + 'border:1px solid #fde68a;color:#d97706;" title="Graduar"><i class="fas fa-graduation-cap"></i></button>';
                 }
-                if (!grad) {
-                    html += '<button onclick="academyGraduateAgent(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#d97706;" title="Graduar"><i class="fas fa-graduation-cap"></i></button>';
-                }
-                html += '<button onclick="academyAwardBadge(' + u.id + ',\'' + _esc(u.name).replace(/'/g, "\\\\'") + '\')" style="background:none;border:1px solid #ddd6fe;border-radius:6px;padding:3px 8px;cursor:pointer;font-size:0.72rem;color:#7c3aed;" title="Dar Medalla"><i class="fas fa-medal"></i></button>';
-                html += '</div></td>';
-                html += '</tr>';
-            }
+                html += '<button onclick="academyAwardBadge(' + a.id + ', window._academyAgentNames[' + a.id + '])" style="' + btn + 'border:1px solid #ddd6fe;color:#7c3aed;" title="Dar medalla"><i class="fas fa-medal"></i></button>';
+                html += '</div></td></tr>';
+            });
             tbody.innerHTML = html;
         } catch(e) {
-            tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar agentes</p></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8"><div style="text-align:center;color:#f59e0b;padding:16px;"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar agentes: ' + _esc(e.message) + '</p><button onclick="academyReloadAgents()" style="margin-top:8px;background:#7c3aed;color:#fff;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;">Reintentar</button></div></td></tr>';
         }
     }
+    window.academyReloadAgents = loadAcademyAgents;
 
     function renderPendingQuestionsPreview() {
         var wrap = document.getElementById('academyQPreviewWrap');

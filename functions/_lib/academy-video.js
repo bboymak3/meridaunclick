@@ -32,6 +32,7 @@ export function youtubeId(url) {
 export async function ensureAcademyVideoSchema(db) {
   var alters = [
     "ALTER TABLE agent_classes ADD COLUMN video_url TEXT DEFAULT ''",
+    "ALTER TABLE agent_classes ADD COLUMN teacher TEXT DEFAULT ''",
     "ALTER TABLE user_class_progress ADD COLUMN video_completed INTEGER DEFAULT 0",
     "ALTER TABLE user_class_progress ADD COLUMN video_started_at TEXT",
     "ALTER TABLE user_class_progress ADD COLUMN video_duration INTEGER DEFAULT 0"
