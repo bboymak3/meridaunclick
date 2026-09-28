@@ -1,8 +1,10 @@
 // functions/api/agent-exam/index.js
 // GET: Get exam status
 // POST: Submit exam answers - 15 questions, 80% to pass, max 3 attempts
+// Requisito: haber aprobado todas las clases activas de la ruta
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
+import { getPath } from '../../_lib/academy-path.js';
 
 function calcLevel(xp) {
   const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
@@ -49,17 +51,21 @@ export async function onRequestGet(context) {
       profile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
     }
 
-    // Check prerequisites
+    // Requisito: aprobar todas las clases de la ruta
     const level = calcLevel(profile.xp);
+    const path = await getPath(env.DB, userId);
 
     return new Response(JSON.stringify({
       level,
+      requirement_met: path.exam_unlocked,
+      path_completed: path.completed,
+      path_total: path.total,
       exam_passed: profile.exam_passed === 1,
       exam_passed_at: profile.exam_passed_at,
       exam_attempts: profile.exam_attempts || 0,
       max_attempts: 3,
       attempts_remaining: Math.max(0, 3 - (profile.exam_attempts || 0)),
-      can_take_exam: level >= 7 && profile.exam_passed !== 1 && (profile.exam_attempts || 0) < 3,
+      can_take_exam: path.exam_unlocked && profile.exam_passed !== 1 && (profile.exam_attempts || 0) < 3,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -97,10 +103,10 @@ export async function onRequestPost(context) {
       });
     }
 
-    // Check level requirement (>= 7)
-    const level = calcLevel(profile.xp);
-    if (level < 7) {
-      return new Response(JSON.stringify({ error: 'Necesitas alcanzar nivel 7 para tomar el examen', required_level: 7, current_level: level }), {
+    // Requisito: aprobar todas las clases de la ruta
+    const path = await getPath(env.DB, userId);
+    if (!path.exam_unlocked) {
+      return new Response(JSON.stringify({ error: 'Debes aprobar todas las clases antes del examen final', path_completed: path.completed, path_total: path.total }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -136,10 +142,16 @@ export async function onRequestPost(context) {
     let totalPoints = 0;
     let maxPoints = 0;
     let correct = 0;
+    let graded = 0;
 
+    const seen = {};
     for (const ans of answers) {
+      // Cada pregunta cuenta una sola vez
+      if (!ans || seen[ans.question_id]) continue;
+      seen[ans.question_id] = true;
       const q = allQuestions.find(function(q) { return q.id === ans.question_id; });
       if (q) {
+        graded++;
         maxPoints += (q.points || 10);
         var isCorrect = String(q.correct_answer).toLowerCase() === String(ans.answer).toLowerCase();
         if (isCorrect) {
@@ -149,7 +161,16 @@ export async function onRequestPost(context) {
       }
     }
 
-    var scorePercent = maxPoints > 0 ? Math.round((totalPoints / maxPoints) * 100) : 0;
+    // Minimo 10 preguntas distintas y validas (no se gasta un intento)
+    if (graded < 10) {
+      return new Response(JSON.stringify({ error: 'Debes responder al menos 10 preguntas distintas del examen' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Calificacion = % de respuestas correctas (las preguntas de video valen
+    // 2 pts y las normales 10, asi que no se pondera por puntos)
+    var scorePercent = Math.round((correct / graded) * 100);
     var passed = scorePercent >= 80;
 
     // Update exam attempts
@@ -179,8 +200,8 @@ export async function onRequestPost(context) {
           `).bind(userId),
           env.DB.prepare(`
             INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon)
-            VALUES (?, 'exam_passed', 'Examen Aprobado', 'Aprobaste el examen final con ' + scorePercent + '% de calificacion', 'fas fa-trophy')
-          `).bind(userId),
+            VALUES (?, 'exam_passed', 'Examen Aprobado', ?, 'fas fa-trophy')
+          `).bind(userId, 'Aprobaste el examen final con ' + scorePercent + '% de calificacion'),
           env.DB.prepare(`
             INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon)
             VALUES (?, 'partner', 'Partner Digital Certificado', 'Eres un Partner Digital certificado de AunClick', 'fas fa-certificate')
@@ -195,7 +216,7 @@ export async function onRequestPost(context) {
       passed,
       score_percent: scorePercent,
       correct_answers: correct,
-      total_questions: answers.length,
+      total_questions: graded,
       total_points: totalPoints,
       max_points: maxPoints,
       exam_attempts: newAttempts,
