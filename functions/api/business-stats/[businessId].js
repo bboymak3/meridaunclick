@@ -170,7 +170,10 @@ export async function onRequestGet(context) {
     const days = getPeriodDays(periodParam);
     const sinceDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-    const [totals, dailyViews, dailyWhatsapp] = await Promise.all([
+    // Previous period of the same length (for "vs. mes anterior")
+    const prevSince = new Date(Date.now() - 2 * days * 24 * 60 * 60 * 1000).toISOString();
+
+    const [totals, dailyViews, dailyWhatsapp, prevTotals] = await Promise.all([
       env.DB.prepare(`
         SELECT
           COUNT(CASE WHEN event_type = 'view' THEN 1 END) as total_views,
@@ -197,6 +200,14 @@ export async function onRequestGet(context) {
         GROUP BY date(created_at)
         ORDER BY date(created_at) ASC
       `).bind(businessIdNum, sinceDate).all(),
+
+      env.DB.prepare(`
+        SELECT
+          COUNT(CASE WHEN event_type = 'view' THEN 1 END) as views,
+          COUNT(CASE WHEN event_type IN ('whatsapp_click', 'phone_click') THEN 1 END) as contacts
+        FROM business_analytics
+        WHERE business_id = ? AND created_at > ? AND created_at <= ?
+      `).bind(businessIdNum, prevSince, sinceDate).first(),
     ]);
 
     return new Response(JSON.stringify({
@@ -209,6 +220,8 @@ export async function onRequestGet(context) {
       total_shares: totals.total_shares || 0,
       daily_views: dailyViews.results || [],
       daily_whatsapp: dailyWhatsapp.results || [],
+      prev_views: (prevTotals && prevTotals.views) || 0,
+      prev_contacts: (prevTotals && prevTotals.contacts) || 0,
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

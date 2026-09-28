@@ -12353,3 +12353,31 @@ a.btn-icon {
 @media (min-width: 769px) {
     #searchResultsGrid.list-view .business-card-image { width: 150px; min-width: 150px; }
 }
+
+/* ─── Panel: editor de horario por día y preguntas frecuentes ─── */
+.hx-editor-hint { display: block; color: #64748b; font-size: 0.8rem; margin: 4px 0 8px; }
+.hx-hours-editor { display: flex; flex-direction: column; gap: 6px; }
+.hx-day { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f8fafc; }
+.hx-day.is-on { background: #eff6ff; border-color: #bfdbfe; }
+.hx-day-name { display: flex; align-items: center; gap: 6px; width: 110px; font-weight: 600; font-size: 0.88rem; cursor: pointer; }
+.hx-day-ranges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hx-day:not(.is-on) .hx-day-ranges { opacity: 0.45; pointer-events: none; }
+.hx-range { display: inline-flex; align-items: center; gap: 4px; font-size: 0.85rem; }
+.hx-range[hidden] { display: none; }
+.hx-range input[type=time] { padding: 5px 6px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; font-size: 0.85rem; }
+.hx-add2, .hx-copy-week, .hx-faq-add { border: 1px dashed #93c5fd; background: #fff; color: #006EE3; border-radius: 8px; padding: 5px 10px; font: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+.hx-hours-tools { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
+.hx-hours-tools .hx-note { flex: 1; min-width: 200px; }
+.hx-faq-editor { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+.hx-faq-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 10px; background: #f8fafc; }
+.hx-faq-row .hx-faq-q { grid-column: 1; }
+.hx-faq-row .hx-faq-a { grid-column: 1; }
+.hx-faq-row .hx-faq-del { grid-column: 2; grid-row: 1 / span 2; align-self: start; border: 0; background: #fee2e2; color: #b91c1c; border-radius: 8px; width: 34px; height: 34px; cursor: pointer; }
+
+/* ─── Panel: resumen de estadísticas del mes ─── */
+.hx-stats-summary { background: linear-gradient(135deg, #0052ab, #006EE3); color: #fff; border-radius: 14px; padding: 16px 18px; margin-bottom: 16px; }
+.hx-stats-summary p { margin: 0; font-size: 1rem; line-height: 1.5; }
+.hx-stats-summary strong { font-size: 1.15rem; }
+.hx-stats-summary small { display: block; margin-top: 6px; opacity: 0.9; font-size: 0.82rem; }
+.hx-trend-up { color: #bbf7d0; font-weight: 700; }
+.hx-trend-down { color: #fecaca; font-weight: 700; }

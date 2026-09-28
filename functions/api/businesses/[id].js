@@ -2,6 +2,7 @@
 // GET: Get business by ID
 // PUT: Update business (owner or admin only)
 // DELETE: Delete business (owner or admin only)
+import { parseSchedule, scheduleToText, parseFaqs } from '../../../js/horario.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -141,6 +142,23 @@ export async function onRequestPut(context) {
       body.category_id = parseInt(body.category_id);
     }
 
+    // Structured schedule + FAQs (js/horario.js): validate, store as JSON and
+    // keep the plain-text `schedule` in sync for the places that show it.
+    if (body.schedule_json !== undefined || body.faqs !== undefined) {
+      for (const col of ['schedule_json', 'faqs']) {
+        try { await env.DB.prepare(`ALTER TABLE businesses ADD COLUMN ${col} TEXT`).run(); } catch (e) { /* exists */ }
+      }
+    }
+    if (body.schedule_json !== undefined) {
+      const sched = parseSchedule(body.schedule_json);
+      body.schedule_json = sched ? JSON.stringify(sched) : null;
+      if (sched && !(body.schedule && String(body.schedule).trim())) body.schedule = scheduleToText(sched);
+    }
+    if (body.faqs !== undefined) {
+      const faqs = parseFaqs(body.faqs);
+      body.faqs = faqs.length ? JSON.stringify(faqs) : null;
+    }
+
     // Build dynamic UPDATE query — only business-relevant fields
     const allowedFields = [
       'title', 'description', 'category_id', 'business_type',
@@ -151,6 +169,7 @@ export async function onRequestPut(context) {
       'has_parking', 'has_wifi', 'has_card', 'has_delivery', 'has_outdoor',
       'custom_html', 'especialidad', 'seo_description', 'custom_jsonld',
       'web_url', 'web_page_mode', 'google_maps_url',
+      'schedule_json', 'faqs',
     ];
 
     const setClauses = [];
@@ -223,7 +242,7 @@ export async function onRequestPut(context) {
     const seoRelevantFields = ['title', 'description', 'category_id', 'business_type',
       'address', 'city', 'state', 'phone', 'whatsapp', 'website', 'instagram', 'facebook',
       'schedule', 'has_parking', 'has_wifi', 'has_card', 'has_delivery', 'has_outdoor',
-      'especialidad', 'seo_description'];
+      'especialidad', 'seo_description', 'schedule_json', 'faqs'];
     const shouldInvalidateCache = seoRelevantFields.some(f => body[f] !== undefined);
     if (shouldInvalidateCache) {
       setClauses.push('ai_cache = NULL');

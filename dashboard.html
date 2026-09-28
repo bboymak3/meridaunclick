@@ -22,7 +22,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Panel de usuario de HolaX - Gestiona tus negocios y mensajes.">
     <title>Mi Panel - HolaX</title>
-    <link rel="stylesheet" href="css/styles.css?v=4">
+    <link rel="stylesheet" href="css/styles.css?v=24">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
@@ -712,6 +712,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
                 <!-- Stats Section -->
                 <section class="dashboard-section hidden" id="sectionStats">
+                    <div class="hx-stats-summary" id="statsSummary" hidden></div>
                     <div class="dash-stats-grid" style="margin-bottom:24px;">
                         <div class="dash-stat-card">
                             <div class="dash-stat-icon stat-icon-blue"><i class="fas fa-eye"></i></div>
@@ -1804,7 +1805,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                     <div class="eb-section">
                         <div class="eb-section-title"><i class="fas fa-clipboard-list"></i> Horario y Caracteristicas</div>
                         <div class="eb-field">
-                            <label for="editBizSchedule"><i class="fas fa-clock"></i> Horario de Atencion</label>
+                            <label><i class="fas fa-clock"></i> Horario por día</label>
+                            <div id="editBizHours" class="hx-hours-editor"></div>
+                            <small class="hx-editor-hint">Marca los días que atiendes. Puedes agregar un segundo turno (ej. tarde). Tu ficha mostrará "Abierto ahora" y Google verá tu horario.</small>
+                        </div>
+                        <div class="eb-field">
+                            <label for="editBizSchedule"><i class="fas fa-align-left"></i> Horario en texto (solo si no usas el horario por día)</label>
                             <textarea id="editBizSchedule" class="eb-input eb-textarea" rows="2" placeholder="Lun-Vie 8:00-17:00, Sab 8:00-12:00"></textarea>
                         </div>
                         <div class="eb-features" id="editBizFeatures">
@@ -1824,6 +1830,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                                 <i class="fas fa-umbrella-beach"></i> Terraza
                             </div>
                         </div>
+                    </div>
+                    <!-- Preguntas frecuentes del negocio -->
+                    <div class="eb-section">
+                        <div class="eb-section-title"><i class="fas fa-circle-question"></i> Preguntas frecuentes</div>
+                        <small class="hx-editor-hint">Responde las dudas más comunes de tus clientes o pacientes (máximo 8). Aparecen en tu ficha y en Google.</small>
+                        <div id="editBizFaqs" class="hx-faq-editor"></div>
+                        <button type="button" class="hx-faq-add" id="editBizFaqAdd"><i class="fas fa-plus"></i> Agregar pregunta</button>
                     </div>
                 </form>
             </div>
@@ -1956,7 +1969,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <script src="js/app.js"></script>
     <script src="js/dynamic-categories.js?v=1"></script>
     <script type="module" src="/js/especialidades.js?v=1"></script>
-    <script src="js/dashboard.js?v=16"></script>
+    <script src="js/dashboard.js?v=17"></script>
     <script src="js/chat.js"></script>
 
     <script>
