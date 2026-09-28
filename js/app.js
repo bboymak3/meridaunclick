@@ -40,6 +40,9 @@ const VENEZUELA_STATES = [
 ];
 
 const LOCATION_KEY = 'aunclick_selected_state';
+// Set once the state was auto-detected or chosen by hand, so IP detection
+// never overrides the visitor's own choice (including "Todo Venezuela").
+const GEO_CHECKED_KEY = 'holax_geo_checked';
 
 // ─── Location Selector System ───────────────────────────────────
 function getSelectedState() {
@@ -72,9 +75,60 @@ function setSelectedState(stateName) {
     loadFeaturedJobs();
   }
   const searchGrid = document.getElementById('searchResultsGrid');
-  if (searchGrid) {
-    executeSearch(1);
+  if (searchGrid && typeof window.holaxSearchByState === 'function') {
+    window.holaxSearchByState(stateName);
   }
+  renderStateGuideBar(stateName);
+}
+
+// ─── State guide bar (index): links to the state wiki ───────────
+function renderStateGuideBar(stateName, detected) {
+  const anchor = document.getElementById('featuredGrid');
+  let bar = document.getElementById('stateGuideBar');
+  if (!anchor) return;
+  const state = VENEZUELA_STATES.find(s => s.name === stateName);
+  if (!state) {
+    if (bar) bar.remove();
+    return;
+  }
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'stateGuideBar';
+    bar.className = 'state-guide-bar';
+    const main = document.querySelector('main') || document.body;
+    const firstSection = main.querySelector('section');
+    if (firstSection && firstSection.parentNode) firstSection.parentNode.insertBefore(bar, firstSection.nextSibling);
+    else main.prepend(bar);
+  }
+  const label = state.slug === 'vargas' ? 'La Guaira' : state.name;
+  bar.innerHTML = `
+    <div class="state-guide-inner">
+      <i class="fas fa-location-dot"></i>
+      <div class="state-guide-text">
+        <strong>${detected ? 'Estás en ' : ''}${escapeHtml(label)}</strong>
+        <span>Mostramos negocios de ${escapeHtml(label)}. Mira su guía: clima, emergencias, municipios y más.</span>
+      </div>
+      <a class="state-guide-btn" href="/estado/${state.slug}">Guía de ${escapeHtml(label)}</a>
+      <a class="state-guide-link" href="/search?categoria=medicina-servicio-medico&estado=${encodeURIComponent(state.name)}">Médicos</a>
+    </div>`;
+}
+
+// ─── Auto-detect the visitor's state (Cloudflare IP geolocation) ───
+function autoDetectState() {
+  let checked = false;
+  try { checked = !!localStorage.getItem(GEO_CHECKED_KEY); } catch (e) {}
+  if (checked || getSelectedState()) return;
+  fetch('/api/geo')
+    .then(r => (r.ok ? r.json() : null))
+    .then(data => {
+      try { localStorage.setItem(GEO_CHECKED_KEY, '1'); } catch (e) {}
+      if (!data || !data.state || !data.state.name) return;
+      if (getSelectedState()) return; // chosen by hand meanwhile
+      if (!VENEZUELA_STATES.some(s => s.name === data.state.name)) return;
+      setSelectedState(data.state.name);
+      renderStateGuideBar(data.state.name, true);
+    })
+    .catch(() => {});
 }
 
 function updateBrandDisplay(stateName) {
@@ -139,6 +193,7 @@ function initLocationSelector() {
     const option = e.target.closest('.location-option');
     if (option) {
       const stateName = option.dataset.state || '';
+      try { localStorage.setItem(GEO_CHECKED_KEY, '1'); } catch (err) {}
       setSelectedState(stateName);
       locationDropdown.classList.add('hidden');
       locationBtn.classList.remove('active');
@@ -149,6 +204,7 @@ function initLocationSelector() {
   const allVzlaOption = locationDropdown.querySelector('.location-option[data-state=""]');
   if (allVzlaOption) {
     allVzlaOption.addEventListener('click', () => {
+      try { localStorage.setItem(GEO_CHECKED_KEY, '1'); } catch (err) {}
       setSelectedState('');
       locationDropdown.classList.add('hidden');
       locationBtn.classList.remove('active');
@@ -171,6 +227,9 @@ function initLocationSelector() {
   if (savedState) {
     updateBrandDisplay(savedState);
     updateLocationLabel(savedState);
+    renderStateGuideBar(savedState);
+  } else {
+    autoDetectState();
   }
 }
 
@@ -1520,6 +1579,13 @@ async function loadSiteStats() {
                 window.location.href = '/search.html';
             });
         }
+
+        // Header location selector → filter this search by state
+        window.holaxSearchByState = (stateName) => {
+            const sEstado = document.getElementById('sEstado');
+            if (sEstado) sEstado.value = stateName || '';
+            executeSearch(1);
+        };
 
         // Execute initial search
         executeSearch(params.page);
