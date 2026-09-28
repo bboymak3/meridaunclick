@@ -64,18 +64,22 @@ export function buildSearchSeo(o) {
     const place = o.city ? (o.city + (o.stateName ? ', ' + o.stateName : '')) : (o.stateName || 'Venezuela');
     const total = Number(o.total) || 0;
 
-    const h1 = slug ? 'Ver ' + label + ' en ' + place : 'Directorio de negocios en ' + place;
+    const h1 = isMedical
+        ? 'Médicos y especialistas en ' + place
+        : (slug ? 'Ver ' + label + ' en ' + place : 'Directorio de negocios en ' + place);
 
     let h2;
-    if (!slug) h2 = 'Busca negocios, profesionales y servicios cerca de ti';
+    if (isMedical) h2 = 'Encuentra profesionales de la salud, clínicas y centros médicos en ' + place
+        + '. Filtra por especialidad, consulta ubicación y horarios, y agenda tu cita directamente.';
+    else if (!slug) h2 = 'Busca negocios, profesionales y servicios cerca de ti';
     else if (total > 0) h2 = total + (total === 1 ? ' opción disponible' : ' opciones disponibles') + ' de ' + label + ' en ' + place;
     else h2 = 'Directorio de ' + label + ' en ' + place;
 
     let intro;
     if (isMedical) {
-        intro = 'Encuentra médicos y servicios de salud en ' + place + ': especialistas, consultorios y clínicas con dirección, '
-            + 'horarios, ubicación en el mapa y contacto directo por WhatsApp. Compara opciones, revisa reseñas de pacientes '
-            + 'y agenda tu consulta de forma rápida y segura en HolaX.';
+        intro = 'Cuidar de tu salud y la de tu familia empieza con encontrar al especialista indicado cerca de ti. '
+            + 'En HolaX reunimos médicos, centros de diagnóstico y clínicas de ' + place + ' para que no pierdas tiempo buscando: '
+            + 'compara perfiles, revisa su especialidad y ubicación, y comunícate con su consultorio en un solo clic.';
     } else if (slug) {
         intro = 'Descubre ' + label + ' en ' + place + ' con HolaX, el directorio comercial de Venezuela. Revisa fichas con fotos, '
             + 'dirección, horarios, ubicación en el mapa y reseñas de clientes, y contacta directo por WhatsApp. '
@@ -86,12 +90,22 @@ export function buildSearchSeo(o) {
             + 'y contáctalo directo por WhatsApp.';
     }
 
-    const title = slug
+    const trust = isMedical
+        ? (total > 0 ? total + (total === 1 ? ' profesional' : ' profesionales') + ' en ' + place + ' · ' : '')
+            + 'Contacto directo por WhatsApp y ubicación en el mapa de cada consultorio.'
+        : '';
+
+    const title = isMedical
+        ? 'Médicos y especialistas en ' + place + ' | Directorio médico HolaX'
+        : slug
         ? capitalize(label) + ' en ' + place + ' | Directorio HolaX'
         : 'Explorar Negocios en ' + place + ' | HolaX';
 
     const description = truncate(
-        slug
+        isMedical
+            ? 'Médicos y especialistas en ' + place + (total > 0 ? ': ' + total + (total === 1 ? ' profesional' : ' profesionales') + ' de la salud' : '')
+              + ', clínicas y centros médicos con dirección, horarios, mapa y WhatsApp para agendar tu cita.'
+            : slug
             ? capitalize(label) + ' en ' + place + (total > 0 ? ': ' + total + (total === 1 ? ' opción' : ' opciones') : '') +
               ' con dirección, horarios, mapa, reseñas y WhatsApp directo. Directorio actualizado en HolaX.'
             : 'Busca negocios en ' + place + ': restaurantes, farmacias, tiendas, profesionales y servicios. Dirección, mapa y WhatsApp en HolaX.',
@@ -163,7 +177,7 @@ export function buildSearchSeo(o) {
     const jsonLd = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
 
     return {
-        h1, h2, intro, title, description, canonical, faq, jsonLd,
+        h1, h2, intro, trust, title, description, canonical, faq, jsonLd, isMedical, place,
         robots: o.refined ? 'noindex, follow' : 'index, follow',
     };
 }
@@ -179,6 +193,46 @@ export function renderFaqHtml(seo) {
     return '<h2 class="search-faq-title">Preguntas frecuentes</h2>' + seo.faq.map(f =>
         '<details class="search-faq-item"><summary>' + escapeHtml(f.q) + '</summary><p>' + escapeHtml(f.a) + '</p></details>'
     ).join('');
+}
+
+/**
+ * Medical landing blocks (search?categoria=medicina-servicio-medico):
+ * specialties that really have doctors in the place + what each profile
+ * includes + call to action for doctors.
+ * @param {object} seo            result of buildSearchSeo
+ * @param {Array}  specialties    [{slug, name, desc, count}] with count > 0
+ * @param {string} [estadoSlug]   state slug for /medicos/:esp/:estado links
+ */
+export function renderMedicalBlocks(seo, specialties, estadoSlug) {
+    const place = escapeHtml(seo.place);
+    const list = (specialties || []).filter(e => e.count > 0);
+    const specialtiesHtml = list.length
+        ? '<h2 class="med-title">Especialidades médicas disponibles en ' + place + '</h2>'
+            + '<p class="med-sub">Encuentra atención personalizada según lo que necesitas hoy:</p>'
+            + '<div class="med-esp-grid">' + list.map(e =>
+                '<a class="med-esp" href="/medicos/' + encodeURIComponent(e.slug) + (estadoSlug ? '/' + encodeURIComponent(estadoSlug) : '') + '">'
+                + '<strong>' + escapeHtml(e.name) + ' <span>' + e.count + '</span></strong>'
+                + (e.desc ? '<small>' + escapeHtml(e.desc) + '</small>' : '') + '</a>'
+            ).join('') + '</div>'
+        : '';
+
+    const infoHtml = '<h2 class="med-title">Toda la información que necesitas antes de tu consulta</h2>'
+        + '<p class="med-sub">Cada ficha del directorio reúne los datos del consultorio en un solo lugar:</p>'
+        + '<ul class="med-info">'
+        + '<li><i class="fas fa-user-doctor"></i><div><strong>Profesional y especialidad</strong><span>Nombre del médico o centro de salud y su área de atención.</span></div></li>'
+        + '<li><i class="fas fa-location-dot"></i><div><strong>Dirección y mapa</strong><span>Consultorio, clínica o torre médica en ' + place + ' con ubicación en el mapa.</span></div></li>'
+        + '<li><i class="fas fa-clock"></i><div><strong>Horarios de atención</strong><span>Días de consulta, previa cita o por orden de llegada.</span></div></li>'
+        + '<li><i class="fab fa-whatsapp"></i><div><strong>Contacto directo</strong><span>Botón de WhatsApp, llamada telefónica y redes sociales.</span></div></li>'
+        + '<li><i class="fas fa-notes-medical"></i><div><strong>Servicios y procedimientos</strong><span>Tratamientos, estudios o cirugías que realiza.</span></div></li>'
+        + '</ul>'
+        + '<p class="med-note">La información de cada ficha la proporciona el propio profesional o centro de salud.</p>'
+        + '<div class="med-cta">'
+        + '<h2>¿Eres médico o representas un centro de salud en ' + place + '?</h2>'
+        + '<p>Llega a más pacientes que buscan tus servicios a diario en internet. Registra tu consultorio, completa tu ficha en el directorio de HolaX y recibe consultas directas en tu WhatsApp.</p>'
+        + '<a class="med-cta-btn" href="/registrar-negocio.html"><i class="fas fa-stethoscope"></i> Registrar mi consultorio médico</a>'
+        + '</div>';
+
+    return { specialtiesHtml, infoHtml };
 }
 
 // ─── Browser: apply to the current document ───
@@ -198,6 +252,27 @@ export function applySearchSeo(o) {
     set('searchH1', seo.h1);
     set('searchH2', seo.h2);
     set('searchIntro', seo.intro);
+    set('searchTrust', seo.trust);
+    const trustEl = document.getElementById('searchTrust');
+    if (trustEl) trustEl.hidden = !seo.trust;
+
+    const espEl = document.getElementById('searchMedSpecialties');
+    const infoEl = document.getElementById('searchMedInfo');
+    if (seo.isMedical) {
+        // Static part now; specialties with real counts from the API
+        const blocks = renderMedicalBlocks(seo, []);
+        if (infoEl) { infoEl.innerHTML = blocks.infoHtml; infoEl.hidden = false; }
+        const url = '/api/medicos/especialidades' + (o.stateName ? '?estado=' + encodeURIComponent(o.stateName) : '');
+        fetch(url).then(r => (r.ok ? r.json() : null)).then(data => {
+            if (!data || !espEl) return;
+            const html = renderMedicalBlocks(seo, data.especialidades || [], data.estado && data.estado.slug).specialtiesHtml;
+            espEl.innerHTML = html;
+            espEl.hidden = !html;
+        }).catch(() => {});
+    } else {
+        if (espEl) { espEl.innerHTML = ''; espEl.hidden = true; }
+        if (infoEl) { infoEl.innerHTML = ''; infoEl.hidden = true; }
+    }
 
     const faqEl = document.getElementById('searchFaq');
     if (faqEl) {

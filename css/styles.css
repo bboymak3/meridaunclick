@@ -12226,3 +12226,56 @@ a.btn-icon {
     white-space: nowrap;
 }
 .state-guide-link { font-weight: 700; font-size: 0.88rem; color: #006EE3; text-decoration: none; }
+
+/* ─── Landing medica (search?categoria=medicina-servicio-medico) ─── */
+.search-landing-trust {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #047857;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 999px;
+    padding: 6px 14px;
+    margin: 0 0 14px;
+}
+.search-landing-trust[hidden] { display: none; }
+.med-block {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 20px;
+}
+.med-block[hidden] { display: none; }
+.med-title { font-size: 1.2rem; font-weight: 800; color: #0f172a; margin: 0 0 4px; }
+.med-sub { color: #64748b; margin: 0 0 14px; font-size: 0.93rem; }
+.med-esp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.med-esp {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: #0f172a;
+    transition: border-color 0.2s, background 0.2s;
+}
+.med-esp:hover { border-color: #006EE3; background: #eff6ff; }
+.med-esp strong { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 0.95rem; }
+.med-esp strong span { background: #eff6ff; color: #006EE3; border-radius: 999px; padding: 1px 9px; font-size: 0.78rem; }
+.med-esp small { color: #64748b; font-size: 0.82rem; line-height: 1.4; }
+.med-info { list-style: none; padding: 0; margin: 0 0 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.med-info li { display: flex; gap: 12px; align-items: flex-start; background: #f8fafc; border-radius: 12px; padding: 12px; }
+.med-info li > i { color: #006EE3; font-size: 1.15rem; margin-top: 2px; width: 20px; text-align: center; }
+.med-info strong { display: block; font-size: 0.93rem; color: #0f172a; }
+.med-info span { font-size: 0.84rem; color: #64748b; }
+.med-note { font-size: 0.8rem; color: #94a3b8; margin: 0 0 16px; }
+.med-cta { background: linear-gradient(135deg, #0052ab, #006EE3); color: #fff; border-radius: 14px; padding: 20px; text-align: center; }
+.med-cta h2 { color: #fff; font-size: 1.15rem; margin: 0 0 8px; }
+.med-cta p { color: rgba(255,255,255,0.92); margin: 0 auto 14px; max-width: 640px; font-size: 0.93rem; }
+.med-cta-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; color: #006EE3 !important; font-weight: 800; padding: 11px 20px; border-radius: 12px; text-decoration: none; }
