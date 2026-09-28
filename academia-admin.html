@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Administración de la Academia - HolaX</title>
+    <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
+    <link rel="stylesheet" href="/css/styles.css?v=4">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { background: #f4f3fa; margin: 0; }
+        .aa-header { position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #5b21b6, #7c3aed 60%, #2563eb); color: #fff; box-shadow: 0 2px 12px rgba(76, 29, 149, .25); }
+        .aa-header-inner { max-width: 1200px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+        .aa-brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; }
+        .aa-brand img { width: 36px; height: 36px; border-radius: 8px; background: #fff; }
+        .aa-brand strong { display: block; font-size: 1.05rem; line-height: 1.2; }
+        .aa-brand small { display: block; font-size: .75rem; opacity: .85; }
+        .aa-spacer { flex: 1; }
+        .aa-links { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .aa-link { display: inline-flex; align-items: center; gap: 6px; color: #fff; text-decoration: none; font-size: .82rem; font-weight: 600; padding: 7px 12px; border-radius: 8px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); cursor: pointer; font-family: inherit; }
+        .aa-link:hover { background: rgba(255,255,255,.25); }
+        .aa-user { font-size: .8rem; opacity: .9; }
+        .aa-main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 48px; }
+        .aa-intro { margin-bottom: 18px; }
+        .aa-intro h1 { font-size: 1.5rem; margin: 0 0 4px; color: #1e293b; }
+        .aa-intro p { margin: 0; color: #64748b; font-size: .9rem; }
+        .aa-main .admin-card { border-radius: 14px; }
+        .aa-main .admin-table th { text-align: left; }
+        .aa-main .admin-card { max-width: 100%; }
+        .aa-main .admin-card > div[style*="overflow-x:auto"] { -webkit-overflow-scrolling: touch; }
+        @media (max-width: 640px) {
+            .aa-header-inner { padding: 10px 14px; }
+            .aa-link span { display: none; }
+            .aa-user { display: none; }
+            .aa-main { padding: 16px 12px 40px; }
+            .aa-intro h1 { font-size: 1.25rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="aa-header">
+        <div class="aa-header-inner">
+            <a class="aa-brand" href="/academia-admin">
+                <img src="/images/favicon.jpeg" alt="HolaX">
+                <span><strong>Academia · Administración</strong><small>AunClick Academy</small></span>
+            </a>
+            <div class="aa-spacer"></div>
+            <span class="aa-user" id="academyAdminUser"></span>
+            <nav class="aa-links">
+                <a class="aa-link" href="/academia.html" target="_blank" title="Ver la academia como agente"><i class="fas fa-eye"></i><span> Ver academia</span></a>
+                <a class="aa-link" href="/partners.html" target="_blank" title="Lista pública de Partners"><i class="fas fa-certificate"></i><span> Partners</span></a>
+                <a class="aa-link" href="/admin.html" title="Volver al panel de administración"><i class="fas fa-arrow-left"></i><span> Panel admin</span></a>
+                <button class="aa-link" id="academyAdminLogout" type="button" title="Cerrar sesión"><i class="fas fa-sign-out-alt"></i></button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="aa-main" id="academyAdminMain">
+        <div class="aa-intro">
+            <h1><i class="fas fa-graduation-cap" style="color:#7c3aed;"></i> Administración de la Academia</h1>
+            <p>Clases con video, preguntas, canales de YouTube, Partners Digitales, progreso de agentes y analíticas.</p>
+        </div>
+                    <!-- Stats + Classes List -->
+                    <div class="admin-card" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                            <div>
+                                <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-graduation-cap" style="color:#7c3aed;"></i> Academia de Agentes</h3>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Gestiona clases, preguntas y progreso de los agentes.</p>
+                            </div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <button class="btn btn-primary" id="academyAddClassBtn" style="background:#7c3aed;"><i class="fas fa-plus"></i> Nueva Clase</button>
+                                <button class="btn btn-secondary" id="academyRefreshBtn" title="Refrescar lista"><i class="fas fa-sync-alt"></i></button>
+                                <button class="btn btn-secondary" id="academyAnalyticsBtn" title="Analíticas" style="color:#7c3aed;border-color:#ddd6fe;"><i class="fas fa-chart-bar"></i></button>
+                                <button class="btn btn-secondary" onclick="window.open('/partners.html','_blank')"><i class="fas fa-certificate"></i> Ver Partners</button>
+                            </div>
+                        </div>
+
+                        <!-- Stats Cards -->
+                        <div id="academyStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;"></div>
+
+                        <!-- YouTube channels (profesores) -->
+                        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:20px;">
+                            <div style="font-weight:600;font-size:0.85rem;margin-bottom:6px;color:#dc2626;"><i class="fab fa-youtube"></i> Canales de YouTube de la Academia</div>
+                            <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Un canal por profesor (máximo 4). Se muestran en la academia con botones para visitar y suscribirse.</p>
+                            <div id="academyChannelsList" style="display:grid;gap:8px;"></div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+                                <button class="btn btn-secondary" id="academyAddChannelBtn" type="button"><i class="fas fa-plus"></i> Agregar canal</button>
+                                <button class="btn btn-primary" id="academySaveChannelBtn" type="button" style="background:#dc2626;"><i class="fas fa-save"></i> Guardar canales</button>
+                            </div>
+                        </div>
+
+                        <!-- Classes Table -->
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" style="width:100%;font-size:0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Titulo</th>
+                                        <th>Preguntas</th>
+                                        <th>XP</th>
+                                        <th>Completados</th>
+                                        <th>Orden</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="academyClassesTableBody">
+                                    <tr><td colspan="7" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Class Creator (inline) -->
+                    <div class="admin-card hidden" id="academyClassEditor" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                            <h3 style="margin:0;font-size:1.1rem;" id="academyEditorTitle"><i class="fas fa-edit" style="color:#7c3aed;"></i> Nueva Clase</h3>
+                            <button class="btn btn-secondary btn-sm" id="academyCloseEditorBtn"><i class="fas fa-times"></i> Cerrar</button>
+                        </div>
+                        <div style="display:grid;gap:14px;">
+                            <input type="hidden" id="academyClassId">
+                            <div class="form-group">
+                                <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Titulo *</label>
+                                <input type="text" id="academyClassTitle" placeholder="Nombre de la clase" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                            </div>
+                            <div class="form-group">
+                                <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Descripcion</label>
+                                <textarea id="academyClassDesc" placeholder="Descripcion breve de la clase" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Contenido</label>
+                                <textarea id="academyClassContent" placeholder="Material que verá el agente en la clase: resumen, notas, enlaces (texto, HTML básico permitido)" rows="6" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">XP Recompensa</label>
+                                    <input type="number" id="academyClassXP" value="10" min="1" max="100" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Orden</label>
+                                    <input type="number" id="academyClassOrder" value="0" min="0" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <label style="font-weight:600;font-size:0.85rem;"><input type="checkbox" id="academyClassActive" checked style="accent-color:#7c3aed;"> Activa</label>
+                            </div>
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Módulo</label>
+                                    <select id="academyClassModule" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                        <option value="General">General</option>
+                                        <option value="Fundamentos">Fundamentos</option>
+                                        <option value="Intermedio">Intermedio</option>
+                                        <option value="Avanzado">Avanzado</option>
+                                        <option value="Examen Final">Examen Final</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Orden en Módulo</label>
+                                    <input type="number" id="academyClassModuleOrder" value="0" min="0" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                </div>
+                            </div>
+                            <p style="font-size:0.78rem;color:#6b7280;margin:-6px 0 0;"><i class="fas fa-route" style="color:#7c3aed;"></i> Ruta de aprendizaje: los agentes hacen las clases en orden (General → Fundamentos → Intermedio → Avanzado → Examen Final, y dentro de cada módulo por "Orden en Módulo"). Cada clase se desbloquea al aprobar la anterior, y el examen final al aprobar todas.</p>
+                            <!-- YouTube video + 5 questions -->
+                            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;">
+                                <div style="font-weight:600;font-size:0.85rem;margin-bottom:6px;color:#dc2626;"><i class="fab fa-youtube"></i> Video de YouTube (evaluación)</div>
+                                <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Pega la URL del video. El agente deberá verlo completo, sin cerrarlo ni adelantarlo, y luego responder 5 preguntas de selección simple. Puntaje: 10 pts por ver el video + 2 pts por respuesta correcta + 10 pts de bono si acierta todas (máx. 30 pts, se suman como XP). Aprueba con 4 de 5. Déjalo vacío para una clase normal.</p>
+                                <input type="url" id="academyClassVideoUrl" placeholder="https://www.youtube.com/watch?v=..." style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                <div id="academyVideoPreview" style="margin-top:8px;font-size:0.78rem;"></div>
+                                <div id="academyVideoQuestionsWrap" class="hidden" style="margin-top:12px;">
+                                    <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:#374151;"><i class="fas fa-list-ol" style="color:#dc2626;"></i> 5 preguntas del video <span style="font-weight:400;color:#6b7280;font-size:0.75rem;">(marca el círculo de la respuesta correcta)</span></div>
+                                    <div id="academyVideoQuestions" style="display:grid;gap:10px;"></div>
+                                </div>
+                            </div>
+                            <!-- AI Question Generator -->
+                            <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:14px;">
+                                <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:#7c3aed;"><i class="fas fa-robot"></i> Generar Preguntas con IA</div>
+                                <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Pega un texto educativo y el sistema generara preguntas automaticamente.</p>
+                                <textarea id="academyAIText" placeholder="Pega aqui el texto del cual quieres generar preguntas..." rows="3" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;resize:vertical;margin-bottom:8px;"></textarea>
+                                <div style="display:flex;gap:8px;align-items:center;">
+                                    <button class="btn btn-primary btn-sm" id="academyGenQBtn" style="background:#7c3aed;"><i class="fas fa-magic"></i> Generar Preguntas</button>
+                                    <input type="number" id="academyGenQCount" value="5" min="1" max="20" style="width:60px;padding:6px;border:2px solid #e2e8f0;border-radius:6px;font-size:0.85rem;text-align:center;">
+                                    <span style="font-size:0.75rem;color:#6b7280;">preguntas</span>
+                                </div>
+                            </div>
+                            <!-- Generated Questions Preview -->
+                            <div id="academyQPreviewWrap" class="hidden" style="background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;padding:14px;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <div style="font-weight:600;font-size:0.85rem;color:#374151;"><i class="fas fa-list-ol" style="color:#7c3aed;"></i> Preguntas Generadas (<span id="academyQPreviewCount">0</span>)</div>
+                                    <button class="btn btn-secondary btn-sm" id="academyClearQPreviewBtn" style="font-size:0.75rem;"><i class="fas fa-trash"></i> Limpiar</button>
+                                </div>
+                                <div id="academyQPreviewList" style="display:grid;gap:10px;max-height:400px;overflow-y:auto;"></div>
+                            </div>
+                            <div style="display:flex;gap:10px;">
+                                <button class="btn btn-primary" id="academySaveClassBtn" style="background:#7c3aed;"><i class="fas fa-save"></i> Guardar Clase</button>
+                                <button class="btn btn-secondary" id="academyCancelClassBtn"><i class="fas fa-times"></i> Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Questions Manager (inline panel) -->
+                    <div class="admin-card hidden" id="academyQuestionsPanel" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+                            <h3 style="margin:0;font-size:1.1rem;"><i class="fas fa-question-circle" style="color:#7c3aed;"></i> Preguntas: <span id="academyQuestionsClassName"></span></h3>
+                            <div style="display:flex;gap:8px;">
+                                <button class="btn btn-primary btn-sm" id="academyAddQuestionBtn" style="background:#7c3aed;"><i class="fas fa-plus"></i> Agregar Pregunta</button>
+                                <button class="btn btn-secondary btn-sm" id="academyCloseQuestionsBtn"><i class="fas fa-arrow-left"></i> Volver</button>
+                            </div>
+                        </div>
+                        <div id="academyQuestionsList"></div>
+                        <!-- Inline add/edit question form (hidden) -->
+                        <div id="academyInlineQForm" class="hidden" style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:16px;margin-top:12px;">
+                            <h4 style="margin:0 0 12px;font-size:0.9rem;color:#7c3aed;" id="academyInlineQFormTitle">Nueva Pregunta</h4>
+                            <input type="hidden" id="academyInlineQId">
+                            <div style="display:grid;gap:10px;">
+                                <div class="form-group">
+                                    <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:block;">Pregunta *</label>
+                                    <textarea id="academyInlineQText" placeholder="Texto de la pregunta" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;resize:vertical;"></textarea>
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                                    <div class="form-group">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyInlineCorrect" value="a" style="accent-color:#7c3aed;"> <strong>A</strong></label>
+                                        <input type="text" id="academyInlineQOptA" placeholder="Opcion A" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyInlineCorrect" value="b" style="accent-color:#7c3aed;"> <strong>B</strong></label>
+                                        <input type="text" id="academyInlineQOptB" placeholder="Opcion B" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyInlineCorrect" value="c" style="accent-color:#7c3aed;"> <strong>C</strong></label>
+                                        <input type="text" id="academyInlineQOptC" placeholder="Opcion C" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-weight:600;font-size:0.82rem;margin-bottom:4px;display:flex;align-items:center;gap:6px;"><input type="radio" name="academyInlineCorrect" value="d" style="accent-color:#7c3aed;"> <strong>D</strong></label>
+                                        <input type="text" id="academyInlineQOptD" placeholder="Opcion D" style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.85rem;outline:none;">
+                                    </div>
+                                </div>
+                                <div style="display:flex;gap:8px;">
+                                    <button class="btn btn-primary btn-sm" id="academySaveInlineQBtn" style="background:#7c3aed;"><i class="fas fa-save"></i> Guardar</button>
+                                    <button class="btn btn-secondary btn-sm" id="academyCancelInlineQBtn"><i class="fas fa-times"></i> Cancelar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Partners Digitales -->
+                    <div class="admin-card" style="padding:24px;margin-bottom:20px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+                            <div>
+                                <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-certificate" style="color:#d97706;"></i> Partners Digitales <span id="academyPartnersCount" style="font-size:0.8rem;color:#6b7280;font-weight:600;"></span></h3>
+                                <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Agentes certificados: ver su certificado, quitar la certificación o eliminar su cuenta de Partner.</p>
+                            </div>
+                            <button class="btn btn-secondary" id="academyPartnersRefreshBtn" title="Refrescar"><i class="fas fa-sync-alt"></i></button>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" style="width:100%;font-size:0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Partner</th>
+                                        <th>Nivel / XP</th>
+                                        <th>Clases</th>
+                                        <th>Certificado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="academyPartnersTableBody">
+                                    <tr><td colspan="5" style="text-align:center;padding:30px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Certificate preview modal -->
+                    <div id="academyCertModal" class="hidden" style="position:fixed;inset:0;background:rgba(15,23,42,.6);z-index:3000;display:flex;align-items:center;justify-content:center;padding:16px;">
+                        <div style="background:#fff;border-radius:14px;width:100%;max-width:880px;max-height:92vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);">
+                            <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #e5e7eb;">
+                                <h3 id="academyCertModalTitle" style="margin:0;font-size:1rem;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"><i class="fas fa-certificate" style="color:#d97706;"></i> Certificado</h3>
+                                <button class="btn btn-secondary btn-sm" id="academyCertModalClose"><i class="fas fa-times"></i> Cerrar</button>
+                            </div>
+                            <div style="padding:16px;overflow:auto;background:#f1f0f7;flex:1;">
+                                <div id="academyCertPreview" style="background:#fff;border-radius:8px;box-shadow:0 4px 16px rgba(15,23,42,.12);min-height:200px;display:flex;align-items:center;justify-content:center;overflow:hidden;"></div>
+                                <p id="academyCertModalNote" style="font-size:0.78rem;color:#6b7280;text-align:center;margin:10px 0 0;"></p>
+                            </div>
+                            <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;padding:12px 16px;border-top:1px solid #e5e7eb;">
+                                <a class="btn btn-secondary btn-sm" id="academyCertModalProfile" href="#" target="_blank"><i class="fas fa-external-link-alt"></i> Ver perfil</a>
+                                <button class="btn btn-primary btn-sm" id="academyCertModalDownload" style="background:#d97706;"><i class="fas fa-download"></i> Descargar PDF</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agents Overview -->
+                    <div class="admin-card" style="padding:24px;margin-bottom:20px;">
+                        <div style="margin-bottom:20px;">
+                            <h3 style="margin:0;font-size:1.2rem;"><i class="fas fa-users-graduate" style="color:#059669;"></i> Progreso de Agentes</h3>
+                            <p style="margin:4px 0 0;color:#6b7280;font-size:0.85rem;">Visualiza el progreso y gestiona agentes.</p>
+                        </div>
+                        <div style="overflow-x:auto;">
+                            <table class="admin-table" style="width:100%;font-size:0.85rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Nivel</th>
+                                        <th>XP</th>
+                                        <th>Clases</th>
+                                        <th>Medallas</th>
+                                        <th>Examen</th>
+                                        <th>Partner</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="academyAgentsTableBody">
+                                    <tr><td colspan="8" style="text-align:center;padding:40px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Analytics Panel (hidden by default) -->
+                        <div class="admin-card hidden" id="academyAnalyticsPanel" style="padding:24px;margin-bottom:20px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                                <h3 style="margin:0;font-size:1.1rem;"><i class="fas fa-chart-bar" style="color:#7c3aed;"></i> Analíticas de Academia</h3>
+                                <button class="btn btn-secondary btn-sm" id="academyCloseAnalyticsBtn"><i class="fas fa-times"></i> Cerrar</button>
+                            </div>
+                            <div id="academyAnalyticsContent" style="font-size:0.88rem;color:#374151;">
+                                <div style="text-align:center;padding:20px;color:#6b7280;"><i class="fas fa-spinner fa-spin"></i> Cargando analíticas...</div>
+                            </div>
+                        </div>
+                    </div>
+    </main>
+
+    <script src="/js/academy-certificate.js"></script>
+    <script src="/js/academia-admin.js"></script>
+</body>
+</html>
