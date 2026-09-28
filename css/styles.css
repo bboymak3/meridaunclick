@@ -12226,6 +12226,10 @@ a.btn-icon {
     white-space: nowrap;
 }
 .state-guide-link { font-weight: 700; font-size: 0.88rem; color: #006EE3; text-decoration: none; }
+.state-guide-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.state-guide-btn { display: inline-flex; align-items: center; gap: 6px; }
+.state-guide-btn-alt { background: #fff; color: #006EE3 !important; border: 1.5px solid #006EE3; }
+.state-guide-btn-alt:hover { background: #eff6ff; }
 
 /* ─── Landing medica (search?categoria=medicina-servicio-medico) ─── */
 .search-landing-trust {

@@ -106,10 +106,12 @@ function renderStateGuideBar(stateName, detected) {
       <i class="fas fa-location-dot"></i>
       <div class="state-guide-text">
         <strong>${detected ? 'Estás en ' : ''}${escapeHtml(label)}</strong>
-        <span>Mostramos negocios de ${escapeHtml(label)}. Mira su guía: clima, emergencias, municipios y más.</span>
+        <span>Mostramos negocios de ${escapeHtml(label)}. Mira su wiki: clima, emergencias, municipios, ferias y más.</span>
       </div>
-      <a class="state-guide-btn" href="/estado/${state.slug}">Guía de ${escapeHtml(label)}</a>
-      <a class="state-guide-link" href="/search?categoria=medicina-servicio-medico&estado=${encodeURIComponent(state.name)}">Médicos</a>
+      <div class="state-guide-actions">
+        <a class="state-guide-btn" href="/estado/${state.slug}"><i class="fas fa-book-open"></i> Wiki de ${escapeHtml(label)}</a>
+        <a class="state-guide-btn state-guide-btn-alt" href="/search?categoria=medicina-servicio-medico&estado=${encodeURIComponent(state.name)}"><i class="fas fa-user-doctor"></i> Médicos</a>
+      </div>
     </div>`;
 }
 
