@@ -37,7 +37,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="https://holax.com.ve/images/Holax.png">
     <link rel="canonical" href="https://holax.com.ve/search">
-    <link rel="stylesheet" href="css/styles.css?v=21">
+    <link rel="stylesheet" href="css/styles.css?v=22">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Leaflet for mini map -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -114,6 +114,11 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- Search Page -->
     <main class="search-page">
         <div class="container">
+            <!-- Banner de la categoria (primero, antes de cualquier texto) -->
+            <div id="categoryBanner" class="category-top-banner" style="display:none;">
+                <img id="categoryBannerImg" src="" alt="" width="1064" height="405">
+            </div>
+
             <!-- Landing header: H1 / H2 / intro (rellenado por js/search-seo.js y en el servidor por functions/search.js) -->
             <header class="search-landing" id="searchLanding">
                 <h1 class="search-landing-h1" id="searchH1">Directorio de negocios en Venezuela</h1>
@@ -245,51 +250,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
             </section>
 
             <!-- Active Filters & Results Info -->
-            <div class="search-info-bar">
-                <div class="search-results-info">
-                    <span id="resultsCount">0 resultados encontrados</span>
-                    <div class="active-filters" id="activeFilters">
-                        <!-- Active filter tags inserted dynamically -->
-                    </div>
-                    <button class="btn-clear-filters hidden" id="clearFiltersBtn">
-                        <i class="fas fa-times"></i> Limpiar filtros
-                    </button>
-                </div>
-                <div class="search-view-controls">
-                    <div class="sort-select">
-                        <label for="sSort">Ordenar:</label>
-                        <select id="sSort" class="form-select-sm">
-                            <option value="relevancia">Relevancia</option>
-                            <option value="reciente">Más reciente</option>
-                            <option value="visto">Más visto</option>
-                        </select>
-                    </div>
-                    <div class="view-toggle">
-                        <button class="view-btn active" id="gridViewBtn" title="Vista cuadrícula" aria-label="Vista cuadrícula">
-                            <i class="fas fa-th-large"></i>
-                        </button>
-                        <button class="view-btn" id="listViewBtn" title="Vista lista" aria-label="Vista lista">
-                            <i class="fas fa-list"></i>
-                        </button>
-                    </div>
-                    <button class="btn btn-outline btn-map-toggle" id="mapToggleBtn" title="Mostrar mapa">
-                        <i class="fas fa-map"></i> Mapa
-                    </button>
-                </div>
-            </div>
-
             <!-- Main Content with optional Map -->
             <div class="search-layout" id="searchLayout">
                 <!-- Results Grid -->
                 <div class="search-results">
-                    <!-- Category Banner -->
-                    <div id="categoryBanner" style="display:none;margin-bottom:16px;border-radius:14px;overflow:hidden;position:relative;max-width:1064px;margin-left:auto;margin-right:auto;">
-                        <img id="categoryBannerImg" src="" alt="" style="width:100%;height:auto;aspect-ratio:1064/405;object-fit:cover;display:block;">
-                        <div style="position:absolute;bottom:0;left:0;right:0;padding:16px 20px;background:linear-gradient(transparent,rgba(0,0,0,0.6));">
-                            <h2 id="categoryBannerTitle" style="color:#fff;font-size:1.3rem;font-weight:700;margin:0;text-shadow:0 1px 4px rgba(0,0,0,0.4);"></h2>
-                        </div>
-                    </div>
-
                     <!-- Loading -->
                     <div class="loading-spinner" id="searchLoading">
                         <i class="fas fa-spinner fa-spin fa-2x"></i>
@@ -324,18 +288,53 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
                             Siguiente <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
+
+                    <!-- Resultados, filtros activos, orden, vista y mapa (debajo de las fichas) -->
+                    <div class="search-info-bar search-info-bottom" id="searchInfoBar">
+                        <div class="search-results-info">
+                            <span id="resultsCount">0 resultados encontrados</span>
+                            <div class="active-filters" id="activeFilters">
+                                <!-- Active filter tags inserted dynamically -->
+                            </div>
+                            <button class="btn-clear-filters hidden" id="clearFiltersBtn">
+                                <i class="fas fa-times"></i> Limpiar filtros
+                            </button>
+                        </div>
+                        <div class="search-view-controls">
+                            <div class="sort-select">
+                                <label for="sSort" class="sr-only">Ordenar</label>
+                                <select id="sSort" class="form-select-sm">
+                                    <option value="relevancia">Relevancia</option>
+                                    <option value="reciente">Más reciente</option>
+                                    <option value="visto">Más visto</option>
+                                </select>
+                            </div>
+                            <div class="view-toggle">
+                                <button type="button" class="view-btn active" id="gridViewBtn" title="Vista cuadrícula" aria-label="Vista cuadrícula">
+                                    <i class="fas fa-th-large"></i>
+                                </button>
+                                <button type="button" class="view-btn" id="listViewBtn" title="Vista lista" aria-label="Vista lista">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+                            <button class="btn-map-mini" id="mapToggleBtn" type="button" title="Ver en el mapa" aria-expanded="false" aria-controls="searchMapContainer">
+                                <i class="fas fa-map-location-dot"></i> <span>Mapa</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Mapa (se abre con el boton "Mapa") -->
+                    <div class="search-map hidden" id="searchMapContainer">
+                        <div class="search-map-header">
+                            <h3>Mapa de resultados</h3>
+                            <button type="button" class="btn-close-map" id="closeMapBtn" aria-label="Cerrar mapa">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div id="searchMiniMap"></div>
+                    </div>
                 </div>
 
-                <!-- Mini Map (toggleable) -->
-                <div class="search-map" id="searchMapContainer">
-                    <div class="search-map-header">
-                        <h3>Mapa</h3>
-                        <button class="btn-close-map" id="closeMapBtn">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div id="searchMiniMap"></div>
-                </div>
             </div>
 
             <!-- Landing medica: que incluye cada ficha + llamado para profesionales -->
@@ -366,7 +365,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <script type="module" src="/js/especialidades.js?v=1"></script>
     <script type="module" src="js/search-seo.js?v=2"></script>
-    <script src="js/app.js?v=18"></script>
+    <script src="js/app.js?v=19"></script>
     <script src="js/dynamic-categories.js?v=1"></script>
-    <script src="js/map.js?v=2"></script>
+    <script src="js/map.js?v=3"></script>
     <script src="js/chat.js"></script>

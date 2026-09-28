@@ -795,27 +795,37 @@
             mapToggleBtn.classList.add('active');
         }
 
+        function setMapOpen(open) {
+            searchMapContainer.classList.toggle('hidden', !open);
+            mapToggleBtn.classList.toggle('active', open);
+            mapToggleBtn.setAttribute('aria-expanded', String(open));
+            var label = mapToggleBtn.querySelector('span');
+            if (label) label.textContent = open ? 'Ocultar mapa' : 'Mapa';
+        }
+
         mapToggleBtn.addEventListener('click', function () {
             var isHidden = searchMapContainer.classList.contains('hidden');
             if (isHidden) {
-                searchMapContainer.classList.remove('hidden');
-                mapToggleBtn.classList.add('active');
+                setMapOpen(true);
                 if (!miniMapInitialized) {
                     initMiniMap();
                     miniMapInitialized = true;
                 } else {
+                    // Refresh markers with the current filters (state, category…)
+                    loadMiniMapBusinesses();
                     setTimeout(function () { if (window._miniMap) window._miniMap.invalidateSize(); }, 100);
                 }
+                setTimeout(function () {
+                    searchMapContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
             } else {
-                searchMapContainer.classList.add('hidden');
-                mapToggleBtn.classList.remove('active');
+                setMapOpen(false);
             }
         });
 
         if (closeMapBtn) {
             closeMapBtn.addEventListener('click', function () {
-                searchMapContainer.classList.add('hidden');
-                mapToggleBtn.classList.remove('active');
+                setMapOpen(false);
             });
         }
     }
@@ -852,7 +862,8 @@
 
         var params = getSearchParams();
         var endpoint = '/businesses?status=approved&limit=50';
-        if (params.comuna) endpoint += '&state=' + encodeURIComponent(params.comuna);
+        var estado = params.estado || params.comuna;
+        if (estado) endpoint += '&state=' + encodeURIComponent(estado);
         if (params.categoria) endpoint += '&categoria=' + encodeURIComponent(params.categoria);
         if (params.city) endpoint += '&city=' + encodeURIComponent(params.city);
         if (params.search) endpoint += '&search=' + encodeURIComponent(params.search);

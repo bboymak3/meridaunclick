@@ -808,7 +808,7 @@ function createBusinessCard(business) {
 
     const featuredBadge = business.featured ? '<span class="card-badge badge-featured" title="Destacada"><i class="fas fa-star"></i></span>' : '';
     const statusBadge = business.status && business.status !== 'approved' ? `<span class="card-badge badge-${business.status}">${getStatusLabel(business.status)}</span>` : '';
-    const especialidadBadge = business.especialidad ? `<span class="card-badge badge-especialidad"><i class="fas fa-stethoscope"></i> ${business.especialidad}</span>` : '';
+    const especialidadBadge = business.especialidad ? `<span class="card-badge badge-especialidad"><i class="fas fa-stethoscope"></i> ${escapeHtml(business.especialidad)}</span>` : '';
 
     // FIX: Badges delivery (azul) + servicio a domicilio (naranja) en cards de listado
     const deliveryBadge = business.has_delivery
@@ -1558,18 +1558,21 @@ async function loadSiteStats() {
         const gridViewBtn = document.getElementById('gridViewBtn');
         const listViewBtn = document.getElementById('listViewBtn');
         if (gridViewBtn && listViewBtn) {
-            gridViewBtn.addEventListener('click', () => {
-                searchGrid.classList.remove('list-view');
-                searchGrid.classList.add('grid-view');
-                gridViewBtn.classList.add('active');
-                listViewBtn.classList.remove('active');
-            });
-            listViewBtn.addEventListener('click', () => {
-                searchGrid.classList.remove('grid-view');
-                searchGrid.classList.add('list-view');
-                listViewBtn.classList.add('active');
-                gridViewBtn.classList.remove('active');
-            });
+            const setView = (view) => {
+                const isList = view === 'list';
+                searchGrid.classList.toggle('list-view', isList);
+                searchGrid.classList.toggle('grid-view', !isList);
+                listViewBtn.classList.toggle('active', isList);
+                gridViewBtn.classList.toggle('active', !isList);
+                gridViewBtn.setAttribute('aria-pressed', String(!isList));
+                listViewBtn.setAttribute('aria-pressed', String(isList));
+                try { localStorage.setItem('holax_search_view', view); } catch (e) {}
+            };
+            gridViewBtn.addEventListener('click', () => setView('grid'));
+            listViewBtn.addEventListener('click', () => setView('list'));
+            let savedView = 'grid';
+            try { savedView = localStorage.getItem('holax_search_view') || 'grid'; } catch (e) {}
+            setView(savedView);
         }
 
         // Clear filters
@@ -1630,7 +1633,8 @@ async function loadSiteStats() {
                 if (matchedCat) categoryName = matchedCat.name || '';
                 if (matchedCat && matchedCat.banner_url) {
                     categoryBannerImg.src = matchedCat.banner_url;
-                    categoryBannerTitle.textContent = matchedCat.name;
+                    categoryBannerImg.alt = matchedCat.name || '';
+                    if (categoryBannerTitle) categoryBannerTitle.textContent = matchedCat.name;
                     categoryBannerEl.style.display = 'block';
                 } else {
                     categoryBannerEl.style.display = 'none';
