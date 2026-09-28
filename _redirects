@@ -1,10 +1,9 @@
 # HolaX - Cloudflare Pages Redirects
 # https://developers.cloudflare.com/pages/configuration/redirects/
 
-# SEO: servir robots.txt dinamico desde el endpoint /api/robots
-# (Cloudflare Pages Functions maneja /api/robots/index.js)
-# Status 200 = rewrite (no cambia la URL en el navegador del cliente)
-/robots.txt  /api/robots  200
+# robots.txt se sirve como archivo estatico (/robots.txt en la raiz).
+# Nota: un rewrite 200 hacia /api/robots NO funciona en Pages (los rewrites
+# solo apuntan a archivos estaticos) y devolvia index.html.
 
 # Redirigir antiguo dominio a nuevo (solo páginas, NO API calls)
 # Los API calls desde aunclick.pages.dev se redirigen SIN cambiar método (308)

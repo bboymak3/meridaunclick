@@ -12110,3 +12110,86 @@ a.btn-icon {
     align-items: center;
     gap: 8px;
 }
+
+/* ─── Search landing (search.html?categoria=...) ─── */
+.search-landing {
+    text-align: center;
+    max-width: 820px;
+    margin: 8px auto 18px;
+    padding: 0 4px;
+}
+.search-landing-h1 {
+    font-size: clamp(1.45rem, 4.8vw, 2.2rem);
+    line-height: 1.2;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+    margin: 0 0 8px;
+}
+.search-landing-h1::first-letter { text-transform: uppercase; }
+.search-landing-h2 {
+    font-size: clamp(1rem, 3.2vw, 1.2rem);
+    font-weight: 600;
+    color: #006EE3;
+    margin: 0 0 10px;
+}
+.search-landing-intro {
+    font-size: 0.97rem;
+    line-height: 1.6;
+    color: #475569;
+    margin: 0 auto 16px;
+    max-width: 720px;
+}
+.search-filters-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1.5px solid #006EE3;
+    background: #fff;
+    color: #006EE3;
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.95rem;
+    padding: 10px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 110, 227, 0.12);
+    transition: background 0.2s, color 0.2s;
+}
+.search-filters-toggle:hover,
+.search-filters-toggle.is-open {
+    background: #006EE3;
+    color: #fff;
+}
+.search-filters-chevron { font-size: 0.75rem; transition: transform 0.2s; }
+.search-filters-toggle.is-open .search-filters-chevron { transform: rotate(180deg); }
+.search-filters-bar.is-collapsed { display: none; }
+
+.search-faq {
+    max-width: 820px;
+    margin: 32px auto 8px;
+}
+.search-faq[hidden] { display: none; }
+.search-faq-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 12px;
+}
+.search-faq-item {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+}
+.search-faq-item summary {
+    cursor: pointer;
+    font-weight: 700;
+    color: #0f172a;
+}
+.search-faq-item p {
+    margin: 8px 0 0;
+    color: #475569;
+    line-height: 1.55;
+}
