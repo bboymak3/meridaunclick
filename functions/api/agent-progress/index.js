@@ -3,6 +3,7 @@
 // POST: Submit class answers - scoring by points, 70% to pass, allows retries if failed
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
+import { ensureAcademyVideoSchema, youtubeId, videoScore, MIN_WATCH_RATIO } from '../../_lib/academy-video.js';
 
 const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
 
@@ -38,6 +39,46 @@ async function ensureTables(db) {
   // Ensure columns exist (migration may have created tables without these)
   try { await db.prepare("ALTER TABLE class_questions ADD COLUMN points INTEGER DEFAULT 10").run(); } catch(e) {}
   try { await db.prepare("ALTER TABLE user_class_progress ADD COLUMN total_points INTEGER DEFAULT 0").run(); } catch(e) {}
+  await ensureAcademyVideoSchema(db);
+}
+
+function json(data, status) {
+  return new Response(JSON.stringify(data), {
+    status: status || 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+  });
+}
+
+// Seguimiento del video: 'video_start' al empezar a verlo (reinicia el progreso)
+// y 'video_complete' al terminarlo. El servidor comprueba que haya pasado el
+// tiempo real del video entre ambos.
+async function handleVideoAction(env, userId, body) {
+  var classId = body.class_id;
+  var cls = await env.DB.prepare('SELECT id, video_url FROM agent_classes WHERE id = ? AND is_active = 1').bind(classId).first();
+  if (!cls || !youtubeId(cls.video_url)) return json({ error: 'Esta clase no tiene video' }, 404);
+
+  await env.DB.prepare('INSERT OR IGNORE INTO user_class_progress (user_id, class_id, completed) VALUES (?, ?, 0)').bind(userId, classId).run();
+  var row = await env.DB.prepare('SELECT completed, video_completed, video_started_at, video_duration FROM user_class_progress WHERE user_id = ? AND class_id = ?').bind(userId, classId).first();
+
+  if (body.action === 'video_start') {
+    var duration = Math.max(0, Math.min(6 * 3600, Math.round(Number(body.duration) || 0)));
+    await env.DB.prepare(
+      "UPDATE user_class_progress SET video_completed = 0, video_started_at = datetime('now'), video_duration = ? WHERE user_id = ? AND class_id = ?"
+    ).bind(duration, userId, classId).run();
+    return json({ ok: true, video_completed: false });
+  }
+
+  // video_complete
+  if (!row || !row.video_started_at || !(row.video_duration > 0)) return json({ error: 'Debes reproducir el video desde el inicio' }, 400);
+  var elapsedRow = await env.DB.prepare(
+    "SELECT CAST((julianday('now') - julianday(video_started_at)) * 86400 AS INTEGER) AS elapsed FROM user_class_progress WHERE user_id = ? AND class_id = ?"
+  ).bind(userId, classId).first();
+  var elapsed = (elapsedRow && elapsedRow.elapsed) || 0;
+  var needed = Math.floor((row.video_duration || 0) * MIN_WATCH_RATIO);
+  if (elapsed < needed) {
+    return json({ error: 'Debes ver el video completo sin adelantarlo', elapsed: elapsed, needed: needed }, 400);
+  }
+  await env.DB.prepare('UPDATE user_class_progress SET video_completed = 1 WHERE user_id = ? AND class_id = ?').bind(userId, classId).run();
+  return json({ ok: true, video_completed: true });
 }
 
 export async function onRequestOptions() {
@@ -118,6 +159,11 @@ export async function onRequestPost(context) {
     var class_id = body.class_id;
     var answers = body.answers;
 
+    if (class_id && (body.action === 'video_start' || body.action === 'video_complete')) {
+      await ensureTables(env.DB);
+      return await handleVideoAction(env, userId, body);
+    }
+
     if (!class_id || !answers || !Array.isArray(answers)) {
       return new Response(JSON.stringify({ error: 'class_id y answers son requeridos' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -125,6 +171,7 @@ export async function onRequestPost(context) {
     }
 
     await ensureTables(env.DB);
+    await env.DB.prepare('INSERT OR IGNORE INTO agent_profiles (user_id) VALUES (?)').bind(userId).run();
 
     // Get class info
     var cls = await env.DB.prepare('SELECT * FROM agent_classes WHERE id = ? AND is_active = 1').bind(class_id).first();
@@ -144,6 +191,11 @@ export async function onRequestPost(context) {
       });
     }
 
+    // Clase con video: primero hay que ver el video completo
+    if (youtubeId(cls.video_url) && (!existing || existing.video_completed !== 1)) {
+      return json({ error: 'Debes ver el video completo antes de responder', video_required: true }, 403);
+    }
+
     // Get questions with points
     var qResp = await env.DB.prepare(
       'SELECT id, correct_answer, points FROM class_questions WHERE class_id = ?'
@@ -155,9 +207,13 @@ export async function onRequestPost(context) {
     var totalPoints = 0;
     var maxPoints = 0;
     var results = [];
+    var seen = {};
 
     for (var i = 0; i < answers.length; i++) {
-      var ans = answers[i];
+      var ans = answers[i] || {};
+      // Cada pregunta cuenta una sola vez
+      if (seen[ans.question_id]) continue;
+      seen[ans.question_id] = true;
       var q = null;
       for (var j = 0; j < questions.length; j++) {
         if (questions[j].id === ans.question_id) { q = questions[j]; break; }
@@ -182,26 +238,41 @@ export async function onRequestPost(context) {
     // XP earned: full if passed, half otherwise (but only on first pass or first attempt)
     var xpEarned = passed ? cls.xp_reward : Math.floor(cls.xp_reward * 0.5);
 
+    // Clase con video: 10 pts por el video + 2 por respuesta correcta + 10 si
+    // todas son correctas. Aprueba con 70% de respuestas correctas.
+    var isVideo = !!youtubeId(cls.video_url);
+    var breakdown = null;
+    if (isVideo) {
+      breakdown = videoScore(correct, totalQuestions);
+      totalPoints = breakdown.points;
+      maxPoints = breakdown.max_points;
+      scorePercent = totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0;
+      passed = scorePercent >= 70;
+      xpEarned = breakdown.points;
+    }
+
     // BUG #2 FIX: Only count as completed when passed
     // BUG #3 FIX: Only add XP and increment count on first pass
     if (existing) {
       // Update existing record
       if (passed) {
         // First time passing — set completed and award full XP
-        await env.DB.prepare(
-          "UPDATE user_class_progress SET completed = 1, correct_answers = ?, total_questions = ?, total_points = ?, xp_earned = ?, completed_at = datetime('now') WHERE user_id = ? AND class_id = ?"
+        var passUpdate = await env.DB.prepare(
+          "UPDATE user_class_progress SET completed = 1, correct_answers = ?, total_questions = ?, total_points = ?, xp_earned = ?, completed_at = datetime('now') WHERE user_id = ? AND class_id = ? AND COALESCE(completed, 0) = 0"
         ).bind(correct, totalQuestions, totalPoints, xpEarned, userId, class_id).run();
 
         // BUG #3 FIX: Only add XP if this is first time passing (existing was not completed)
-        if (existing.completed !== 1) {
+        // (y solo si esta peticion fue la que marco la clase como aprobada)
+        if (existing.completed !== 1 && passUpdate.meta && passUpdate.meta.changes > 0) {
           await env.DB.prepare(
             "UPDATE agent_profiles SET xp = xp + ?, total_classes_completed = total_classes_completed + 1, updated_at = datetime('now') WHERE user_id = ?"
           ).bind(xpEarned, userId).run();
         }
       } else {
         // Failed attempt — update score but keep completed = 0, no XP
+        // (en clases con video hay que volver a verlo para reintentar)
         await env.DB.prepare(
-          "UPDATE user_class_progress SET correct_answers = ?, total_questions = ?, total_points = ?, xp_earned = 0 WHERE user_id = ? AND class_id = ?"
+          "UPDATE user_class_progress SET correct_answers = ?, total_questions = ?, total_points = ?, xp_earned = 0" + (isVideo ? ", video_completed = 0" : "") + " WHERE user_id = ? AND class_id = ?"
         ).bind(correct, totalQuestions, totalPoints, userId, class_id).run();
       }
     } else {
@@ -255,8 +326,8 @@ export async function onRequestPost(context) {
       var perfectExists = await env.DB.prepare("SELECT COUNT(*) as cnt FROM user_badges WHERE user_id = ? AND badge_type = 'perfect_score'").bind(userId).first();
       if (perfectExists.cnt === 0) {
         await env.DB.prepare(
-          "INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon) VALUES (?, 'perfect_score', 'Puntuacion Perfecta', 'Obtuviste ' + scorePercent + '% en un quiz', 'fas fa-crown')"
-        ).bind(userId).run();
+          "INSERT INTO user_badges (user_id, badge_type, badge_name, badge_description, badge_icon) VALUES (?, 'perfect_score', 'Puntuacion Perfecta', ?, 'fas fa-crown')"
+        ).bind(userId, 'Obtuviste ' + scorePercent + '% en un quiz').run();
       }
     }
 
@@ -273,6 +344,8 @@ export async function onRequestPost(context) {
       new_level: newLevel,
       old_level: oldLevel,
       results: results,
+      is_video: isVideo,
+      score_breakdown: breakdown,
     }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

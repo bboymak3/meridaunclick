@@ -787,6 +787,17 @@
                         <!-- Stats Cards -->
                         <div id="academyStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;"></div>
 
+                        <!-- YouTube channel -->
+                        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;margin-bottom:20px;">
+                            <div style="font-weight:600;font-size:0.85rem;margin-bottom:6px;color:#dc2626;"><i class="fab fa-youtube"></i> Canal de YouTube de la Academia</div>
+                            <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Se muestra en la academia con botones para visitar y suscribirse al canal.</p>
+                            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;align-items:end;">
+                                <input type="url" id="academyChannelUrl" placeholder="https://www.youtube.com/@tucanal" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                <input type="text" id="academyChannelName" placeholder="Nombre del canal (opcional)" maxlength="100" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                <button class="btn btn-primary" id="academySaveChannelBtn" style="background:#dc2626;"><i class="fas fa-save"></i> Guardar canal</button>
+                            </div>
+                        </div>
+
                         <!-- Classes Table -->
                         <div style="overflow-x:auto;">
                             <table class="admin-table" style="width:100%;font-size:0.85rem;">
@@ -855,6 +866,17 @@
                                 <div class="form-group">
                                     <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Orden en Módulo</label>
                                     <input type="number" id="academyClassModuleOrder" value="0" min="0" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                </div>
+                            </div>
+                            <!-- YouTube video + 5 questions -->
+                            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:10px;padding:14px;">
+                                <div style="font-weight:600;font-size:0.85rem;margin-bottom:6px;color:#dc2626;"><i class="fab fa-youtube"></i> Video de YouTube (evaluación)</div>
+                                <p style="font-size:0.78rem;color:#6b7280;margin:0 0 10px;">Pega la URL del video. El agente deberá verlo completo, sin cerrarlo ni adelantarlo, y luego responder 5 preguntas de selección simple. Puntaje: 10 pts por ver el video + 2 pts por respuesta correcta + 10 pts de bono si acierta todas (máx. 30 pts, se suman como XP). Aprueba con 4 de 5. Déjalo vacío para una clase normal.</p>
+                                <input type="url" id="academyClassVideoUrl" placeholder="https://www.youtube.com/watch?v=..." style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                <div id="academyVideoPreview" style="margin-top:8px;font-size:0.78rem;"></div>
+                                <div id="academyVideoQuestionsWrap" class="hidden" style="margin-top:12px;">
+                                    <div style="font-weight:600;font-size:0.85rem;margin-bottom:8px;color:#374151;"><i class="fas fa-list-ol" style="color:#dc2626;"></i> 5 preguntas del video <span style="font-weight:400;color:#6b7280;font-size:0.75rem;">(marca el círculo de la respuesta correcta)</span></div>
+                                    <div id="academyVideoQuestions" style="display:grid;gap:10px;"></div>
                                 </div>
                             </div>
                             <!-- AI Question Generator -->

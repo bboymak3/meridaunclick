@@ -2,6 +2,7 @@
 // POST: Create new class (admin only)
 
 import { corsHeaders, requireAuth, requireAdmin } from '../../_lib/auth.js';
+import { ensureAcademyVideoSchema, youtubeId, normalizeQuestions, replaceQuestions } from '../../_lib/academy-video.js';
 
 async function ensureTables(db) {
   var tables = [
@@ -24,6 +25,7 @@ async function ensureTables(db) {
   for (var j = 0; j < alters.length; j++) {
     try { await db.prepare(alters[j]).run(); } catch(e) { /* column already exists */ }
   }
+  await ensureAcademyVideoSchema(db);
 }
 
 export async function onRequestOptions() {
@@ -45,7 +47,7 @@ export async function onRequestGet(context) {
       query = "SELECT ac.*, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, (SELECT COUNT(*) FROM user_class_progress WHERE class_id = ac.id AND completed = 1) as completions FROM agent_classes ac ORDER BY ac.sort_order ASC, ac.id ASC";
       params = [];
     } else {
-      query = "SELECT ac.id, ac.title, ac.description, ac.content, ac.xp_reward, ac.sort_order, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, COALESCE((SELECT completed FROM user_class_progress WHERE class_id = ac.id AND user_id = ?), 0) as is_completed FROM agent_classes ac WHERE ac.is_active = 1 ORDER BY ac.sort_order ASC, ac.id ASC";
+      query = "SELECT ac.id, ac.title, ac.description, ac.content, ac.xp_reward, ac.sort_order, ac.video_url, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, COALESCE((SELECT completed FROM user_class_progress WHERE class_id = ac.id AND user_id = ?), 0) as is_completed FROM agent_classes ac WHERE ac.is_active = 1 ORDER BY ac.sort_order ASC, ac.id ASC";
       params = [auth.user.id];
     }
 
@@ -85,11 +87,29 @@ export async function onRequestPost(context) {
       });
     }
 
+    // Clase con video de YouTube: URL valida + 5 preguntas
+    var video_url = String(body.video_url || '').trim();
+    if (video_url && !youtubeId(video_url)) {
+      return new Response(JSON.stringify({ error: 'La URL del video de YouTube no es valida' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    var questions = null;
+    if (body.questions !== undefined || video_url) {
+      var norm = normalizeQuestions(body.questions || [], !!video_url);
+      if (norm.error) {
+        return new Response(JSON.stringify({ error: norm.error }), {
+          status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      questions = norm.questions;
+    }
+
     await ensureTables(env.DB);
 
     // BUG #8 FIX: Use !== undefined instead of || to allow explicit 0 values
     var result = await env.DB.prepare(
-      'INSERT INTO agent_classes (title, description, content, xp_reward, sort_order, is_active, module, module_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO agent_classes (title, description, content, xp_reward, sort_order, is_active, module, module_order, video_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     ).bind(
       title.trim(),
       description || '',
@@ -98,12 +118,17 @@ export async function onRequestPost(context) {
       sort_order !== undefined ? sort_order : 0,
       is_active !== undefined ? (is_active ? 1 : 0) : 1,
       module || 'General',
-      module_order !== undefined ? module_order : 0
+      module_order !== undefined ? module_order : 0,
+      video_url
     ).run();
+
+    var classId = result.meta.last_row_id;
+    if (questions) await replaceQuestions(env.DB, classId, questions);
 
     return new Response(JSON.stringify({
       message: 'Clase creada exitosamente',
-      class_id: result.meta.last_row_id,
+      class_id: classId,
+      questions_saved: questions ? questions.length : 0,
     }), {
       status: 201, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

@@ -178,6 +178,35 @@ button:active{transform:scale(.97)}
 .no-badges{text-align:center;padding:32px;color:var(--gray-400);font-size:14px}
 .no-badges i{font-size:32px;margin-bottom:8px;display:block}
 
+/* YouTube channel banner */
+.yt-channel{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#fff,#fef2f2);border:1.5px solid #fecaca}
+.yt-channel-icon{width:52px;height:52px;border-radius:50%;background:#dc2626;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.yt-channel-text{flex:1;min-width:180px}
+.yt-channel-title{font-size:15px;font-weight:700;color:var(--gray-900)}
+.yt-channel-sub{font-size:13px;color:var(--gray-500)}
+.yt-channel-actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn-yt{background:#dc2626;color:#fff}
+.btn-yt:hover{background:#b91c1c}
+.btn-yt-outline{background:#fff;color:#dc2626;border:2px solid #dc2626}
+.btn-yt-outline:hover{background:#fef2f2}
+
+/* Video class */
+.class-video-tag{background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;display:inline-flex;align-items:center;gap:4px}
+.video-panel{background:var(--gray-50);border-radius:var(--radius);margin-top:12px;padding:14px;border:1.5px solid #fecaca}
+.video-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-sm);overflow:hidden}
+.video-frame iframe,.video-frame>div{position:absolute;inset:0;width:100%;height:100%}
+.video-note{font-size:12px;color:var(--gray-600);margin:10px 0 8px;display:flex;gap:6px;align-items:flex-start}
+.video-note i{color:#dc2626;margin-top:2px}
+.video-progress{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--gray-500)}
+.video-progress-bar{flex:1;height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden}
+.video-progress-fill{height:100%;width:0;background:#dc2626;border-radius:4px;transition:width .4s}
+.video-done{text-align:center;padding:12px 4px 4px}
+.video-done i{font-size:32px;color:var(--success);margin-bottom:6px}
+.score-breakdown{display:grid;gap:6px;max-width:320px;margin:10px auto 6px;text-align:left}
+.score-row{display:flex;justify-content:space-between;font-size:13px;color:var(--gray-600);padding:6px 10px;background:#fff;border-radius:var(--radius-sm);border:1px solid var(--gray-200)}
+.score-row strong{color:var(--gray-900)}
+.score-row.total{border-color:var(--primary);background:var(--primary-light)}
+
 /* File input hidden */
 .hidden-input{display:none}
 
@@ -244,6 +273,7 @@ button:active{transform:scale(.97)}
   let agentProgress = null;
   let classes = [];
   let examStatus = null;
+  let academyConfig = {};
 
   // ── Helpers ──
   function apiHeaders(){ return {'Content-Type':'application/json','Authorization':'Bearer '+TOKEN} }
@@ -339,6 +369,12 @@ button:active{transform:scale(.97)}
       document.getElementById('headerAvatarLink').href='/perfil.html?id='+USER_ID;
       document.getElementById('headerProfileBtn').href='/perfil.html?id='+USER_ID;
 
+      // Canal de YouTube (opcional, no bloquea la carga)
+      try{
+        const cfg=await fetch(API+'/academy-config').then(function(r){ return r.ok?r.json():null; });
+        academyConfig=(cfg&&cfg.config)||{};
+      }catch(e){ academyConfig={}; }
+
       render();
     }catch(err){
       document.getElementById('pageLoader').innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Error al cargar datos</p><p style="font-size:12px;margin-top:4px;color:var(--gray-400)">'+err.message+'</p></div>';
@@ -349,12 +385,46 @@ button:active{transform:scale(.97)}
     const m=document.getElementById('mainContent');
     m.innerHTML='';
 
-    m.innerHTML += renderProfileCard();
+    closeVideo();
+    m.innerHTML += '<div id="profileSection">'+renderProfileCard()+'</div>';
+    m.innerHTML += renderChannelCard();
     m.innerHTML += renderClassesSection();
     m.innerHTML += renderExamSection();
-    m.innerHTML += renderBadgesSection();
+    m.innerHTML += '<div id="badgesSection">'+renderBadgesSection()+'</div>';
 
     bindClassEvents();
+  }
+
+  // Actualiza perfil y medallas sin tocar las clases (no borra los resultados del quiz)
+  function refreshSummary(){
+    const p=document.getElementById('profileSection');
+    const b=document.getElementById('badgesSection');
+    if(p) p.innerHTML=renderProfileCard();
+    if(b) b.innerHTML=renderBadgesSection();
+  }
+
+  // ── Render: YouTube channel ──
+  function channelUrl(){
+    const u=String(academyConfig.youtube_channel_url||'');
+    return /^https:\/\/(www\.|m\.)?youtube\.com\//.test(u)?u:'';
+  }
+
+  function renderChannelCard(){
+    const url=channelUrl();
+    if(!url) return '';
+    const name=academyConfig.youtube_channel_name||'nuestro canal de YouTube';
+    return `
+    <div class="card yt-channel">
+      <div class="yt-channel-icon"><i class="fab fa-youtube"></i></div>
+      <div class="yt-channel-text">
+        <div class="yt-channel-title">Aprende con ${escapeHTML(name)}</div>
+        <div class="yt-channel-sub">Las clases de la academia están en nuestro canal. ¡Suscríbete para no perderte ninguna!</div>
+      </div>
+      <div class="yt-channel-actions">
+        <a class="btn btn-sm btn-yt" href="${escapeAttr(url+'?sub_confirmation=1')}" target="_blank" rel="noopener"><i class="fas fa-bell"></i> Suscribirme</a>
+        <a class="btn btn-sm btn-yt-outline" href="${escapeAttr(url)}" target="_blank" rel="noopener"><i class="fab fa-youtube"></i> Ver canal</a>
+      </div>
+    </div>`;
   }
 
   // ── Render: Profile Card ──
@@ -362,7 +432,7 @@ button:active{transform:scale(.97)}
     const p=agentProgress;
     const lvl=p.level;
     const xpPercent=p.progress_percent;
-    const completedClasses=p.completed_classes? p.completed_classes.length : 0;
+    const completedClasses=p.completed_classes? p.completed_classes.filter(function(c){ return c.completed===1; }).length : 0;
     const totalBadges=p.total_badges||0;
     const avatarHTML=userProfile.avatar
       ? '<img src="'+userProfile.avatar+'" alt="Avatar">'
@@ -413,6 +483,7 @@ button:active{transform:scale(.97)}
     }
     let cards=classes.map(function(c){
       const completed=c.is_completed===1||c.is_completed===true;
+      const isVideo=!!youtubeId(c.video_url);
       const statusHTML=completed
         ?'<span class="class-status completed"><i class="fas fa-check-circle"></i> Completada</span>'
         :'<span class="class-status available"><i class="fas fa-play-circle"></i> Disponible</span>';
@@ -425,10 +496,13 @@ button:active{transform:scale(.97)}
           </div>
         </div>
         <div class="class-meta">
+          ${isVideo?'<span class="class-video-tag"><i class="fab fa-youtube"></i> Video</span>':''}
           <span class="class-meta-item"><i class="fas fa-question-circle"></i> ${c.question_count||0} preguntas</span>
-          <span class="class-xp"><i class="fas fa-bolt"></i> +${c.xp_reward||10} XP</span>
+          <span class="class-xp"><i class="fas fa-bolt"></i> ${isVideo?'hasta +'+VIDEO_MAX_POINTS:'+'+(c.xp_reward||10)} XP</span>
           ${statusHTML}
-          ${!completed?'<button class="btn btn-sm btn-primary" onclick="startQuiz('+c.id+')" style="margin-left:auto"><i class="fas fa-play"></i> Comenzar</button>':''}
+          ${!completed?(isVideo
+            ?'<button class="btn btn-sm btn-yt" onclick="startVideoClass('+c.id+')" style="margin-left:auto"><i class="fab fa-youtube"></i> Ver video</button>'
+            :'<button class="btn btn-sm btn-primary" onclick="startQuiz('+c.id+')" style="margin-left:auto"><i class="fas fa-play"></i> Comenzar</button>'):''}
         </div>
         <div id="quizPanel-${c.id}"></div>
       </div>`;
@@ -437,12 +511,190 @@ button:active{transform:scale(.97)}
     return '<div class="card"><div class="card-title"><i class="fas fa-book-open"></i> Mis Clases</div><div class="classes-grid">'+cards+'</div></div>';
   }
 
+  // ── Clases con video de YouTube ──
+  // Hay que ver el video completo sin cerrarlo ni adelantarlo. Si se cierra
+  // el panel o se recarga la página, el progreso se pierde y empieza de nuevo.
+  const VIDEO_MAX_POINTS=30;
+  let ytApiPromise=null;
+  let video=null; // {classId, player, timer, maxWatched, duration, started, done}
+
+  function youtubeId(url){
+    const s=String(url||'').trim();
+    if(!s) return '';
+    if(/^[A-Za-z0-9_-]{11}$/.test(s)) return s;
+    const m=s.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/)|youtube-nocookie\.com\/embed\/|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+    return m?m[1]:'';
+  }
+
+  function loadYouTubeApi(){
+    if(window.YT&&window.YT.Player) return Promise.resolve(window.YT);
+    if(ytApiPromise) return ytApiPromise;
+    ytApiPromise=new Promise(function(resolve,reject){
+      const prev=window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady=function(){ if(prev) prev(); resolve(window.YT); };
+      const s=document.createElement('script');
+      s.src='https://www.youtube.com/iframe_api';
+      s.onerror=function(){ ytApiPromise=null; reject(new Error('No se pudo cargar YouTube')); };
+      document.head.appendChild(s);
+    });
+    return ytApiPromise;
+  }
+
+  function closeVideo(){
+    if(!video) return;
+    clearInterval(video.timer);
+    try{ video.player&&video.player.destroy(); }catch(e){}
+    const panel=document.getElementById('quizPanel-'+video.classId);
+    if(panel&&!video.keepPanel) panel.innerHTML='';
+    video=null;
+  }
+
+  function fmtTime(s){
+    s=Math.max(0,Math.floor(s||0));
+    return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+  }
+
+  async function startVideoClass(classId){
+    const cls=classes.find(function(c){ return c.id===classId; });
+    const vid=cls&&youtubeId(cls.video_url);
+    if(!vid) return;
+    closeVideo();
+    Object.keys(quizStates).forEach(function(id){ closeQuiz(Number(id)); });
+    const panel=document.getElementById('quizPanel-'+classId);
+    if(!panel) return;
+    panel.innerHTML=`
+    <div class="video-panel">
+      <div class="video-frame"><div id="ytPlayer-${classId}"></div></div>
+      <div class="video-note"><i class="fas fa-info-circle"></i><span>Mira el video <strong>completo</strong> para desbloquear las 5 preguntas. No lo cierres ni lo adelantes: si cierras o recargas la página, empiezas de nuevo.</span></div>
+      <div class="video-progress">
+        <span id="videoTime-${classId}">0:00</span>
+        <div class="video-progress-bar"><div class="video-progress-fill" id="videoFill-${classId}"></div></div>
+        <span id="videoPct-${classId}">0%</span>
+      </div>
+      <div id="videoStatus-${classId}"></div>
+      <div style="text-align:right;margin-top:10px"><button class="btn btn-sm btn-outline" onclick="closeVideoClass()">Cerrar</button></div>
+    </div>`;
+    video={classId:classId,player:null,timer:null,maxWatched:0,duration:0,started:false,done:false};
+    const state=video;
+    try{
+      const YT=await loadYouTubeApi();
+      if(video!==state) return;
+      state.player=new YT.Player('ytPlayer-'+classId,{
+        videoId:vid,
+        playerVars:{rel:0,modestbranding:1,playsinline:1,disablekb:1,fs:1},
+        events:{
+          onStateChange:function(e){ onVideoState(state,e.data); },
+          onPlaybackRateChange:function(){ try{ if(state.player.getPlaybackRate()!==1) state.player.setPlaybackRate(1); }catch(err){} }
+        }
+      });
+      state.timer=setInterval(function(){ trackVideo(state); },500);
+    }catch(err){
+      panel.innerHTML='<div class="empty-state" style="padding:12px;color:var(--danger)"><i class="fas fa-exclamation-triangle"></i><p>'+escapeHTML(err.message)+'</p></div>';
+      if(video===state) video=null;
+    }
+  }
+  window.startVideoClass=startVideoClass;
+
+  function closeVideoClass(){
+    if(video&&!video.done) showToast('Cerraste el video: tendrás que verlo de nuevo desde el inicio');
+    closeVideo();
+  }
+  window.closeVideoClass=closeVideoClass;
+
+  async function onVideoState(state,s){
+    if(video!==state||state.done) return;
+    const YTS=window.YT.PlayerState;
+    if(s===YTS.PLAYING&&!state.started){
+      state.started=true;
+      state.duration=state.player.getDuration()||0;
+      try{
+        await apiPost('/agent-progress',{class_id:state.classId,action:'video_start',duration:state.duration});
+      }catch(err){
+        state.started=false;
+        state.player.pauseVideo();
+        setVideoStatus(state,'<span style="color:var(--danger)">'+escapeHTML(err.message)+'</span>');
+      }
+    }
+    if(s===YTS.ENDED){
+      trackVideo(state);
+      if(state.duration&&state.maxWatched>=state.duration*0.95-2){
+        finishVideo(state);
+      }else{
+        setVideoStatus(state,'<span style="color:var(--danger)">Debes ver todo el video sin adelantarlo.</span>');
+        state.player.seekTo(state.maxWatched,true);
+      }
+    }
+  }
+
+  function trackVideo(state){
+    if(video!==state||!state.player||!state.player.getCurrentTime||state.done) return;
+    const t=state.player.getCurrentTime()||0;
+    const d=state.duration||state.player.getDuration()||0;
+    const now=Date.now();
+    // Avance permitido = tiempo real transcurrido (las pestañas en segundo plano
+    // ejecutan el timer con menos frecuencia) + un margen
+    const allowed=state.lastTick?(now-state.lastTick)/1000*1.1+1.5:2.5;
+    state.lastTick=now;
+    if(state.started){
+      if(t>state.maxWatched+allowed){
+        // Intentó adelantar: volver al punto máximo visto
+        state.player.seekTo(state.maxWatched,true);
+        showToast('No puedes adelantar el video');
+      }else if(t>state.maxWatched){
+        state.maxWatched=t;
+      }
+    }
+    const pct=d?Math.min(100,Math.round(state.maxWatched/d*100)):0;
+    const fill=document.getElementById('videoFill-'+state.classId);
+    if(fill) fill.style.width=pct+'%';
+    const pctEl=document.getElementById('videoPct-'+state.classId);
+    if(pctEl) pctEl.textContent=pct+'%';
+    const timeEl=document.getElementById('videoTime-'+state.classId);
+    if(timeEl) timeEl.textContent=fmtTime(state.maxWatched)+' / '+fmtTime(d);
+  }
+
+  function setVideoStatus(state,html){
+    const el=document.getElementById('videoStatus-'+state.classId);
+    if(el) el.innerHTML='<div style="font-size:13px;margin-top:8px;text-align:center">'+html+'</div>';
+  }
+
+  async function finishVideo(state){
+    state.done=true;
+    clearInterval(state.timer);
+    setVideoStatus(state,'<div class="spinner" style="width:24px;height:24px"></div>');
+    try{
+      await apiPost('/agent-progress',{class_id:state.classId,action:'video_complete'});
+      setVideoStatus(state,`
+        <div class="video-done">
+          <i class="fas fa-check-circle"></i>
+          <div style="font-weight:700;color:var(--gray-900)">¡Video completado! +10 pts</div>
+          <div style="font-size:13px;color:var(--gray-500);margin:4px 0 10px">Ahora responde las 5 preguntas: 2 pts por cada respuesta correcta y 10 pts extra si aciertas todas.</div>
+          <button class="btn btn-primary" onclick="answerVideoQuestions(${state.classId})"><i class="fas fa-question-circle"></i> Responder preguntas</button>
+        </div>`);
+    }catch(err){
+      state.done=false;
+      setVideoStatus(state,'<span style="color:var(--danger)">'+escapeHTML(err.message)+'</span><br><button class="btn btn-sm btn-yt" style="margin-top:8px" onclick="startVideoClass('+state.classId+')"><i class="fas fa-redo"></i> Ver de nuevo</button>');
+    }
+  }
+
+  function answerVideoQuestions(classId){
+    if(video&&video.classId===classId){ video.keepPanel=true; closeVideo(); }
+    startQuiz(classId);
+  }
+  window.answerVideoQuestions=answerVideoQuestions;
+
+  // Avisar antes de cerrar/recargar con un video a medias
+  window.addEventListener('beforeunload',function(e){
+    if(video&&video.started&&!video.done){ e.preventDefault(); e.returnValue=''; }
+  });
+
   // ── Quiz State ──
   const quizStates={};
 
   function bindClassEvents(){}
 
   async function startQuiz(classId){
+    if(video&&video.classId!==classId) closeVideo();
     const panel=document.getElementById('quizPanel-'+classId);
     if(!panel) return;
     panel.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div><p style="font-size:13px;color:var(--gray-500)">Cargando preguntas...</p></div>';
@@ -554,11 +806,15 @@ button:active{transform:scale(.97)}
       const result=await apiPost('/agent-progress',{class_id:classId,answers:answers});
       if(!result) return;
       renderQuizResults(classId,result);
-      // Refresh progress
+      // Refresh progress (perfil y medallas, sin borrar los resultados)
       const freshProgress=await apiGet('/agent-progress');
-      if(freshProgress) agentProgress=freshProgress;
+      if(freshProgress){ agentProgress=freshProgress; refreshSummary(); }
     }catch(err){
-      panel.innerHTML='<div class="results-panel" style="color:var(--danger)"><i class="fas fa-exclamation-triangle" style="font-size:24px;margin-bottom:8px"></i><p>'+escapeHTML(err.message)+'</p><button class="btn btn-sm btn-outline" onclick="startQuiz('+classId+')" style="margin-top:12px"><i class="fas fa-redo"></i> Reintentar</button></div>';
+      const cls=classes.find(function(c){return c.id===classId});
+      const retry=cls&&youtubeId(cls.video_url)
+        ?'<button class="btn btn-sm btn-yt" onclick="startVideoClass('+classId+')" style="margin-top:12px"><i class="fab fa-youtube"></i> Ver video</button>'
+        :'<button class="btn btn-sm btn-outline" onclick="startQuiz('+classId+')" style="margin-top:12px"><i class="fas fa-redo"></i> Reintentar</button>';
+      panel.innerHTML='<div class="results-panel" style="color:var(--danger)"><i class="fas fa-exclamation-triangle" style="font-size:24px;margin-bottom:8px"></i><p>'+escapeHTML(err.message)+'</p>'+retry+'</div>';
     }
   }
   window.submitQuiz=submitQuiz;
@@ -571,6 +827,16 @@ button:active{transform:scale(.97)}
     html+=`<i class="fas ${passed?'fa-check-circle':'fa-times-circle'}" style="font-size:40px;color:${passed?'var(--success)':'var(--danger)'}"></i>`;
     html+=`<div class="results-score ${passed?'pass':'fail'}">${r.score_percent}%</div>`;
     html+=`<div class="results-message">${r.correct_answers} de ${r.total_questions} correctas</div>`;
+    const b=r.score_breakdown;
+    if(r.is_video&&b){
+      html+=`<div class="score-breakdown">
+        <div class="score-row"><span><i class="fab fa-youtube" style="color:#dc2626"></i> Video visto</span><strong>+${b.video_points}</strong></div>
+        <div class="score-row"><span><i class="fas fa-check" style="color:var(--success)"></i> Respuestas correctas (${r.correct_answers} × 2)</span><strong>+${b.answer_points}</strong></div>
+        <div class="score-row"><span><i class="fas fa-crown" style="color:#d97706"></i> Bono todas correctas</span><strong>+${b.bonus_points}</strong></div>
+        <div class="score-row total"><span>Total</span><strong>${b.points} / ${b.max_points} pts</strong></div>
+      </div>`;
+      if(!passed) html+=`<div class="results-message" style="font-size:13px">Necesitas al menos 4 de 5 correctas. Para reintentar debes ver el video otra vez.</div>`;
+    }
     html+=`<div class="results-xp"><i class="fas fa-bolt"></i> +${r.xp_earned} XP ganados</div>`;
     if(r.leveled_up){
       html+=`<div class="results-levelup"><i class="fas fa-arrow-up"></i> ¡Subiste al nivel ${r.new_level}! ${getLevelName(r.new_level)?'· '+getLevelName(r.new_level):''}</div>`;
@@ -578,7 +844,9 @@ button:active{transform:scale(.97)}
     html+=`<div class="results-actions">`;
     html+=`<button class="btn btn-sm btn-outline" onclick="closeQuiz(${classId})">Cerrar</button>`;
     if(!passed && cls){
-      html+=`<button class="btn btn-sm btn-primary" onclick="startQuiz(${classId})"><i class="fas fa-redo"></i> Reintentar</button>`;
+      html+=r.is_video
+        ?`<button class="btn btn-sm btn-yt" onclick="startVideoClass(${classId})"><i class="fab fa-youtube"></i> Ver video de nuevo</button>`
+        :`<button class="btn btn-sm btn-primary" onclick="startQuiz(${classId})"><i class="fas fa-redo"></i> Reintentar</button>`;
     }
     html+=`</div></div>`;
 
@@ -597,13 +865,10 @@ button:active{transform:scale(.97)}
           statusEl.className='class-status completed';
           statusEl.innerHTML='<i class="fas fa-check-circle"></i> Completada';
         }
-        const btn=metaDiv.querySelector('.btn-primary');
+        const btn=metaDiv.querySelector('.btn-primary, .btn-yt');
         if(btn) btn.remove();
       }
     }
-
-    // Update header stats quickly
-    render();
   }
 
   function closeQuiz(classId){
@@ -859,6 +1124,10 @@ button:active{transform:scale(.97)}
     const div=document.createElement('div');
     div.appendChild(document.createTextNode(str));
     return div.innerHTML;
+  }
+
+  function escapeAttr(str){
+    return String(str||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
   function formatDate(dateStr){
