@@ -354,15 +354,6 @@ window.closeEditBusinessModal = function() {
                 userAvatar.innerHTML = `<span class="avatar-initials">${initials}</span>`;
             }
         }
-        // Set profile partner link
-        var profileLink = document.getElementById('sidebarProfileLink');
-        if (profileLink && currentUser.id) {
-            profileLink.href = '/perfil.html?id=' + currentUser.id;
-        }
-        var partnerLink = document.getElementById('profilePartnerLink');
-        if (partnerLink && currentUser.id) {
-            partnerLink.href = '/perfil.html?id=' + currentUser.id;
-        }
     }
 
     // ─── Sidebar Navigation ────────────────────────────────────
