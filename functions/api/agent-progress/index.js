@@ -4,6 +4,7 @@
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
 import { ensureAcademyVideoSchema, youtubeId, videoScore, MIN_WATCH_RATIO } from '../../_lib/academy-video.js';
+import { getPath, isClassLocked } from '../../_lib/academy-path.js';
 
 const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
 
@@ -55,6 +56,7 @@ async function handleVideoAction(env, userId, body) {
   var classId = body.class_id;
   var cls = await env.DB.prepare('SELECT id, video_url FROM agent_classes WHERE id = ? AND is_active = 1').bind(classId).first();
   if (!cls || !youtubeId(cls.video_url)) return json({ error: 'Esta clase no tiene video' }, 404);
+  if (await isClassLocked(env.DB, userId, classId)) return json({ error: 'Primero aprueba la clase anterior', locked: true }, 403);
 
   await env.DB.prepare('INSERT OR IGNORE INTO user_class_progress (user_id, class_id, completed) VALUES (?, ?, 0)').bind(userId, classId).run();
   var row = await env.DB.prepare('SELECT completed, video_completed, video_started_at, video_duration FROM user_class_progress WHERE user_id = ? AND class_id = ?').bind(userId, classId).first();
@@ -121,7 +123,9 @@ export async function onRequestGet(context) {
     var xpInCurrentLevel = profile.xp - currentLevelXp;
     var xpNeeded = nextXp - currentLevelXp;
     var progressPercent = level >= 10 ? 100 : Math.min(100, Math.round((xpInCurrentLevel / xpNeeded) * 100));
-    var examAvailable = level >= 7 && !profile.exam_passed && (profile.exam_attempts || 0) < 3;
+    // El examen final se desbloquea al aprobar todas las clases de la ruta
+    var path = await getPath(env.DB, userId);
+    var examAvailable = path.exam_unlocked && !profile.exam_passed && (profile.exam_attempts || 0) < 3;
 
     return new Response(JSON.stringify({
       profile: profile,
@@ -131,6 +135,8 @@ export async function onRequestGet(context) {
       xp_needed_for_next: xpNeeded,
       progress_percent: progressPercent,
       exam_available: examAvailable,
+      path_completed: path.completed,
+      path_total: path.total,
       exam_attempts: profile.exam_attempts || 0,
       attempts_remaining: Math.max(0, 3 - (profile.exam_attempts || 0)),
       is_partner: profile.is_partner === 1,
@@ -189,6 +195,11 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: 'Esta clase ya fue aprobada', already_completed: true }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Ruta de aprendizaje: hay que aprobar las clases en orden
+    if (await isClassLocked(env.DB, userId, class_id)) {
+      return json({ error: 'Primero aprueba la clase anterior', locked: true }, 403);
     }
 
     // Clase con video: primero hay que ver el video completo

@@ -3,6 +3,7 @@
 
 import { corsHeaders, requireAuth, requireAdmin } from '../../_lib/auth.js';
 import { ensureAcademyVideoSchema, youtubeId, normalizeQuestions, replaceQuestions } from '../../_lib/academy-video.js';
+import { applyPath } from '../../_lib/academy-path.js';
 
 async function ensureTables(db) {
   var tables = [
@@ -47,13 +48,15 @@ export async function onRequestGet(context) {
       query = "SELECT ac.*, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, (SELECT COUNT(*) FROM user_class_progress WHERE class_id = ac.id AND completed = 1) as completions FROM agent_classes ac ORDER BY ac.sort_order ASC, ac.id ASC";
       params = [];
     } else {
-      query = "SELECT ac.id, ac.title, ac.description, ac.content, ac.xp_reward, ac.sort_order, ac.video_url, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, COALESCE((SELECT completed FROM user_class_progress WHERE class_id = ac.id AND user_id = ?), 0) as is_completed FROM agent_classes ac WHERE ac.is_active = 1 ORDER BY ac.sort_order ASC, ac.id ASC";
+      query = "SELECT ac.id, ac.title, ac.description, ac.content, ac.xp_reward, ac.sort_order, ac.video_url, ac.module, ac.module_order, (SELECT COUNT(*) FROM class_questions WHERE class_id = ac.id) as question_count, COALESCE((SELECT completed FROM user_class_progress WHERE class_id = ac.id AND user_id = ?), 0) as is_completed FROM agent_classes ac WHERE ac.is_active = 1 ORDER BY ac.sort_order ASC, ac.id ASC";
       params = [auth.user.id];
     }
 
     var stmt = env.DB.prepare(query);
     var result = params.length > 0 ? await stmt.bind(...params).all() : await stmt.all();
-    return new Response(JSON.stringify({ classes: result.results || [] }), {
+    // Agentes: ruta ordenada por modulos, con las clases siguientes bloqueadas
+    var list = isAdmin ? (result.results || []) : applyPath(result.results || []);
+    return new Response(JSON.stringify({ classes: list }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {

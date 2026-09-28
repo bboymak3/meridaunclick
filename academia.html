@@ -207,6 +207,43 @@ button:active{transform:scale(.97)}
 .score-row strong{color:var(--gray-900)}
 .score-row.total{border-color:var(--primary);background:var(--primary-light)}
 
+/* Learning path */
+.path-summary{margin-bottom:16px}
+.path-summary-top{display:flex;justify-content:space-between;font-size:13px;color:var(--gray-600);margin-bottom:6px}
+.path-summary-top strong{color:var(--gray-900)}
+.module-block{margin-bottom:18px}
+.module-block:last-child{margin-bottom:0}
+.module-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;color:var(--primary-dark);background:var(--primary-light);padding:8px 12px;border-radius:var(--radius-sm);margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.module-head i{margin-right:4px}
+.module-head.complete{background:var(--success-light);color:#047857}
+.module-count{font-size:12px;letter-spacing:0}
+.class-card.is-locked{background:var(--gray-50);opacity:.75}
+.class-card.is-locked .class-title{color:var(--gray-500)}
+.class-card.is-done{border-color:var(--success-light)}
+.class-status.locked{background:var(--gray-200);color:var(--gray-600)}
+.class-locked-note{font-size:12px;color:var(--gray-500);margin-top:10px}
+.class-material{margin-top:12px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);background:var(--gray-50)}
+.class-material summary{cursor:pointer;padding:10px 12px;font-size:13px;font-weight:600;color:var(--primary);list-style:none}
+.class-material summary::-webkit-details-marker{display:none}
+.class-material summary::after{content:'\25BE';float:right;color:var(--gray-400)}
+.class-material[open] summary::after{content:'\25B4'}
+.class-material-body{padding:0 14px 14px;font-size:14px;color:var(--gray-700);line-height:1.65;overflow-wrap:anywhere}
+.class-material-body a{color:var(--primary);text-decoration:underline}
+.class-material-body img{border-radius:var(--radius-sm);margin:8px 0;height:auto}
+.class-material-body ul,.class-material-body ol{padding-left:20px;margin:6px 0}
+.class-material-body p{margin:6px 0}
+.class-material-body table{border-collapse:collapse;width:100%;display:block;overflow-x:auto}
+.class-material-body td,.class-material-body th{border:1px solid var(--gray-200);padding:4px 8px}
+
+/* Certificate */
+.cert-card{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fcd34d}
+.cert-icon{width:52px;height:52px;border-radius:50%;background:#d97706;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.cert-text{flex:1;min-width:180px}
+.cert-title{font-size:15px;font-weight:700;color:var(--gray-900)}
+.cert-sub{font-size:13px;color:#92400e}
+.btn-cert{background:#d97706;color:#fff}
+.btn-cert:hover{background:#b45309}
+
 /* File input hidden */
 .hidden-input{display:none}
 
@@ -387,6 +424,7 @@ button:active{transform:scale(.97)}
 
     closeVideo();
     m.innerHTML += '<div id="profileSection">'+renderProfileCard()+'</div>';
+    m.innerHTML += renderCertificateCard();
     m.innerHTML += renderChannelCard();
     m.innerHTML += renderClassesSection();
     m.innerHTML += renderExamSection();
@@ -402,6 +440,139 @@ button:active{transform:scale(.97)}
     if(p) p.innerHTML=renderProfileCard();
     if(b) b.innerHTML=renderBadgesSection();
   }
+
+  // ── Certificado (PDF) ──
+  function isCertified(){
+    return !!(examStatus&&examStatus.exam_passed)||!!(agentProgress&&(agentProgress.is_partner||agentProgress.is_graduated));
+  }
+
+  function renderCertificateCard(){
+    if(!isCertified()) return '';
+    return `
+    <div class="card cert-card">
+      <div class="cert-icon"><i class="fas fa-certificate"></i></div>
+      <div class="cert-text">
+        <div class="cert-title">Partner Digital Certificado</div>
+        <div class="cert-sub">Descarga tu certificado y compártelo en tus redes.</div>
+      </div>
+      <button class="btn btn-sm btn-cert" onclick="downloadCertificate()"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
+    </div>`;
+  }
+
+  let jsPdfPromise=null;
+  function loadJsPdf(){
+    if(window.jspdf&&window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if(jsPdfPromise) return jsPdfPromise;
+    jsPdfPromise=new Promise(function(resolve,reject){
+      const s=document.createElement('script');
+      s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload=function(){ window.jspdf&&window.jspdf.jsPDF?resolve(window.jspdf.jsPDF):reject(new Error('No se pudo cargar el generador de PDF')); };
+      s.onerror=function(){ jsPdfPromise=null; reject(new Error('No se pudo cargar el generador de PDF. Revisa tu conexión.')); };
+      document.head.appendChild(s);
+    });
+    return jsPdfPromise;
+  }
+
+  function loadImageData(src){
+    return new Promise(function(resolve){
+      const img=new Image();
+      img.onload=function(){
+        try{
+          const c=document.createElement('canvas');
+          c.width=img.naturalWidth; c.height=img.naturalHeight;
+          c.getContext('2d').drawImage(img,0,0);
+          resolve(c.toDataURL('image/jpeg',0.92));
+        }catch(e){ resolve(null); }
+      };
+      img.onerror=function(){ resolve(null); };
+      img.src=src;
+    });
+  }
+
+  function certificateInfo(){
+    const p=(agentProgress&&agentProgress.profile)||{};
+    const raw=(examStatus&&examStatus.exam_passed_at)||p.exam_passed_at||p.partner_at||p.graduated_at||'';
+    let date=raw?new Date(String(raw).replace(' ','T')+'Z'):new Date();
+    if(isNaN(date.getTime())) date=new Date();
+    const id=String(USER_ID||userProfile.id||'0');
+    return {
+      name:String(userProfile.name||'Agente AunClick').trim(),
+      date:date,
+      dateText:date.toLocaleDateString('es-VE',{day:'numeric',month:'long',year:'numeric'}),
+      code:'AC-'+date.getFullYear()+'-'+id.padStart(5,'0'),
+      verifyUrl:window.location.origin+'/perfil.html?id='+encodeURIComponent(id)
+    };
+  }
+
+  async function downloadCertificate(){
+    if(!isCertified()){ showToast('Aún no tienes el certificado','error'); return; }
+    showToast('Generando tu certificado...');
+    try{
+      const [JsPDF,logo]=await Promise.all([loadJsPdf(),loadImageData('/images/favicon.jpeg')]);
+      const info=certificateInfo();
+      const doc=new JsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+      const W=297, H=210, cx=W/2;
+      const PURPLE=[124,58,237], DARK=[31,41,55], GRAY=[107,114,128], GOLD=[217,119,6];
+
+      // Marco
+      doc.setFillColor(250,248,255); doc.rect(0,0,W,H,'F');
+      doc.setDrawColor.apply(doc,PURPLE); doc.setLineWidth(3); doc.rect(8,8,W-16,H-16);
+      doc.setDrawColor.apply(doc,GOLD); doc.setLineWidth(0.6); doc.rect(13,13,W-26,H-26);
+
+      // Encabezado
+      let y=24;
+      if(logo){ try{ doc.addImage(logo,'JPEG',cx-10,y,20,20); y+=26; }catch(e){ y+=4; } } else { y+=4; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor.apply(doc,PURPLE);
+      doc.text('AUNCLICK ACADEMY',cx,y,{align:'center'});
+      y+=16;
+      doc.setFontSize(36); doc.setTextColor.apply(doc,DARK);
+      doc.text('CERTIFICADO',cx,y,{align:'center'});
+      y+=9;
+      doc.setFontSize(13); doc.setTextColor.apply(doc,GOLD);
+      doc.text('PARTNER DIGITAL CERTIFICADO',cx,y,{align:'center'});
+
+      // Nombre
+      y+=15;
+      doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor.apply(doc,GRAY);
+      doc.text('Se otorga el presente certificado a',cx,y,{align:'center'});
+      y+=15;
+      doc.setFont('helvetica','bold'); doc.setTextColor.apply(doc,DARK);
+      let size=30; doc.setFontSize(size);
+      while(doc.getTextWidth(info.name)>220&&size>16){ size-=2; doc.setFontSize(size); }
+      doc.text(info.name,cx,y,{align:'center'});
+      doc.setDrawColor.apply(doc,PURPLE); doc.setLineWidth(0.5); doc.line(cx-75,y+4,cx+75,y+4);
+
+      // Texto
+      y+=14;
+      doc.setFont('helvetica','normal'); doc.setFontSize(12); doc.setTextColor.apply(doc,GRAY);
+      const body='por haber completado satisfactoriamente la ruta de formación de la Academia de Agentes AunClick y aprobado su evaluación final, acreditándose como Partner Digital Certificado.';
+      doc.text(doc.splitTextToSize(body,200),cx,y,{align:'center'});
+
+      // Pie: fecha, firma, código
+      const fy=H-40;
+      doc.setDrawColor.apply(doc,GRAY); doc.setLineWidth(0.3);
+      doc.line(35,fy,95,fy); doc.line(cx-30,fy,cx+30,fy); doc.line(W-95,fy,W-35,fy);
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor.apply(doc,DARK);
+      doc.text(info.dateText,65,fy-3,{align:'center'});
+      doc.text('AunClick Academy',cx,fy-3,{align:'center'});
+      doc.text(info.code,W-65,fy-3,{align:'center'});
+      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor.apply(doc,GRAY);
+      doc.text('Fecha de emisión',65,fy+5,{align:'center'});
+      doc.text('Dirección académica',cx,fy+5,{align:'center'});
+      doc.text('Código del certificado',W-65,fy+5,{align:'center'});
+
+      doc.setFontSize(8.5);
+      doc.text('Verifica este certificado en: '+info.verifyUrl,cx,H-19,{align:'center'});
+
+      doc.setProperties({title:'Certificado AunClick Academy - '+info.name,subject:'Partner Digital Certificado',author:'AunClick Academy'});
+      const fileName='Certificado-AunClick-'+info.name.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'')+'.pdf';
+      doc.save(fileName);
+      showToast('Certificado descargado','success');
+    }catch(err){
+      showToast(err.message||'No se pudo generar el certificado','error');
+    }
+  }
+  window.downloadCertificate=downloadCertificate;
 
   // ── Render: YouTube channel ──
   function channelUrl(){
@@ -481,34 +652,106 @@ button:active{transform:scale(.97)}
     if(!classes.length){
       return '<div class="card"><div class="card-title"><i class="fas fa-book-open"></i> Mis Clases</div><div class="empty-state"><i class="fas fa-inbox"></i><p>No hay clases disponibles aún</p></div></div>';
     }
-    let cards=classes.map(function(c){
-      const completed=c.is_completed===1||c.is_completed===true;
-      const isVideo=!!youtubeId(c.video_url);
-      const statusHTML=completed
-        ?'<span class="class-status completed"><i class="fas fa-check-circle"></i> Completada</span>'
-        :'<span class="class-status available"><i class="fas fa-play-circle"></i> Disponible</span>';
-      return `
-      <div class="class-card" id="classCard-${c.id}">
-        <div class="class-card-top">
-          <div style="flex:1">
-            <div class="class-title">${escapeHTML(c.title)}</div>
-            ${c.description?'<div class="class-desc">'+escapeHTML(c.description)+'</div>':''}
-          </div>
-        </div>
-        <div class="class-meta">
-          ${isVideo?'<span class="class-video-tag"><i class="fab fa-youtube"></i> Video</span>':''}
-          <span class="class-meta-item"><i class="fas fa-question-circle"></i> ${c.question_count||0} preguntas</span>
-          <span class="class-xp"><i class="fas fa-bolt"></i> ${isVideo?'hasta +'+VIDEO_MAX_POINTS:'+'+(c.xp_reward||10)} XP</span>
-          ${statusHTML}
-          ${!completed?(isVideo
-            ?'<button class="btn btn-sm btn-yt" onclick="startVideoClass('+c.id+')" style="margin-left:auto"><i class="fab fa-youtube"></i> Ver video</button>'
-            :'<button class="btn btn-sm btn-primary" onclick="startQuiz('+c.id+')" style="margin-left:auto"><i class="fas fa-play"></i> Comenzar</button>'):''}
-        </div>
-        <div id="quizPanel-${c.id}"></div>
-      </div>`;
-    }).join('');
+    // Las clases ya vienen ordenadas por el servidor (ruta por módulos)
+    const groups=[];
+    classes.forEach(function(c){
+      const mod=c.module||'General';
+      let g=groups[groups.length-1];
+      if(!g||g.name!==mod){ g={name:mod,items:[]}; groups.push(g); }
+      g.items.push(c);
+    });
+    const done=classes.filter(isDone).length;
+    const pct=Math.round(done/classes.length*100);
 
-    return '<div class="card"><div class="card-title"><i class="fas fa-book-open"></i> Mis Clases</div><div class="classes-grid">'+cards+'</div></div>';
+    let html=`
+    <div class="path-summary">
+      <div class="path-summary-top"><span>Tu avance en la ruta</span><strong>${done} / ${classes.length} clases</strong></div>
+      <div class="xp-bar"><div class="xp-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+    groups.forEach(function(g){
+      const gDone=g.items.filter(isDone).length;
+      const complete=gDone===g.items.length;
+      html+=`
+      <div class="module-block">
+        <div class="module-head${complete?' complete':''}">
+          <span><i class="fas ${complete?'fa-check-circle':'fa-layer-group'}"></i> ${escapeHTML(g.name)}</span>
+          <span class="module-count">${gDone}/${g.items.length}</span>
+        </div>
+        <div class="classes-grid">${g.items.map(renderClassCard).join('')}</div>
+      </div>`;
+    });
+    return '<div class="card"><div class="card-title"><i class="fas fa-route"></i> Ruta de aprendizaje</div>'+html+'</div>';
+  }
+
+  function isDone(c){ return c.is_completed===1||c.is_completed===true; }
+
+  function renderClassCard(c){
+    const completed=isDone(c);
+    const locked=!completed&&!!c.is_locked;
+    const isVideo=!!youtubeId(c.video_url);
+    const statusHTML=completed
+      ?'<span class="class-status completed"><i class="fas fa-check-circle"></i> Completada</span>'
+      :locked
+        ?'<span class="class-status locked"><i class="fas fa-lock"></i> Bloqueada</span>'
+        :'<span class="class-status available"><i class="fas fa-play-circle"></i> Disponible</span>';
+    let action='';
+    if(!completed&&!locked){
+      action=isVideo
+        ?'<button class="btn btn-sm btn-yt" onclick="startVideoClass('+c.id+')" style="margin-left:auto"><i class="fab fa-youtube"></i> Ver video</button>'
+        :'<button class="btn btn-sm btn-primary" onclick="startQuiz('+c.id+')" style="margin-left:auto"><i class="fas fa-play"></i> Comenzar</button>';
+    }
+    const material=!locked&&String(c.content||'').trim()
+      ?`<details class="class-material"><summary><i class="fas fa-file-alt"></i> Material de la clase</summary><div class="class-material-body">${renderMaterial(c.content)}</div></details>`
+      :'';
+    return `
+    <div class="class-card${locked?' is-locked':''}${completed?' is-done':''}" id="classCard-${c.id}">
+      <div class="class-card-top">
+        <div style="flex:1">
+          <div class="class-title">${escapeHTML(c.title)}</div>
+          ${c.description?'<div class="class-desc">'+escapeHTML(c.description)+'</div>':''}
+        </div>
+      </div>
+      <div class="class-meta">
+        ${isVideo?'<span class="class-video-tag"><i class="fab fa-youtube"></i> Video</span>':''}
+        <span class="class-meta-item"><i class="fas fa-question-circle"></i> ${c.question_count||0} preguntas</span>
+        <span class="class-xp"><i class="fas fa-bolt"></i> ${isVideo?'hasta +'+VIDEO_MAX_POINTS:'+'+(c.xp_reward||10)} XP</span>
+        ${statusHTML}
+        ${action}
+      </div>
+      ${locked?'<div class="class-locked-note"><i class="fas fa-info-circle"></i> Aprueba la clase anterior para desbloquearla</div>':''}
+      ${material}
+      <div id="quizPanel-${c.id}"></div>
+    </div>`;
+  }
+
+  // Material escrito por el admin: se permite HTML básico, sin scripts ni eventos.
+  // Si es texto plano, se respetan los saltos de línea y los enlaces.
+  function renderMaterial(content){
+    const raw=String(content||'');
+    if(!/<[a-z][\s\S]*>/i.test(raw)){
+      return escapeHTML(raw)
+        .replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')
+        .replace(/\n/g,'<br>');
+    }
+    const doc=new DOMParser().parseFromString('<div>'+raw+'</div>','text/html');
+    const ALLOWED=['P','BR','B','STRONG','I','EM','U','UL','OL','LI','A','H2','H3','H4','BLOCKQUOTE','IMG','DIV','SPAN','CODE','PRE','HR','TABLE','THEAD','TBODY','TR','TD','TH'];
+    (function clean(node){
+      Array.from(node.children).forEach(function(el){
+        if(ALLOWED.indexOf(el.tagName)===-1){
+          if(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','FORM','INPUT','BUTTON','TEXTAREA','SELECT','LINK','META'].indexOf(el.tagName)!==-1){ el.remove(); return; }
+          clean(el); el.replaceWith.apply(el,Array.from(el.childNodes)); return;
+        }
+        Array.from(el.attributes).forEach(function(a){
+          const n=a.name.toLowerCase(), v=String(a.value||'').trim();
+          const keep=(n==='href'&&el.tagName==='A')||(n==='src'&&el.tagName==='IMG')||(n==='alt'&&el.tagName==='IMG');
+          if(!keep||/^(javascript|data|vbscript):/i.test(v.replace(/\s+/g,''))) el.removeAttribute(a.name);
+        });
+        if(el.tagName==='A'){ el.setAttribute('target','_blank'); el.setAttribute('rel','noopener'); }
+        if(el.tagName==='IMG') el.setAttribute('loading','lazy');
+        clean(el);
+      });
+    })(doc.body.firstChild);
+    return doc.body.firstChild.innerHTML;
   }
 
   // ── Clases con video de YouTube ──
@@ -559,7 +802,11 @@ button:active{transform:scale(.97)}
     const vid=cls&&youtubeId(cls.video_url);
     if(!vid) return;
     closeVideo();
-    Object.keys(quizStates).forEach(function(id){ closeQuiz(Number(id)); });
+    Object.keys(quizStates).forEach(function(id){
+      const qp=document.getElementById('quizPanel-'+id);
+      if(qp&&Number(id)!==classId) qp.innerHTML='';
+      delete quizStates[id];
+    });
     const panel=document.getElementById('quizPanel-'+classId);
     if(!panel) return;
     panel.innerHTML=`
@@ -805,10 +1052,18 @@ button:active{transform:scale(.97)}
     try{
       const result=await apiPost('/agent-progress',{class_id:classId,answers:answers});
       if(!result) return;
+      if(result.passed) pathChanged=true;
       renderQuizResults(classId,result);
       // Refresh progress (perfil y medallas, sin borrar los resultados)
       const freshProgress=await apiGet('/agent-progress');
       if(freshProgress){ agentProgress=freshProgress; refreshSummary(); }
+      if(result.passed){
+        pathRefresh=Promise.all([apiGet('/agent-classes'),apiGet('/agent-exam')]).then(function(r){
+          if(r[0]) classes=r[0].classes||classes;
+          if(r[1]) examStatus=r[1];
+        }).catch(function(){});
+        await pathRefresh;
+      }
     }catch(err){
       const cls=classes.find(function(c){return c.id===classId});
       const retry=cls&&youtubeId(cls.video_url)
@@ -842,7 +1097,9 @@ button:active{transform:scale(.97)}
       html+=`<div class="results-levelup"><i class="fas fa-arrow-up"></i> ¡Subiste al nivel ${r.new_level}! ${getLevelName(r.new_level)?'· '+getLevelName(r.new_level):''}</div>`;
     }
     html+=`<div class="results-actions">`;
-    html+=`<button class="btn btn-sm btn-outline" onclick="closeQuiz(${classId})">Cerrar</button>`;
+    html+=passed
+      ?`<button class="btn btn-sm btn-primary" onclick="closeQuiz(${classId})">Continuar <i class="fas fa-arrow-right"></i></button>`
+      :`<button class="btn btn-sm btn-outline" onclick="closeQuiz(${classId})">Cerrar</button>`;
     if(!passed && cls){
       html+=r.is_video
         ?`<button class="btn btn-sm btn-yt" onclick="startVideoClass(${classId})"><i class="fab fa-youtube"></i> Ver video de nuevo</button>`
@@ -871,37 +1128,50 @@ button:active{transform:scale(.97)}
     }
   }
 
-  function closeQuiz(classId){
-    document.getElementById('quizPanel-'+classId).innerHTML='';
+  let pathChanged=false;
+  let pathRefresh=null;
+  async function closeQuiz(classId){
+    const panel=document.getElementById('quizPanel-'+classId);
+    if(panel) panel.innerHTML='';
     delete quizStates[classId];
+    if(pathChanged){
+      if(pathRefresh) await pathRefresh;
+      // Aprobó una clase: mostrar la ruta actualizada con la siguiente desbloqueada
+      pathChanged=false;
+      render();
+      const next=classes.find(function(c){ return !isDone(c)&&!c.is_locked; });
+      const card=next&&document.getElementById('classCard-'+next.id);
+      if(card) card.scrollIntoView({behavior:'smooth',block:'center'});
+    }
   }
   window.closeQuiz=closeQuiz;
 
   // ── Render: Exam Section ──
   function renderExamSection(){
-    const lvl=examStatus.level||agentProgress.level||1;
     const passed=examStatus.exam_passed;
     const attemptsRemaining=examStatus.attempts_remaining;
     const canTake=examStatus.can_take_exam;
 
     let content='';
 
-    if(lvl<7){
-      content=`
-      <div class="exam-locked">
-        <i class="fas fa-lock"></i>
-        <h3>Examen Bloqueado</h3>
-        <p>Necesitas <strong>nivel 7</strong> para desbloquear el examen final.</p>
-        <p style="margin-top:8px;font-size:13px;color:var(--gray-400)">Tu nivel actual: ${lvl}</p>
-      </div>`;
-    } else if(passed){
+    if(passed){
       const passedDate=examStatus.exam_passed_at ? formatDate(examStatus.exam_passed_at) : '';
       content=`
       <div class="exam-passed">
         <i class="fas fa-trophy"></i>
         <h3>Examen Aprobado</h3>
-        <p>${examStatus.score_percent?'Calificación: '+examStatus.score_percent+'%':'¡Felicidades!'}</p>
+        <p>${examStatus.score_percent?'Calificación: '+examStatus.score_percent+'%':'¡Felicidades! Eres Partner Digital Certificado'}</p>
         ${passedDate?'<p style="font-size:12px;color:var(--gray-400);margin-top:4px">'+passedDate+'</p>':''}
+        <button class="btn btn-cert" style="margin-top:14px" onclick="downloadCertificate()"><i class="fas fa-file-pdf"></i> Descargar certificado (PDF)</button>
+      </div>`;
+    } else if(!examStatus.requirement_met){
+      const done=examStatus.path_completed||0, total=examStatus.path_total||0;
+      content=`
+      <div class="exam-locked">
+        <i class="fas fa-lock"></i>
+        <h3>Examen Bloqueado</h3>
+        <p>${total?'Aprueba <strong>todas las clases</strong> de la ruta para desbloquear el examen final.':'Aún no hay clases publicadas.'}</p>
+        ${total?'<p style="margin-top:8px;font-size:13px;color:var(--gray-400)">Llevas '+done+' de '+total+' clases</p>':''}
       </div>`;
     } else {
       content=`
@@ -1066,6 +1336,7 @@ button:active{transform:scale(.97)}
       html+=`<div class="results-score pass">${r.score_percent}%</div>`;
       html+=`<div class="results-message" style="font-size:16px;font-weight:700;color:var(--success)">¡Aprobaste!</div>`;
       html+=`<div class="results-message">Eres ahora un <strong>Partner Digital Certificado</strong></div>`;
+      html+=`<button class="btn btn-cert" style="margin-top:10px" onclick="downloadCertificate()"><i class="fas fa-file-pdf"></i> Descargar certificado (PDF)</button>`;
     }else{
       html+=`<i class="fas fa-times-circle" style="font-size:48px;color:var(--danger)"></i>`;
       html+=`<div class="results-score fail">${r.score_percent}%</div>`;
@@ -1090,9 +1361,11 @@ button:active{transform:scale(.97)}
     examAnswers=[];
     examCurrentIdx=0;
     // Refresh exam status
-    apiGet('/agent-exam').then(function(d){
-      if(d){ examStatus=d; render(); }
-    });
+    Promise.all([apiGet('/agent-exam'),apiGet('/agent-progress')]).then(function(r){
+      if(r[0]) examStatus=r[0];
+      if(r[1]) agentProgress=r[1];
+      render();
+    }).catch(function(){});
   }
   window.closeExam=closeExam;
 

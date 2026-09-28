@@ -1,16 +1,8 @@
 // GET: Get 15 random exam questions (without correct answers)
-// Requirements: level >= 7, not passed, max 3 attempts
+// Requirements: all path classes passed, not passed, max 3 attempts
 
 import { corsHeaders, requireAuth } from '../../_lib/auth.js';
-
-function calcLevel(xp) {
-  const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
-  let level = 1;
-  for (let i = LEVEL_XP.length - 1; i >= 0; i--) {
-    if (xp >= LEVEL_XP[i]) { level = i + 1; break; }
-  }
-  return Math.min(level, 10);
-}
+import { getPath } from '../../_lib/academy-path.js';
 
 async function ensureTables(db) {
   var tables = [
@@ -47,10 +39,10 @@ export async function onRequestGet(context) {
       profile = await env.DB.prepare('SELECT * FROM agent_profiles WHERE user_id = ?').bind(userId).first();
     }
 
-    // Check prerequisites: level >= 7
-    const level = calcLevel(profile.xp);
-    if (level < 7) {
-      return new Response(JSON.stringify({ error: 'Necesitas nivel 7 para ver las preguntas del examen', required_level: 7, current_level: level }), {
+    // Requisito: aprobar todas las clases de la ruta
+    const path = await getPath(env.DB, userId);
+    if (!path.exam_unlocked) {
+      return new Response(JSON.stringify({ error: 'Debes aprobar todas las clases antes del examen final', path_completed: path.completed, path_total: path.total }), {
         status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
