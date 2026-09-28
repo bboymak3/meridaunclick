@@ -165,8 +165,17 @@
                         <h1 class="admin-page-title" id="adminPageTitle">Dashboard</h1>
                     </div>
                     <div class="admin-topbar-right">
+                        <a href="https://aunclick.pages.dev/academia-admin" class="admin-academy-btn" title="Administrar la academia">
+                            <i class="fas fa-graduation-cap"></i> Academia
+                        </a>
                         <span class="admin-date" id="adminDate"></span>
                     </div>
+                    <style>
+                        .admin-academy-btn { display: inline-flex; align-items: center; gap: 8px; background: #7c3aed; color: #fff; font-weight: 700; font-size: 0.9rem; padding: 8px 16px; border-radius: 10px; text-decoration: none; box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); transition: background .2s, transform .1s; white-space: nowrap; }
+                        .admin-academy-btn:hover { background: #6d28d9; color: #fff; text-decoration: none; }
+                        .admin-academy-btn:active { transform: scale(.97); }
+                        @media (max-width: 480px) { .admin-academy-btn { padding: 7px 12px; font-size: 0.82rem; } .admin-topbar-right .admin-date { display: none; } }
+                    </style>
                 </div>
 
                 <!-- ==================== DASHBOARD TAB ==================== -->
