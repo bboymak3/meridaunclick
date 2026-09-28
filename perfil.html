@@ -238,6 +238,8 @@
     <i class="fas fa-user-slash"></i>
     <h1>Perfil no encontrado</h1>
     <p>El agente que buscas no existe o su perfil no está disponible.</p>
+    <p id="error-detail" style="font-size:.85rem;"></p>
+    <button id="btn-retry" class="btn btn-primary" type="button"><i class="fas fa-rotate-right"></i> Reintentar</button>
     <a href="/partners.html"><i class="fas fa-arrow-left"></i> Ver todos los partners</a>
   </div>
 
@@ -434,6 +436,12 @@
     let profile = null;
     let certInfo = null;
 
+    // Cada bloque del perfil se dibuja por separado: si uno falla (por ejemplo
+    // una foto o un dato con formato inesperado) el resto del perfil se muestra.
+    function section(nameOf, fn) {
+      try { fn(); } catch (e) { console.error('perfil: error en ' + nameOf, e); }
+    }
+
     function render(data) {
       profile = data;
       const user = data.user || {};
@@ -452,14 +460,17 @@
 
       document.title = name + ' — ' + (isPartner ? 'Partner Digital Certificado' : 'Agente') + ' | AunClick Academy';
 
+      section('Hero', () => {
       // Hero
       if (isPartner) $('#hero').classList.add('is-partner');
       const avatarUrl = safeUrl(user.avatar);
       const av = $('#avatar');
       if (avatarUrl) {
         const img = document.createElement('img');
-        img.src = avatarUrl; img.alt = name;
+        img.alt = name;
+        img.decoding = 'async';
         img.onerror = () => { av.textContent = initials(name); };
+        img.src = avatarUrl;
         av.appendChild(img);
       } else {
         av.textContent = initials(name);
@@ -473,6 +484,9 @@
       if (since) chips += '<span class="chip"><i class="fas fa-calendar-check"></i> Desde ' + esc(since) + '</span>';
       $('#hero-chips').innerHTML = chips;
 
+      });
+
+      section('XP bar', () => {
       // XP bar: progreso dentro del nivel actual
       const cur = LEVEL_XP[Math.min(level, LEVEL_XP.length) - 1] || 0;
       const next = level < LEVEL_XP.length ? LEVEL_XP[level] : null;
@@ -481,6 +495,9 @@
       $('#xp-right').textContent = next ? 'Faltan ' + (next - xp).toLocaleString('es-VE') + ' XP para nivel ' + (level + 1) : 'Nivel máximo';
       setTimeout(() => { $('#xp-fill').style.width = pct + '%'; }, 200);
 
+      });
+
+      section('Stats', () => {
       // Stats
       $('#stat-xp').textContent = xp.toLocaleString('es-VE');
       $('#stat-classes').innerHTML = pathTotal ? done + ' <small>/ ' + pathTotal + '</small>' : String(done);
@@ -492,6 +509,9 @@
       else if (attempts > 0) { exam.className = 'stat-value wait'; exam.textContent = 'En curso (' + attempts + '/3)'; }
       else { exam.className = 'stat-value wait'; exam.textContent = 'Pendiente'; }
 
+      });
+
+      section('Certificate', () => {
       // Certificate
       if (isPartner && window.AcademyCertificate) {
         const issued = (data.certificate && data.certificate.issued_at) || agent.exam_passed_at || agent.partner_at || agent.graduated_at || '';
@@ -506,6 +526,9 @@
         $('#cert-note').textContent = 'Código ' + certInfo.code + ' · Verificable en ' + certInfo.verifyUrl;
       }
 
+      });
+
+      section('About', () => {
       // About
       const bio = $('#bio');
       if (user.bio && String(user.bio).trim()) { bio.textContent = user.bio; }
@@ -526,6 +549,9 @@
       if (tel.length >= 7) contact += '<a class="btn btn-soft" href="tel:' + esc(tel) + '"><i class="fas fa-phone"></i> Llamar</a>';
       $('#contact-actions').innerHTML = contact;
 
+      });
+
+      section('Badges', () => {
       // Badges
       $('#badges-count').textContent = badges.length;
       if (badges.length) {
@@ -543,6 +569,9 @@
         $('#badges').innerHTML = '<div class="empty"><i class="fas fa-award"></i>Aún no tiene medallas.</div>';
       }
 
+      });
+
+      section('Training path', () => {
       // Training path
       const pathPct = pathTotal ? Math.round(Math.min(done, pathTotal) / pathTotal * 100) : (isPartner ? 100 : 0);
       $('#path-label').textContent = isPartner ? 'Ruta de formación completada' : 'Avance en la ruta de formación';
@@ -557,6 +586,9 @@
       ];
       $('#steps').innerHTML = steps.map(s => '<li class="' + (s.ok ? 'done' : '') + '"><i class="fas ' + (s.ok ? 'fa-check' : 'fa-circle') + '"></i><span>' + esc(s.text) + '</span></li>').join('');
 
+      });
+
+      section('Classes', () => {
       // Classes
       $('#classes-count').textContent = classes.length;
       if (classes.length) {
@@ -572,6 +604,9 @@
         $('#classes').innerHTML = '<div class="empty"><i class="fas fa-book"></i>Aún no ha aprobado clases.</div>';
       }
 
+      });
+
+      section('Owner / visitor', () => {
       // Owner / visitor
       let me = null;
       try { me = JSON.parse(localStorage.getItem('meridaunclick_user') || 'null'); } catch (e) {}
@@ -579,6 +614,9 @@
       if (isOwner) { $('#owner-bar').style.display = 'flex'; $('#cta').hidden = true; }
       if (isPartner) $('#cta').querySelector('h3').innerHTML = '<i class="fas fa-rocket"></i> Tú también puedes ser Partner Digital';
 
+      });
+
+      section('Share', () => {
       // Share
       const shareText = isPartner
         ? name + ' es Partner Digital Certificado de AunClick Academy'
@@ -587,6 +625,7 @@
       $('#btn-facebook').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(pageUrl);
       $('#btn-x').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(pageUrl);
       $('#footer-name').textContent = name;
+      });
 
       $('#loading-screen').style.display = 'none';
       $('#profile-page').style.display = 'block';
@@ -673,15 +712,42 @@
 
     // ── Init ──
     const id = new URLSearchParams(window.location.search).get('id');
-    function fail() {
+    function fail(detail) {
       $('#loading-screen').style.display = 'none';
       $('#error-screen').style.display = 'flex';
+      const d = $('#error-detail');
+      if (d) d.textContent = detail || '';
     }
-    if (!id || !/^\d+$/.test(id)) { fail(); return; }
-    fetch('/api/partners/' + encodeURIComponent(id))
-      .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
-      .then(render)
-      .catch(err => { console.error('Error loading profile:', err); fail(); });
+    if (!id || !/^\d+$/.test(id)) { fail('El enlace del perfil no es válido.'); return; }
+    function load() {
+      $('#error-screen').style.display = 'none';
+      $('#loading-screen').style.display = 'flex';
+      const ctrl = window.AbortController ? new AbortController() : null;
+      const timer = setTimeout(() => { if (ctrl) ctrl.abort(); }, 20000);
+      fetch('/api/partners/' + encodeURIComponent(id), ctrl ? { signal: ctrl.signal } : {})
+        .then(r => {
+          if (r.status === 404) throw new Error('Este perfil no existe.');
+          if (!r.ok) throw new Error('El servidor respondió con un error (' + r.status + '). Intenta de nuevo.');
+          return r.json();
+        })
+        .then(data => {
+          clearTimeout(timer);
+          try { render(data); }
+          catch (e) {
+            // Aun con un error inesperado, mostrar lo que se pudo dibujar
+            console.error('Error mostrando el perfil:', e);
+            $('#loading-screen').style.display = 'none';
+            $('#profile-page').style.display = 'block';
+          }
+        })
+        .catch(err => {
+          clearTimeout(timer);
+          console.error('Error loading profile:', err);
+          fail(err && err.name === 'AbortError' ? 'El perfil tardó demasiado en cargar. Revisa tu conexión e intenta de nuevo.' : (err && err.message) || 'No se pudo cargar el perfil.');
+        });
+    }
+    $('#btn-retry').addEventListener('click', load);
+    load();
   })();
   </script>
 </body>
