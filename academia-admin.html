@@ -124,6 +124,12 @@
                                 <input type="text" id="academyClassTitle" placeholder="Nombre de la clase" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
                             </div>
                             <div class="form-group">
+                                <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;"><i class="fas fa-chalkboard-teacher" style="color:#7c3aed;"></i> Profesor</label>
+                                <input type="text" id="academyClassTeacher" list="academyTeacherList" maxlength="100" placeholder="Nombre del profesor que dicta la clase" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;">
+                                <datalist id="academyTeacherList"></datalist>
+                                <p style="font-size:0.75rem;color:#6b7280;margin:4px 0 0;">Se muestra en la clase. Si coincide con el nombre de un canal, los alumnos verán el enlace a su canal. Si lo dejas vacío, se usa tu nombre.</p>
+                            </div>
+                            <div class="form-group">
                                 <label style="font-weight:600;font-size:0.85rem;margin-bottom:4px;display:block;">Descripcion</label>
                                 <textarea id="academyClassDesc" placeholder="Descripcion breve de la clase" rows="2" style="width:100%;padding:10px 14px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;outline:none;resize:vertical;"></textarea>
                             </div>
@@ -327,7 +333,7 @@
                     </div>
     </main>
 
-    <script src="/js/academy-certificate.js"></script>
-    <script src="/js/academia-admin.js"></script>
+    <script src="/js/academy-certificate.js?v=2"></script>
+    <script src="/js/academia-admin.js?v=3"></script>
 </body>
 </html>

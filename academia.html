@@ -198,6 +198,10 @@ button:active{transform:scale(.97)}
 .btn-yt-outline:hover{background:#fef2f2}
 
 /* Video class */
+.class-teacher{font-size:12px;color:var(--gray-600);margin-top:6px;display:flex;align-items:center;gap:6px}
+.class-teacher i{color:var(--primary)}
+.class-teacher a{color:#dc2626;font-weight:600}
+.class-teacher a i{color:#dc2626}
 .class-video-tag{background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:700;padding:3px 10px;border-radius:12px;display:inline-flex;align-items:center;gap:4px}
 .video-panel{background:var(--gray-50);border-radius:var(--radius);margin-top:12px;padding:14px;border:1.5px solid #fecaca}
 .video-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-sm);overflow:hidden}
@@ -312,7 +316,7 @@ button:active{transform:scale(.97)}
 <!-- Hidden file input for avatar -->
 <input type="file" class="hidden-input" id="avatarInput" accept="image/*">
 
-<script src="/js/academy-certificate.js"></script>
+<script src="/js/academy-certificate.js?v=2"></script>
 <script>
 (function(){
   'use strict';
@@ -669,6 +673,16 @@ button:active{transform:scale(.97)}
     card.classList.toggle('is-done',isDone(c));
   }
 
+  // Profesor de la clase; si coincide con un canal configurado, enlaza al canal
+  function renderTeacher(c){
+    const t=String(c.teacher||'').trim();
+    if(!t) return '';
+    const ch=channelList().find(function(x){ return String(x.name||'').trim().toLowerCase()===t.toLowerCase(); });
+    const name=escapeHTML(t);
+    return '<div class="class-teacher"><i class="fas fa-chalkboard-teacher"></i> Prof. '+
+      (ch?'<a href="'+escapeAttr(ch.url)+'" target="_blank" rel="noopener">'+name+' <i class="fab fa-youtube"></i></a>':name)+'</div>';
+  }
+
   function renderClassCard(c){
     const completed=isDone(c);
     const locked=!completed&&!!c.is_locked;
@@ -681,6 +695,7 @@ button:active{transform:scale(.97)}
         <div style="flex:1">
           <div class="class-title">${escapeHTML(c.title)}</div>
           ${c.description?'<div class="class-desc">'+escapeHTML(c.description)+'</div>':''}
+          ${renderTeacher(c)}
         </div>
       </div>
       <div class="class-meta" id="classMeta-${c.id}">${renderClassMeta(c)}</div>
