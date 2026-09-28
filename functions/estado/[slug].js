@@ -233,6 +233,12 @@ export async function onRequestGet(context) {
       </section>
     </div>
 
+    <section class="hx-section" id="ferias">
+      <h2><i class="fas fa-masks-theater"></i> Ferias y fiestas de ${esc(estado.name)}</h2>
+      ${(estado.ferias || []).length ? `<ul class="hx-list">${estado.ferias.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`
+        : `<p class="hx-note">Estamos recopilando las ferias y fiestas tradicionales de ${esc(estado.name)}. ¿Conoces alguna? <a href="/contacto.html">Escríbenos</a>.</p>`}
+    </section>
+
     <section class="hx-section" id="medicos">
       <h2><i class="fas fa-user-doctor"></i> Médicos en ${esc(estado.name)}</h2>
       ${espList.length ? `<div class="hx-chips">${espList.map(x =>

@@ -20,6 +20,7 @@ export const ESTADOS = [
     clima: 'Tropical lluvioso de selva, cálido y húmedo todo el año, con temperaturas entre 24 °C y 32 °C y lluvias abundantes, sobre todo de abril a octubre.',
     economia: ['Turismo de naturaleza y aventura', 'Pesca artesanal', 'Agricultura de subsistencia (yuca, plátano, frutas amazónicas)', 'Artesanía indígena', 'Comercio y administración pública'],
     atractivos: ['Cerro Autana', 'Raudales de Atures', 'Parque Nacional Parima-Tapirapecó', 'Tobogán de la Selva', 'Río Orinoco', 'Piedra Pintada', 'Museo Etnológico de Amazonas', 'Mercado indígena de Puerto Ayacucho', 'Río Sipapo'],
+    ferias: ['Warime, ceremonia ancestral del pueblo piaroa'],
     municipios: ['Alto Orinoco', 'Atabapo', 'Atures', 'Autana', 'Manapiare', 'Maroa', 'Río Negro'],
   },
   {
@@ -31,6 +32,7 @@ export const ESTADOS = [
     clima: 'Cálido tropical; seco y soleado en la costa, con temperaturas de 26 °C a 33 °C, y lluvias concentradas entre mayo y octubre en el interior.',
     economia: ['Petróleo y gas (Faja del Orinoco, complejo petroquímico de Jose)', 'Turismo de playa', 'Pesca', 'Ganadería y agricultura (maíz, sorgo)', 'Comercio y servicios portuarios'],
     atractivos: ['Parque Nacional Mochima', 'Playa Colorada', 'Lechería y El Morro', 'Casco histórico de Barcelona', 'Isla de Plata', 'Paseo Colón de Puerto La Cruz', 'Islas Chimanas', 'Playa Arapito', 'Laguna de Unare', 'Casa Fuerte de Barcelona'],
+    ferias: ['Fiestas de la Santa Cruz en Puerto La Cruz (mayo)', 'Fiestas de San Cristóbal, patrono de Barcelona (julio)'],
     municipios: ['Anaco', 'Aragua', 'Diego Bautista Urbaneja', 'Fernando de Peñalver', 'Francisco del Carmen Carvajal', 'Francisco de Miranda', 'General Sir Arthur McGregor', 'Guanta', 'Independencia', 'José Gregorio Monagas', 'Juan Antonio Sotillo', 'Juan Manuel Cajigal', 'Libertad', 'Manuel Ezequiel Bruzual', 'Pedro María Freites', 'Píritu', 'San José de Guanipa', 'San Juan de Capistrano', 'Santa Ana', 'Simón Bolívar', 'Simón Rodríguez'],
   },
   {
@@ -42,6 +44,7 @@ export const ESTADOS = [
     clima: 'Tropical de sabana, muy cálido (27 °C a 35 °C), con una marcada temporada de lluvias (mayo–octubre) que inunda las sabanas y una estación seca (noviembre–abril).',
     economia: ['Ganadería bovina', 'Agricultura (arroz, maíz, plátano)', 'Pesca de río', 'Turismo de llano y hatos', 'Comercio fronterizo con Colombia'],
     atractivos: ['Parque Nacional Santos Luzardo', 'Parque Nacional Cinaruco-Capanaparo', 'Hatos llaneros', 'Río Apure', 'Médanos de Apure', 'Puente María Nieves', 'Galeras del Cinaruco', 'Elorza y sus fiestas patronales'],
+    ferias: ['Fiestas de San José en Elorza (marzo)'],
     municipios: ['Achaguas', 'Biruaca', 'Muñoz', 'Páez', 'Pedro Camejo', 'Rómulo Gallegos', 'San Fernando'],
   },
   {
@@ -53,6 +56,7 @@ export const ESTADOS = [
     clima: 'Tropical templado por la altitud en los valles (24 °C a 30 °C) y más fresco en la montaña; lluvias de mayo a noviembre.',
     economia: ['Industria manufacturera (alimentos, textiles, química)', 'Agricultura (caña de azúcar, cacao, hortalizas)', 'Turismo de playa y montaña', 'Comercio y servicios', 'Aviación y actividad militar'],
     atractivos: ['Parque Nacional Henri Pittier', 'Choroní y Puerto Colombia', 'Bahía de Cata', 'Colonia Tovar', 'Museo Aeronáutico de Maracay', 'Parque Aragua', 'Playa Grande de Choroní', 'Ocumare de la Costa y playa La Ciénaga', 'Hacienda Santa Teresa (El Consejo)', 'Lago de Valencia'],
+    ferias: ['Fiestas de San José, patrono de Maracay (marzo)', 'Diablos Danzantes de Chuao (Corpus Christi, Patrimonio UNESCO)', 'Tambores de San Juan en Choroní y Chuao (junio)'],
     municipios: ['Bolívar', 'Camatagua', 'Francisco Linares Alcántara', 'Girardot', 'José Ángel Lamas', 'José Félix Ribas', 'José Rafael Revenga', 'Libertador', 'Mario Briceño Iragorry', 'Ocumare de la Costa de Oro', 'San Casimiro', 'San Sebastián', 'Santiago Mariño', 'Santos Michelena', 'Sucre', 'Tovar', 'Urdaneta', 'Zamora'],
   },
   {
@@ -64,6 +68,7 @@ export const ESTADOS = [
     clima: 'Tropical cálido (26 °C a 34 °C) en el llano y más templado en el piedemonte; lluvias intensas de abril a noviembre.',
     economia: ['Ganadería bovina y lechera', 'Agricultura (maíz, arroz, plátano, caña)', 'Petróleo y gas', 'Agroindustria', 'Turismo de aventura (rafting, parapente)'],
     atractivos: ['Barinitas y el piedemonte andino', 'Río Acequias y río Canaguá', 'Parque Nacional Aguaro-Guariquito (cercano)', 'Casco histórico de Barinas', 'Parque Los Mangos', 'Palacio del Marqués del Pumar', 'Altamira de Cáceres (pueblo colonial)', 'Parque Universitario de la UNELLEZ'],
+    ferias: ['Feria Internacional de Barinas'],
     municipios: ['Alberto Arvelo Torrealba', 'Andrés Eloy Blanco', 'Antonio José de Sucre', 'Arismendi', 'Barinas', 'Bolívar', 'Cruz Paredes', 'Ezequiel Zamora', 'Obispos', 'Pedraza', 'Rojas', 'Sosa'],
   },
   {
@@ -75,6 +80,7 @@ export const ESTADOS = [
     clima: 'Tropical cálido y húmedo en las zonas bajas (25 °C a 33 °C) y fresco en la Gran Sabana (15 °C a 25 °C); lluvias de mayo a octubre.',
     economia: ['Minería (hierro, bauxita, oro)', 'Industria siderúrgica y del aluminio', 'Generación hidroeléctrica (Guri, Caruachi, Macagua)', 'Turismo (Canaima, Gran Sabana)', 'Comercio y servicios'],
     atractivos: ['Salto Ángel (Kerepakupai Merú)', 'Parque Nacional Canaima', 'Gran Sabana y Roraima', 'Casco histórico de Ciudad Bolívar', 'Parque Cachamay en Puerto Ordaz', 'Puente Angostura', 'Paseo Orinoco', 'Represa del Guri', 'Quebrada de Jaspe', 'Salto Kamá', 'Parque La Llovizna'],
+    ferias: ['Carnaval de El Callao (Patrimonio UNESCO)', 'Feria de la Sapoara en Ciudad Bolívar (agosto)'],
     municipios: ['Angostura', 'Caroní', 'Cedeño', 'El Callao', 'Gran Sabana', 'Heres', 'Padre Pedro Chien', 'Piar', 'Roscio', 'Sifontes', 'Sucre'],
   },
   {
@@ -86,6 +92,7 @@ export const ESTADOS = [
     clima: 'Tropical cálido (24 °C a 32 °C), con lluvias de mayo a noviembre y temporada seca el resto del año.',
     economia: ['Industria manufacturera (automotriz, alimentos, química)', 'Actividad portuaria (Puerto Cabello)', 'Petroquímica (Morón) y refinación (El Palito)', 'Comercio y servicios', 'Agricultura (cítricos, hortalizas)'],
     atractivos: ['Campo de Carabobo', 'Puerto Cabello y su casco colonial', 'Parque Nacional San Esteban', 'Playas de Morrocoy (cercanas)', 'Catedral y Plaza Bolívar de Valencia', 'Parque Fernando Peñalver', 'Acuario de Valencia', 'Playas de Patanemo', 'Casa de Páez', 'Teatro Municipal de Valencia', 'Fortín Solano'],
+    ferias: ['Aniversario de la Batalla de Carabobo (24 de junio)', 'Feria Internacional de Valencia y fiestas de la Virgen del Socorro (noviembre)'],
     municipios: ['Bejuma', 'Carlos Arvelo', 'Diego Ibarra', 'Guacara', 'Juan José Mora', 'Libertador', 'Los Guayos', 'Miranda', 'Montalbán', 'Naguanagua', 'Puerto Cabello', 'San Diego', 'San Joaquín', 'Valencia'],
   },
   {
@@ -97,6 +104,7 @@ export const ESTADOS = [
     clima: 'Tropical de sabana, cálido (26 °C a 34 °C), con lluvias de mayo a octubre.',
     economia: ['Ganadería bovina', 'Agricultura (arroz, maíz, sorgo)', 'Agroindustria', 'Explotación forestal', 'Comercio'],
     atractivos: ['Hato Piñero', 'Parque Nacional Tirgua', 'Casco histórico de San Carlos', 'Río Cojedes', 'Tinaquillo', 'Casa de La Blanquera (San Carlos)', 'Río Tirgua'],
+    ferias: ['Fiestas de San Carlos Borromeo, patrono de San Carlos (noviembre)'],
     municipios: ['Anzoátegui', 'Ezequiel Zamora', 'Girardot', 'Lima Blanco', 'Pao de San Juan Bautista', 'Ricaurte', 'Rómulo Gallegos', 'Tinaco', 'Tinaquillo'],
   },
   {
@@ -108,6 +116,7 @@ export const ESTADOS = [
     clima: 'Tropical húmedo, cálido todo el año (25 °C a 32 °C) y con lluvias abundantes, sobre todo de mayo a noviembre.',
     economia: ['Pesca', 'Agricultura (arroz, ocumo, plátano)', 'Petróleo (zona de Pedernales)', 'Ecoturismo fluvial', 'Artesanía warao (moriche)'],
     atractivos: ['Delta del Orinoco', 'Caños y comunidades warao', 'Tucupita y su paseo Manamo', 'Parque Nacional Mariusa', 'Pedernales', 'Río Manamo', 'Catedral de la Divina Pastora de Tucupita'],
+    ferias: [],
     municipios: ['Antonio Díaz', 'Casacoima', 'Pedernales', 'Tucupita'],
   },
   {
@@ -119,6 +128,7 @@ export const ESTADOS = [
     clima: 'Tropical de altura, templado y agradable (18 °C a 28 °C) por estar a unos 900 m sobre el nivel del mar; lluvias de mayo a noviembre.',
     economia: ['Administración pública nacional', 'Comercio y servicios', 'Banca y finanzas', 'Industria cultural y medios', 'Turismo urbano'],
     atractivos: ['Parque Nacional Waraira Repano (El Ávila)', 'Casco histórico y Plaza Bolívar', 'Panteón Nacional', 'Museo de Arte Contemporáneo y Parque Central', 'Teleférico Warairarepano', 'Casa Natal del Libertador', 'Ciudad Universitaria de Caracas (UNESCO)', 'Jardín Botánico de Caracas', 'Parque Los Caobos', 'Teatro Teresa Carreño'],
+    ferias: ['Aniversario de Caracas (25 de julio)', 'Semana Santa y procesión del Nazareno de San Pablo'],
     municipios: ['Libertador'],
   },
   {
@@ -130,6 +140,7 @@ export const ESTADOS = [
     clima: 'Semiárido y cálido en la costa y Paraguaná (27 °C a 34 °C), con pocas lluvias; más fresco y húmedo en la sierra de San Luis.',
     economia: ['Refinación de petróleo (Complejo Refinador Paraguaná)', 'Turismo de playa', 'Pesca', 'Ganadería caprina', 'Comercio (zona libre de Paraguaná)'],
     atractivos: ['Coro y La Vela (Patrimonio UNESCO)', 'Parque Nacional Médanos de Coro', 'Parque Nacional Morrocoy', 'Península de Paraguaná', 'Sierra de San Luis', 'Cayo Sombrero', 'Tucacas y Chichiriviche', 'Adícora', 'Cerro Santa Ana', 'Cabo San Román'],
+    ferias: [],
     municipios: ['Acosta', 'Bolívar', 'Buchivacoa', 'Cacique Manaure', 'Carirubana', 'Colina', 'Dabajuro', 'Democracia', 'Falcón', 'Federación', 'Jacura', 'Los Taques', 'Mauroa', 'Miranda', 'Monseñor Iturriza', 'Palmasola', 'Petit', 'Píritu', 'San Francisco', 'Silva', 'Sucre', 'Tocópero', 'Unión', 'Urumaco', 'Zamora'],
   },
   {
@@ -141,6 +152,7 @@ export const ESTADOS = [
     clima: 'Tropical de sabana, cálido (26 °C a 35 °C), con lluvias de mayo a octubre y una estación seca muy marcada.',
     economia: ['Agricultura (arroz, maíz, sorgo)', 'Ganadería bovina', 'Petróleo y gas', 'Pesca en embalses', 'Turismo termal'],
     atractivos: ['Los Morros de San Juan', 'Aguas termales de San Juan de los Morros', 'Parque Nacional Aguaro-Guariquito', 'Embalse de Guárico (Calabozo)', 'Ortiz, pueblo de Doña Bárbara', 'Calabozo y su casco histórico', 'Monumento Natural Morros de Macaira'],
+    ferias: ['Fiestas de San Juan Bautista en San Juan de los Morros (junio)'],
     municipios: ['Camaguán', 'Chaguaramas', 'El Socorro', 'Francisco de Miranda', 'José Félix Ribas', 'José Tadeo Monagas', 'Juan Germán Roscio', 'Julián Mellado', 'Las Mercedes', 'Leonardo Infante', 'Ortiz', 'Pedro Zaraza', 'San Gerónimo de Guayabal', 'San José de Guaribe', 'Santa María de Ipire'],
   },
   {
@@ -152,6 +164,7 @@ export const ESTADOS = [
     clima: 'Semiárido y cálido en el centro y norte (24 °C a 32 °C); más fresco y lluvioso hacia el sur montañoso (Sanare, El Tocuyo).',
     economia: ['Agricultura (caña de azúcar, cebolla, tomate, uva)', 'Agroindustria (vinos de Carora, azúcar)', 'Comercio y servicios', 'Industria manufacturera', 'Artesanía'],
     atractivos: ['Barquisimeto y la procesión de la Divina Pastora', 'Carora y sus viñedos', 'Parque Nacional Yacambú', 'Parque Nacional Dinira', 'Quíbor y Sanare', 'Parque Nacional Cerro Saroche', 'Parque Zoológico Bararida', 'Obelisco y Catedral de Barquisimeto', 'El Tocuyo'],
+    ferias: ['Procesión de la Divina Pastora (14 de enero)', 'Fiestas de San Antonio y el Tamunangue (junio)', 'Feria Internacional de Barquisimeto (septiembre)'],
     municipios: ['Andrés Eloy Blanco', 'Crespo', 'Iribarren', 'Jiménez', 'Morán', 'Palavecino', 'Simón Planas', 'Torres', 'Urdaneta'],
   },
   {
@@ -163,6 +176,7 @@ export const ESTADOS = [
     clima: 'De montaña: templado en la ciudad de Mérida (15 °C a 26 °C) y frío en los páramos (puede bajar de 0 °C); lluvias de abril a noviembre.',
     economia: ['Turismo de montaña', 'Agricultura (papa, hortalizas, café, fresas)', 'Educación universitaria (ULA)', 'Ganadería lechera y quesos andinos', 'Comercio y servicios'],
     atractivos: ['Teleférico Mukumbarí', 'Parque Nacional Sierra Nevada', 'Laguna de Mucubají', 'Los Aleros y Jají', 'Heladería Coromoto y centro de Mérida', 'Pico Bolívar', 'Laguna Negra', 'Mucuchíes y Apartaderos', 'Jardín Botánico de Mérida', 'Venezuela de Antier', 'Los Nevados'],
+    ferias: ['Feria Internacional del Sol (febrero)', 'Paradura del Niño (enero–febrero)', 'Vasallos de la Candelaria (2 de febrero, Patrimonio UNESCO)'],
     municipios: ['Alberto Adriani', 'Andrés Bello', 'Antonio Pinto Salinas', 'Aricagua', 'Arzobispo Chacón', 'Campo Elías', 'Caracciolo Parra Olmedo', 'Cardenal Quintero', 'Guaraque', 'Julio César Salas', 'Justo Briceño', 'Libertador', 'Miranda', 'Obispo Ramos de Lora', 'Padre Noguera', 'Pueblo Llano', 'Rangel', 'Rivas Dávila', 'Santos Marquina', 'Sucre', 'Tovar', 'Tulio Febres Cordero', 'Zea'],
   },
   {
@@ -174,6 +188,7 @@ export const ESTADOS = [
     clima: 'Variado: templado en los Altos Mirandinos (16 °C a 26 °C) y cálido y húmedo en Barlovento y la costa (25 °C a 32 °C); lluvias de mayo a diciembre.',
     economia: ['Comercio y servicios', 'Industria manufacturera', 'Agricultura (cacao de Barlovento, frutas)', 'Turismo de playa (Higuerote, Río Chico)', 'Construcción'],
     atractivos: ['Higuerote y Parque Nacional Laguna de Tacarigua', 'Barlovento y sus tambores', 'El Hatillo', 'Altos Mirandinos y San Antonio de los Altos', 'Parque Nacional Guatopo', 'Parque Generalísimo Francisco de Miranda (Parque del Este)', 'Río Chico y Paparo', 'Curiepe y los tambores de San Juan'],
+    ferias: ['Tambores de San Juan en Curiepe y Barlovento (23–24 de junio)', 'Diablos Danzantes de San Francisco de Yare (Corpus Christi, Patrimonio UNESCO)'],
     municipios: ['Acevedo', 'Andrés Bello', 'Baruta', 'Brión', 'Buroz', 'Carrizal', 'Chacao', 'Cristóbal Rojas', 'El Hatillo', 'Guaicaipuro', 'Independencia', 'Lander', 'Los Salias', 'Páez', 'Paz Castillo', 'Pedro Gual', 'Plaza', 'Simón Bolívar', 'Sucre', 'Urdaneta', 'Zamora'],
   },
   {
@@ -185,6 +200,7 @@ export const ESTADOS = [
     clima: 'Cálido tropical en la llanura (26 °C a 33 °C) y fresco en la serranía de Caripe (18 °C a 26 °C); lluvias de mayo a noviembre.',
     economia: ['Petróleo y gas', 'Agricultura (yuca, maíz, frutas, café en Caripe)', 'Ganadería', 'Comercio y servicios', 'Turismo de naturaleza'],
     atractivos: ['Cueva del Guácharo (Caripe)', 'Valle de Caripe', 'Morichales del sur de Monagas', 'Parque La Guaricha en Maturín', 'Río Guarapiche', 'Catedral de Nuestra Señora del Carmen (Maturín)', 'Río Morichal Largo'],
+    ferias: [],
     municipios: ['Acosta', 'Aguasay', 'Bolívar', 'Caripe', 'Cedeño', 'Ezequiel Zamora', 'Libertador', 'Maturín', 'Piar', 'Punceres', 'Santa Bárbara', 'Sotillo', 'Uracoa'],
   },
   {
@@ -196,6 +212,7 @@ export const ESTADOS = [
     clima: 'Tropical seco y soleado (26 °C a 32 °C), con brisas constantes y pocas lluvias, concentradas entre octubre y enero.',
     economia: ['Turismo de playa', 'Comercio (puerto libre)', 'Pesca', 'Artesanía (hamacas, cestería)', 'Servicios'],
     atractivos: ['Playa El Agua y Playa Parguito', 'Parque Nacional Laguna de La Restinga', 'Castillo de Santa Rosa y La Asunción', 'Juan Griego y su atardecer', 'Isla de Coche', 'Playa Manzanillo', 'Pampatar y Castillo San Carlos Borromeo', 'Basílica de la Virgen del Valle', 'Isla de Cubagua (Nueva Cádiz)', 'Playa Caribe', 'Cerro El Copey'],
+    ferias: ['Fiesta de la Virgen del Valle (8 de septiembre)', 'Carnaval de Margarita'],
     municipios: ['Antolín del Campo', 'Arismendi', 'Díaz', 'García', 'Gómez', 'Maneiro', 'Marcano', 'Mariño', 'Península de Macanao', 'Tubores', 'Villalba'],
   },
   {
@@ -207,6 +224,7 @@ export const ESTADOS = [
     clima: 'Tropical cálido (26 °C a 34 °C), con lluvias de abril a noviembre.',
     economia: ['Agricultura (arroz, maíz, sorgo, caña de azúcar)', 'Agroindustria', 'Ganadería', 'Comercio', 'Turismo religioso'],
     atractivos: ['Santuario Nacional de la Virgen de Coromoto', 'Casco histórico de Guanare', 'Araure y Acarigua', 'Parque Nacional Guaramacal (cercano)', 'Ríos del piedemonte', 'Represa Las Majaguas', 'Catedral de Guanare'],
+    ferias: ['Peregrinación a la Virgen de Coromoto en Guanare (8 de septiembre)'],
     municipios: ['Agua Blanca', 'Araure', 'Esteller', 'Guanare', 'Guanarito', 'Monseñor José Vicente de Unda', 'Ospino', 'Páez', 'Papelón', 'San Genaro de Boconoíto', 'San Rafael de Onoto', 'Santa Rosalía', 'Sucre', 'Turén'],
   },
   {
@@ -218,6 +236,7 @@ export const ESTADOS = [
     clima: 'Cálido tropical (26 °C a 33 °C); seco en Araya y la costa oeste, y húmedo y lluvioso en la península de Paria.',
     economia: ['Pesca e industria atunera y sardinera', 'Cacao (Paria)', 'Turismo de playa', 'Salinas de Araya', 'Agricultura (coco, frutas)'],
     atractivos: ['Península de Paria y Playa Medina', 'Castillo de Araya y sus salinas', 'Mochima (compartido con Anzoátegui)', 'Casco histórico de Cumaná', 'Parque Nacional Turuépano', 'Playa Pui Puy', 'Carúpano y su Carnaval', 'Río Caribe', 'Castillo San Antonio de la Eminencia'],
+    ferias: ['Carnaval de Carúpano (febrero)', 'Fiestas de Santa Inés, patrona de Cumaná (enero)'],
     municipios: ['Andrés Eloy Blanco', 'Andrés Mata', 'Arismendi', 'Benítez', 'Bermúdez', 'Bolívar', 'Cajigal', 'Cruz Salmerón Acosta', 'Libertador', 'Mariño', 'Mejía', 'Montes', 'Ribero', 'Sucre', 'Valdez'],
   },
   {
@@ -229,6 +248,7 @@ export const ESTADOS = [
     clima: 'De montaña: templado en San Cristóbal (18 °C a 28 °C), frío en los páramos y cálido en las tierras bajas; lluvias de abril a noviembre.',
     economia: ['Comercio fronterizo', 'Agricultura (café, hortalizas, caña)', 'Ganadería y lácteos', 'Industria manufacturera', 'Turismo de montaña'],
     atractivos: ['Feria Internacional de San Sebastián', 'Páramo El Zumbador', 'Parque Nacional El Tamá', 'Capacho y Peribeca', 'San Pedro del Río (pueblo colonial)', 'La Grita y el Santo Cristo', 'Parque Nacional Chorro El Indio'],
+    ferias: ['Feria Internacional de San Sebastián (enero)', 'Fiestas del Santo Cristo de La Grita (6 de agosto)'],
     municipios: ['Andrés Bello', 'Antonio Rómulo Costa', 'Ayacucho', 'Bolívar', 'Cárdenas', 'Córdoba', 'Fernández Feo', 'Francisco de Miranda', 'García de Hevia', 'Guásimos', 'Independencia', 'Jáuregui', 'José María Vargas', 'Junín', 'Libertad', 'Libertador', 'Lobatera', 'Michelena', 'Panamericano', 'Pedro María Ureña', 'Rafael Urdaneta', 'Samuel Darío Maldonado', 'San Cristóbal', 'San Judas Tadeo', 'Seboruco', 'Simón Rodríguez', 'Sucre', 'Torbes', 'Uribante'],
   },
   {
@@ -240,6 +260,7 @@ export const ESTADOS = [
     clima: 'Templado de montaña en Trujillo, Boconó y Valera (18 °C a 28 °C) y cálido en la zona del lago; lluvias de abril a noviembre.',
     economia: ['Agricultura (café, caña de azúcar, hortalizas)', 'Comercio (Valera)', 'Ganadería', 'Turismo religioso y de montaña', 'Agroindustria'],
     atractivos: ['Monumento a la Virgen de la Paz', 'Boconó, "Jardín de Venezuela"', 'Parque Nacional Guaramacal', 'Isnotú y el santuario del Dr. José Gregorio Hernández', 'Casco histórico de Trujillo', 'Jajó', 'Niquitao', 'La Puerta'],
+    ferias: ['Fiestas de Nuestra Señora de la Paz (enero)', 'Peregrinación a Isnotú por el Dr. José Gregorio Hernández (26 de octubre)'],
     municipios: ['Andrés Bello', 'Boconó', 'Bolívar', 'Candelaria', 'Carache', 'Escuque', 'José Felipe Márquez Cañizales', 'Juan Vicente Campo Elías', 'La Ceiba', 'Miranda', 'Monte Carmelo', 'Motatán', 'Pampán', 'Pampanito', 'Rafael Rangel', 'San Rafael de Carvajal', 'Sucre', 'Trujillo', 'Urdaneta', 'Valera'],
   },
   {
@@ -251,6 +272,7 @@ export const ESTADOS = [
     clima: 'Cálido y seco (26 °C a 33 °C), con brisa marina y lluvias escasas, más frecuentes entre noviembre y enero.',
     economia: ['Actividad portuaria y aeroportuaria', 'Turismo de playa', 'Pesca artesanal', 'Comercio y servicios', 'Administración pública'],
     atractivos: ['Casco colonial de La Guaira', 'Macuto y su malecón', 'Playas de Naiguatá y Los Caracas', 'Parque Nacional Waraira Repano (vertiente norte)', 'Colonia Tovar (acceso por la costa)', 'Galipán', 'Camurí Grande', 'Chichiriviche de la Costa', 'Puerto Cruz'],
+    ferias: ['Diablos Danzantes de Naiguatá (Corpus Christi, Patrimonio UNESCO)', 'Tambores de San Juan en Naiguatá (junio)'],
     municipios: ['Vargas'],
   },
   {
@@ -262,6 +284,7 @@ export const ESTADOS = [
     clima: 'Tropical cálido y húmedo en los valles (24 °C a 32 °C), más fresco en las montañas; lluvias de mayo a noviembre.',
     economia: ['Agricultura (caña de azúcar, naranja, maíz)', 'Agroindustria (centrales azucareros)', 'Ganadería', 'Comercio', 'Turismo religioso y de naturaleza'],
     atractivos: ['Montaña de Sorte', 'Parque San Felipe El Fuerte', 'Parque Nacional Yurubí', 'Chivacoa', 'Nirgua', 'Aroa y el Parque Minas de Bolívar'],
+    ferias: ['Peregrinación a la montaña de Sorte (12 de octubre)'],
     municipios: ['Arístides Bastidas', 'Bolívar', 'Bruzual', 'Cocorote', 'Independencia', 'José Antonio Páez', 'La Trinidad', 'Manuel Monge', 'Nirgua', 'Peña', 'San Felipe', 'Sucre', 'Urachiche', 'Veroes'],
   },
   {
@@ -273,6 +296,7 @@ export const ESTADOS = [
     clima: 'Muy cálido y húmedo (28 °C a 35 °C) en Maracaibo; semiárido en la Guajira y lluvioso al sur del lago.',
     economia: ['Petróleo y gas (lago de Maracaibo, costa oriental)', 'Ganadería y producción láctea (sur del lago)', 'Agricultura (plátano, frutas)', 'Petroquímica (El Tablazo)', 'Comercio y servicios'],
     atractivos: ['Basílica de Nuestra Señora de Chiquinquirá', 'Puente General Rafael Urdaneta', 'Relámpago del Catatumbo', 'Casco histórico y calle Carabobo de Maracaibo', 'Sierra de Perijá', 'Vereda del Lago', 'Isla de San Carlos y su castillo', 'Santa Rosa de Agua (palafitos)', 'Laguna de Sinamaica', 'Teatro Baralt'],
+    ferias: ['Feria de la Chinita (noviembre)', 'Fiestas de San Benito en el Sur del Lago (diciembre–enero)', 'Temporada de gaitas (noviembre–diciembre)'],
     municipios: ['Almirante Padilla', 'Baralt', 'Cabimas', 'Catatumbo', 'Colón', 'Francisco Javier Pulgar', 'Guajira', 'Jesús Enrique Lossada', 'Jesús María Semprún', 'La Cañada de Urdaneta', 'Lagunillas', 'Machiques de Perijá', 'Mara', 'Maracaibo', 'Miranda', 'Rosario de Perijá', 'San Francisco', 'Santa Rita', 'Simón Bolívar', 'Sucre', 'Valmore Rodríguez'],
   },
 ];
@@ -347,6 +371,6 @@ export const WIKI_GLOBAL_DEFAULTS = {
 // Campos de un estado que el panel admin puede sobrescribir.
 export const WIKI_STATE_FIELDS = [
   'resena', 'capital', 'area', 'population', 'region', 'gentilicio', 'clima',
-  'economia', 'atractivos', 'municipios',
+  'economia', 'atractivos', 'ferias', 'municipios',
   'banner_url', 'emergencias_extra', 'envios', 'datos_utiles',
 ];
