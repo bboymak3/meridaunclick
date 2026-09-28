@@ -42,10 +42,15 @@ export async function onRequestGet(context) {
       });
     }
 
+    // fresh=1: leer directo de R2 sin caché (herramienta de optimización)
+    const fresh = url.searchParams.get('fresh') === '1';
+
     // Reuse the edge-cached response before reading the object from R2.
     const cache = caches.default;
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) return cachedResponse;
+    if (!fresh) {
+      const cachedResponse = await cache.match(request);
+      if (cachedResponse) return cachedResponse;
+    }
 
     // Fetch the object from R2
     const object = await env.R2.get(key);
@@ -60,9 +65,10 @@ export async function onRequestGet(context) {
     // Determine content type from metadata or key extension
     const contentType = object.httpMetadata?.contentType || getContentTypeFromKey(key);
 
-    // Cache headers (1 week for images)
+    // Navegador: 1 semana. Caché del borde (abajo): 1 día, para que una imagen
+    // re-optimizada en R2 se vea en todas las regiones en menos de un día.
     const cacheHeaders = {
-      'Cache-Control': 'public, max-age=604800, immutable',
+      'Cache-Control': fresh ? 'no-store' : 'public, max-age=604800',
       'ETag': object.etag || '',
       'Last-Modified': object.uploaded.toUTCString(),
     };
@@ -76,7 +82,11 @@ export async function onRequestGet(context) {
       },
     });
 
-    context.waitUntil(cache.put(request, response.clone()));
+    if (!fresh) {
+      const edgeCopy = new Response(response.clone().body, response);
+      edgeCopy.headers.set('Cache-Control', 'public, max-age=86400');
+      context.waitUntil(cache.put(request, edgeCopy));
+    }
     return response;
   } catch (error) {
     console.error('Serve image error:', error);
