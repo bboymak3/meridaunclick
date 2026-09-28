@@ -200,6 +200,10 @@ button:active{transform:scale(.97)}
 .video-progress{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--gray-500)}
 .video-progress-bar{flex:1;height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden}
 .video-progress-fill{height:100%;width:0;background:#dc2626;border-radius:4px;transition:width .4s}
+.video-progress[hidden]{display:none}
+.video-note.review i{color:var(--success)}
+.btn-outline-green{background:#fff;color:#047857;border:2px solid var(--success)}
+.btn-outline-green:hover{background:var(--success-light)}
 .video-done{text-align:center;padding:12px 4px 4px}
 .video-done i{font-size:32px;color:var(--success);margin-bottom:6px}
 .score-breakdown{display:grid;gap:6px;max-width:320px;margin:10px auto 6px;text-align:left}
@@ -685,21 +689,57 @@ button:active{transform:scale(.97)}
 
   function isDone(c){ return c.is_completed===1||c.is_completed===true; }
 
-  function renderClassCard(c){
+  function isWatched(c){ return c.video_watched===1||c.video_watched===true; }
+
+  // Estado + botones de la tarjeta. En clases con video:
+  //   aprobada            -> "Completada" + Ver de nuevo (repaso)
+  //   video ya visto      -> "Video visto" + Responder preguntas (+ repaso)
+  //   pendiente           -> "Disponible" + Ver video
+  function renderClassMeta(c){
     const completed=isDone(c);
     const locked=!completed&&!!c.is_locked;
     const isVideo=!!youtubeId(c.video_url);
+    const watched=isVideo&&!completed&&isWatched(c);
     const statusHTML=completed
       ?'<span class="class-status completed"><i class="fas fa-check-circle"></i> Completada</span>'
       :locked
         ?'<span class="class-status locked"><i class="fas fa-lock"></i> Bloqueada</span>'
-        :'<span class="class-status available"><i class="fas fa-play-circle"></i> Disponible</span>';
+        :watched
+          ?'<span class="class-status completed"><i class="fas fa-check-circle"></i> Video visto</span>'
+          :'<span class="class-status available"><i class="fas fa-play-circle"></i> Disponible</span>';
     let action='';
-    if(!completed&&!locked){
+    if(isVideo&&completed){
+      action='<button class="btn btn-sm btn-outline-green" onclick="startVideoClass('+c.id+',true)" style="margin-left:auto"><i class="fas fa-redo"></i> Ver de nuevo</button>';
+    }else if(watched){
+      action='<span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
+        '<button class="btn btn-sm btn-outline-green" onclick="startVideoClass('+c.id+',true)"><i class="fas fa-redo"></i> Ver de nuevo</button>'+
+        '<button class="btn btn-sm btn-success" onclick="answerVideoQuestions('+c.id+')"><i class="fas fa-question-circle"></i> Responder preguntas</button></span>';
+    }else if(!completed&&!locked){
       action=isVideo
         ?'<button class="btn btn-sm btn-yt" onclick="startVideoClass('+c.id+')" style="margin-left:auto"><i class="fab fa-youtube"></i> Ver video</button>'
         :'<button class="btn btn-sm btn-primary" onclick="startQuiz('+c.id+')" style="margin-left:auto"><i class="fas fa-play"></i> Comenzar</button>';
     }
+    return `
+        ${isVideo?'<span class="class-video-tag"><i class="fab fa-youtube"></i> Video</span>':''}
+        <span class="class-meta-item"><i class="fas fa-question-circle"></i> ${c.question_count||0} preguntas</span>
+        <span class="class-xp"><i class="fas fa-bolt"></i> ${isVideo?'hasta +'+VIDEO_MAX_POINTS:'+'+(c.xp_reward||10)} XP</span>
+        ${statusHTML}
+        ${action}`;
+  }
+
+  // Actualiza estado y botones de una tarjeta sin tocar el video/quiz abierto
+  function refreshClassCard(classId){
+    const c=classes.find(function(x){ return x.id===classId; });
+    const card=document.getElementById('classCard-'+classId);
+    const meta=document.getElementById('classMeta-'+classId);
+    if(!c||!card||!meta) return;
+    meta.innerHTML=renderClassMeta(c);
+    card.classList.toggle('is-done',isDone(c));
+  }
+
+  function renderClassCard(c){
+    const completed=isDone(c);
+    const locked=!completed&&!!c.is_locked;
     const material=!locked&&String(c.content||'').trim()
       ?`<details class="class-material"><summary><i class="fas fa-file-alt"></i> Material de la clase</summary><div class="class-material-body">${renderMaterial(c.content)}</div></details>`
       :'';
@@ -711,13 +751,7 @@ button:active{transform:scale(.97)}
           ${c.description?'<div class="class-desc">'+escapeHTML(c.description)+'</div>':''}
         </div>
       </div>
-      <div class="class-meta">
-        ${isVideo?'<span class="class-video-tag"><i class="fab fa-youtube"></i> Video</span>':''}
-        <span class="class-meta-item"><i class="fas fa-question-circle"></i> ${c.question_count||0} preguntas</span>
-        <span class="class-xp"><i class="fas fa-bolt"></i> ${isVideo?'hasta +'+VIDEO_MAX_POINTS:'+'+(c.xp_reward||10)} XP</span>
-        ${statusHTML}
-        ${action}
-      </div>
+      <div class="class-meta" id="classMeta-${c.id}">${renderClassMeta(c)}</div>
       ${locked?'<div class="class-locked-note"><i class="fas fa-info-circle"></i> Aprueba la clase anterior para desbloquearla</div>':''}
       ${material}
       <div id="quizPanel-${c.id}"></div>
@@ -797,8 +831,9 @@ button:active{transform:scale(.97)}
     return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
   }
 
-  async function startVideoClass(classId){
+  async function startVideoClass(classId,review){
     const cls=classes.find(function(c){ return c.id===classId; });
+    review=!!review;
     const vid=cls&&youtubeId(cls.video_url);
     if(!vid) return;
     closeVideo();
@@ -812,8 +847,10 @@ button:active{transform:scale(.97)}
     panel.innerHTML=`
     <div class="video-panel">
       <div class="video-frame"><div id="ytPlayer-${classId}"></div></div>
-      <div class="video-note"><i class="fas fa-info-circle"></i><span>Mira el video <strong>completo</strong> para desbloquear las 5 preguntas. No lo cierres ni lo adelantes: si cierras o recargas la página, empiezas de nuevo.</span></div>
-      <div class="video-progress">
+      ${review
+        ?'<div class="video-note review"><i class="fas fa-check-circle"></i><span>Ya viste este video. Puedes repasarlo libremente: tu avance no cambia.</span></div>'
+        :'<div class="video-note"><i class="fas fa-info-circle"></i><span>Mira el video <strong>completo</strong> para desbloquear las 5 preguntas. No lo cierres ni lo adelantes: si cierras o recargas la página, empiezas de nuevo.</span></div>'}
+      <div class="video-progress"${review?' hidden':''}>
         <span id="videoTime-${classId}">0:00</span>
         <div class="video-progress-bar"><div class="video-progress-fill" id="videoFill-${classId}"></div></div>
         <span id="videoPct-${classId}">0%</span>
@@ -821,7 +858,7 @@ button:active{transform:scale(.97)}
       <div id="videoStatus-${classId}"></div>
       <div style="text-align:right;margin-top:10px"><button class="btn btn-sm btn-outline" onclick="closeVideoClass()">Cerrar</button></div>
     </div>`;
-    video={classId:classId,player:null,timer:null,maxWatched:0,duration:0,started:false,done:false};
+    video={classId:classId,player:null,timer:null,maxWatched:0,duration:0,started:false,done:false,review:review};
     const state=video;
     try{
       const YT=await loadYouTubeApi();
@@ -831,10 +868,10 @@ button:active{transform:scale(.97)}
         playerVars:{rel:0,modestbranding:1,playsinline:1,disablekb:1,fs:1},
         events:{
           onStateChange:function(e){ onVideoState(state,e.data); },
-          onPlaybackRateChange:function(){ try{ if(state.player.getPlaybackRate()!==1) state.player.setPlaybackRate(1); }catch(err){} }
+          onPlaybackRateChange:function(){ if(state.review) return; try{ if(state.player.getPlaybackRate()!==1) state.player.setPlaybackRate(1); }catch(err){} }
         }
       });
-      state.timer=setInterval(function(){ trackVideo(state); },500);
+      if(!review) state.timer=setInterval(function(){ trackVideo(state); },500);
     }catch(err){
       panel.innerHTML='<div class="empty-state" style="padding:12px;color:var(--danger)"><i class="fas fa-exclamation-triangle"></i><p>'+escapeHTML(err.message)+'</p></div>';
       if(video===state) video=null;
@@ -843,7 +880,7 @@ button:active{transform:scale(.97)}
   window.startVideoClass=startVideoClass;
 
   function closeVideoClass(){
-    if(video&&!video.done) showToast('Cerraste el video: tendrás que verlo de nuevo desde el inicio');
+    if(video&&!video.done&&!video.review) showToast('Cerraste el video: tendrás que verlo de nuevo desde el inicio');
     closeVideo();
   }
   window.closeVideoClass=closeVideoClass;
@@ -851,6 +888,13 @@ button:active{transform:scale(.97)}
   async function onVideoState(state,s){
     if(video!==state||state.done) return;
     const YTS=window.YT.PlayerState;
+    if(state.review){
+      const c=classes.find(function(x){ return x.id===state.classId; });
+      if(s===YTS.ENDED&&c&&!isDone(c)){
+        setVideoStatus(state,'<button class="btn btn-success" onclick="answerVideoQuestions('+state.classId+')"><i class="fas fa-question-circle"></i> Responder preguntas</button>');
+      }
+      return;
+    }
     if(s===YTS.PLAYING&&!state.started){
       state.started=true;
       state.duration=state.player.getDuration()||0;
@@ -911,6 +955,8 @@ button:active{transform:scale(.97)}
     setVideoStatus(state,'<div class="spinner" style="width:24px;height:24px"></div>');
     try{
       await apiPost('/agent-progress',{class_id:state.classId,action:'video_complete'});
+      const wc=classes.find(function(x){ return x.id===state.classId; });
+      if(wc){ wc.video_watched=1; refreshClassCard(state.classId); }
       setVideoStatus(state,`
         <div class="video-done">
           <i class="fas fa-check-circle"></i>
@@ -932,7 +978,7 @@ button:active{transform:scale(.97)}
 
   // Avisar antes de cerrar/recargar con un video a medias
   window.addEventListener('beforeunload',function(e){
-    if(video&&video.started&&!video.done){ e.preventDefault(); e.returnValue=''; }
+    if(video&&!video.review&&video.started&&!video.done){ e.preventDefault(); e.returnValue=''; }
   });
 
   // ── Quiz State ──
@@ -1066,6 +1112,8 @@ button:active{transform:scale(.97)}
       }
     }catch(err){
       const cls=classes.find(function(c){return c.id===classId});
+      // El servidor pide ver el video de nuevo: la tarjeta vuelve a "Ver video"
+      if(cls&&youtubeId(cls.video_url)&&/video/i.test(err.message||'')){ cls.video_watched=0; refreshClassCard(classId); }
       const retry=cls&&youtubeId(cls.video_url)
         ?'<button class="btn btn-sm btn-yt" onclick="startVideoClass('+classId+')" style="margin-top:12px"><i class="fab fa-youtube"></i> Ver video</button>'
         :'<button class="btn btn-sm btn-outline" onclick="startQuiz('+classId+')" style="margin-top:12px"><i class="fas fa-redo"></i> Reintentar</button>';
@@ -1109,22 +1157,11 @@ button:active{transform:scale(.97)}
 
     document.getElementById('quizPanel-'+classId).innerHTML=html;
 
-    // Update the class card to show completed
-    const card=document.getElementById('classCard-'+classId);
-    if(passed && card){
-      const c=classes.find(function(c){return c.id===classId});
-      if(c) c.is_completed=1;
-      // Re-render to update status
-      const metaDiv=card.querySelector('.class-meta');
-      if(metaDiv){
-        const statusEl=metaDiv.querySelector('.class-status');
-        if(statusEl){
-          statusEl.className='class-status completed';
-          statusEl.innerHTML='<i class="fas fa-check-circle"></i> Completada';
-        }
-        const btn=metaDiv.querySelector('.btn-primary, .btn-yt');
-        if(btn) btn.remove();
-      }
+    // Actualizar la tarjeta: aprobada -> Completada; video no aprobado -> hay que verlo otra vez
+    if(cls){
+      if(passed) cls.is_completed=1;
+      if(r.is_video) cls.video_watched=passed?1:0;
+      refreshClassCard(classId);
     }
   }
 
