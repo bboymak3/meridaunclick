@@ -3,6 +3,7 @@
 // Returns empty list if no tables/partners yet
 
 import { corsHeaders } from '../../_lib/auth.js';
+import { calcLevel, levelName } from '../../_lib/academy-levels.js';
 
 async function ensureTables(db) {
   var tables = [
@@ -65,7 +66,11 @@ export async function onRequestGet(context) {
       });
     }
 
-    var partners = result.results || [];
+    // Nivel calculado desde el XP (igual que en el perfil y la academia)
+    var partners = (result.results || []).map(function(p) {
+      var lvl = calcLevel(p.xp || 0);
+      return Object.assign({}, p, { level: lvl, level_name: levelName(lvl) });
+    });
 
     // If detailed, also fetch badges for each partner
     if (detailed && partners.length > 0) {

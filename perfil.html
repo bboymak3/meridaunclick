@@ -3,1055 +3,691 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Perfil — AunClick Partner Academy</title>
+  <title>Perfil de Partner — AunClick Academy</title>
+  <meta name="description" content="Perfil público de agente y Partner Digital Certificado de AunClick Academy: nivel, medallas, clases y certificado verificable.">
+  <meta property="og:title" content="Perfil de Partner — AunClick Academy">
+  <meta property="og:description" content="Conoce a este agente de AunClick Academy: certificación, medallas y clases completadas.">
+  <meta property="og:type" content="profile">
+  <meta property="og:site_name" content="AunClick">
+  <link rel="icon" type="image/jpeg" href="/images/favicon.jpeg">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
-    /* ===== RESET & BASE ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --primary: #7c3aed;
-      --primary-dark: #5b21b6;
-      --partner-gold: #f59e0b;
-      --partner-gold-dark: #d97706;
-      --success: #059669;
-      --danger: #dc2626;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #1e293b;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --gradient-start: #7c3aed;
-      --gradient-end: #2563eb;
+      --primary: #7c3aed; --primary-dark: #5b21b6; --primary-light: #ede9fe;
+      --blue: #2563eb;
+      --gold: #f59e0b; --gold-dark: #b45309; --gold-light: #fef3c7;
+      --success: #059669; --success-light: #d1fae5;
+      --wa: #25d366;
+      --bg: #f4f3fa; --card: #ffffff; --text: #1e293b; --muted: #64748b; --border: #e2e8f0;
+      --radius: 16px; --shadow: 0 1px 3px rgba(15,23,42,.06), 0 6px 20px rgba(15,23,42,.05);
     }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      min-height: 100vh;
-    }
-
+    html { scroll-behavior: smooth; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; -webkit-font-smoothing: antialiased; }
     a { color: var(--primary); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    button { font-family: inherit; cursor: pointer; border: none; }
+    body.modal-open { overflow: hidden; }
 
-    /* ===== LOADING SCREEN ===== */
-    .loading-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      flex-direction: column;
-      gap: 1rem;
-      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-    }
-    .loading-screen .spinner {
-      width: 48px; height: 48px;
-      border: 4px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-    .loading-screen p { color: rgba(255,255,255,0.8); font-size: 1.1rem; }
+    /* Loading / error */
+    .loading-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 1rem; background: linear-gradient(135deg, var(--primary), var(--blue)); }
+    .spinner { width: 44px; height: 44px; border: 4px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+    .spinner.dark { border-color: var(--primary-light); border-top-color: var(--primary); }
+    .loading-screen p { color: rgba(255,255,255,.85); }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ===== ERROR SCREEN ===== */
-    .error-screen {
-      display: none;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      flex-direction: column;
-      gap: 1rem;
-      text-align: center;
-      padding: 2rem;
-    }
-    .error-screen i { font-size: 4rem; color: var(--text-muted); }
-    .error-screen h1 { font-size: 1.5rem; color: var(--text); }
-    .error-screen p { color: var(--text-muted); }
-
-    /* ===== PROFILE PAGE ===== */
+    .error-screen { display: none; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 1rem; text-align: center; padding: 2rem; }
+    .error-screen i { font-size: 3.5rem; color: var(--muted); }
     #profile-page { display: none; }
 
-    /* ===== HERO BANNER ===== */
-    .hero {
-      position: relative;
-      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-      padding: 3rem 1.5rem 2rem;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-      pointer-events: none;
-    }
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: -2px; left: 0; right: 0;
-      height: 40px;
-      background: var(--bg);
-      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
-    }
-    .hero-content {
-      position: relative;
-      z-index: 1;
-      max-width: 800px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-    }
+    /* Top bar */
+    .topbar { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+    .topbar-inner { max-width: 960px; margin: 0 auto; padding: .7rem 1rem; display: flex; align-items: center; gap: .75rem; }
+    .brand { font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: .5rem; font-size: 1.05rem; }
+    .topbar-spacer { flex: 1; }
+    .topbar a.top-link { font-size: .85rem; font-weight: 600; color: var(--muted); padding: .4rem .6rem; border-radius: 8px; }
+    .topbar a.top-link:hover { background: var(--primary-light); color: var(--primary); }
 
-    /* Avatar */
-    .avatar-wrapper {
-      position: relative;
-      flex-shrink: 0;
-    }
-    .avatar {
-      width: 120px; height: 120px;
-      border-radius: 50%;
-      border: 4px solid rgba(255,255,255,0.5);
-      object-fit: cover;
-      background: rgba(255,255,255,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: #fff;
-      overflow: hidden;
-    }
-    .avatar img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      border-radius: 50%;
-    }
-    .avatar-wrapper.is-partner .avatar {
-      border-color: var(--partner-gold);
-      box-shadow: 0 0 0 3px var(--partner-gold), 0 0 20px rgba(245, 158, 11, 0.4);
-    }
-    .partner-badge-hero {
-      position: absolute;
-      bottom: -4px; right: -4px;
-      background: var(--partner-gold);
-      color: #fff;
-      font-size: 1.2rem;
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid var(--gradient-start);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
+    /* Hero */
+    .hero { position: relative; background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 55%, var(--blue) 100%); color: #fff; padding: 2.5rem 1rem 4.5rem; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 15% 20%, rgba(255,255,255,.14), transparent 40%), radial-gradient(circle at 90% 80%, rgba(255,255,255,.1), transparent 45%); pointer-events: none; }
+    .hero.is-partner { background: linear-gradient(135deg, #4c1d95 0%, var(--primary) 50%, #b45309 130%); }
+    .hero-content { position: relative; max-width: 960px; margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; }
+    .avatar-wrap { position: relative; flex-shrink: 0; }
+    .avatar { width: 124px; height: 124px; border-radius: 50%; border: 4px solid rgba(255,255,255,.55); background: rgba(255,255,255,.18); display: flex; align-items: center; justify-content: center; font-size: 2.6rem; font-weight: 800; overflow: hidden; }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .is-partner .avatar { border-color: var(--gold); box-shadow: 0 0 0 4px rgba(245,158,11,.35), 0 10px 30px rgba(0,0,0,.25); }
+    .avatar-star { display: none; position: absolute; bottom: 4px; right: 4px; width: 34px; height: 34px; border-radius: 50%; background: var(--gold); color: #fff; align-items: center; justify-content: center; border: 3px solid #fff; font-size: .9rem; }
+    .is-partner .avatar-star { display: flex; }
+    .hero-info { flex: 1; min-width: 0; }
+    .hero-kicker { font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; opacity: .85; }
+    .hero-name { font-size: 2rem; font-weight: 800; line-height: 1.2; margin: .2rem 0 .6rem; overflow-wrap: anywhere; }
+    .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+    .chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; font-weight: 700; padding: .3rem .75rem; border-radius: 999px; background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.28); }
+    .chip.gold { background: var(--gold); border-color: var(--gold); color: #fff; }
+    .xp { margin-top: 1rem; max-width: 460px; }
+    .xp-top { display: flex; justify-content: space-between; font-size: .8rem; opacity: .92; margin-bottom: .35rem; gap: .5rem; }
+    .xp-bar { height: 9px; background: rgba(255,255,255,.22); border-radius: 99px; overflow: hidden; }
+    .xp-fill { height: 100%; width: 0; background: linear-gradient(90deg, #fde68a, var(--gold)); border-radius: 99px; transition: width 1s ease; }
 
-    /* Hero Info */
-    .hero-info {
-      flex: 1;
-      min-width: 0;
-    }
-    .hero-name {
-      font-size: 1.8rem;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 0.25rem;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .hero-level {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(10px);
-      color: #fff;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-    .hero-level i { color: var(--partner-gold); }
-    .partner-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      background: linear-gradient(135deg, var(--partner-gold), var(--partner-gold-dark));
-      color: #fff;
-      padding: 0.3rem 0.85rem;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      margin-left: 0.5rem;
-      box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
-    }
-    .graduated-icon {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 32px; height: 32px;
-      background: rgba(255,255,255,0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 50%;
-      color: var(--partner-gold);
-      font-size: 0.9rem;
-      margin-left: 0.5rem;
-    }
+    /* Layout */
+    .main { max-width: 960px; margin: -3rem auto 0; padding: 0 1rem 2rem; position: relative; }
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1rem; }
+    .card-title { font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: .55rem; margin-bottom: 1rem; }
+    .card-title i { color: var(--primary); }
+    .card-title .count { margin-left: auto; font-size: .78rem; font-weight: 700; color: var(--muted); background: var(--bg); padding: .15rem .6rem; border-radius: 99px; }
+    .grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; align-items: start; }
+    .grid-2 > .card { margin-bottom: 0; }
+    .stack > .card + .card { margin-top: 1rem; }
 
-    /* XP Bar */
-    .xp-section {
-      margin-top: 0.5rem;
-    }
-    .xp-label {
-      display: flex;
-      justify-content: space-between;
-      color: rgba(255,255,255,0.8);
-      font-size: 0.75rem;
-      margin-bottom: 0.25rem;
-    }
-    .xp-bar-bg {
-      height: 8px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .xp-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--partner-gold), #fbbf24);
-      border-radius: 4px;
-      transition: width 1s ease-out;
-    }
+    /* Actions */
+    .actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; font-size: .88rem; font-weight: 700; padding: .6rem 1rem; border-radius: 10px; transition: transform .1s, background .2s, box-shadow .2s; white-space: nowrap; }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-gold { background: var(--gold); color: #fff; box-shadow: 0 6px 16px rgba(245,158,11,.3); }
+    .btn-gold:hover { background: #d97706; }
+    .btn-ghost { background: #fff; color: var(--primary); border: 1.5px solid #ddd6fe; }
+    .btn-ghost:hover { background: var(--primary-light); }
+    .btn-wa { background: var(--wa); color: #fff; }
+    .btn-wa:hover { background: #1fb457; }
+    .btn-soft { background: var(--bg); color: var(--text); }
+    .btn-soft:hover { background: #e9e7f5; }
+    .btn-soft.copied { background: var(--success-light); color: var(--success); }
+    .share-label { font-size: .82rem; font-weight: 700; color: var(--muted); margin-right: .25rem; }
+    .owner-bar { display: none; background: var(--primary-light); border: 1px solid #ddd6fe; }
+    .owner-bar p { font-size: .85rem; color: var(--primary-dark); flex: 1; min-width: 200px; }
 
-    /* ===== SHARE BAR (sticky) ===== */
-    .share-bar {
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      background: var(--card);
-      border-bottom: 1px solid var(--border);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      padding: 0.6rem 1.5rem;
-    }
-    .share-bar-inner {
-      max-width: 800px;
-      margin: 0 auto;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    .share-label {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-right: 0.25rem;
-      white-space: nowrap;
-    }
-    .share-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      padding: 0.4rem 0.85rem;
-      border: none;
-      border-radius: 20px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      white-space: nowrap;
-    }
-    .share-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .share-btn:active { transform: translateY(0); }
-    .share-btn.copy {
-      background: var(--primary);
-      color: #fff;
-    }
-    .share-btn.copy.copied {
-      background: var(--success);
-    }
-    .share-btn.whatsapp {
-      background: #25d366;
-      color: #fff;
-    }
-    .share-btn.facebook {
-      background: #1877f2;
-      color: #fff;
-    }
-    .share-btn.twitter {
-      background: #000;
-      color: #fff;
-    }
+    /* Stats */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-bottom: 1rem; }
+    .stat { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 1rem .75rem; text-align: center; }
+    .stat-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto .5rem; font-size: 1rem; }
+    .stat-icon.xp { background: var(--gold-light); color: var(--gold-dark); }
+    .stat-icon.cls { background: var(--primary-light); color: var(--primary); }
+    .stat-icon.bdg { background: #dbeafe; color: var(--blue); }
+    .stat-icon.exm { background: var(--success-light); color: var(--success); }
+    .stat-value { font-size: 1.35rem; font-weight: 800; line-height: 1.2; }
+    .stat-value small { font-size: .8rem; color: var(--muted); font-weight: 600; }
+    .stat-label { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; }
+    .stat-value.ok { color: var(--success); font-size: 1rem; }
+    .stat-value.wait { color: var(--muted); font-size: 1rem; }
 
-    /* ===== TOAST ===== */
-    .toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: #1e293b;
-      color: #fff;
-      padding: 0.75rem 1.5rem;
-      border-radius: 10px;
-      font-size: 0.9rem;
-      font-weight: 500;
-      z-index: 9999;
-      opacity: 0;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-      pointer-events: none;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    }
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
+    /* Certificate */
+    .cert-card { border: 2px solid #fcd34d; background: linear-gradient(135deg, #fffbeb, #fff 60%); scroll-margin-top: 80px; }
+    .cert-layout { display: grid; grid-template-columns: 260px 1fr; gap: 1.25rem; align-items: center; }
+    .cert-mini { position: relative; aspect-ratio: 297 / 210; background: #faf8ff; border: 5px solid var(--primary); outline: 1px solid var(--gold); outline-offset: -9px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: .75rem; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+    .cert-mini:hover { transform: translateY(-2px) rotate(-.5deg); box-shadow: 0 10px 24px rgba(124,58,237,.18); }
+    .cert-mini .m1 { font-size: .5rem; font-weight: 800; color: var(--primary); letter-spacing: .08em; }
+    .cert-mini .m2 { font-size: 1rem; font-weight: 900; color: var(--text); letter-spacing: .02em; }
+    .cert-mini .m3 { font-size: .45rem; font-weight: 800; color: #d97706; letter-spacing: .06em; }
+    .cert-mini .m4 { font-size: .72rem; font-weight: 800; margin-top: .4rem; border-bottom: 1px solid var(--primary); padding: 0 .5rem .1rem; max-width: 90%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cert-mini .zoom { position: absolute; right: 8px; bottom: 8px; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff; font-size: .7rem; display: flex; align-items: center; justify-content: center; }
+    .verified { display: inline-flex; align-items: center; gap: .4rem; font-size: .78rem; font-weight: 800; color: var(--success); background: var(--success-light); padding: .25rem .7rem; border-radius: 99px; margin-bottom: .5rem; }
+    .cert-title { font-size: 1.25rem; font-weight: 800; margin-bottom: .3rem; }
+    .cert-desc { font-size: .9rem; color: var(--muted); margin-bottom: .75rem; }
+    .cert-meta { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin-bottom: 1rem; }
+    .cert-meta div { background: #fff; border: 1px solid #fde68a; border-radius: 10px; padding: .5rem .7rem; }
+    .cert-meta span { display: block; font-size: .7rem; color: var(--muted); text-transform: uppercase; font-weight: 700; letter-spacing: .04em; }
+    .cert-meta strong { font-size: .9rem; overflow-wrap: anywhere; }
 
-    /* ===== MAIN CONTENT ===== */
-    .main-content {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 1.5rem;
-    }
+    /* Path / training */
+    .path-bar { height: 10px; background: var(--bg); border-radius: 99px; overflow: hidden; margin: .5rem 0 .4rem; }
+    .path-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--primary), var(--blue)); border-radius: 99px; transition: width 1s ease; }
+    .path-text { font-size: .85rem; color: var(--muted); display: flex; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+    .steps { list-style: none; margin-top: 1rem; display: grid; gap: .5rem; }
+    .steps li { display: flex; align-items: center; gap: .6rem; font-size: .88rem; }
+    .steps li i { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .7rem; flex-shrink: 0; background: var(--bg); color: var(--muted); }
+    .steps li.done i { background: var(--success); color: #fff; }
+    .steps li.done span { color: var(--text); font-weight: 600; }
+    .steps li span { color: var(--muted); }
 
-    /* ===== SECTION CARD ===== */
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.5rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.02);
-      transition: box-shadow 0.2s;
-    }
-    .card:hover {
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.04);
-    }
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .card-title i {
-      color: var(--primary);
-      font-size: 1rem;
-    }
+    /* About */
+    .bio { font-size: .95rem; color: #334155; white-space: pre-line; overflow-wrap: anywhere; }
+    .bio.empty { color: var(--muted); font-style: italic; }
+    .facts { list-style: none; margin-top: 1rem; display: grid; gap: .5rem; }
+    .facts li { display: flex; align-items: center; gap: .6rem; font-size: .88rem; color: #334155; overflow-wrap: anywhere; }
+    .facts li i { width: 30px; height: 30px; border-radius: 8px; background: var(--bg); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .contact-actions { margin-top: 1rem; }
 
-    /* ===== STATS GRID ===== */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.75rem;
-      margin-bottom: 1.25rem;
-    }
-    .stat-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.25rem 0.75rem;
-      text-align: center;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .stat-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    }
-    .stat-icon {
-      width: 44px; height: 44px;
-      border-radius: 12px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      margin-bottom: 0.5rem;
-    }
-    .stat-icon.xp { background: #ede9fe; color: var(--primary); }
-    .stat-icon.classes { background: #dbeafe; color: #2563eb; }
-    .stat-icon.badges { background: #fef3c7; color: var(--partner-gold-dark); }
-    .stat-icon.exam { background: #d1fae5; color: var(--success); }
-    .stat-number {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--text);
-      line-height: 1.2;
-    }
-    .stat-label {
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      font-weight: 500;
-      margin-top: 0.2rem;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-    }
-    .stat-status {
-      font-size: 0.85rem;
-      font-weight: 700;
-      margin-top: 0.2rem;
-    }
-    .stat-status.passed { color: var(--success); }
-    .stat-status.failed { color: var(--danger); }
-    .stat-status.pending { color: var(--text-muted); }
+    /* Badges */
+    .badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: .75rem; }
+    .badge { display: flex; gap: .7rem; align-items: flex-start; padding: .8rem; border: 1px solid var(--border); border-radius: 12px; transition: transform .15s, box-shadow .15s; }
+    .badge:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .badge-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--gold-light); color: var(--gold-dark); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .badge.special .badge-icon { background: linear-gradient(135deg, var(--gold), #d97706); color: #fff; }
+    .badge > div:last-child { min-width: 0; }
+    .badge-name { font-size: .88rem; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+    .badge-desc { font-size: .78rem; color: var(--muted); line-height: 1.4; overflow-wrap: anywhere; }
+    .badge-date { font-size: .7rem; color: #94a3b8; margin-top: .2rem; }
 
-    /* ===== BIO SECTION ===== */
-    .bio-text {
-      color: var(--text);
-      font-size: 0.95rem;
-      line-height: 1.7;
-      margin-bottom: 1rem;
-      white-space: pre-wrap;
-    }
-    .bio-empty {
-      color: var(--text-muted);
-      font-style: italic;
-    }
-    .bio-details {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-    }
-    .bio-detail-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.88rem;
-      color: var(--text-muted);
-    }
-    .bio-detail-item i {
-      color: var(--primary);
-      width: 16px;
-      text-align: center;
-    }
-    .bio-detail-item a {
-      color: var(--primary);
-      font-weight: 500;
-    }
-    .bio-detail-item a:hover { text-decoration: underline; }
+    /* Classes */
+    .classes { display: grid; grid-template-columns: minmax(0, 1fr); gap: .5rem; }
+    .class-row { display: flex; align-items: center; gap: .75rem; padding: .7rem .8rem; border: 1px solid var(--border); border-radius: 12px; }
+    .class-row .ci { width: 34px; height: 34px; border-radius: 10px; background: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .class-row .cn { flex: 1; min-width: 0; }
+    .class-row .ct { font-size: .9rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .class-row .cd { font-size: .75rem; color: var(--muted); }
+    .pill { font-size: .72rem; font-weight: 800; padding: .2rem .55rem; border-radius: 99px; white-space: nowrap; }
+    .pill.score { background: var(--primary-light); color: var(--primary-dark); }
+    .pill.xp { background: var(--gold-light); color: var(--gold-dark); }
+    .empty { text-align: center; color: var(--muted); padding: 1.5rem .5rem; font-size: .9rem; }
+    .empty i { display: block; font-size: 1.8rem; margin-bottom: .4rem; color: #cbd5e1; }
 
-    /* ===== BADGES GRID ===== */
-    .badges-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 0.75rem;
-    }
-    .badge-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 0.75rem;
-      padding: 1rem;
-      background: linear-gradient(135deg, #fefce8, #fffbeb);
-      border: 1px solid #fde68a;
-      border-radius: 12px;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .badge-item:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
-    }
-    .badge-icon-wrap {
-      width: 44px; height: 44px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, var(--partner-gold), var(--partner-gold-dark));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      color: #fff;
-      font-size: 1.1rem;
-      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-    }
-    .badge-info { min-width: 0; }
-    .badge-name {
-      font-weight: 700;
-      font-size: 0.88rem;
-      color: var(--text);
-      margin-bottom: 0.15rem;
-    }
-    .badge-desc {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      line-height: 1.4;
-      margin-bottom: 0.25rem;
-    }
-    .badge-date {
-      font-size: 0.7rem;
-      color: #94a3b8;
-    }
-    .empty-state {
-      text-align: center;
-      padding: 2rem 1rem;
-      color: var(--text-muted);
-      font-style: italic;
-    }
-    .empty-state i {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-      display: block;
-      opacity: 0.4;
-    }
+    /* CTA */
+    .cta { text-align: center; background: linear-gradient(135deg, var(--primary), var(--blue)); color: #fff; }
+    .cta h3 { font-size: 1.2rem; margin-bottom: .3rem; }
+    .cta p { opacity: .9; font-size: .92rem; margin-bottom: 1rem; }
+    .cta .btn { background: #fff; color: var(--primary); }
 
-    /* ===== CLASSES TABLE ===== */
-    .classes-list {
-      overflow-x: auto;
-    }
-    .classes-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-    .classes-table th {
-      text-align: left;
-      padding: 0.6rem 0.75rem;
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--text-muted);
-      font-weight: 600;
-      border-bottom: 2px solid var(--border);
-      white-space: nowrap;
-    }
-    .classes-table td {
-      padding: 0.7rem 0.75rem;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-    .classes-table tr:last-child td { border-bottom: none; }
-    .classes-table tr:hover td { background: #f8fafc; }
-    .class-title {
-      font-weight: 600;
-      color: var(--text);
-      max-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .class-score {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-weight: 600;
-    }
-    .class-score.high { color: var(--success); }
-    .class-score.mid { color: var(--partner-gold-dark); }
-    .class-score.low { color: var(--danger); }
-    .class-points {
-      color: var(--primary);
-      font-weight: 600;
-    }
-    .class-xp {
-      color: var(--partner-gold-dark);
-      font-weight: 600;
-    }
-    .class-date {
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      white-space: nowrap;
-    }
+    .footer { text-align: center; padding: 1.5rem 1rem 2.5rem; color: var(--muted); font-size: .82rem; }
+    .footer a { font-weight: 700; }
 
-    /* ===== FOOTER ===== */
-    .footer {
-      text-align: center;
-      padding: 2rem 1.5rem 3rem;
-      color: var(--text-muted);
-      font-size: 0.85rem;
-    }
-    .footer-brand {
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 0.25rem;
-    }
-    .footer a {
-      color: var(--primary);
-      font-weight: 600;
-    }
-    .footer-divider {
-      width: 40px; height: 3px;
-      background: linear-gradient(90deg, var(--primary), var(--gradient-end));
-      border-radius: 2px;
-      margin: 0.75rem auto;
-    }
+    /* Toast */
+    .toast { position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(120px); background: #1e293b; color: #fff; padding: .7rem 1.2rem; border-radius: 10px; font-size: .88rem; z-index: 300; transition: transform .3s; max-width: calc(100% - 2rem); text-align: center; }
+    .toast { opacity: 0; visibility: hidden; }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; visibility: visible; }
 
-    /* ===== RESPONSIVE ===== */
+    /* Certificate modal (bottom sheet) */
+    .sheet-backdrop { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 200; opacity: 0; pointer-events: none; transition: opacity .25s; display: flex; align-items: flex-end; justify-content: center; }
+    .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+    .sheet { background: #fff; width: 100%; max-width: 900px; max-height: 92vh; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform .3s cubic-bezier(.2,.8,.2,1); box-shadow: 0 -10px 40px rgba(0,0,0,.2); }
+    .sheet-backdrop.open .sheet { transform: translateY(0); }
+    .sheet-handle { width: 44px; height: 5px; border-radius: 99px; background: #cbd5e1; margin: .6rem auto 0; }
+    .sheet-head { display: flex; align-items: center; gap: .75rem; padding: .75rem 1.25rem; border-bottom: 1px solid var(--border); }
+    .sheet-head h2 { font-size: 1rem; font-weight: 800; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sheet-close { width: 36px; height: 36px; border-radius: 50%; background: var(--bg); color: var(--muted); font-size: 1rem; flex-shrink: 0; }
+    .sheet-close:hover { background: #e2e8f0; color: var(--text); }
+    .sheet-body { padding: 1rem 1.25rem; overflow-y: auto; background: #f1f0f7; flex: 1; }
+    .sheet-preview { background: #fff; border-radius: 8px; box-shadow: 0 4px 18px rgba(15,23,42,.12); overflow: hidden; min-height: 180px; display: flex; align-items: center; justify-content: center; }
+    .sheet-preview .loading { display: flex; flex-direction: column; align-items: center; gap: .6rem; color: var(--muted); font-size: .85rem; padding: 2.5rem 1rem; }
+    .sheet-note { font-size: .78rem; color: var(--muted); text-align: center; margin-top: .75rem; overflow-wrap: anywhere; }
+    .sheet-foot { display: flex; gap: .5rem; justify-content: flex-end; flex-wrap: wrap; padding: .9rem 1.25rem calc(.9rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
+
+    @media (min-width: 900px) {
+      .sheet-backdrop { align-items: center; padding: 1.5rem; }
+      .sheet { border-radius: 20px; transform: translateY(40px) scale(.98); }
+      .sheet-backdrop.open .sheet { transform: none; }
+      .sheet-handle { display: none; }
+    }
+    @media (max-width: 820px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .cert-layout { grid-template-columns: 1fr; }
+      .cert-mini { max-width: 320px; width: 100%; margin: 0 auto; }
+    }
     @media (max-width: 640px) {
-      .hero { padding: 2rem 1rem 1.5rem; }
-      .hero-content {
-        flex-direction: column;
-        text-align: center;
-      }
-      .avatar { width: 100px; height: 100px; font-size: 2rem; }
-      .hero-name { font-size: 1.4rem; }
-      .hero-level, .partner-tag, .graduated-icon { margin-left: 0; margin-top: 0.25rem; }
-
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .stat-card { padding: 1rem 0.5rem; }
-      .stat-number { font-size: 1.3rem; }
-
-      .badges-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .share-bar-inner { justify-content: center; }
-      .share-label { display: none; }
-
-      .main-content { padding: 1rem; }
-      .card { padding: 1.25rem; border-radius: 12px; }
-
-      .bio-details { flex-direction: column; gap: 0.5rem; }
-
-      /* Mobile table as cards */
-      .classes-table thead { display: none; }
-      .classes-table tr {
-        display: block;
-        margin-bottom: 0.75rem;
-        border: 1px solid var(--border);
-        border-radius: 10px;
-        padding: 0.75rem;
-      }
-      .classes-table td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.3rem 0;
-        border-bottom: 1px solid #f1f5f9;
-      }
-      .classes-table td:last-child { border-bottom: none; }
-      .classes-table td::before {
-        content: attr(data-label);
-        font-weight: 600;
-        font-size: 0.72rem;
-        text-transform: uppercase;
-        color: var(--text-muted);
-        margin-right: 1rem;
-      }
-      .class-title { max-width: 160px; }
-    }
-
-    @media (min-width: 641px) and (max-width: 900px) {
-      .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
+      .hero { padding: 1.75rem 1rem 4rem; }
+      .hero-content { flex-direction: column; text-align: center; }
+      .chips { justify-content: center; }
+      .xp { margin-left: auto; margin-right: auto; }
+      .avatar { width: 104px; height: 104px; font-size: 2.1rem; }
+      .hero-name { font-size: 1.55rem; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .card { padding: 1.15rem; }
+      .actions .btn { flex: 1 1 auto; }
+      .share-label { width: 100%; }
+      .topbar a.top-link span { display: none; }
+      .sheet-foot .btn { flex: 1 1 45%; }
+      .cert-meta { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
 <body>
-
-  <!-- Loading Screen -->
   <div class="loading-screen" id="loading-screen">
     <div class="spinner"></div>
     <p>Cargando perfil...</p>
   </div>
 
-  <!-- Error Screen -->
   <div class="error-screen" id="error-screen">
     <i class="fas fa-user-slash"></i>
     <h1>Perfil no encontrado</h1>
-    <p>El agente que buscas no existe o su perfil es privado.</p>
-    <a href="/" style="margin-top:0.5rem;"><i class="fas fa-arrow-left"></i> Volver al inicio</a>
+    <p>El agente que buscas no existe o su perfil no está disponible.</p>
+    <a href="/partners.html"><i class="fas fa-arrow-left"></i> Ver todos los partners</a>
   </div>
 
-  <!-- Profile Page -->
   <div id="profile-page">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/"><i class="fas fa-graduation-cap"></i> AunClick Academy</a>
+        <div class="topbar-spacer"></div>
+        <a class="top-link" href="/partners.html"><i class="fas fa-users"></i><span> Partners</span></a>
+        <a class="top-link" href="/academia.html"><i class="fas fa-book-open"></i><span> Academia</span></a>
+      </div>
+    </header>
 
-    <!-- Hero Banner -->
-    <div class="hero">
+    <section class="hero" id="hero">
       <div class="hero-content">
-        <div class="avatar-wrapper" id="avatar-wrapper">
+        <div class="avatar-wrap">
           <div class="avatar" id="avatar"></div>
-          <div class="partner-badge-hero" id="partner-badge-hero" style="display:none;">
-            <i class="fas fa-star"></i>
-          </div>
+          <div class="avatar-star" title="Partner Digital Certificado"><i class="fas fa-star"></i></div>
         </div>
         <div class="hero-info">
+          <div class="hero-kicker" id="hero-kicker">Agente AunClick</div>
           <h1 class="hero-name" id="hero-name"></h1>
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem;">
-            <span class="hero-level" id="hero-level">
-              <i class="fas fa-shield-halved"></i>
-              <span id="level-text"></span>
-            </span>
-            <span class="partner-tag" id="partner-tag" style="display:none;">
-              <i class="fas fa-certificate"></i> Partner Digital Certificado ⭐
-            </span>
-            <span class="graduated-icon" id="graduated-icon" style="display:none;" title="Graduado">
-              <i class="fas fa-graduation-cap"></i>
-            </span>
-          </div>
-          <div class="xp-section">
-            <div class="xp-label">
-              <span>Experiencia</span>
-              <span id="xp-text"></span>
-            </div>
-            <div class="xp-bar-bg">
-              <div class="xp-bar-fill" id="xp-bar" style="width:0%;"></div>
-            </div>
+          <div class="chips" id="hero-chips"></div>
+          <div class="xp">
+            <div class="xp-top"><span id="xp-left"></span><span id="xp-right"></span></div>
+            <div class="xp-bar"><div class="xp-fill" id="xp-fill"></div></div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Share Bar -->
-    <div class="share-bar" id="share-bar">
-      <div class="share-bar-inner">
-        <span class="share-label"><i class="fas fa-share-nodes"></i> Compartir:</span>
-        <button class="share-btn copy" id="btn-copy" onclick="copyLink()">
-          <i class="fas fa-link"></i> Copiar enlace
-        </button>
-        <a class="share-btn whatsapp" id="btn-whatsapp" href="#" target="_blank" rel="noopener">
-          <i class="fab fa-whatsapp"></i> WhatsApp
-        </a>
-        <a class="share-btn facebook" id="btn-facebook" href="#" target="_blank" rel="noopener">
-          <i class="fab fa-facebook-f"></i> Facebook
-        </a>
-        <a class="share-btn twitter" id="btn-twitter" href="#" target="_blank" rel="noopener">
-          <i class="fab fa-x-twitter"></i> X
-        </a>
+    <main class="main">
+      <!-- Owner tools -->
+      <div class="card owner-bar actions" id="owner-bar">
+        <p><i class="fas fa-user-check"></i> Este es tu perfil público de Partner. Así lo ven los demás.</p>
+        <a class="btn btn-primary" href="/dashboard.html#profile"><i class="fas fa-user-pen"></i> Editar mi perfil</a>
+        <a class="btn btn-ghost" href="/academia.html"><i class="fas fa-graduation-cap"></i> Ir a la academia</a>
       </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="main-content">
+      <!-- Stats -->
+      <div class="stats">
+        <div class="stat"><div class="stat-icon xp"><i class="fas fa-bolt"></i></div><div class="stat-value" id="stat-xp">0</div><div class="stat-label">XP total</div></div>
+        <div class="stat"><div class="stat-icon cls"><i class="fas fa-book-open"></i></div><div class="stat-value" id="stat-classes">0</div><div class="stat-label">Clases aprobadas</div></div>
+        <div class="stat"><div class="stat-icon bdg"><i class="fas fa-medal"></i></div><div class="stat-value" id="stat-badges">0</div><div class="stat-label">Medallas</div></div>
+        <div class="stat"><div class="stat-icon exm"><i class="fas fa-clipboard-check"></i></div><div class="stat-value" id="stat-exam">—</div><div class="stat-label">Examen final</div></div>
+      </div>
 
-      <!-- Stats Grid -->
-      <div class="stats-grid" id="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon xp"><i class="fas fa-bolt"></i></div>
-          <div class="stat-number" id="stat-xp">0</div>
-          <div class="stat-label">XP Total</div>
+      <!-- Certificate (partners) -->
+      <section class="card cert-card" id="certificado" hidden>
+        <div class="cert-layout">
+          <div class="cert-mini" id="cert-mini" role="button" tabindex="0" aria-label="Ver certificado">
+            <div class="m1">AUNCLICK ACADEMY</div>
+            <div class="m2">CERTIFICADO</div>
+            <div class="m3">PARTNER DIGITAL CERTIFICADO</div>
+            <div class="m4" id="cert-mini-name"></div>
+            <div class="zoom"><i class="fas fa-magnifying-glass-plus"></i></div>
+          </div>
+          <div>
+            <div class="verified"><i class="fas fa-circle-check"></i> Certificado verificado</div>
+            <h2 class="cert-title">Partner Digital Certificado</h2>
+            <p class="cert-desc" id="cert-desc"></p>
+            <div class="cert-meta">
+              <div><span>Código</span><strong id="cert-code"></strong></div>
+              <div><span>Emitido</span><strong id="cert-date"></strong></div>
+            </div>
+            <div class="actions">
+              <button class="btn btn-gold" id="btn-cert-open"><i class="fas fa-eye"></i> Ver certificado</button>
+              <button class="btn btn-ghost" id="btn-cert-download"><i class="fas fa-file-pdf"></i> Descargar PDF</button>
+            </div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon classes"><i class="fas fa-book-open"></i></div>
-          <div class="stat-number" id="stat-classes">0</div>
-          <div class="stat-label">Clases Completadas</div>
+      </section>
+
+      <div class="grid-2">
+        <div class="stack">
+          <!-- About -->
+          <section class="card">
+            <h2 class="card-title"><i class="fas fa-user"></i> Sobre mí</h2>
+            <div class="bio" id="bio"></div>
+            <ul class="facts" id="facts"></ul>
+            <div class="actions contact-actions" id="contact-actions"></div>
+          </section>
+
+          <!-- Badges -->
+          <section class="card">
+            <h2 class="card-title"><i class="fas fa-medal"></i> Medallas y logros <span class="count" id="badges-count">0</span></h2>
+            <div id="badges"></div>
+          </section>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon badges"><i class="fas fa-trophy"></i></div>
-          <div class="stat-number" id="stat-badges">0</div>
-          <div class="stat-label">Medallas</div>
+
+        <div class="stack">
+          <!-- Training path -->
+          <section class="card">
+            <h2 class="card-title"><i class="fas fa-route"></i> Formación</h2>
+            <div class="path-text"><span id="path-label"></span><strong id="path-count"></strong></div>
+            <div class="path-bar"><div class="path-fill" id="path-fill"></div></div>
+            <ul class="steps" id="steps"></ul>
+          </section>
+
+          <!-- Share -->
+          <section class="card">
+            <h2 class="card-title"><i class="fas fa-share-nodes"></i> Compartir perfil</h2>
+            <div class="actions">
+              <button class="btn btn-soft" id="btn-copy"><i class="fas fa-link"></i> Copiar enlace</button>
+              <a class="btn btn-wa" id="btn-whatsapp" href="#" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+              <a class="btn btn-soft" id="btn-facebook" href="#" target="_blank" rel="noopener"><i class="fab fa-facebook-f"></i> Facebook</a>
+              <a class="btn btn-soft" id="btn-x" href="#" target="_blank" rel="noopener"><i class="fab fa-x-twitter"></i> X</a>
+            </div>
+          </section>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon exam"><i class="fas fa-clipboard-check"></i></div>
-          <div class="stat-status" id="stat-exam">—</div>
-          <div class="stat-label">Estado del Examen</div>
-        </div>
       </div>
 
-      <!-- Bio Section -->
-      <div class="card" id="bio-card">
-        <h2 class="card-title"><i class="fas fa-user"></i> Sobre mí</h2>
-        <div class="bio-text" id="bio-text"></div>
-        <div class="bio-details" id="bio-details"></div>
-      </div>
+      <!-- Classes -->
+      <section class="card" style="margin-top:1rem;">
+        <h2 class="card-title"><i class="fas fa-graduation-cap"></i> Clases aprobadas <span class="count" id="classes-count">0</span></h2>
+        <div id="classes"></div>
+      </section>
 
-      <!-- Badges Section -->
-      <div class="card" id="badges-card">
-        <h2 class="card-title"><i class="fas fa-medal"></i> Medallas y Logros</h2>
-        <div id="badges-content"></div>
-      </div>
+      <!-- CTA -->
+      <section class="card cta" id="cta">
+        <h3><i class="fas fa-rocket"></i> ¿Quieres ser Partner Digital?</h3>
+        <p>Aprende con las clases en video de AunClick Academy, aprueba el examen final y obtén tu certificado.</p>
+        <a class="btn" href="/academia.html"><i class="fas fa-graduation-cap"></i> Entrar a la Academia</a>
+      </section>
+    </main>
 
-      <!-- Completed Classes -->
-      <div class="card" id="classes-card">
-        <h2 class="card-title"><i class="fas fa-graduation-cap"></i> Clases Completadas</h2>
-        <div id="classes-content"></div>
-      </div>
-
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <div class="footer-brand" id="footer-brand">AunClick Partner Academy</div>
-      <div class="footer-divider"></div>
-      <p>Perfil de <strong id="footer-name"></strong></p>
-      <p style="margin-top:0.5rem;"><a href="/partners.html"><i class="fas fa-users"></i> Ver todos los partners</a></p>
-    </div>
-
+    <footer class="footer">
+      <p>Perfil de <strong id="footer-name"></strong> · <a href="/partners.html">Ver todos los partners</a></p>
+      <p>AunClick Academy</p>
+    </footer>
   </div>
 
-  <!-- Toast -->
+  <!-- Certificate modal -->
+  <div class="sheet-backdrop" id="cert-modal" aria-hidden="true">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cert-modal-title">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <h2 id="cert-modal-title"><i class="fas fa-certificate" style="color:var(--gold)"></i> Certificado</h2>
+        <button class="sheet-close" id="cert-modal-close" aria-label="Cerrar"><i class="fas fa-xmark"></i></button>
+      </div>
+      <div class="sheet-body">
+        <div class="sheet-preview" id="cert-preview"></div>
+        <p class="sheet-note" id="cert-note"></p>
+      </div>
+      <div class="sheet-foot">
+        <button class="btn btn-soft" id="cert-modal-share"><i class="fas fa-share-nodes"></i> Compartir</button>
+        <button class="btn btn-gold" id="cert-modal-download"><i class="fas fa-download"></i> Descargar PDF</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
 
+  <script src="/js/academy-certificate.js"></script>
   <script>
-    // ===== Helpers =====
+  (function () {
+    'use strict';
     const $ = (sel) => document.querySelector(sel);
-    const pageUrl = window.location.href;
+    const pageUrl = window.location.origin + window.location.pathname + window.location.search;
+    const DEFAULT_LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
 
-    function getLevelName(level) {
-      if (level <= 2) return 'Principiante';
-      if (level <= 4) return 'Aprendiz';
-      if (level <= 6) return 'Intermedio';
-      if (level <= 9) return 'Avanzado';
-      return 'Experto';
+    function esc(v) {
+      return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-
-    function getInitials(name) {
-      if (!name) return '?';
-      const parts = name.trim().split(/\s+/);
-      if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-      return name.substring(0, 2).toUpperCase();
+    // Nombres de nivel: iguales a la academia y al servidor
+    function levelName(l) { return l >= 10 ? 'Experto' : l >= 7 ? 'Avanzado' : l >= 5 ? 'Intermedio' : l >= 3 ? 'Aprendiz' : 'Principiante'; }
+    function initials(name) {
+      const parts = String(name || '?').trim().split(/\s+/);
+      return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
     }
-
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      try {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-      } catch { return dateStr; }
+    // Fechas del servidor: "YYYY-MM-DD HH:MM:SS" en UTC
+    function parseDate(s) {
+      if (!s) return null;
+      const raw = String(s).trim();
+      const d = new Date(raw.replace(' ', 'T') + (/[zZ]|[+-]\d\d:?\d\d$/.test(raw) || raw.length <= 10 ? '' : 'Z'));
+      return isNaN(d.getTime()) ? null : d;
     }
-
-    function formatShortDate(dateStr) {
-      if (!dateStr) return '';
-      try {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
-      } catch { return dateStr; }
+    function fmtDate(s, opts) {
+      const d = parseDate(s);
+      if (!d) return '';
+      try { return d.toLocaleDateString('es-VE', Object.assign({ timeZone: 'America/Caracas' }, opts || { day: 'numeric', month: 'long', year: 'numeric' })); }
+      catch (e) { return d.toLocaleDateString('es-VE', opts); }
     }
-
-    function showToast(msg) {
+    let toastTimer = null;
+    function toast(msg) {
       const t = $('#toast');
       t.textContent = msg;
       t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+    function safeUrl(u) {
+      const s = String(u || '').trim();
+      return /^(https?:\/\/|\/)/i.test(s) ? s : '';
     }
 
-    function scoreClass(correct, total) {
-      if (!total) return 'mid';
-      const pct = (correct / total) * 100;
-      if (pct >= 80) return 'high';
-      if (pct >= 50) return 'mid';
-      return 'low';
-    }
+    let profile = null;
+    let certInfo = null;
 
-    // ===== Share Functions =====
-    let profileName = '';
-
-    function setupShareButtons() {
-      const shareText = `Mira el perfil de ${profileName} en AunClick Partner Academy`;
-      const encodedText = encodeURIComponent(shareText);
-      const encodedUrl = encodeURIComponent(pageUrl);
-
-      $('#btn-whatsapp').href = `https://wa.me/?text=${encodedText}%20${encodedUrl}`;
-      $('#btn-facebook').href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-      $('#btn-twitter').href = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
-    }
-
-    function copyLink() {
-      navigator.clipboard.writeText(pageUrl).then(() => {
-        const btn = $('#btn-copy');
-        btn.classList.add('copied');
-        btn.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
-        showToast('¡Enlace copiado al portapapeles!');
-        setTimeout(() => {
-          btn.classList.remove('copied');
-          btn.innerHTML = '<i class="fas fa-link"></i> Copiar enlace';
-        }, 2500);
-      }).catch(() => {
-        // Fallback
-        const ta = document.createElement('textarea');
-        ta.value = pageUrl;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        document.body.removeChild(ta);
-        showToast('¡Enlace copiado!');
-      });
-    }
-
-    // ===== Render Profile =====
-    function renderProfile(data) {
+    function render(data) {
+      profile = data;
       const user = data.user || {};
       const agent = data.agent_profile || {};
-      const isPartner = data.is_partner || agent.is_partner || false;
-      const isGraduated = agent.graduated || false;
-      const level = data.level || agent.level || 1;
-      const xp = data.xp || agent.xp || 0;
-      const totalBadges = data.total_badges || (data.badges || []).length || 0;
-      const totalClasses = data.total_classes_completed || (data.completed_classes || []).length || 0;
-      const examPassed = data.exam_passed || agent.exam_passed || false;
+      const name = String(user.name || 'Agente AunClick').trim();
+      const xp = Number(data.xp || agent.xp || 0);
+      const LEVEL_XP = Array.isArray(data.level_xp) && data.level_xp.length ? data.level_xp : DEFAULT_LEVEL_XP;
+      const level = Number(data.level || 1);
+      const isPartner = !!data.is_partner;
+      const isGraduated = !!(data.is_graduated || agent.graduated === 1);
+      const examPassed = !!(data.exam_passed || agent.exam_passed === 1);
       const badges = data.badges || [];
       const classes = data.completed_classes || [];
+      const pathTotal = Number(data.path_total || 0);
+      const done = classes.length;
 
-      profileName = user.name || 'Agente';
+      document.title = name + ' — ' + (isPartner ? 'Partner Digital Certificado' : 'Agente') + ' | AunClick Academy';
 
-      // Update page title
-      document.title = `${profileName} — AunClick Partner Academy`;
-
-      // --- Hero ---
-      const avatarEl = $('#avatar');
-      if (user.avatar) {
-        avatarEl.innerHTML = `<img src="${user.avatar}" alt="${profileName}" onerror="this.parentElement.innerHTML='${getInitials(profileName)}'">`;
+      // Hero
+      if (isPartner) $('#hero').classList.add('is-partner');
+      const avatarUrl = safeUrl(user.avatar);
+      const av = $('#avatar');
+      if (avatarUrl) {
+        const img = document.createElement('img');
+        img.src = avatarUrl; img.alt = name;
+        img.onerror = () => { av.textContent = initials(name); };
+        av.appendChild(img);
       } else {
-        avatarEl.textContent = getInitials(profileName);
+        av.textContent = initials(name);
+      }
+      $('#hero-kicker').textContent = isPartner ? 'Partner Digital Certificado' : 'Agente en formación';
+      $('#hero-name').textContent = name;
+      let chips = '<span class="chip"><i class="fas fa-shield-halved"></i> Nivel ' + level + ' · ' + esc(data.level_name || levelName(level)) + '</span>';
+      if (isPartner) chips += '<span class="chip gold"><i class="fas fa-certificate"></i> Partner certificado</span>';
+      if (isGraduated) chips += '<span class="chip"><i class="fas fa-graduation-cap"></i> Graduado</span>';
+      const since = data.certificate && data.certificate.issued_at ? fmtDate(data.certificate.issued_at, { month: 'short', year: 'numeric' }) : '';
+      if (since) chips += '<span class="chip"><i class="fas fa-calendar-check"></i> Desde ' + esc(since) + '</span>';
+      $('#hero-chips').innerHTML = chips;
+
+      // XP bar: progreso dentro del nivel actual
+      const cur = LEVEL_XP[Math.min(level, LEVEL_XP.length) - 1] || 0;
+      const next = level < LEVEL_XP.length ? LEVEL_XP[level] : null;
+      const pct = next ? Math.max(0, Math.min(100, ((xp - cur) / (next - cur)) * 100)) : 100;
+      $('#xp-left').textContent = xp.toLocaleString('es-VE') + ' XP';
+      $('#xp-right').textContent = next ? 'Faltan ' + (next - xp).toLocaleString('es-VE') + ' XP para nivel ' + (level + 1) : 'Nivel máximo';
+      setTimeout(() => { $('#xp-fill').style.width = pct + '%'; }, 200);
+
+      // Stats
+      $('#stat-xp').textContent = xp.toLocaleString('es-VE');
+      $('#stat-classes').innerHTML = pathTotal ? done + ' <small>/ ' + pathTotal + '</small>' : String(done);
+      $('#stat-badges').textContent = badges.length;
+      const exam = $('#stat-exam');
+      const attempts = Number(data.exam_attempts || agent.exam_attempts || 0);
+      if (examPassed) { exam.className = 'stat-value ok'; exam.innerHTML = '<i class="fas fa-circle-check"></i> Aprobado'; }
+      else if (isGraduated) { exam.className = 'stat-value ok'; exam.innerHTML = '<i class="fas fa-graduation-cap"></i> Graduado'; }
+      else if (attempts > 0) { exam.className = 'stat-value wait'; exam.textContent = 'En curso (' + attempts + '/3)'; }
+      else { exam.className = 'stat-value wait'; exam.textContent = 'Pendiente'; }
+
+      // Certificate
+      if (isPartner && window.AcademyCertificate) {
+        const issued = (data.certificate && data.certificate.issued_at) || agent.exam_passed_at || agent.partner_at || agent.graduated_at || '';
+        certInfo = window.AcademyCertificate.info({ name: name, userId: user.id, issuedAt: issued });
+        if (data.certificate && data.certificate.code) certInfo.code = data.certificate.code;
+        $('#certificado').hidden = false;
+        $('#cert-mini-name').textContent = name;
+        $('#cert-desc').textContent = name + ' completó la ruta de formación de AunClick Academy y aprobó la evaluación final.';
+        $('#cert-code').textContent = certInfo.code;
+        $('#cert-date').textContent = certInfo.dateText;
+        $('#cert-modal-title').innerHTML = '<i class="fas fa-certificate" style="color:var(--gold)"></i> Certificado de ' + esc(name);
+        $('#cert-note').textContent = 'Código ' + certInfo.code + ' · Verificable en ' + certInfo.verifyUrl;
       }
 
-      if (isPartner) {
-        $('#avatar-wrapper').classList.add('is-partner');
-        $('#partner-badge-hero').style.display = 'flex';
-        $('#partner-tag').style.display = 'inline-flex';
+      // About
+      const bio = $('#bio');
+      if (user.bio && String(user.bio).trim()) { bio.textContent = user.bio; }
+      else { bio.textContent = 'Este agente aún no ha agregado su presentación.'; bio.classList.add('empty'); }
+      let facts = '';
+      if (user.created_at) facts += '<li><i class="fas fa-calendar"></i> Miembro desde ' + esc(fmtDate(user.created_at, { month: 'long', year: 'numeric' })) + '</li>';
+      facts += '<li><i class="fas fa-shield-halved"></i> Nivel ' + level + ' · ' + esc(levelName(level)) + ' (' + xp.toLocaleString('es-VE') + ' XP)</li>';
+      if (isPartner) facts += '<li><i class="fas fa-certificate"></i> Partner Digital Certificado de AunClick</li>';
+      if (user.phone) facts += '<li><i class="fas fa-phone"></i> ' + esc(user.phone) + '</li>';
+      $('#facts').innerHTML = facts;
+      let contact = '';
+      const wa = String(user.whatsapp || '').replace(/[^0-9]/g, '');
+      if (wa.length >= 8) {
+        const msg = encodeURIComponent('Hola ' + name + ', vi tu perfil de Partner en AunClick y me gustaría contactarte.');
+        contact += '<a class="btn btn-wa" href="https://wa.me/' + wa + '?text=' + msg + '" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> Escribir por WhatsApp</a>';
       }
+      const tel = String(user.phone || '').replace(/[^0-9+]/g, '');
+      if (tel.length >= 7) contact += '<a class="btn btn-soft" href="tel:' + esc(tel) + '"><i class="fas fa-phone"></i> Llamar</a>';
+      $('#contact-actions').innerHTML = contact;
 
-      if (isGraduated) {
-        $('#graduated-icon').style.display = 'inline-flex';
-      }
-
-      $('#hero-name').textContent = profileName;
-      $('#level-text').textContent = `Nivel ${level}: ${getLevelName(level)}`;
-
-      // XP bar - use correct level thresholds (non-linear)
-      const LEVEL_XP = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200];
-      const xpInLevel = xp - (level <= 1 ? 0 : LEVEL_XP[level - 2]);
-      const xpNeeded = level >= 10 ? LEVEL_XP[9] - LEVEL_XP[8] : LEVEL_XP[level - 1] - (level <= 1 ? 0 : LEVEL_XP[level - 2]);
-      const xpPercent = level >= 10 ? 100 : Math.min((xpInLevel / xpNeeded) * 100, 100);
-      $('#xp-text').textContent = `${xp} XP`;
-      // Animate XP bar after a short delay
-      setTimeout(() => {
-        $('#xp-bar').style.width = xpPercent + '%';
-      }, 300);
-
-      // --- Stats ---
-      $('#stat-xp').textContent = xp.toLocaleString('es-ES');
-      $('#stat-classes').textContent = totalClasses;
-      $('#stat-badges').textContent = totalBadges;
-
-      const examEl = $('#stat-exam');
-      if (examPassed) {
-        examEl.className = 'stat-status passed';
-        examEl.innerHTML = '<i class="fas fa-check-circle"></i> Aprobado';
-      } else if (data.exam_passed === false || agent.exam_passed === false) {
-        examEl.className = 'stat-status failed';
-        examEl.textContent = 'No aprobado';
+      // Badges
+      $('#badges-count').textContent = badges.length;
+      if (badges.length) {
+        $('#badges').innerHTML = '<div class="badges">' + badges.map(b => {
+          const icon = String(b.badge_icon || 'fas fa-medal').replace(/[^a-zA-Z0-9\s-]/g, '');
+          const special = ['partner', 'exam_passed', 'graduation'].indexOf(b.badge_type) !== -1;
+          return '<div class="badge' + (special ? ' special' : '') + '">' +
+            '<div class="badge-icon"><i class="' + icon + '"></i></div>' +
+            '<div><div class="badge-name">' + esc(b.badge_name || 'Medalla') + '</div>' +
+            (b.badge_description ? '<div class="badge-desc">' + esc(b.badge_description) + '</div>' : '') +
+            (b.earned_at ? '<div class="badge-date"><i class="fas fa-clock"></i> ' + esc(fmtDate(b.earned_at, { day: 'numeric', month: 'short', year: 'numeric' })) + '</div>' : '') +
+            '</div></div>';
+        }).join('') + '</div>';
       } else {
-        examEl.className = 'stat-status pending';
-        examEl.textContent = 'No presentado';
+        $('#badges').innerHTML = '<div class="empty"><i class="fas fa-award"></i>Aún no tiene medallas.</div>';
       }
 
-      // --- Bio ---
-      const bioEl = $('#bio-text');
-      if (user.bio && user.bio.trim()) {
-        bioEl.textContent = user.bio;
-        bioEl.classList.remove('bio-empty');
+      // Training path
+      const pathPct = pathTotal ? Math.round(Math.min(done, pathTotal) / pathTotal * 100) : (isPartner ? 100 : 0);
+      $('#path-label').textContent = isPartner ? 'Ruta de formación completada' : 'Avance en la ruta de formación';
+      $('#path-count').textContent = pathTotal ? Math.min(done, pathTotal) + ' / ' + pathTotal + ' clases' : done + ' clases';
+      setTimeout(() => { $('#path-fill').style.width = pathPct + '%'; }, 200);
+      const allClasses = pathTotal > 0 && done >= pathTotal;
+      const steps = [
+        { ok: done > 0, text: 'Primera clase aprobada' },
+        { ok: allClasses || isPartner, text: 'Todas las clases de la ruta' },
+        { ok: examPassed || isGraduated, text: 'Examen final aprobado' },
+        { ok: isPartner, text: 'Partner Digital Certificado' },
+      ];
+      $('#steps').innerHTML = steps.map(s => '<li class="' + (s.ok ? 'done' : '') + '"><i class="fas ' + (s.ok ? 'fa-check' : 'fa-circle') + '"></i><span>' + esc(s.text) + '</span></li>').join('');
+
+      // Classes
+      $('#classes-count').textContent = classes.length;
+      if (classes.length) {
+        $('#classes').innerHTML = '<div class="classes">' + classes.map(c => {
+          const total = Number(c.total_questions || 0), ok = Number(c.correct_answers || 0);
+          return '<div class="class-row"><div class="ci"><i class="fas fa-check"></i></div>' +
+            '<div class="cn"><div class="ct" title="' + esc(c.title || '') + '">' + esc(c.title || 'Clase') + '</div>' +
+            '<div class="cd">' + esc(fmtDate(c.completed_at, { day: 'numeric', month: 'short', year: 'numeric' })) + '</div></div>' +
+            (total ? '<span class="pill score">' + ok + '/' + total + '</span>' : '') +
+            '<span class="pill xp">+' + Number(c.xp_earned || 0) + ' XP</span></div>';
+        }).join('') + '</div>';
       } else {
-        bioEl.textContent = 'Este agente aún no ha agregado su bio.';
-        bioEl.classList.add('bio-empty');
+        $('#classes').innerHTML = '<div class="empty"><i class="fas fa-book"></i>Aún no ha aprobado clases.</div>';
       }
 
-      // Bio details
-      const detailsEl = $('#bio-details');
-      let detailsHtml = '';
+      // Owner / visitor
+      let me = null;
+      try { me = JSON.parse(localStorage.getItem('meridaunclick_user') || 'null'); } catch (e) {}
+      const isOwner = !!(me && String(me.id) === String(user.id));
+      if (isOwner) { $('#owner-bar').style.display = 'flex'; $('#cta').hidden = true; }
+      if (isPartner) $('#cta').querySelector('h3').innerHTML = '<i class="fas fa-rocket"></i> Tú también puedes ser Partner Digital';
 
-      if (user.created_at) {
-        detailsHtml += `<div class="bio-detail-item"><i class="fas fa-calendar"></i> Miembro desde ${formatDate(user.created_at)}</div>`;
-      }
+      // Share
+      const shareText = isPartner
+        ? name + ' es Partner Digital Certificado de AunClick Academy'
+        : 'Mira el perfil de ' + name + ' en AunClick Academy';
+      $('#btn-whatsapp').href = 'https://wa.me/?text=' + encodeURIComponent(shareText + ' ' + pageUrl);
+      $('#btn-facebook').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(pageUrl);
+      $('#btn-x').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(pageUrl);
+      $('#footer-name').textContent = name;
 
-      if (user.role) {
-        detailsHtml += `<div class="bio-detail-item"><i class="fas fa-briefcase"></i> ${user.role}</div>`;
-      }
-
-      if (user.whatsapp) {
-        const waClean = user.whatsapp.replace(/[^0-9]/g, '');
-        detailsHtml += `<div class="bio-detail-item"><i class="fab fa-whatsapp" style="color:#25d366;"></i> <a href="https://wa.me/${waClean}" target="_blank" rel="noopener">${user.whatsapp}</a></div>`;
-      }
-
-      if (user.phone) {
-        detailsHtml += `<div class="bio-detail-item"><i class="fas fa-phone"></i> <a href="tel:${user.phone}">${user.phone}</a></div>`;
-      }
-
-      detailsEl.innerHTML = detailsHtml;
-
-      // --- Badges ---
-      const badgesEl = $('#badges-content');
-      if (badges.length > 0) {
-        let badgesHtml = '<div class="badges-grid">';
-        badges.forEach(b => {
-          const icon = (b.badge_icon || 'fas fa-medal').replace(/[^a-zA-Z0-9\s\-]/g, '');
-          badgesHtml += `
-            <div class="badge-item">
-              <div class="badge-icon-wrap"><i class="${icon}"></i></div>
-              <div class="badge-info">
-                <div class="badge-name">${b.badge_name || 'Medalla'}</div>
-                ${b.badge_description ? `<div class="badge-desc">${b.badge_description}</div>` : ''}
-                ${b.earned_at ? `<div class="badge-date"><i class="fas fa-clock"></i> ${formatShortDate(b.earned_at)}</div>` : ''}
-              </div>
-            </div>`;
-        });
-        badgesHtml += '</div>';
-        badgesEl.innerHTML = badgesHtml;
-      } else {
-        badgesEl.innerHTML = '<div class="empty-state"><i class="fas fa-award"></i>Este agente aún no ha ganado medallas.</div>';
-      }
-
-      // --- Completed Classes ---
-      const classesEl = $('#classes-content');
-      if (classes.length > 0) {
-        let classesHtml = '<div class="classes-list"><table class="classes-table"><thead><tr>' +
-          '<th>Clase</th><th>Puntaje</th><th>Puntos</th><th>XP</th><th>Fecha</th>' +
-          '</tr></thead><tbody>';
-        classes.forEach(c => {
-          const correct = c.correct_answers || 0;
-          const total = c.total_questions || 0;
-          const sc = scoreClass(correct, total);
-          classesHtml += `<tr>
-            <td data-label="Clase" class="class-title" title="${(c.title || '').replace(/"/g, '&quot;')}">${c.title || 'Sin título'}</td>
-            <td data-label="Puntaje"><span class="class-score ${sc}"><i class="fas fa-bullseye"></i> ${correct}/${total}</span></td>
-            <td data-label="Puntos"><span class="class-points">${c.total_points || 0} pts</span></td>
-            <td data-label="XP"><span class="class-xp">+${c.xp_earned || 0} XP</span></td>
-            <td data-label="Fecha" class="class-date">${formatShortDate(c.completed_at)}</td>
-          </tr>`;
-        });
-        classesHtml += '</tbody></table></div>';
-        classesEl.innerHTML = classesHtml;
-      } else {
-        classesEl.innerHTML = '<div class="empty-state"><i class="fas fa-book"></i>Este agente aún no ha completado clases.</div>';
-      }
-
-      // --- Footer ---
-      $('#footer-name').textContent = profileName;
-
-      // --- Share buttons ---
-      setupShareButtons();
-
-      // Show page
       $('#loading-screen').style.display = 'none';
       $('#profile-page').style.display = 'block';
+
+      if (isPartner && /^#certificado$/.test(window.location.hash)) {
+        $('#certificado').scrollIntoView();
+        openCert();
+      }
     }
 
-    // ===== Init =====
-    (function init() {
-      const params = new URLSearchParams(window.location.search);
-      const id = params.get('id');
-
-      if (!id) {
-        $('#loading-screen').style.display = 'none';
-        $('#error-screen').style.display = 'flex';
-        return;
+    // ── Copy link ──
+    function copyLink() {
+      const done = () => {
+        const b = $('#btn-copy');
+        b.classList.add('copied');
+        b.innerHTML = '<i class="fas fa-check"></i> ¡Copiado!';
+        toast('Enlace copiado');
+        setTimeout(() => { b.classList.remove('copied'); b.innerHTML = '<i class="fas fa-link"></i> Copiar enlace'; }, 2400);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(pageUrl).then(done).catch(fallback);
+      } else fallback();
+      function fallback() {
+        const ta = document.createElement('textarea');
+        ta.value = pageUrl; document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { toast('No se pudo copiar'); }
+        ta.remove();
       }
+    }
 
-      const apiUrl = `${window.location.origin}/api/partners/${id}`;
+    // ── Certificate modal ──
+    let lastFocus = null;
+    let rendered = false;
+    async function openCert() {
+      if (!certInfo) return;
+      lastFocus = document.activeElement;
+      const modal = $('#cert-modal');
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('modal-open');
+      $('#cert-modal-close').focus();
+      if (rendered) return;
+      const box = $('#cert-preview');
+      box.innerHTML = '<div class="loading"><div class="spinner dark"></div>Generando certificado...</div>';
+      try {
+        await window.AcademyCertificate.preview(certInfo, box);
+        rendered = true;
+      } catch (e) {
+        box.innerHTML = '<div class="loading"><i class="fas fa-triangle-exclamation" style="font-size:1.5rem;color:#d97706"></i>' + esc(e.message || 'No se pudo mostrar el certificado') + '</div>';
+      }
+    }
+    function closeCert() {
+      const modal = $('#cert-modal');
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('modal-open');
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+    }
+    async function downloadCert() {
+      if (!certInfo) return;
+      toast('Preparando PDF...');
+      try { await window.AcademyCertificate.download(certInfo); toast('Certificado descargado'); }
+      catch (e) { toast(e.message || 'No se pudo descargar'); }
+    }
+    async function shareCert() {
+      const url = pageUrl + '#certificado';
+      const text = (profile && profile.user ? profile.user.name : 'Este agente') + ' es Partner Digital Certificado de AunClick Academy';
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Certificado AunClick Academy', text: text, url: url }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+      }
+      window.open('https://wa.me/?text=' + encodeURIComponent(text + ' ' + url), '_blank', 'noopener');
+    }
 
-      fetch(apiUrl)
-        .then(res => {
-          if (!res.ok) throw new Error('Not found');
-          return res.json();
-        })
-        .then(data => renderProfile(data))
-        .catch(err => {
-          console.error('Error loading profile:', err);
-          $('#loading-screen').style.display = 'none';
-          $('#error-screen').style.display = 'flex';
-        });
-    })();
+    $('#btn-copy').addEventListener('click', copyLink);
+    $('#btn-cert-open').addEventListener('click', openCert);
+    $('#cert-mini').addEventListener('click', openCert);
+    $('#cert-mini').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCert(); } });
+    $('#btn-cert-download').addEventListener('click', downloadCert);
+    $('#cert-modal-download').addEventListener('click', downloadCert);
+    $('#cert-modal-share').addEventListener('click', shareCert);
+    $('#cert-modal-close').addEventListener('click', closeCert);
+    $('#cert-modal').addEventListener('click', (e) => { if (e.target === e.currentTarget) closeCert(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#cert-modal').classList.contains('open')) closeCert(); });
+
+    // ── Init ──
+    const id = new URLSearchParams(window.location.search).get('id');
+    function fail() {
+      $('#loading-screen').style.display = 'none';
+      $('#error-screen').style.display = 'flex';
+    }
+    if (!id || !/^\d+$/.test(id)) { fail(); return; }
+    fetch('/api/partners/' + encodeURIComponent(id))
+      .then(r => { if (!r.ok) throw new Error('Not found'); return r.json(); })
+      .then(render)
+      .catch(err => { console.error('Error loading profile:', err); fail(); });
+  })();
   </script>
 </body>
 </html>

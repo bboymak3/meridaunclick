@@ -1,6 +1,7 @@
 // POST: Admin actions on agents - assign classes, graduate, award badges
 
 import { corsHeaders, requireAdmin } from '../../../_lib/auth.js';
+import { addXp, EXAM_XP } from '../../../_lib/academy-levels.js';
 
 async function ensureTables(db) {
   var tables = [
@@ -70,9 +71,16 @@ export async function onRequestPost(context) {
       }
 
       // Ensure agent profile exists
-      var existing = await env.DB.prepare('SELECT user_id FROM agent_profiles WHERE user_id = ?').bind(user_id).first();
+      var existing = await env.DB.prepare('SELECT user_id, exam_passed, graduated FROM agent_profiles WHERE user_id = ?').bind(user_id).first();
       if (!existing) {
         await env.DB.prepare('INSERT INTO agent_profiles (user_id) VALUES (?)').bind(user_id).run();
+      }
+
+      // Graduarlo equivale a aprobar el examen: +150 XP una sola vez
+      var gradXp = 0;
+      if (!existing || (existing.exam_passed !== 1 && existing.graduated !== 1)) {
+        await addXp(env.DB, user_id, EXAM_XP);
+        gradXp = EXAM_XP;
       }
 
       // Set graduated
@@ -106,6 +114,7 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({
         message: 'Agente marcado como graduado exitosamente',
         badges_awarded: awardedBadges,
+        xp_awarded: gradXp,
       }), {
         status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
